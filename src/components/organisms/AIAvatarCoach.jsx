@@ -5,6 +5,7 @@ import Video from "next-video";
 import { Play,Pause, Sparkles } from "lucide-react";
 const femaleVideo = "/AI_avatar_video_female.mp4";
 const maleVideo = "/AI_avatar_video_male.mp4";
+
 import { useRef, useState } from "react";
 
 export default function AIAvatarCoach({
@@ -47,13 +48,15 @@ const [isVideoPlaying, setIsVideoPlaying] = useState(true);
        
          
       
-      <Video
+   <video
   ref={videoRef}
-  src={voiceGender === "female" ? femaleVideo : maleVideo}
+  src={voiceGender === "female"
+    ? "/AI_avatar_video_female.mp4"
+    : "/AI_avatar_video_male.mp4"}
   autoPlay
   loop
-  controls={false}
   playsInline
+  controls={false}
   muted={false}
   className="w-full h-full object-cover"
 />
