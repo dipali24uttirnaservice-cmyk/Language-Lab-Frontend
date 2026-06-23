@@ -12,8 +12,12 @@ import {
   Building2,
   Settings,
   BadgeCheck,
+  LogOut,
 } from "lucide-react";
 import { FaGraduationCap } from "react-icons/fa";
+import LogoutModal from "@/components/molecules/LogoutModal";
+import { logoutUser } from "@/services/auth/logoutApi";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
   {
@@ -46,6 +50,12 @@ const menuItems = [
   href: "/institute-dashboard/license",
   icon: BadgeCheck,
   color: "from-emerald-400 to-green-600",
+},
+{
+  title: "Logout",
+  action: "logout",
+  icon: LogOut,
+  color: "from-red-500 to-rose-600",
 }
  
 ];
@@ -55,6 +65,11 @@ export default function InstituteSidebar({ isOpen }) {
 
  const [institute, setInstitute] = useState({});
 const [mounted, setMounted] = useState(false);
+
+const router = useRouter();
+
+const [showLogoutModal, setShowLogoutModal] =
+  useState(false);
 
 useEffect(() => {
   setMounted(true);
@@ -75,6 +90,21 @@ useEffect(() => {
   const instituteLogo =
     institute?.logo || "/default-logo.png";
 
+    const handleLogout = async () => {
+  try {
+    await logoutUser();
+
+    Cookies.remove("token");
+    Cookies.remove("role");
+    Cookies.remove("userData");
+
+    setShowLogoutModal(false);
+
+    router.replace("/login");
+  } catch (error) {
+    console.error("Logout Error:", error);
+  }
+};
   return (
     <aside
       className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300 ease-in-out
@@ -85,9 +115,7 @@ useEffect(() => {
       ========================================== */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Base Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50 to-slate-100" />
-
-        {/* Top Orb */}
+<div className="absolute inset-0 bg-gradient-to-b from-amber-100 via-orange-50 to-amber-200" />        {/* Top Orb */}
         <motion.div
           animate={{
             y: [0, -20, 0],
@@ -195,88 +223,90 @@ useEffect(() => {
 </div>
 
         {/* Menu */}
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
+     <div className="space-y-2">
+  {menuItems.map((item) => {
+    const Icon = item.icon;
+    const active = pathname === item.href;
 
-            return (
-              <motion.div
-                key={item.title}
-                whileHover={{
-                  x: 4,
-                  scale: 1.02,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-               <Link
-  href={item.href}
-  className="
-    relative
-    flex
-    items-center
-    w-full
-    p-3
-    rounded-xl
-    transition-all
-    group
-    overflow-hidden
-    cursor-pointer
-  "
->
+    // Logout Menu
+    if (item.action === "logout") {
+      return (
+        <motion.div
+          key={item.title}
+          whileHover={{ x: 4, scale: 1.02 }}
+        >
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
+          >
+            <div
+              className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`}
+            >
+              <Icon size={16} />
+            </div>
 
- {active && (
-    <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-indigo-600 z-20" />
-  )}
-                 {active && (
-  <motion.div
-    layoutId="activeSidebarGlow"
-    className="
-      absolute inset-0 rounded-xl
-      bg-gradient-to-r
-      from-indigo-50
-      via-blue-50
-      to-violet-50
-      border-2 border-indigo-500
-      shadow-[0_0_25px_rgba(99,102,241,0.15)]
-    "
-  />
-)}
+            <span className="relative z-10 text-sm font-bold text-slate-700">
+              {item.title}
+            </span>
+          </button>
+        </motion.div>
+      );
+    }
 
-                 <div
-  className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300
-  ${
-    active
-      ? `bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`
-      : "bg-white text-slate-500 border-slate-200 group-hover:border-slate-300"
-  }`}
->
-                    <Icon size={16} />
-                  </div>
+    // Normal Menu
+    return (
+      <motion.div
+        key={item.title}
+        whileHover={{ x: 4, scale: 1.02 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Link
+          href={item.href}
+          className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
+        >
+          {active && (
+            <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-indigo-600 z-20" />
+          )}
 
-                 <span
-  className={`relative z-10 text-sm font-bold
-  ${
-    active
-      ? "text-indigo-700 font-extrabold"
-      : "text-slate-700 group-hover:text-slate-900"
-  }`}
->
-  {item.title}
-</span>
-                <div
-  className={`relative z-10 ml-auto h-2 w-2 rounded-full transition-all duration-300
-  ${
-    active
-      ? "bg-indigo-500"
-      : "bg-transparent group-hover:bg-slate-300"
-  }`}
-/>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
+          {active && (
+            <motion.div
+              layoutId="activeSidebarGlow"
+              className="
+                absolute inset-0 rounded-xl
+                bg-gradient-to-r
+                from-indigo-50
+                via-blue-50
+                to-violet-50
+                border-2 border-indigo-500
+                shadow-[0_0_25px_rgba(99,102,241,0.15)]
+              "
+            />
+          )}
+
+          <div
+            className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300 ${
+              active
+                ? `bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`
+                : "bg-white text-slate-500 border-slate-200 group-hover:border-slate-300"
+            }`}
+          >
+            <Icon size={16} />
+          </div>
+
+          <span
+            className={`relative z-10 text-sm font-bold ${
+              active
+                ? "text-indigo-700 font-extrabold"
+                : "text-slate-700 group-hover:text-slate-900"
+            }`}
+          >
+            {item.title}
+          </span>
+        </Link>
+      </motion.div>
+    );
+  })}
+</div>
       </div>
 
       {/* ==========================================
@@ -316,6 +346,11 @@ useEffect(() => {
           </p>
         </div>
       </div>
+      <LogoutModal
+  open={showLogoutModal}
+  onClose={() => setShowLogoutModal(false)}
+  onConfirm={handleLogout}
+/>
     </aside>
   );
 }

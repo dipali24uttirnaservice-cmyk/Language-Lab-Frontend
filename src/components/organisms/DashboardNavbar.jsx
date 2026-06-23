@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import {
   FaBell,
   FaGraduationCap,
@@ -13,12 +14,14 @@ import {
 
 import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutUser } from "@/services/auth/logoutApi";
+import Link from "next/link";   
 
 export default function DashboardNavbar({
   isSidebarOpen,
   setIsOpen,
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [showLogoutModal, setShowLogoutModal] =
     useState(false);
@@ -54,6 +57,18 @@ const role = Cookies.get("role");
           ?.charAt(0)
           ?.toUpperCase() || "I";
 
+
+
+          const breadcrumbs = pathname
+  .split("/")
+  .filter(Boolean)
+  .map((item, index, arr) => ({
+    label: item
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()),
+    href: "/" + arr.slice(0, index + 1).join("/"),
+  }));
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/70 backdrop-blur-xl px-6 h-16 flex items-center justify-between">
@@ -72,21 +87,35 @@ const role = Cookies.get("role");
             )}
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-xs">
-              <FaGraduationCap className="text-sm" />
-            </div>
+         <div>
+  <h1 className="text-lg font-bold text-slate-900">
+    {breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard"}
+  </h1>
 
-            <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-wider uppercase">
-                Workspace
-              </h1>
+  <div className="flex items-center gap-2 text-xs text-slate-500">
+    {breadcrumbs.map((crumb, index) => (
+      <div
+        key={crumb.href}
+        className="flex items-center gap-2"
+      >
+        {index > 0 && (
+          <span className="text-slate-300">/</span>
+        )}
 
-              <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase -mt-0.5">
-                Student Core v1.0
-              </p>
-            </div>
-          </div>
+        <Link
+          href={crumb.href}
+          className={`hover:text-indigo-600 ${
+            index === breadcrumbs.length - 1
+              ? "font-semibold text-slate-700"
+              : ""
+          }`}
+        >
+          {crumb.label}
+        </Link>
+      </div>
+    ))}
+  </div>
+</div>
         </div>
 
         {/* Right Side */}

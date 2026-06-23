@@ -46,9 +46,9 @@ export default function InstituteDashboardLayout({ children }) {
           </div>
 
           {/* Children Content Layer */}
-          <div className="relative z-10 p-6 md:p-8">
-            {children}
-          </div>
+      <div className="relative z-10 px-6 md:px-8 pt-2 pb-6">
+  {children}
+</div>
         </main>
       </div>
     </div>
