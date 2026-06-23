@@ -12,11 +12,7 @@ export default function TableActions({
 }) {
   return (
     <div className="flex items-center justify-center gap-3">
-      <ActionIcon
-        icon={Eye}
-        gradient="from-blue-500 to-indigo-600"
-        onClick={onView}
-      />
+    
 
       <ActionIcon
         icon={Pencil}

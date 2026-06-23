@@ -27,13 +27,7 @@ export default function TableToolbar({ title, search, setSearch, onAdd }) {
           />
         </div>
 
-        {/* Filter */}
-        <button
-          className="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-95 flex items-center gap-2 font-medium text-slate-600 transition-all duration-200"
-        >
-          <Filter size={16} />
-          Filter
-        </button>
+     
 
         <div className="flex-1" />
 

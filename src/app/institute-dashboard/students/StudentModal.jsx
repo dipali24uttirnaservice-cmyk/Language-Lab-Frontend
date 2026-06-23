@@ -16,6 +16,7 @@ export default function StudentModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const initialState = {
     full_name: "",
@@ -57,31 +58,120 @@ export default function StudentModal({
       ...prev,
       [name]: value,
     }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.full_name.trim()) {
+  newErrors.full_name = "This field is required";
+}
+
+    // Full Name
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = "Full Name is required";
+    }
+
+    // Roll No
+    if (!formData.roll_no.trim()) {
+      newErrors.roll_no = "Roll Number is required";
+    } else if (!/^\d{1,6}$/.test(formData.roll_no)) {
+      newErrors.roll_no =
+        "Roll Number must contain only numbers (max 6 digits)";
+    }
+
+    // Enrollment No
+    if (!formData.enrollment_no.trim()) {
+      newErrors.enrollment_no =
+        "Enrollment Number is required";
+    } else if (!/^\d{1,6}$/.test(formData.enrollment_no)) {
+      newErrors.enrollment_no =
+        "Enrollment Number must contain only numbers (max 6 digits)";
+    }
+
+    if (mode === "add") {
+      // Email
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+        newErrors.email =
+          "Please enter a valid email address";
+      }
+
+      // Phone
+      if (!formData.phone.trim()) {
+        newErrors.phone = "Phone Number is required";
+      } else if (!/^\d{10}$/.test(formData.phone)) {
+        newErrors.phone =
+          "Phone Number must be exactly 10 digits";
+      }
+
+      // Course
+      if (!formData.course.trim()) {
+        newErrors.course = "Course is required";
+      }
+
+      // Batch
+      if (!formData.batch.trim()) {
+        newErrors.batch = "Batch is required";
+      } else if (
+        !/^\d{4}-\d{4}$/.test(formData.batch)
+      ) {
+        newErrors.batch =
+          "Batch format should be like 2024-2026";
+      }
+
+      // Year
+      if (!formData.year) {
+        newErrors.year = "Year is required";
+      } else if (
+        !["1", "2", "3", "4", "5", "6"].includes(
+          formData.year.toString()
+        )
+      ) {
+        newErrors.year =
+          "Year must be between 1 and 6";
+      }
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
     try {
       setLoading(true);
 
       if (mode === "add") {
-      const userDataRaw = Cookies.get("userData");
+        const userDataRaw = Cookies.get("userData");
 
-if (!userDataRaw) {
-  throw new Error("Login session expired");
-}
+        if (!userDataRaw) {
+          throw new Error("Login session expired");
+        }
 
-const userData = JSON.parse(userDataRaw);
+        const userData = JSON.parse(userDataRaw);
 
-const instituteId =
-  userData?.institute?.id ||
-  userData?.institute?._id ||
-  userData?.institute_id;
+        const instituteId =
+          userData?.institute?.id ||
+          userData?.institute?._id ||
+          userData?.institute_id;
 
-console.log("Institute ID:", instituteId);
+        console.log("Institute ID:", instituteId);
 
-if (!instituteId) {
-  throw new Error("Institute ID not found");
-}
+        if (!instituteId) {
+          throw new Error("Institute ID not found");
+        }
 
         if (!instituteId) {
           throw new Error("Institute ID not found");
@@ -202,7 +292,7 @@ if (!instituteId) {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Full Name"
+              placeholder="Enter Full Name"
               value={formData.full_name}
               onChange={(e) =>
                 handleChange(
@@ -210,102 +300,130 @@ if (!instituteId) {
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
-            />
+ className={`border rounded-xl p-3 w-full ${
+      errors.full_name
+        ? "border-red-500"
+        : ""
+    }`}            />
 
             <input
               type="text"
-              placeholder="Roll No"
+              maxLength={6}
+              placeholder="Roll Number (Max 6 digits)"
               value={formData.roll_no}
               onChange={(e) =>
                 handleChange(
                   "roll_no",
-                  e.target.value
+                  e.target.value.replace(/\D/g, "")
                 )
               }
-              className="border rounded-xl p-3"
-            />
+ className={`border rounded-xl p-3 w-full ${
+      errors.roll_no
+        ? "border-red-500"
+        : ""
+    }`}            />
 
             <input
               type="text"
-              placeholder="Enrollment No"
+              maxLength={6}
+              placeholder="Enrollment Number (Max 6 digits)"
               value={formData.enrollment_no}
               onChange={(e) =>
                 handleChange(
                   "enrollment_no",
-                  e.target.value
+                  e.target.value.replace(/\D/g, "")
                 )
               }
               disabled={mode === "edit"}
-              className="border rounded-xl p-3"
+            className={`border rounded-xl p-3 w-full ${
+      errors.enrollment_no
+        ? "border-red-500"
+        : ""
+    }`}
             />
 
             <input
               type="text"
-              placeholder="Batch"
-              value={formData.batch}
+              placeholder="2024-2026" value={formData.batch}
               onChange={(e) =>
                 handleChange(
                   "batch",
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className={`border rounded-xl p-3 w-full ${
+      errors.batch
+        ? "border-red-500"
+        : ""
+    }`}
             />
 
             {mode === "add" && (
               <>
                 <input
                   type="email"
-                  placeholder="Email"
-                  value={formData.email}
+                  placeholder="student@gmail.com" value={formData.email}
                   onChange={(e) =>
                     handleChange(
                       "email",
                       e.target.value
                     )
                   }
-                  className="border rounded-xl p-3"
-                />
+ className={`border rounded-xl p-3 w-full ${
+      errors.full_name
+        ? "border-red-500"
+        : ""
+    }`}                />
 
                 <input
                   type="text"
-                  placeholder="Phone"
+                  maxLength={10}
+                  placeholder="10 Digit Mobile Number"
                   value={formData.phone}
                   onChange={(e) =>
                     handleChange(
                       "phone",
-                      e.target.value
+                      e.target.value.replace(/\D/g, "")
                     )
                   }
-                  className="border rounded-xl p-3"
+                  className={`border rounded-xl p-3 w-full ${
+      errors.phone
+        ? "border-red-500"
+        : ""
+    }`}
                 />
 
                 <input
                   type="text"
-                  placeholder="Course"
-                  value={formData.course}
+                  placeholder="Enter Course Name" value={formData.course}
                   onChange={(e) =>
                     handleChange(
                       "course",
                       e.target.value
                     )
                   }
-                  className="border rounded-xl p-3"
+                  className={`border rounded-xl p-3 w-full ${
+      errors.course
+        ? "border-red-500"
+        : ""
+    }`}
                 />
 
                 <input
                   type="number"
-                  placeholder="Year"
-                  value={formData.year}
+                  placeholder="College Year (1-6)"
+                   value={formData.year}
                   onChange={(e) =>
                     handleChange(
                       "year",
                       e.target.value
                     )
                   }
-                  className="border rounded-xl p-3"
-                />
+ className={`border rounded-xl p-3 w-full ${
+      errors.year
+        ? "border-red-500"
+        : ""
+    }`}                />
 
                 <div className="col-span-full">
                   <input
@@ -359,8 +477,8 @@ if (!instituteId) {
               {loading
                 ? "Processing..."
                 : mode === "add"
-                ? "Add Student"
-                : "Update Student"}
+                  ? "Add Student"
+                  : "Update Student"}
             </button>
           </div>
         </motion.div>

@@ -11,7 +11,9 @@ import {
   BarChart3,
   Building2,
   Settings,
+  BadgeCheck,
 } from "lucide-react";
+import { FaGraduationCap } from "react-icons/fa";
 
 const menuItems = [
   {
@@ -38,12 +40,14 @@ const menuItems = [
     icon: Building2,
     color: "from-sky-400 to-blue-500",
   },
-  {
-    title: "Settings",
-    href: "/institute-dashboard/settings",
-    icon: Settings,
-    color: "from-slate-500 to-slate-700",
-  },
+
+   {
+  title: "License & Subscription",
+  href: "/institute-dashboard/license",
+  icon: BadgeCheck,
+  color: "from-emerald-400 to-green-600",
+}
+ 
 ];
 
 export default function InstituteSidebar({ isOpen }) {
@@ -205,56 +209,69 @@ useEffect(() => {
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <Link
-                  href={item.href}
-                  className="relative flex items-center p-3 rounded-xl transition-all group overflow-hidden"
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="activeSidebarGlow"
-                      className="
-                        absolute inset-0 rounded-xl
-                        bg-gradient-to-r
-                        from-indigo-50
-                        via-blue-50
-                        to-violet-50
-                        border border-indigo-200/50
-                        shadow-[0_0_25px_rgba(99,102,241,0.15)]
-                        -z-10
-                      "
-                    />
-                  )}
+               <Link
+  href={item.href}
+  className="
+    relative
+    flex
+    items-center
+    w-full
+    p-3
+    rounded-xl
+    transition-all
+    group
+    overflow-hidden
+    cursor-pointer
+  "
+>
 
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300
-                    ${
-                      active
-                        ? `bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`
-                        : "bg-white text-slate-500 border-slate-200 group-hover:border-slate-300"
-                    }`}
-                  >
+ {active && (
+    <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-indigo-600 z-20" />
+  )}
+                 {active && (
+  <motion.div
+    layoutId="activeSidebarGlow"
+    className="
+      absolute inset-0 rounded-xl
+      bg-gradient-to-r
+      from-indigo-50
+      via-blue-50
+      to-violet-50
+      border-2 border-indigo-500
+      shadow-[0_0_25px_rgba(99,102,241,0.15)]
+    "
+  />
+)}
+
+                 <div
+  className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300
+  ${
+    active
+      ? `bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`
+      : "bg-white text-slate-500 border-slate-200 group-hover:border-slate-300"
+  }`}
+>
                     <Icon size={16} />
                   </div>
 
-                  <span
-                    className={`text-sm font-bold
-                    ${
-                      active
-                        ? "text-slate-900"
-                        : "text-slate-500 group-hover:text-slate-700"
-                    }`}
-                  >
-                    {item.title}
-                  </span>
-
-                  <div
-                    className={`ml-auto h-2 w-2 rounded-full transition-all duration-300
-                    ${
-                      active
-                        ? "bg-indigo-500"
-                        : "bg-transparent group-hover:bg-slate-300"
-                    }`}
-                  />
+                 <span
+  className={`relative z-10 text-sm font-bold
+  ${
+    active
+      ? "text-indigo-700 font-extrabold"
+      : "text-slate-700 group-hover:text-slate-900"
+  }`}
+>
+  {item.title}
+</span>
+                <div
+  className={`relative z-10 ml-auto h-2 w-2 rounded-full transition-all duration-300
+  ${
+    active
+      ? "bg-indigo-500"
+      : "bg-transparent group-hover:bg-slate-300"
+  }`}
+/>
                 </Link>
               </motion.div>
             );

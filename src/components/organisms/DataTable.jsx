@@ -17,7 +17,7 @@ export default function DataTable({
   const [page, setPage] =
     useState(1);
 
-  const pageSize = 10;
+  const pageSize =5;
 
   const filteredData = useMemo(() => {
     return data.filter((row) =>
