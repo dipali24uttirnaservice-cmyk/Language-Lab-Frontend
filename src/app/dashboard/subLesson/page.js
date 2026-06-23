@@ -62,7 +62,7 @@ const curriculum = [
   },
 ];
 
-export default function lessons() {
+export default function Sublessons() {
   const router = useRouter();
   return (
     <div className="p-6">
@@ -184,8 +184,9 @@ export default function lessons() {
                 </div>
 
                 <button
-onClick={() => router.push("/dashboard/subLesson")}        
-          className="
+   onClick={() => router.push("/dashboard/video")}
+
+                  className="
                     mt-4
                     rounded-xl
                     bg-slate-900

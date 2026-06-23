@@ -1,25 +1,23 @@
-import {
-  getApi,
-  postApi,
-  putApi,
-  deleteApi,
-} from "../apiMethod/apiMethod";
-
-const STUDENT_BASE = "/students";
+import api from "../apiMethod/apiMethod";
 
 export const studentApi = {
-  getStudents: (params) =>
-    getApi(STUDENT_BASE, params),
+  // GET all students
+  getStudents: () => api.get("/student"),
 
-  getStudentById: (id) =>
-    getApi(`${STUDENT_BASE}/${id}`),
+  // GET single student by ID (for Edit)
+  getStudentById: (id) => api.get(`/student/${id}`),
 
-  createStudent: (data) =>
-    postApi(STUDENT_BASE, data),
+  // CREATE: Uses FormData for Multer (File Upload)
+  createStudent: (formData) =>
+    api.post("/student", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 
-  updateStudent: (id, data) =>
-    putApi(`${STUDENT_BASE}/${id}`, data),
+  // UPDATE: Uses JSON for specific fields
+  updateStudent: (id, data) => api.put(`/student/${id}`, data),
 
-  deleteStudent: (id) =>
-    deleteApi(`${STUDENT_BASE}/${id}`),
+  // DELETE
+  deleteStudent: (id) => api.delete(`/student/${id}`),
 };

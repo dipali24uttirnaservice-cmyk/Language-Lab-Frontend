@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,10 +11,7 @@ import {
   BarChart3,
   Building2,
   Settings,
-  University,
 } from "lucide-react";
-import { FaGraduationCap } from "react-icons/fa";
-
 
 const menuItems = [
   {
@@ -48,32 +46,29 @@ const menuItems = [
   },
 ];
 
-
-
 export default function InstituteSidebar({ isOpen }) {
   const pathname = usePathname();
 
-  const userCookie = Cookies.get("userData");
+  const institute = useMemo(() => {
+    try {
+      const userCookie = Cookies.get("userData");
 
-let institute = {};
+      const parsedData = userCookie
+        ? JSON.parse(userCookie)
+        : {};
 
-try {
-  const parsedData = userCookie
-    ? JSON.parse(userCookie)
-    : {};
+      return parsedData?.institute || {};
+    } catch (error) {
+      console.error(error);
+      return {};
+    }
+  }, []);
 
-  institute = parsedData?.institute || {};
-} catch (error) {
-  console.error(error);
-}
+  const instituteName =
+    institute?.institute_name || "Institute";
 
-const instituteName =
-  institute?.institute_name ||
-  "Institute";
-
-const instituteLogo =
-  institute?.logo ||
-  "/default-logo.png";
+  const instituteLogo =
+    institute?.logo || "/default-logo.png";
 
   return (
     <aside

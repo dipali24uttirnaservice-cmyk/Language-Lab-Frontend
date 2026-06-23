@@ -15,10 +15,8 @@ import {
   FaTimes,
 } from "react-icons/fa";
 
-import {
-  getInstituteProfile,
-  updateInstituteProfile,
-} from "@/services/institute/profileApi";
+import { profileApi } from "@/services/institute/profileApi";
+import StatusModal from "@/components/molecules/StatusModal";
 
 export default function InstituteProfilePage() {
   const [institute, setInstitute] = useState(null);
@@ -32,10 +30,18 @@ export default function InstituteProfilePage() {
     website: "",
   });
 
+  const [statusData, setStatusData] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: "",
+});
+
 useEffect(() => {
   const fetchInstituteProfile = async () => {
     try {
-      const response = await getInstituteProfile();
+   const response =
+  await profileApi.getProfile();
 
       if (response.data.success) {
         const data = response.data.data;
@@ -68,29 +74,45 @@ useEffect(() => {
     });
   };
 
-  const handleSave = async () => {
-    try {
-      const response = await updateInstituteProfile({
+ const handleSave = async () => {
+  try {
+    const response =
+      await profileApi.updateProfile({
         institute_name: formData.institute_name,
         address: formData.address,
         phone: formData.phone,
         website: formData.website,
       });
 
-      if (response.data.success) {
-        setInstitute((prev) => ({
-          ...prev,
-          ...formData,
-        }));
+    if (response.data.success) {
+      setInstitute((prev) => ({
+        ...prev,
+        ...formData,
+      }));
 
-        setIsEditing(false);
-        alert("Profile updated successfully");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update profile");
+      setIsEditing(false);
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Profile Updated",
+        message:
+          "Institute profile updated successfully.",
+      });
     }
-  };
+  } catch (error) {
+    console.error(error);
+
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Update Failed",
+      message:
+        error?.response?.data?.message ||
+        "Failed to update profile.",
+    });
+  }
+};
 
   const handleCancel = () => {
     setFormData({
@@ -271,6 +293,19 @@ useEffect(() => {
           </div>
         </div>
       </div>
+      
+      <StatusModal
+  open={statusData.open}
+  type={statusData.type}
+  title={statusData.title}
+  message={statusData.message}
+  onClose={() =>
+    setStatusData((prev) => ({
+      ...prev,
+      open: false,
+    }))
+  }
+/>
     </div>
   );
 }
@@ -301,6 +336,8 @@ function EditableItem({
           className="w-full mt-2 border border-slate-300 rounded-xl px-3 py-2"
         />
       </div>
+
+      
     </div>
   );
 }
@@ -326,6 +363,8 @@ function ProfileItem({
           {value || "-"}
         </p>
       </div>
+
+      
     </div>
   );
 }
