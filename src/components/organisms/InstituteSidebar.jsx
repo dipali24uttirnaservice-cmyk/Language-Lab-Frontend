@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -49,20 +49,21 @@ const menuItems = [
 export default function InstituteSidebar({ isOpen }) {
   const pathname = usePathname();
 
-  const institute = useMemo(() => {
-    try {
-      const userCookie = Cookies.get("userData");
+ const [institute, setInstitute] = useState({});
+const [mounted, setMounted] = useState(false);
 
-      const parsedData = userCookie
-        ? JSON.parse(userCookie)
-        : {};
+useEffect(() => {
+  setMounted(true);
 
-      return parsedData?.institute || {};
-    } catch (error) {
-      console.error(error);
-      return {};
-    }
-  }, []);
+  try {
+    const userCookie = Cookies.get("userData");
+    const parsedData = userCookie ? JSON.parse(userCookie) : {};
+    setInstitute(parsedData?.institute || {});
+  } catch (error) {
+    console.error(error);
+    setInstitute({});
+  }
+}, []);
 
   const instituteName =
     institute?.institute_name || "Institute";

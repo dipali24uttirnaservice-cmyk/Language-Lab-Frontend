@@ -58,7 +58,7 @@ export default function StatusModal({
               </h3>
 
               <p className="mt-2 text-slate-600">
-                {message}
+                {typeof message === "object" ? message.message : message}
               </p>
 
                <button
