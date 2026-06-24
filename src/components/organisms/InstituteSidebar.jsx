@@ -73,6 +73,7 @@ const router = useRouter();
 
   
 
+
 useEffect(() => {
   setMounted(true);
 
@@ -82,9 +83,12 @@ useEffect(() => {
     setInstitute(parsedData?.institute || {});
   } catch (error) {
     console.error(error);
-    setInstitute({});
   }
 }, []);
+
+if (!mounted) {
+  return null;
+}
 
   const instituteName =
     institute?.institute_name || "Institute";
