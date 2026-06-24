@@ -6,28 +6,25 @@ import TableToolbar from "../molecules/TableToolbar";
 import Pagination from "../molecules/Pagination";
 
 export default function DataTable({
+   title,
   columns,
   data,
-  title,
+  search,
+  setSearch,
   onAdd,
+  onBulkUpload,
+  loading,
+    
+
 }) {
-  const [search, setSearch] =
-    useState("");
+ 
 
   const [page, setPage] =
     useState(1);
 
   const pageSize =5;
 
-  const filteredData = useMemo(() => {
-    return data.filter((row) =>
-      JSON.stringify(row)
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    );
-  }, [data, search]);
+ const filteredData = data;
 
   const totalPages = Math.ceil(
     filteredData.length /
@@ -43,11 +40,12 @@ export default function DataTable({
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
 
-     <TableToolbar
+    <TableToolbar
   title={title}
   search={search}
   setSearch={setSearch}
   onAdd={onAdd}
+  onBulkUpload={onBulkUpload}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

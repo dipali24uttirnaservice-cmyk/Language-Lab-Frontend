@@ -6,6 +6,8 @@ import TableActions from "@/components/molecules/TableActions";
 import StudentModal from "./StudentModal";
 import { studentApi } from "@/services/student/studentApi";
 import StatusModal from "@/components/molecules/StatusModal";
+import Cookies from "js-cookie";
+import * as XLSX from "xlsx";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
@@ -14,7 +16,9 @@ export default function StudentsPage() {
   const [mode, setMode] = useState("add");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [search, setSearch] = useState("");
-
+const [previewData, setPreviewData] = useState([]);
+const [selectedFile, setSelectedFile] = useState(null);
+const [showPreview, setShowPreview] = useState(false);
   const [statusData, setStatusData] = useState({
     open: false,
     type: "success",
@@ -129,8 +133,102 @@ const handleEdit = async (id) => {
     },
   ];
 
+  const handleBulkUpload = () => {
+  document.getElementById("studentExcelUpload")?.click();
+};
+
+const uploadStudents = async () => {
+  try {
+    const userData = JSON.parse(
+      Cookies.get("userData") || "{}"
+    );
+
+    const formData = new FormData();
+
+    formData.append(
+      "studentExcel",
+      selectedFile
+    );
+
+    formData.append(
+      "institute_id",
+      userData?.institute?.id
+    );
+
+    await studentApi.bulkUploadStudents(
+      formData
+    );
+
+    setStatusData({
+      open: true,
+      type: "success",
+      title: "Upload Successful",
+      message:
+        "Students uploaded successfully.",
+    });
+
+    setShowPreview(false);
+    setPreviewData([]);
+    setSelectedFile(null);
+
+    loadStudents();
+  } catch (error) {
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Upload Failed",
+      message:
+        error?.response?.data?.message ||
+        "Failed to upload students.",
+    });
+  }
+};
+
+const handleExcelChange = (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  setSelectedFile(file);
+
+  const reader = new FileReader();
+
+  reader.onload = (evt) => {
+    const data = new Uint8Array(evt.target.result);
+
+    const workbook = XLSX.read(data, {
+      type: "array",
+    });
+
+    const sheetName =
+      workbook.SheetNames[0];
+
+    const worksheet =
+      workbook.Sheets[sheetName];
+
+    const jsonData =
+      XLSX.utils.sheet_to_json(
+        worksheet
+      );
+
+    setPreviewData(jsonData);
+    setShowPreview(true);
+  };
+
+  reader.readAsArrayBuffer(file);
+};
+
+const userData = JSON.parse(
+  Cookies.get("userData") || "{}"
+);
+
+console.log("USER DATA", userData);
+console.log("INSTITUTE", userData?.institute);
+console.log("INSTITUTE ID", userData?.institute?._id);
+
   return (
     <div>
+
       <DataTable
         title="Students"
         columns={columns}
@@ -138,8 +236,18 @@ const handleEdit = async (id) => {
         search={search}
         setSearch={setSearch}
         onAdd={handleAdd}
-        loading={loading}
+       onBulkUpload={handleBulkUpload}
+         sampleExcel="/sample-students.xlsx"
+  loading={loading}
+
       />
+    <input
+  id="studentExcelUpload"
+  type="file"
+  accept=".xlsx,.xls"
+  className="hidden"
+  onChange={handleExcelChange}
+/>
 
       <StudentModal
         key={openModal ? `modal-${mode}-${selectedStudent?._id || "new"}` : "closed"}
@@ -150,6 +258,75 @@ const handleEdit = async (id) => {
         onSuccess={loadStudents}
         onShowStatus={(data) => setStatusData(data)}
       />
+
+      {showPreview && (
+<div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center">
+<div className="bg-white rounded-2xl w-[80%] max-w-4xl h-[80vh] p-6 relative z-[10000] flex flex-col">   <h2 className="text-xl font-bold mb-4">
+  Excel Preview ({previewData.length} Records)
+</h2>
+
+<div className="flex-1 overflow-auto border rounded-xl">        <table className="w-full text-sm">
+          <thead className="bg-slate-100 sticky top-0">
+            <tr>
+              {previewData.length > 0 &&
+                Object.keys(
+                  previewData[0]
+                ).map((key) => (
+                  <th
+                    key={key}
+                    className="p-3 text-left"
+                  >
+                    {key}
+                  </th>
+                ))}
+            </tr>
+          </thead>
+
+          <tbody>
+          
+            {previewData.map(
+              (row, index) => (
+                <tr
+                  key={index}
+                  className="border-t"
+                >
+                  {Object.values(row).map(
+                    (value, i) => (
+                 <td
+  key={i}
+  className="p-3"
+>
+  {value ? String(value) : "-"}
+</td>
+                    )
+                  )}
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex justify-end gap-3 mt-5">
+        <button
+          onClick={() =>
+            setShowPreview(false)
+          }
+          className="px-4 py-2 rounded-lg border"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={uploadStudents}
+          className="px-5 py-2 rounded-lg bg-indigo-600 text-white"
+        >
+          Upload Students
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <StatusModal
         open={statusData.open}

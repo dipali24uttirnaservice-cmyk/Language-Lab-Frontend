@@ -20,4 +20,11 @@ export const studentApi = {
 
   // DELETE
   deleteStudent: (id) => api.delete(`/student/${id}`),
+  
+bulkUploadStudents: (formData) =>
+    api.post("/student/bulk-upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 };
