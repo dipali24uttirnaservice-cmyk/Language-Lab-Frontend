@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-
+import { ArrowLeft } from "lucide-react";
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/AnimatedBackground";
 import StatusModal from "@/components/molecules/StatusModal";
@@ -159,9 +159,32 @@ const handleModalClose = () => {
         }}
         className="relative z-10 w-full max-w-md rounded-[32px] border border-white/60 bg-white/40 backdrop-blur-2xl p-10 shadow-[0_20px_80px_rgba(249,115,22,0.15)]"
       >
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-          🎓 Learn English with AI
-        </div>
+      
+    <div className="flex items-center gap-3 mb-6">
+  <button
+    type="button"
+    onClick={() => router.push("/")}
+    className="
+      h-10 w-10
+      flex items-center justify-center
+      rounded-xl
+      border border-orange-200
+      bg-white
+      text-orange-500
+      shadow-sm
+      hover:bg-orange-50
+      hover:border-orange-300
+      hover:shadow-md
+      transition-all duration-300
+    "
+  >
+    <ArrowLeft size={18} />
+  </button>
+
+  <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+     🏫 Institute Management Hub
+  </div>
+</div>
 
         <h2 className="text-3xl font-black text-slate-900">
          Institute Login
