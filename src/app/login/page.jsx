@@ -22,6 +22,23 @@ const router = useRouter();
       password: "",
     });
 
+    useEffect(() => {
+  const role =
+    Cookies.get("role");
+
+  if (role === "institute") {
+    router.replace(
+      "/institute-dashboard"
+    );
+  }
+
+  if (role === "student") {
+    router.replace(
+      "/dashboard"
+    );
+  }
+}, []);
+
   const handleChange = (
     field,
     value
@@ -147,7 +164,7 @@ const handleModalClose = () => {
         </div>
 
         <h2 className="text-3xl font-black text-slate-900">
-          Welcome Back
+         Institute Login
         </h2>
 
         <p className="mt-2 text-slate-500">
@@ -185,14 +202,7 @@ const handleModalClose = () => {
             }
           />
 
-          <div className="flex justify-end">
-            <a
-              href="/forgot-password"
-              className="text-sm font-medium text-orange-500 hover:text-orange-600"
-            >
-              Forgot Password?
-            </a>
-          </div>
+        
 
           <button
             type="submit"
@@ -205,15 +215,7 @@ const handleModalClose = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-slate-600">
-          Don't have an account?{" "}
-          <a
-            href="/register"
-            className="font-bold text-orange-500 hover:text-orange-600 hover:underline"
-          >
-            Create Account
-          </a>
-        </div>
+      
       </motion.div>
 
       <StatusModal

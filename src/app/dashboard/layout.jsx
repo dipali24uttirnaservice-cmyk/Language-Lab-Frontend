@@ -1,12 +1,24 @@
+
 "use client";
 
-import { useState } from "react";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { useEffect,useState } from "react";
 import DashboardSidebar from "@/components/organisms/DashboardSidebar";
 import DashboardNavbar from "@/components/organisms/DashboardNavbar";
 
 export default function DashboardLayout({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const router = useRouter();
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+ useEffect(() => {
+    const role =
+      Cookies.get("role");
+
+    if (role !== "student") {
+      router.replace("/login");
+    }
+  }, []);
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50">
 

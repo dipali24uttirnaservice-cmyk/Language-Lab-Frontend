@@ -4,6 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import {
+  GraduationCap,
+  Building2,
+} from "lucide-react";
 
 export default function Navbar() {
   const router = useRouter();
@@ -44,48 +48,58 @@ export default function Navbar() {
           </nav>
 
           {/* Right Actions Block */}
-          <div className="flex items-center gap-4">
-            
-            {/* Interactive Language Dropdown */}
-            <div className="relative">
-              <button 
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-amber-500 transition-colors"
-              >
-                <span>{currentLang.flag}</span>
-                {currentLang.code}
-              </button>
+        <div className="flex items-center gap-3">
+  {/* Student Login */}
+  <button
+  onClick={() => router.push("/student-login")}  
+    className="
+      flex items-center gap-2
+      px-5 py-2.5
+      rounded-xl
+      bg-gradient-to-r
+      from-amber-500
+      to-orange-500
+      text-white
+      font-semibold
+      shadow-lg
+      hover:shadow-xl
+      hover:scale-[1.02]
+      transition-all duration-300
+    "
+  >
+    <GraduationCap size={16} />
+    Student Login
+  </button>
 
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 top-full mt-2 w-32 rounded-xl border border-slate-100 bg-white p-1 shadow-xl"
-                  >
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => { setCurrentLang(lang); setIsOpen(false); }}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                      >
-                        {lang.flag} {lang.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+  {/* Institute Login */}
+ <button
+  onClick={() => router.push("/login")}
+  className="
+    relative overflow-hidden
+    flex items-center gap-2
+    px-5 py-2.5
+    rounded-xl
+    bg-gradient-to-br
+    from-slate-700
+    via-slate-800
+    to-black
+    text-white
+    font-semibold
+    border border-slate-500/70
+    shadow-lg
+    hover:shadow-2xl
+    hover:-translate-y-0.5
+    transition-all duration-300
+  "
+>
+  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-transparent" />
 
-            {/* CTA Get Started Button */}
-            <motion.button
-              whileHover={{ scale: 1.02, translateY: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/login")}
-              className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800"
-            >
-              Get Started
-            </motion.button>
-          </div>
+  <Building2 size={16} className="relative z-10 text-slate-200" />
+  <span className="relative z-10">
+    Institute Login
+  </span>
+</button>
+</div>
         </div>
       </div>
     </header>

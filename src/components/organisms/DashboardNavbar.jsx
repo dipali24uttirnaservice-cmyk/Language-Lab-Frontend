@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 
 import LogoutModal from "@/components/molecules/LogoutModal";
-import { logoutUser } from "@/services/auth/logoutApi";
+import { logoutStudent } from "@/services/auth/logoutApi";
 import Link from "next/link";   
 
 export default function DashboardNavbar({
@@ -25,29 +25,51 @@ export default function DashboardNavbar({
 
   const [showLogoutModal, setShowLogoutModal] =
     useState(false);
+const [mounted, setMounted] = useState(false);
 
+useEffct(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) return null;
   const handleLogout = async () => {
     try {
-      await logoutUser();
+      await logoutStudent();
 
       Cookies.remove("token");
       Cookies.remove("role");
-      Cookies.remove("user");
+      Cookies.remove("studentData");
 
       setShowLogoutModal(false);
 
-      router.replace("/login");
+      router.replace("/student-login");
     } catch (error) {
       console.error("Logout Error:", error);
     }
   };
 
- const user =
-  Cookies.get("user")
-    ? JSON.parse(Cookies.get("user"))
-    : null;
+const [user, setUser] = useState(null);
+const [role, setRole] = useState(null);
 
-const role = Cookies.get("role");
+useEffect(() => {
+  const savedRole = Cookies.get("role");
+
+  let savedUser = null;
+
+  try {
+    savedUser =
+      JSON.parse(
+        Cookies.get("studentData") ||
+          Cookies.get("userData") ||
+          "{}"
+      );
+  } catch (error) {
+    console.error(error);
+  }
+
+  setRole(savedRole);
+  setUser(savedUser);
+}, []);
 
   const avatarLetter =
     role === "student"
@@ -148,14 +170,18 @@ const role = Cookies.get("role");
   </div>
 
   <div className="hidden md:block">
-    <p className="text-sm font-semibold text-slate-800">
-      {role === "student"
-        ? user?.name ||
-          user?.student_name ||
-          "Student"
-        : user?.institute_name ||
-          "Institute"}
-    </p>
+   <p className="text-sm font-semibold text-slate-800">
+  {role === "student"
+    ? user?.student_name ||
+      user?.name ||
+      "Student"
+    : user?.institute_name ||
+      "Institute"}
+</p>
+
+<p className="text-xs text-slate-500 capitalize">
+  {role}
+</p>
 
     <p className="text-xs text-slate-500 capitalize">
       {role}

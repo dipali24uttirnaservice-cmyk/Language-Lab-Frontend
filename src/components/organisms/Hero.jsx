@@ -57,14 +57,108 @@ export default function Hero() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex gap-4 pt-2">
-              <button onClick={() => setShowLoginModal(true)} className="px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl shadow-lg transition-all active:scale-95">
-                Get Started
-              </button>
-              <button onClick={() => router.push("/teacher")} className="px-8 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-all active:scale-95">
-                Teacher Console
-              </button>
-            </div>
+           <div className="grid grid-cols-3 gap-5 max-w-xl mt-8">
+  {/* Learners */}
+  <div
+    className="
+      relative overflow-hidden
+      rounded-3xl
+      border border-orange-200
+      bg-gradient-to-br from-orange-50 via-white to-amber-100
+      p-5
+      shadow-[0_10px_30px_rgba(251,146,60,0.15)]
+      hover:-translate-y-2
+      hover:shadow-[0_20px_40px_rgba(251,146,60,0.25)]
+      transition-all duration-300
+    "
+  >
+    {/* Glow */}
+    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-orange-300/30 blur-2xl" />
+
+    {/* Stripe Pattern */}
+    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#f97316_0px,#f97316_1px,transparent_1px,transparent_12px)]" />
+
+    <div className="relative z-10">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl shadow-inner">
+        🎓
+      </div>
+
+      <h4 className="text-3xl font-black text-orange-600">
+        10K+
+      </h4>
+
+      <p className="mt-1 text-sm font-medium text-slate-600">
+        Active Learners
+      </p>
+    </div>
+  </div>
+
+  {/* Improvement */}
+  <div
+    className="
+      relative overflow-hidden
+      rounded-3xl
+      border border-emerald-200
+      bg-gradient-to-br from-emerald-50 via-white to-green-100
+      p-5
+      shadow-[0_10px_30px_rgba(16,185,129,0.15)]
+      hover:-translate-y-2
+      hover:shadow-[0_20px_40px_rgba(16,185,129,0.25)]
+      transition-all duration-300
+    "
+  >
+    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-emerald-300/30 blur-2xl" />
+
+    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#10b981_0px,#10b981_1px,transparent_1px,transparent_12px)]" />
+
+    <div className="relative z-10">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl shadow-inner">
+        📈
+      </div>
+
+      <h4 className="text-3xl font-black text-emerald-600">
+        95%
+      </h4>
+
+      <p className="mt-1 text-sm font-medium text-slate-600">
+        Improvement Rate
+      </p>
+    </div>
+  </div>
+
+  {/* AI Coach */}
+  <div
+    className="
+      relative overflow-hidden
+      rounded-3xl
+      border border-indigo-200
+      bg-gradient-to-br from-indigo-50 via-white to-violet-100
+      p-5
+      shadow-[0_10px_30px_rgba(99,102,241,0.15)]
+      hover:-translate-y-2
+      hover:shadow-[0_20px_40px_rgba(99,102,241,0.25)]
+      transition-all duration-300
+    "
+  >
+    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-indigo-300/30 blur-2xl" />
+
+    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#6366f1_0px,#6366f1_1px,transparent_1px,transparent_12px)]" />
+
+    <div className="relative z-10">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-xl shadow-inner">
+        🤖
+      </div>
+
+      <h4 className="text-3xl font-black text-indigo-600">
+        24/7
+      </h4>
+
+      <p className="mt-1 text-sm font-medium text-slate-600">
+        AI Coach Support
+      </p>
+    </div>
+  </div>
+</div>
 
             {/* Voice Settings Card */}
           {/* Voice Settings Card - Now larger and more prominent */}

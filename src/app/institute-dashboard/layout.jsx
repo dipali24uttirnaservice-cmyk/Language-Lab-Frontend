@@ -6,10 +6,27 @@ import LogoutModal from "@/components/molecules/LogoutModal";
 import InstituteSidebar from "@/components/organisms/InstituteSidebar";
 import InstituteNavbar from "@/components/organisms/InstituteNavbar";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { logoutUser } from "@/services/auth/logoutApi";
 export default function InstituteDashboardLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+   const router = useRouter();
+
+  useEffect(() => {
+    const role =
+      Cookies.get("role");
+
+    if (
+      role !== "institute"
+    ) {
+      router.replace(
+        "/student-login"
+      );
+    }
+  }, []);
   
   const handleLogout = async () => {
   try {
