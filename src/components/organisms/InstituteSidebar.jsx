@@ -60,7 +60,8 @@ const menuItems = [
  
 ];
 
-export default function InstituteSidebar({ isOpen }) {
+export default function InstituteSidebar({  isOpen,
+  setShowLogoutModal, }) {
   const pathname = usePathname();
 
  const [institute, setInstitute] = useState({});
@@ -68,8 +69,9 @@ const [mounted, setMounted] = useState(false);
 
 const router = useRouter();
 
-const [showLogoutModal, setShowLogoutModal] =
-  useState(false);
+
+
+  
 
 useEffect(() => {
   setMounted(true);
@@ -236,14 +238,21 @@ useEffect(() => {
           whileHover={{ x: 4, scale: 1.02 }}
         >
           <button
-            onClick={() => setShowLogoutModal(true)}
+  onClick={() => setShowLogoutModal(true)}
+
             className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
           >
-            <div
-              className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`}
-            >
-              <Icon size={16} />
-            </div>
+           <div
+  className="
+    relative z-10 flex h-10 w-10 items-center justify-center
+    rounded-xl border mr-3
+    bg-white text-red-500
+    border-slate-200
+    group-hover:border-slate-300
+  "
+>
+  <Icon size={16} />
+</div>
 
             <span className="relative z-10 text-sm font-bold text-slate-700">
               {item.title}
@@ -346,11 +355,7 @@ useEffect(() => {
           </p>
         </div>
       </div>
-      <LogoutModal
-  open={showLogoutModal}
-  onClose={() => setShowLogoutModal(false)}
-  onConfirm={handleLogout}
-/>
+     
     </aside>
   );
 }

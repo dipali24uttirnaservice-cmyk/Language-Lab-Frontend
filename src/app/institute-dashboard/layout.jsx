@@ -2,29 +2,53 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-
+import LogoutModal from "@/components/molecules/LogoutModal";
 import InstituteSidebar from "@/components/organisms/InstituteSidebar";
 import InstituteNavbar from "@/components/organisms/InstituteNavbar";
-
+import Cookies from "js-cookie";
+import { logoutUser } from "@/services/auth/logoutApi";
 export default function InstituteDashboardLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  
+  const handleLogout = async () => {
+  try {
+    await logoutUser();
+
+    Cookies.remove("token");
+    Cookies.remove("role");
+    Cookies.remove("userData");
+
+    window.location.href = "/login";
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50 relative">
       {/* Fixed Sidebar */}
       <div className="h-screen shrink-0 z-20">
-        <InstituteSidebar isOpen={isSidebarOpen} />
+        <InstituteSidebar
+          isOpen={isSidebarOpen}
+          setShowLogoutModal={setShowLogoutModal}
+          
+        />
       </div>
+
 
       {/* Right Side */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Fixed Navbar */}
-        <div className="z-20">
-          <InstituteNavbar
-            isSidebarOpen={isSidebarOpen}
-            setIsOpen={setIsSidebarOpen}
-          />
-        </div>
+          {!showLogoutModal && (
+  <div className="z-20">
+    <InstituteNavbar
+      isSidebarOpen={isSidebarOpen}
+      setIsOpen={setIsSidebarOpen}
+      setShowLogoutModal={setShowLogoutModal}
+    />
+  </div>
+)}
 
         {/* Scrollable Content with Background */}
         <main className="flex-1 overflow-y-auto relative">
@@ -51,6 +75,11 @@ export default function InstituteDashboardLayout({ children }) {
 </div>
         </main>
       </div>
+    <LogoutModal
+  open={showLogoutModal}
+  onClose={() => setShowLogoutModal(false)}
+  onConfirm={handleLogout}
+/>
     </div>
   );
 }

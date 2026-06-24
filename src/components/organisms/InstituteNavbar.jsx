@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -18,32 +18,30 @@ import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutUser } from "@/services/auth/logoutApi";
 
 export default function InstituteNavbar({
-  isSidebarOpen,
+ isSidebarOpen,
   setIsOpen,
+  showLogoutModal,
+  setShowLogoutModal,
 }) {
   const router = useRouter();
 const pathname = usePathname();
-  const [showLogoutModal, setShowLogoutModal] =
-    useState(false);
 
-const userCookie =
-  Cookies.get("userData");
+    const [institute, setInstitute] = useState(null);
 
-let institute = {};
+useEffect(() => {
+  try {
+    const userCookie = Cookies.get("userData");
 
-try {
-  const parsedData = userCookie
-    ? JSON.parse(userCookie)
-    : {};
+    const parsedData = userCookie
+      ? JSON.parse(userCookie)
+      : {};
 
-  institute =
-    parsedData?.institute || {};
-} catch (error) {
-  console.error(
-    "Invalid User Cookie",
-    error
-  );
-}
+    setInstitute(parsedData?.institute || {});
+  } catch (error) {
+    console.error(error);
+    setInstitute({});
+  }
+}, []);
 
 const instituteLogo =
   institute?.logo || "/default-logo.png";
@@ -85,6 +83,8 @@ const instituteName =
       .replace(/\b\w/g, (c) => c.toUpperCase()),
     href: "/" + arr.slice(0, index + 1).join("/"),
   }));
+
+
 
   return (
     <>
@@ -199,13 +199,7 @@ const instituteName =
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent" />
       </header>
 
-      <LogoutModal
-        open={showLogoutModal}
-        onClose={() =>
-          setShowLogoutModal(false)
-        }
-        onConfirm={handleLogout}
-      />
+    
     </>
   );
 }
