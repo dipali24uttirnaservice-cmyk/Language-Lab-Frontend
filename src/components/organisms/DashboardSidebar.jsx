@@ -44,12 +44,12 @@ const menus = [
     icon: FaCheckDouble,
     color: "from-pink-500 to-rose-500",
   },
-  // {
-  //   name: "Curriculum",
-  //   href: "/dashboard/lessons",
-  //   icon: FaGraduationCap,
-  //   color: "from-violet-500 to-purple-600",
-  // },
+  {
+    name: "Student Profile",
+    href: "/dashboard/student-profile",
+    icon: FaUserCircle,
+    color: "from-violet-500 to-purple-600",
+  },
 ];
 
 export default function DashboardSidebar({ isOpen }) {
