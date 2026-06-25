@@ -11,14 +11,11 @@ export default function DashboardLayout({ children }) {
     const router = useRouter();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
- useEffect(() => {
-    const role =
-      Cookies.get("role");
+ const [role, setRole] = useState("");
 
-    if (role !== "student") {
-      router.replace("/login");
-    }
-  }, []);
+useEffect(() => {
+  setRole(Cookies.get("role"));
+}, []);
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50">
 

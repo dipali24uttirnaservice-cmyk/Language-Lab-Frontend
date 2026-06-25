@@ -180,7 +180,7 @@ export default function StudentLogin() {
         >
           <Input
             label="Enrollment Number"
-            placeholder="EN2024001"
+            placeholder="EN2024002"
             value={enrollmentNo}
             onChange={(e) =>
               setEnrollmentNo(

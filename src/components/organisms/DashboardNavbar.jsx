@@ -27,11 +27,13 @@ export default function DashboardNavbar({
     useState(false);
 const [mounted, setMounted] = useState(false);
 
-useEffct(() => {
+const [user, setUser] = useState(null);
+const [role, setRole] = useState(null);
+
+useEffect(() => {
   setMounted(true);
 }, []);
 
-if (!mounted) return null;
   const handleLogout = async () => {
     try {
       await logoutStudent();
@@ -48,8 +50,6 @@ if (!mounted) return null;
     }
   };
 
-const [user, setUser] = useState(null);
-const [role, setRole] = useState(null);
 
 useEffect(() => {
   const savedRole = Cookies.get("role");
@@ -90,6 +90,8 @@ useEffect(() => {
       .replace(/\b\w/g, (c) => c.toUpperCase()),
     href: "/" + arr.slice(0, index + 1).join("/"),
   }));
+  
+if (!mounted) return null;
 
   return (
     <>
