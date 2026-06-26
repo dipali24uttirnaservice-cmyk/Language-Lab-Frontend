@@ -9,12 +9,15 @@ import AnimatedBackground from "@/components/organisms/AnimatedBackground";
 import StatusModal from "@/components/molecules/StatusModal";
 
 import { instituteLogin } from "@/services/auth/loginApi";
+import { instituteLoginSchema } from "@/app/schemas/institute.schema";
 
 export default function LoginPage() {
 const router = useRouter();
 
   const [loading, setLoading] =
     useState(false);
+
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] =
     useState({
@@ -70,6 +73,20 @@ useEffect(() => {
 
 const handleLogin = async (e) => {
   e.preventDefault();
+
+  try {
+    await instituteLoginSchema.validate(formData, { abortEarly: false });
+    setErrors({});
+  } catch (err) {
+    if (err.inner) {
+      const newErrors = {};
+      err.inner.forEach((error) => {
+        newErrors[error.path] = error.message;
+      });
+      setErrors(newErrors);
+    }
+    return;
+  }
 
   try {
     setLoading(true);
@@ -210,6 +227,7 @@ const handleModalClose = () => {
                 e.target.value
               )
             }
+            error={errors.email}
           />
 
           <Input
@@ -223,6 +241,7 @@ const handleModalClose = () => {
                 e.target.value
               )
             }
+            error={errors.password}
           />
 
         

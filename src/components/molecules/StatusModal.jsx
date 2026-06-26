@@ -18,7 +18,7 @@ export default function StatusModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[999999] bg-black/40 backdrop-blur-sm"
           />
 
           <motion.div
@@ -36,7 +36,7 @@ export default function StatusModal({
               opacity: 0,
               scale: 0.8,
             }}
-            className="fixed left-1/2 top-1/2 z-[60] w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white p-8 shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-[1000000] w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white p-8 shadow-2xl"
           >
            
 

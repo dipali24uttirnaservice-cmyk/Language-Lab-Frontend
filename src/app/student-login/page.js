@@ -11,11 +11,13 @@ import StatusModal from "@/components/molecules/StatusModal";
 
 import { studentLogin } from "@/services/auth/loginApi";
 import { ArrowLeft } from "lucide-react";
+import { studentLoginSchema } from "@/app/schemas/student.schema";
 
 export default function StudentLogin() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [enrollmentNo, setEnrollmentNo] =
     useState("");
@@ -40,6 +42,20 @@ export default function StudentLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    try {
+      await studentLoginSchema.validate({ enrollmentNo }, { abortEarly: false });
+      setErrors({});
+    } catch (err) {
+      if (err.inner) {
+        const newErrors = {};
+        err.inner.forEach((error) => {
+          newErrors[error.path] = error.message;
+        });
+        setErrors(newErrors);
+      }
+      return;
+    }
 
     try {
       setLoading(true);
@@ -187,6 +203,7 @@ export default function StudentLogin() {
                 e.target.value
               )
             }
+            error={errors.enrollmentNo}
           />
 
           <button
