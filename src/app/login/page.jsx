@@ -21,8 +21,8 @@ const router = useRouter();
 
   const [formData, setFormData] =
     useState({
-      email: "",
-      password: "",
+      email: "institute@abcli.edu",
+      password: "Institute@123",
     });
 
     useEffect(() => {
@@ -42,14 +42,32 @@ const router = useRouter();
   }
 }, []);
 
-  const handleChange = (
+  const handleChange = async (
     field,
     value
   ) => {
-    setFormData((prev) => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value,
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // Only re-validate on change if an error for this field already exists
+    if (errors[field]) {
+      try {
+        await instituteLoginSchema.validateAt(field, newFormData);
+        setErrors((prev) => ({
+          ...prev,
+          [field]: "",
+        }));
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: err.message,
+        }));
+      }
+    }
   };
 
 

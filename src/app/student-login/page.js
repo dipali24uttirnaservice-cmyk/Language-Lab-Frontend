@@ -22,6 +22,19 @@ export default function StudentLogin() {
   const [enrollmentNo, setEnrollmentNo] =
     useState("");
 
+  const handleEnrollmentNoChange = async (value) => {
+    setEnrollmentNo(value);
+
+    if (errors.enrollmentNo) {
+      try {
+        await studentLoginSchema.validateAt("enrollmentNo", { enrollmentNo: value });
+        setErrors((prev) => ({ ...prev, enrollmentNo: "" }));
+      } catch (err) {
+        setErrors((prev) => ({ ...prev, enrollmentNo: err.message }));
+      }
+    }
+  };
+
   const [modal, setModal] = useState({
     open: false,
     type: "",
@@ -199,7 +212,7 @@ export default function StudentLogin() {
             placeholder="EN2024002"
             value={enrollmentNo}
             onChange={(e) =>
-              setEnrollmentNo(
+              handleEnrollmentNoChange(
                 e.target.value
               )
             }

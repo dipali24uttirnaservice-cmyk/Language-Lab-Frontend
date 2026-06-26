@@ -6,6 +6,7 @@ import TableActions from "@/components/molecules/TableActions";
 import StudentModal from "./StudentModal";
 import { studentApi } from "@/services/student/studentApi";
 import StatusModal from "@/components/molecules/StatusModal";
+import ConfirmModal from "@/components/molecules/ConfirmModal";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
 
@@ -25,6 +26,7 @@ const [showPreview, setShowPreview] = useState(false);
     title: "",
     message: "",
   });
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
 
   const loadStudents = useCallback(async () => {
     try {
@@ -77,25 +79,31 @@ const handleEdit = async (id) => {
   }
 };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      try {
-        await studentApi.deleteStudent(id);
-        setStatusData({
-          open: true,
-          type: "success",
-          title: "Deleted",
-          message: "Student record removed successfully.",
-        });
-        loadStudents();
-      } catch (error) {
-        setStatusData({
-          open: true,
-          type: "error",
-          title: "Error",
-          message: "Failed to delete student.",
-        });
-      }
+  const handleDelete = (id) => {
+    setDeleteModal({ open: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.id) return;
+
+    try {
+      await studentApi.deleteStudent(deleteModal.id);
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Deleted",
+        message: "Student record removed successfully.",
+      });
+      loadStudents();
+    } catch (error) {
+      setStatusData({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to delete student.",
+      });
+    } finally {
+      setDeleteModal({ open: false, id: null });
     }
   };
 
@@ -334,6 +342,16 @@ console.log("INSTITUTE ID", userData?.institute?._id);
         title={statusData.title}
         message={statusData.message}
         onClose={() => setStatusData((prev) => ({ ...prev, open: false }))}
+      />
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Delete Student"
+        message="Are you sure you want to delete this student?"
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   );

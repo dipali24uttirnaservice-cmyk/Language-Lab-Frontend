@@ -259,7 +259,7 @@ export default function StudentModal({
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Roll Number</label>
               <input
-                type="text"
+                type="number"
                 maxLength={20}
                 placeholder="Roll Number"
                 value={formData.roll_no}
@@ -291,12 +291,16 @@ export default function StudentModal({
                     e.target.value
                   )
                 }
-                disabled={mode === "edit"}
-                className={`border rounded-xl p-3 w-full ${
-                  errors.enrollment_no
-                    ? "border-red-500"
-                    : ""
-                }`}
+              disabled={mode === "edit"}
+className={`border rounded-xl p-3 w-full ${
+  errors.enrollment_no
+    ? "border-red-500"
+    : "border-gray-300"
+} ${
+  mode === "edit"
+    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+    : "bg-white"
+}`}
               />
               {errors.enrollment_no && <div className="text-red-500 text-sm mt-1">{errors.enrollment_no}</div>}
             </div>
