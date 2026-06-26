@@ -81,11 +81,23 @@ useEffect(() => {
 
 
 
-          const breadcrumbs = pathname
-  .split("/")
-  .filter(Boolean)
-  .map((item, index, arr) => ({
-    label: item
+    const pathSegments = pathname.split("/").filter(Boolean);
+
+const breadcrumbs = pathSegments
+  .filter((segment, index) => {
+    // Hide MongoDB ObjectId (24 hex characters)
+    const isMongoId = /^[a-f\d]{24}$/i.test(segment);
+
+    // You can also hide UUIDs if needed
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        segment
+      );
+
+    return !isMongoId && !isUUID;
+  })
+  .map((segment, index, arr) => ({
+    label: segment
       .replace(/-/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase()),
     href: "/" + arr.slice(0, index + 1).join("/"),

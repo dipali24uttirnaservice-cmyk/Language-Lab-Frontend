@@ -11,6 +11,7 @@ import {
   FaGraduationCap,
   FaUserCircle,
   FaHome,
+  FaBookOpen,
 } from "react-icons/fa";
 
 const menus = [
@@ -20,6 +21,13 @@ const menus = [
     icon: FaHome,
     color: "from-blue-500 to-indigo-600",
   },
+   {
+  name: "Topics",
+  href: "/dashboard/topics",
+  icon: FaBookOpen,
+  color: "from-amber-500 to-orange-600",
+},
+ 
   {
     name: "Video Lessons",
     href: "/dashboard/lessons",
