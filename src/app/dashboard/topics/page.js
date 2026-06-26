@@ -173,208 +173,409 @@ return (
 
     <div className="relative z-10 space-y-8">
 
-      {/* Header */}
+    {/* Header */}
+
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+>
+  {/* Left */}
+
+  <div>
+
+    <div
+      className="
+        inline-flex
+        items-center
+        gap-2
+        rounded-full
+        border
+        border-orange-200
+        bg-white/80
+        backdrop-blur-xl
+        px-4
+        py-2
+        shadow-md
+      "
+    >
+      <span className="text-lg">✨</span>
+
+      <span className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">
+        Language Lab
+      </span>
+    </div>
+
+    <h1 className="mt-4 text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
+      Learning Topics
+    </h1>
+
+   
+
+  </div>
+
+  {/* Right Badge */}
+
+  <motion.div
+    whileHover={{
+      scale: 1.05,
+      rotate: -2,
+    }}
+    className="
+      self-start
+      rounded-3xl
+      border
+      border-orange-100
+      bg-white/80
+      backdrop-blur-xl
+      px-6
+      py-4
+      shadow-lg
+    "
+  >
+    <p className="text-xs uppercase tracking-widest text-slate-500">
+      Welcome Back
+    </p>
+
+    <h3 className="mt-1 text-lg font-black text-orange-600">
+      Continue Learning 🚀
+    </h3>
+  </motion.div>
+
+</motion.div>
+     {/* Premium Statistics */}
+
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+
+  {/* Total Topics */}
+
+  <motion.div
+    whileHover={{ y: -5 }}
+    className="
+      relative
+      overflow-hidden
+      rounded-3xl
+      bg-white/80
+      backdrop-blur-xl
+      border
+      border-orange-100
+      p-5
+      shadow-lg
+    "
+  >
+    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-orange-200/30 blur-2xl" />
+
+    <div className="relative flex items-center justify-between">
+
       <div>
-
-        <span
-          className="
-            inline-flex
-            items-center
-            gap-2
-            rounded-full
-            bg-orange-100
-            px-4
-            py-2
-            text-xs
-            font-bold
-            text-orange-700
-          "
-        >
-          ✨ Language Lab Learning Hub
-        </span>
-
-        <h1 className="mt-5 text-5xl font-black text-slate-900">
-          Learning Topics
-        </h1>
-
-        <p className="mt-3 text-lg text-slate-500">
-          Explore, learn and master English with interactive lessons.
+        <p className="text-sm text-slate-500 font-medium">
+          Total Topics
         </p>
+
+        <h2 className="mt-2 text-4xl font-black text-slate-900">
+          {topics.length}
+        </h2>
       </div>
 
-      {/* Statistics Card */}
-      <div
+      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg">
+        <BookOpen size={26} />
+      </div>
+
+    </div>
+  </motion.div>
+
+  {/* Total Subtopics */}
+
+  <motion.div
+    whileHover={{ y: -5 }}
+    className="
+      relative
+      overflow-hidden
+      rounded-3xl
+      bg-white/80
+      backdrop-blur-xl
+      border
+      border-emerald-100
+      p-5
+      shadow-lg
+    "
+  >
+    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-emerald-200/30 blur-2xl" />
+
+    <div className="relative flex items-center justify-between">
+
+      <div>
+        <p className="text-sm text-slate-500 font-medium">
+          Total Subtopics
+        </p>
+
+        <h2 className="mt-2 text-4xl font-black text-emerald-600">
+          {topics.reduce(
+            (acc, item) => acc + item.subtopic_count,
+            0
+          )}
+        </h2>
+      </div>
+
+      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center text-white shadow-lg">
+        <Layers3 size={26} />
+      </div>
+
+    </div>
+  </motion.div>
+
+  {/* Progress */}
+
+  <motion.div
+    whileHover={{ y: -5 }}
+    className="
+      relative
+      overflow-hidden
+      rounded-3xl
+      bg-white/80
+      backdrop-blur-xl
+      border
+      border-violet-100
+      p-5
+      shadow-lg
+    "
+  >
+    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-violet-200/30 blur-2xl" />
+
+    <div className="relative flex items-center justify-between">
+
+      <div>
+        <p className="text-sm text-slate-500 font-medium">
+          Progress
+        </p>
+
+        <h2 className="mt-2 text-4xl font-black text-violet-600">
+          0%
+        </h2>
+      </div>
+
+      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white shadow-lg">
+        📈
+      </div>
+
+    </div>
+  </motion.div>
+
+  {/* Level */}
+
+  <motion.div
+    whileHover={{ y: -5 }}
+    className="
+      relative
+      overflow-hidden
+      rounded-3xl
+      bg-white/80
+      backdrop-blur-xl
+      border
+      border-blue-100
+      p-5
+      shadow-lg
+    "
+  >
+    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-blue-200/30 blur-2xl" />
+
+    <div className="relative flex items-center justify-between">
+
+      <div>
+        <p className="text-sm text-slate-500 font-medium">
+          Current Level
+        </p>
+
+        <h2 className="mt-2 text-4xl font-black text-blue-600">
+          A1
+        </h2>
+      </div>
+
+      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg">
+        🎯
+      </div>
+
+    </div>
+  </motion.div>
+
+</div>
+
+      {/* Topics */}
+     <div className="space-y-5">
+
+  {topics.map((topic, index) => {
+
+    const colors = [
+      "from-emerald-500 to-teal-500",
+      "from-orange-500 to-amber-500",
+      "from-blue-500 to-indigo-500",
+      "from-pink-500 to-rose-500",
+      "from-cyan-500 to-sky-500",
+      "from-violet-500 to-purple-500",
+    ];
+
+    const color = colors[index % colors.length];
+
+    return (
+      <motion.div
+        key={topic._id}
+        whileHover={{
+          y: -6,
+          scale: 1.01,
+        }}
+        transition={{ duration: 0.25 }}
         className="
-          rounded-[32px]
+          group
+          relative
+          overflow-hidden
+          rounded-[28px]
           border
-          border-white/40
+          border-white/70
           bg-white/80
           backdrop-blur-xl
-          shadow-xl
-          p-8
+          shadow-lg
+          hover:shadow-2xl
+          p-6
         "
       >
-        <div className="grid gap-8 md:grid-cols-4">
 
-          <div>
-            <h3 className="text-4xl font-black text-slate-900">
-              {topics.length}
-            </h3>
-            <p className="text-slate-500">
-              Total Topics
-            </p>
+        {/* Background Glow */}
+
+        <div
+          className={`
+            absolute
+            -right-12
+            -top-12
+            h-44
+            w-44
+            rounded-full
+            bg-gradient-to-br
+            ${color}
+            opacity-10
+            blur-3xl
+            transition-all
+            duration-700
+            group-hover:scale-125
+          `}
+        />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+          {/* Left */}
+
+          <div className="flex items-center gap-5">
+
+            <motion.div
+              whileHover={{
+                rotate: -8,
+                scale: 1.08,
+              }}
+              className={`
+                h-20
+                w-20
+                rounded-3xl
+                bg-gradient-to-br
+                ${color}
+                flex
+                items-center
+                justify-center
+                text-white
+                shadow-xl
+              `}
+            >
+              <BookOpen size={34} />
+            </motion.div>
+
+            <div>
+
+              <h2 className="text-2xl font-black text-slate-900">
+                {topic.title}
+              </h2>
+
+              <div className="mt-2 flex items-center gap-3">
+
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+                  {topic.subtopic_count} Subtopics
+                </span>
+
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
+                  Beginner
+                </span>
+
+              </div>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                {topic.description}
+              </p>
+
+            </div>
+
           </div>
 
-          <div>
-            <h3 className="text-4xl font-black text-orange-500">
-              {topics.reduce(
-                (acc, item) => acc + item.subtopic_count,
-                0
-              )}
-            </h3>
-            <p className="text-slate-500">
-              Total Subtopics
-            </p>
-          </div>
+          {/* Right */}
 
-          <div>
-            <h3 className="text-4xl font-black text-emerald-500">
-              0%
-            </h3>
-            <p className="text-slate-500">
-              Overall Progress
-            </p>
-          </div>
+          <div className="lg:w-64">
 
-          <div>
-            <h3 className="text-4xl font-black text-violet-500">
-              A1
-            </h3>
-            <p className="text-slate-500">
-              Current Level
-            </p>
+            <div className="mb-2 flex justify-between text-sm font-semibold text-slate-500">
+
+              <span>Progress</span>
+
+              <span>0%</span>
+
+            </div>
+
+            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: "0%" }}
+                className={`h-full bg-gradient-to-r ${color}`}
+              />
+
+            </div>
+
+            <button
+              onClick={() =>
+                router.push(`/dashboard/topics/${topic._id}`)
+              }
+              className="
+                mt-5
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                bg-gradient-to-r
+                from-orange-500
+                to-amber-500
+                px-5
+                py-2.5
+                text-sm
+                font-bold
+                text-white
+                shadow-lg
+                transition-all
+                hover:scale-105
+                hover:shadow-xl
+              "
+            >
+              Explore
+
+              <ChevronRight
+                size={18}
+                className="transition-transform group-hover:translate-x-1"
+              />
+
+            </button>
+
           </div>
 
         </div>
-      </div>
 
-      {/* Topics */}
-      <div className="space-y-6">
+      </motion.div>
+    );
+  })}
 
-        {topics.map((topic, index) => {
-
-          const colors = [
-            "from-emerald-500 to-teal-500",
-            "from-orange-500 to-amber-500",
-            "from-blue-500 to-indigo-500",
-            "from-pink-500 to-rose-500",
-            "from-cyan-500 to-sky-500",
-            "from-violet-500 to-purple-500",
-          ];
-
-          const color =
-            colors[index % colors.length];
-
-          return (
-            <motion.div
-              key={topic._id}
-              whileHover={{
-                y: -5,
-                scale: 1.01,
-              }}
-              className="
-                rounded-[32px]
-                border
-                border-white/50
-                bg-white/80
-                backdrop-blur-xl
-                shadow-lg
-                p-6
-              "
-            >
-              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-
-                {/* Left */}
-                <div className="flex items-center gap-5">
-
-                  <div
-                    className={`
-                      h-20
-                      w-20
-                      rounded-3xl
-                      bg-gradient-to-r
-                      ${color}
-                      text-white
-                      flex
-                      items-center
-                      justify-center
-                      shadow-lg
-                    `}
-                  >
-                    <BookOpen size={34} />
-                  </div>
-
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900">
-                      {topic.title}
-                    </h2>
-
-                    <p className="mt-1 text-orange-500 font-semibold">
-                      {topic.subtopic_count} Subtopics
-                    </p>
-
-                    <p className="mt-2 text-slate-500">
-                      {topic.description}
-                    </p>
-                  </div>
-
-                </div>
-
-                {/* Right */}
-                <div className="w-full max-w-md">
-
-                  <div className="mb-2 flex justify-between font-bold">
-                    <span>Progress</span>
-                    <span>0%</span>
-                  </div>
-
-                  <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: "0%" }}
-                      className={`h-full bg-gradient-to-r ${color}`}
-                    />
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/topics/${topic._id}`
-                      )
-                    }
-                    className="
-                      mt-5
-                      w-full
-                      rounded-2xl
-                      bg-slate-900
-                      py-3
-                      font-bold
-                      text-white
-                      transition-all
-                      hover:bg-orange-500
-                    "
-                  >
-                    Open Topic →
-                  </button>
-
-                </div>
-
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
+</div>
     </div>
   </div>
 );

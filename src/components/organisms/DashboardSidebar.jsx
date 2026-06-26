@@ -26,38 +26,43 @@ const menus = [
   href: "/dashboard/topics",
   icon: FaBookOpen,
   color: "from-amber-500 to-orange-600",
+  border: "border-orange-500",
+  bg: "from-orange-50 via-amber-50 to-yellow-50",
+  text: "text-orange-700",
+  dot: "bg-orange-500",
 },
- 
-  {
-    name: "Video Lessons",
-    href: "/dashboard/lessons",
-    icon: FaVideo,
-    color: "from-blue-500 to-indigo-600",
-  },
-  {
-    name: "Audio Practice",
-    href: "/dashboard/audio",
-    icon: FaHeadphones,
-    color: "from-amber-400 to-orange-500",
-  },
-  {
-    name: "Reading Text",
-    href: "/dashboard/reading",
-    icon: FaFileAlt,
-    color: "from-emerald-400 to-teal-500",
-  },
-  {
-    name: "Daily MCQs",
-    href: "/dashboard/mcqs",
-    icon: FaCheckDouble,
-    color: "from-pink-500 to-rose-500",
-  },
-  {
+{
     name: "Student Profile",
     href: "/dashboard/student-profile",
     icon: FaUserCircle,
     color: "from-violet-500 to-purple-600",
-  },
+  }
+ 
+  // {
+  //   name: "Video Lessons",
+  //   href: "/dashboard/lessons",
+  //   icon: FaVideo,
+  //   color: "from-blue-500 to-indigo-600",
+  // },
+  // {
+  //   name: "Audio Practice",
+  //   href: "/dashboard/audio",
+  //   icon: FaHeadphones,
+  //   color: "from-amber-400 to-orange-500",
+  // },
+  // {
+  //   name: "Reading Text",
+  //   href: "/dashboard/reading",
+  //   icon: FaFileAlt,
+  //   color: "from-emerald-400 to-teal-500",
+  // },
+  // {
+  //   name: "Daily MCQs",
+  //   href: "/dashboard/mcqs",
+  //   icon: FaCheckDouble,
+  //   color: "from-pink-500 to-rose-500",
+  // },
+  
 ];
 
 export default function DashboardSidebar({ isOpen }) {
@@ -176,22 +181,19 @@ export default function DashboardSidebar({ isOpen }) {
   "
 >
  {/* Left active indicator */}
-  {active && (
-    <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-indigo-600 z-20" />
-  )}
+ 
                   {/* Active Background */}
-               {active && (
+            {active && (
   <motion.div
     layoutId="activeSidebarGlow"
-    className="
+    className={`
       absolute inset-0 rounded-xl
       bg-gradient-to-r
-      from-indigo-50
-      via-blue-50
-      to-violet-50
-      border-2 border-indigo-500
-      shadow-[0_0_25px_rgba(99,102,241,0.15)]
-    "
+      ${item.bg}
+      border-2
+      ${item.border}
+      shadow-lg
+    `}
   />
 )}
                   {/* Icon */}
@@ -207,11 +209,10 @@ export default function DashboardSidebar({ isOpen }) {
                   </div>
 
                   {/* Label */}
-                <span
-  className={`relative z-10 text-sm font-bold
-  ${
+              <span
+  className={`relative z-10 text-sm font-bold ${
     active
-      ? "text-indigo-700 font-extrabold"
+      ? `${item.text} font-extrabold`
       : "text-slate-700 group-hover:text-slate-900"
   }`}
 >
@@ -219,11 +220,10 @@ export default function DashboardSidebar({ isOpen }) {
 </span>
 
                   {/* Hover Accent Dot */}
-                <div
-  className={`relative z-10 ml-auto h-2 w-2 rounded-full transition-all duration-300
-  ${
+              <div
+  className={`relative z-10 ml-auto h-2 w-2 rounded-full transition-all duration-300 ${
     active
-      ? "bg-indigo-500"
+      ? item.dot
       : "bg-transparent group-hover:bg-slate-300"
   }`}
 />

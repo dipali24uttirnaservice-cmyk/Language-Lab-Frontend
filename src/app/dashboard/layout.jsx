@@ -34,10 +34,9 @@ useEffect(() => {
         />
 
         {/* Scrollable Content Only */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          {children}
-        </main>
-
+    <main className="flex-1 overflow-y-auto p-2">
+  {children}
+</main>
       </div>
     </div>
   );
