@@ -38,19 +38,19 @@ const menuItems = [
     icon: BarChart3,
     color: "from-pink-500 to-rose-500",
   },
-  {
-    title: "Profile",
-    href: "/institute-dashboard/profile",
-    icon: Building2,
-    color: "from-sky-400 to-blue-500",
-  },
 
-   {
+  {
   title: "License & Subscription",
   href: "/institute-dashboard/license",
   icon: BadgeCheck,
   color: "from-emerald-400 to-green-600",
 },
+ {
+    title: "Profile",
+    href: "/institute-dashboard/profile",
+    icon: Building2,
+    color: "from-sky-400 to-blue-500",
+  },
 {
   title: "Logout",
   action: "logout",

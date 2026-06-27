@@ -33,19 +33,7 @@ export default function Navbar() {
             </h2>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            {["Home", "Courses", "Pricing", "Contact"].map((item) => (
-              <Link 
-                key={item} 
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                className="relative py-1 transition-colors hover:text-slate-900 group"
-              >
-                {item}
-                <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300 group-hover:w-full" />
-              </Link>
-            ))}
-          </nav>
+         
 
           {/* Right Actions Block */}
         <div className="flex items-center gap-3">
