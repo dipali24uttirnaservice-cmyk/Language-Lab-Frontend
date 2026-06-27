@@ -11,14 +11,29 @@ import StatusModal from "@/components/molecules/StatusModal";
 
 import { studentLogin } from "@/services/auth/loginApi";
 import { ArrowLeft } from "lucide-react";
+import { studentLoginSchema } from "@/app/schemas/student.schema";
 
 export default function StudentLogin() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [enrollmentNo, setEnrollmentNo] =
     useState("");
+
+  const handleEnrollmentNoChange = async (value) => {
+    setEnrollmentNo(value);
+
+    if (errors.enrollmentNo) {
+      try {
+        await studentLoginSchema.validateAt("enrollmentNo", { enrollmentNo: value });
+        setErrors((prev) => ({ ...prev, enrollmentNo: "" }));
+      } catch (err) {
+        setErrors((prev) => ({ ...prev, enrollmentNo: err.message }));
+      }
+    }
+  };
 
   const [modal, setModal] = useState({
     open: false,
@@ -40,6 +55,20 @@ export default function StudentLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    try {
+      await studentLoginSchema.validate({ enrollmentNo }, { abortEarly: false });
+      setErrors({});
+    } catch (err) {
+      if (err.inner) {
+        const newErrors = {};
+        err.inner.forEach((error) => {
+          newErrors[error.path] = error.message;
+        });
+        setErrors(newErrors);
+      }
+      return;
+    }
 
     try {
       setLoading(true);
@@ -183,10 +212,11 @@ export default function StudentLogin() {
             placeholder="EN2024002"
             value={enrollmentNo}
             onChange={(e) =>
-              setEnrollmentNo(
+              handleEnrollmentNoChange(
                 e.target.value
               )
             }
+            error={errors.enrollmentNo}
           />
 
           <button

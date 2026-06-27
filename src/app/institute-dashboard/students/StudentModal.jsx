@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { motion, AnimatePresence } from "framer-motion";
 import { studentApi } from "@/services/student/studentApi";
+import { studentFormSchemaAdd, studentFormSchemaEdit } from "@/app/schemas/student.schema";
 
 export default function StudentModal({
   open,
@@ -65,89 +66,33 @@ export default function StudentModal({
     }));
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.full_name.trim()) {
-  newErrors.full_name = "This field is required";
-}
-
-    // Full Name
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = "Full Name is required";
-    }
-
-    // Roll No
-    if (!formData.roll_no.trim()) {
-      newErrors.roll_no = "Roll Number is required";
-    } else if (!/^\d{1,6}$/.test(formData.roll_no)) {
-      newErrors.roll_no =
-        "Roll Number must contain only numbers (max 6 digits)";
-    }
-
-    // Enrollment No
-    if (!formData.enrollment_no.trim()) {
-      newErrors.enrollment_no =
-        "Enrollment Number is required";
-    } else if (!/^\d{1,6}$/.test(formData.enrollment_no)) {
-      newErrors.enrollment_no =
-        "Enrollment Number must contain only numbers (max 6 digits)";
-    }
-
-    if (mode === "add") {
-      // Email
-      if (!formData.email.trim()) {
-        newErrors.email = "Email is required";
-      } else if (
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-      ) {
-        newErrors.email =
-          "Please enter a valid email address";
-      }
-
-      // Phone
-      if (!formData.phone.trim()) {
-        newErrors.phone = "Phone Number is required";
-      } else if (!/^\d{10}$/.test(formData.phone)) {
-        newErrors.phone =
-          "Phone Number must be exactly 10 digits";
-      }
-
-      // Course
-      if (!formData.course.trim()) {
-        newErrors.course = "Course is required";
-      }
-
-      // Batch
-      if (!formData.batch.trim()) {
-        newErrors.batch = "Batch is required";
-      } else if (
-        !/^\d{4}-\d{4}$/.test(formData.batch)
-      ) {
-        newErrors.batch =
-          "Batch format should be like 2024-2026";
-      }
-
-      // Year
-      if (!formData.year) {
-        newErrors.year = "Year is required";
-      } else if (
-        !["1", "2", "3", "4", "5", "6"].includes(
-          formData.year.toString()
-        )
-      ) {
-        newErrors.year =
-          "Year must be between 1 and 6";
-      }
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    try {
+      const schema = mode === "add" ? studentFormSchemaAdd : studentFormSchemaEdit;
+      // create a clean object without extra fields that might not be in schema
+      const dataToValidate = {
+        full_name: formData.full_name,
+        roll_no: formData.roll_no,
+        enrollment_no: formData.enrollment_no,
+        ...(mode === "add" && {
+          email: formData.email,
+          phone: formData.phone,
+          course: formData.course,
+          batch: formData.batch,
+          year: String(formData.year),
+        })
+      };
+      
+      await schema.validate(dataToValidate, { abortEarly: false });
+      setErrors({});
+    } catch (err) {
+      if (err.inner) {
+        const newErrors = {};
+        err.inner.forEach((error) => {
+          newErrors[error.path] = error.message;
+        });
+        setErrors(newErrors);
+      }
       return;
     }
     try {
@@ -242,17 +187,17 @@ export default function StudentModal({
 
       onClose();
     } catch (error) {
-      console.error("STUDENT API ERROR:", error);
+  const message =
+    error?.response?.data?.message ??
+    error?.message ??
+    "Something went wrong";
 
-      onShowStatus?.({
-        open: true,
-        type: "error",
-        title: "Operation Failed",
-        message:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong",
-      });
+  onShowStatus?.({
+    open: true,
+    type: "error",
+    title: "Operation Failed",
+    message,
+  });
     } finally {
       setLoading(false);
     }
@@ -290,142 +235,186 @@ export default function StudentModal({
           </div>
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Enter Full Name"
-              value={formData.full_name}
-              onChange={(e) =>
-                handleChange(
-                  "full_name",
-                  e.target.value
-                )
-              }
- className={`border rounded-xl p-3 w-full ${
-      errors.full_name
-        ? "border-red-500"
-        : ""
-    }`}            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                placeholder="Enter Full Name"
+                value={formData.full_name}
+                onChange={(e) =>
+                  handleChange(
+                    "full_name",
+                    e.target.value
+                  )
+                }
+                className={`border rounded-xl p-3 w-full ${
+                  errors.full_name
+                    ? "border-red-500"
+                    : ""
+                }`}
+              />
+              {errors.full_name && <div className="text-red-500 text-sm mt-1">{errors.full_name}</div>}
+            </div>
 
-            <input
-              type="text"
-              maxLength={6}
-              placeholder="Roll Number (Max 6 digits)"
-              value={formData.roll_no}
-              onChange={(e) =>
-                handleChange(
-                  "roll_no",
-                  e.target.value.replace(/\D/g, "")
-                )
-              }
- className={`border rounded-xl p-3 w-full ${
-      errors.roll_no
-        ? "border-red-500"
-        : ""
-    }`}            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Roll Number</label>
+              <input
+                type="number"
+                maxLength={20}
+                placeholder="Roll Number"
+                value={formData.roll_no}
+                onChange={(e) =>
+                  handleChange(
+                    "roll_no",
+                    e.target.value
+                  )
+                }
+                className={`border rounded-xl p-3 w-full ${
+                  errors.roll_no
+                    ? "border-red-500"
+                    : ""
+                }`}
+              />
+              {errors.roll_no && <div className="text-red-500 text-sm mt-1">{errors.roll_no}</div>}
+            </div>
 
-            <input
-              type="text"
-              maxLength={6}
-              placeholder="Enrollment Number (Max 6 digits)"
-              value={formData.enrollment_no}
-              onChange={(e) =>
-                handleChange(
-                  "enrollment_no",
-                  e.target.value.replace(/\D/g, "")
-                )
-              }
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Enrollment Number</label>
+              <input
+                type="text"
+                maxLength={20}
+                placeholder="Enrollment Number"
+                value={formData.enrollment_no}
+                onChange={(e) =>
+                  handleChange(
+                    "enrollment_no",
+                    e.target.value
+                  )
+                }
               disabled={mode === "edit"}
-            className={`border rounded-xl p-3 w-full ${
-      errors.enrollment_no
-        ? "border-red-500"
-        : ""
-    }`}
-            />
+className={`border rounded-xl p-3 w-full ${
+  errors.enrollment_no
+    ? "border-red-500"
+    : "border-gray-300"
+} ${
+  mode === "edit"
+    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+    : "bg-white"
+}`}
+              />
+              {errors.enrollment_no && <div className="text-red-500 text-sm mt-1">{errors.enrollment_no}</div>}
+            </div>
 
-            <input
-              type="text"
-              placeholder="2024-2026" value={formData.batch}
-              onChange={(e) =>
-                handleChange(
-                  "batch",
-                  e.target.value
-                )
-              }
-              className={`border rounded-xl p-3 w-full ${
-      errors.batch
-        ? "border-red-500"
-        : ""
-    }`}
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Batch</label>
+              <input
+                type="text"
+                placeholder="2024-2026"
+                value={formData.batch}
+                onChange={(e) =>
+                  handleChange(
+                    "batch",
+                    e.target.value
+                  )
+                }
+                className={`border rounded-xl p-3 w-full ${
+                  errors.batch
+                    ? "border-red-500"
+                    : ""
+                }`}
+              />
+              {errors.batch && <div className="text-red-500 text-sm mt-1">{errors.batch}</div>}
+            </div>
 
             {mode === "add" && (
               <>
-                <input
-                  type="email"
-                  placeholder="student@gmail.com" value={formData.email}
-                  onChange={(e) =>
-                    handleChange(
-                      "email",
-                      e.target.value
-                    )
-                  }
- className={`border rounded-xl p-3 w-full ${
-      errors.full_name
-        ? "border-red-500"
-        : ""
-    }`}                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="student@gmail.com"
+                    value={formData.email}
+                    onChange={(e) =>
+                      handleChange(
+                        "email",
+                        e.target.value
+                      )
+                    }
+                    className={`border rounded-xl p-3 w-full ${
+                      errors.email
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                  {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                </div>
 
-                <input
-                  type="text"
-                  maxLength={10}
-                  placeholder="10 Digit Mobile Number"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    handleChange(
-                      "phone",
-                      e.target.value.replace(/\D/g, "")
-                    )
-                  }
-                  className={`border rounded-xl p-3 w-full ${
-      errors.phone
-        ? "border-red-500"
-        : ""
-    }`}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                  <input
+                    type="text"
+                    maxLength={10}
+                    placeholder="10 Digit Mobile Number"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      handleChange(
+                        "phone",
+                        e.target.value.replace(/\D/g, "")
+                      )
+                    }
+                    className={`border rounded-xl p-3 w-full ${
+                      errors.phone
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                  {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
+                </div>
 
-                <input
-                  type="text"
-                  placeholder="Enter Course Name" value={formData.course}
-                  onChange={(e) =>
-                    handleChange(
-                      "course",
-                      e.target.value
-                    )
-                  }
-                  className={`border rounded-xl p-3 w-full ${
-      errors.course
-        ? "border-red-500"
-        : ""
-    }`}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Course Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter Course Name"
+                    value={formData.course}
+                    onChange={(e) =>
+                      handleChange(
+                        "course",
+                        e.target.value
+                      )
+                    }
+                    className={`border rounded-xl p-3 w-full ${
+                      errors.course
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                  {errors.course && <div className="text-red-500 text-sm mt-1">{errors.course}</div>}
+                </div>
 
-                <input
-                  type="number"
-                  placeholder="College Year (1-6)"
-                   value={formData.year}
-                  onChange={(e) =>
-                    handleChange(
-                      "year",
-                      e.target.value
-                    )
-                  }
- className={`border rounded-xl p-3 w-full ${
-      errors.year
-        ? "border-red-500"
-        : ""
-    }`}                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">College Year</label>
+                  <input
+                    type="number"
+                    placeholder="College Year (1-6)"
+                    value={formData.year}
+                    onChange={(e) =>
+                      handleChange(
+                        "year",
+                        e.target.value
+                      )
+                    }
+                    className={`border rounded-xl p-3 w-full ${
+                      errors.year
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                  {errors.year && <div className="text-red-500 text-sm mt-1">{errors.year}</div>}
+                </div>
 
                 <div className="col-span-full">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -441,23 +430,26 @@ export default function StudentModal({
             )}
 
             {mode === "edit" && (
-              <select
-                value={formData.status}
-                onChange={(e) =>
-                  handleChange(
-                    "status",
-                    e.target.value
-                  )
-                }
-                className="border rounded-xl p-3"
-              >
-                <option value="active">
-                  Active
-                </option>
-                <option value="inactive">
-                  Inactive
-                </option>
-              </select>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    handleChange(
+                      "status",
+                      e.target.value
+                    )
+                  }
+                  className="border rounded-xl p-3 w-full"
+                >
+                  <option value="active">
+                    Active
+                  </option>
+                  <option value="inactive">
+                    Inactive
+                  </option>
+                </select>
+              </div>
             )}
           </div>
 

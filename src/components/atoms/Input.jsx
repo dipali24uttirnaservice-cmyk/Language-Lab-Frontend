@@ -7,6 +7,7 @@ export default function Input({
   label,
   type = "text",
   className = "",
+  error,
   ...props
 }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +34,7 @@ export default function Input({
             w-full
             rounded-xl
             border
-            border-slate-200
+            ${error ? "border-red-500 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"}
             bg-white
             px-4
             py-3
@@ -41,9 +42,7 @@ export default function Input({
             placeholder:text-slate-400
             outline-none
             transition-all
-            focus:border-orange-400
             focus:ring-4
-            focus:ring-orange-100
             ${isPassword ? "pr-12" : ""}
             ${className}
           `}
@@ -73,6 +72,7 @@ export default function Input({
           </button>
         )}
       </div>
+      {error && <div className="mt-1 text-sm text-red-500 font-medium">{error}</div>}
     </div>
   );
 }

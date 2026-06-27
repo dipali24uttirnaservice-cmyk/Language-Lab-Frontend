@@ -9,6 +9,7 @@ import AnimatedBackground from "@/components/organisms/AnimatedBackground";
 import StatusModal from "@/components/molecules/StatusModal";
 
 import { instituteLogin } from "@/services/auth/loginApi";
+import { instituteLoginSchema } from "@/app/schemas/institute.schema";
 
 export default function LoginPage() {
 const router = useRouter();
@@ -16,10 +17,12 @@ const router = useRouter();
   const [loading, setLoading] =
     useState(false);
 
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] =
     useState({
-      email: "",
-      password: "",
+      email: "institute@abcli.edu",
+      password: "Institute@123",
     });
 
     useEffect(() => {
@@ -39,14 +42,32 @@ const router = useRouter();
   }
 }, []);
 
-  const handleChange = (
+  const handleChange = async (
     field,
     value
   ) => {
-    setFormData((prev) => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value,
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // Only re-validate on change if an error for this field already exists
+    if (errors[field]) {
+      try {
+        await instituteLoginSchema.validateAt(field, newFormData);
+        setErrors((prev) => ({
+          ...prev,
+          [field]: "",
+        }));
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: err.message,
+        }));
+      }
+    }
   };
 
 
@@ -70,6 +91,20 @@ useEffect(() => {
 
 const handleLogin = async (e) => {
   e.preventDefault();
+
+  try {
+    await instituteLoginSchema.validate(formData, { abortEarly: false });
+    setErrors({});
+  } catch (err) {
+    if (err.inner) {
+      const newErrors = {};
+      err.inner.forEach((error) => {
+        newErrors[error.path] = error.message;
+      });
+      setErrors(newErrors);
+    }
+    return;
+  }
 
   try {
     setLoading(true);
@@ -210,6 +245,7 @@ const handleModalClose = () => {
                 e.target.value
               )
             }
+            error={errors.email}
           />
 
           <Input
@@ -223,6 +259,7 @@ const handleModalClose = () => {
                 e.target.value
               )
             }
+            error={errors.password}
           />
 
         
