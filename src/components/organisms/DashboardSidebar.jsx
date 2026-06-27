@@ -12,6 +12,7 @@ import {
   FaUserCircle,
   FaHome,
   FaBookOpen,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
 const menus = [
@@ -36,7 +37,13 @@ const menus = [
     href: "/dashboard/student-profile",
     icon: FaUserCircle,
     color: "from-violet-500 to-purple-600",
-  }
+  },
+   {
+    name: "Logout",
+    action: "logout",
+    icon: FaSignOutAlt,
+    color: "from-red-500 to-rose-600",
+  },
  
   // {
   //   name: "Video Lessons",
@@ -65,7 +72,8 @@ const menus = [
   
 ];
 
-export default function DashboardSidebar({ isOpen }) {
+export default function DashboardSidebar({  isOpen,
+  setShowLogoutModal, }) {
   const pathname = usePathname();
 
   return (
@@ -153,7 +161,31 @@ export default function DashboardSidebar({ isOpen }) {
           {menus.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
+if (item.action === "logout") {
+  return (
+    <motion.div
+      key={item.name}
+      whileHover={{ x: 4, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      <button
+        type="button"
+        onClick={() => setShowLogoutModal(true)}
+        className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
+      >
+        <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 bg-white text-red-500 border-slate-200 group-hover:border-red-300">
+          <Icon className="text-sm" />
+        </div>
 
+        <span className="relative z-10 text-sm font-bold text-slate-700">
+          Logout
+        </span>
+
+        <div className="ml-auto h-2 w-2 rounded-full bg-transparent group-hover:bg-red-400 transition-all" />
+      </button>
+    </motion.div>
+  );
+}
             return (
               <motion.div
                 key={item.name}
