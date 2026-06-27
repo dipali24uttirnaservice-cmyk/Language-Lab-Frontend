@@ -8,6 +8,8 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  Search,
+  Ticket,
 } from "lucide-react";
 import { licenseApi } from "@/services/license/licenseApi";
 
@@ -15,10 +17,11 @@ export default function LicensePage() {
   const [loading, setLoading] = useState(true);
   const [licenses, setLicenses] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; // Adjust this number as needed
+  const itemsPerPage = 8;
 
   useEffect(() => {
     fetchLicenses();
@@ -49,239 +52,255 @@ export default function LicensePage() {
     }
   };
 
+  // Search Filter
+  const filteredLicenses = licenses.filter((license) => 
+    license.license_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    license.user_id?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Logic for Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLicenses = licenses.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(licenses.length / itemsPerPage);
+  const currentLicenses = filteredLicenses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredLicenses.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   if (loading) {
-    return <div className="p-10 text-center">Loading licenses...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
+        <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin" />
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Loading Portal Data...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">License Management</h1>
-        <p className="text-slate-500">{summary.instituteName}</p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-  <StatCard
-    icon={<ShieldCheck />}
-    title="Total Licenses"
-    value={summary.totalLicenses}
-    gradient="bg-gradient-to-br from-indigo-50 via-blue-50 to-violet-100"
-  />
-
-  <StatCard
-    icon={<CheckCircle />}
-    title="Active"
-    value={summary.activeCount}
-    gradient="bg-gradient-to-br from-emerald-50 via-green-50 to-lime-100"
-  />
-
-  <StatCard
-    icon={<XCircle />}
-    title="Expired"
-    value={summary.expiredCount}
-    gradient="bg-gradient-to-br from-rose-50 via-red-50 to-pink-100"
-  />
-
-  <StatCard
-    icon={<Users />}
-    title="Free Seats"
-    value={summary.freeSeatsCount}
-    gradient="bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100"
-  />
-</div>
-      {/* License Table */}
-      <div className="bg-white rounded-3xl border shadow-sm overflow-hidden flex flex-col">
-        <div className="p-5 border-b flex justify-between items-center">
-          <h2 className="font-semibold text-lg">License List</h2>
-          <span className="text-xs text-slate-400">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, licenses.length)} of {licenses.length}</span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
-  <tr>
-    <th className="p-4 text-left">Sr. No</th>
-
-    <th className="p-4 text-left">
-      License Code
-    </th>
-
-    <th className="p-4 text-left">
-      User ID
-    </th>
-
-    <th className="p-4 text-left">
-      Status
-    </th>
-
-    <th className="p-4 text-left">
-      Sessions
-    </th>
-
-    <th className="p-4 text-left">
-      Days Left
-    </th>
-
-    <th className="p-4 text-left">
-      Expiry
-    </th>
-  </tr>
-</thead>
-          <tbody>
-  {currentLicenses.map((license, index) => {
-    return (
-      <tr
-        key={license._id}
-        className="
-          border-t
-          hover:bg-indigo-50
-          transition-all
-          duration-200
-        "
-      >
-        <td className="p-4 font-semibold text-slate-500">
-          {(currentPage - 1) * itemsPerPage + index + 1}
-        </td>
-
-        <td className="p-4 font-medium text-indigo-600">
-          {license.license_code}
-        </td>
-
-        <td className="p-4 text-slate-600">
-          {license.user_id || "N/A"}
-        </td>
-
-        <td className="p-4">
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              license.is_valid
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {license.is_valid ? "Active" : "Expired"}
-          </span>
-        </td>
-
-        <td className="p-4">
-          {license.active_sessions}/{license.total_seats}
-        </td>
-
-        <td className="p-4 font-mono">
-          {license.days_remaining}d
-        </td>
-
-        <td className="p-4 text-slate-500">
-          {new Date(license.expiry_date).toLocaleDateString("en-IN")}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-          </table>
-        </div>
-
-        {/* Pagination Controls */}
-        <div className="p-4 border-t flex items-center justify-between bg-slate-50/50">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border rounded-lg disabled:opacity-50 hover:bg-slate-50 transition-all"
-          >
-            <ChevronLeft size={16} /> Previous
-          </button>
-          
-          <div className="hidden sm:flex space-x-2">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                  currentPage === i + 1 
-                  ? "bg-indigo-600 text-white" 
-                  : "bg-white border text-slate-600 hover:border-indigo-400"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border rounded-lg disabled:opacity-50 hover:bg-slate-50 transition-all"
-          >
-            Next <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  title,
-  value,
-  gradient,
-  iconBg,
-  iconColor,
-}) {
-  return (
-    <div
-      className={`
-      relative overflow-hidden
-      rounded-3xl
-      p-6
-      border-2 border-slate-200
-      shadow-[0_10px_35px_rgba(0,0,0,0.08)]
-      hover:-translate-y-1
-      hover:border-slate-300
-      transition-all duration-300
-      ${gradient}
-      `}
-    >
-      {/* Light Glow */}
-      <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-white/40 blur-2xl" />
-
-      {/* Stripe Effect */}
-      <div
-        className="
-          absolute inset-0 opacity-[0.05]
-          bg-[repeating-linear-gradient(135deg,#000_0px,#000_1px,transparent_1px,transparent_12px)]
-        "
+    <div className="relative min-h-screen bg-[#F4F7FC] p-4 md:p-8 space-y-8 max-w-7xl mx-auto overflow-hidden">
+      
+      {/* Blueprint Grid Background Pattern matching Screenshot 2026-06-27 143645.jpg */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-0 opacity-[0.45]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #E2E8F0 1px, transparent 1px),
+            linear-gradient(to bottom, #E2E8F0 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px'
+        }}
       />
 
-      <div className="relative z-10">
-        <div
-          className={`
-            h-14 w-14 rounded-2xl
-            flex items-center justify-center
-            shadow-md
-            ${iconBg}
-            ${iconColor}
-          `}
-        >
-          {icon}
+      <div className="relative z-10 space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-200/60 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+              + Institute Management Portal
+            </div>
+           
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">{summary.instituteName}</p>
+          </div>
+          <div className="bg-white border border-slate-100 text-emerald-600 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 self-start sm:self-auto shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            SYSTEM OPERATIONAL
+          </div>
         </div>
 
-        <p className="mt-4 text-sm font-medium text-slate-600">
-          {title}
-        </p>
+        {/* Summary Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <StatCard
+            icon={<ShieldCheck size={20} />}
+            title="Enrolled Licenses"
+            value={summary.totalLicenses}
+            iconBg="bg-blue-600 shadow-blue-500/30"
+            subtext="+0 Managed from Core"
+          />
+          <StatCard
+            icon={<CheckCircle size={20} />}
+            title="Active Licenses"
+            value={summary.activeCount}
+            iconBg="bg-amber-500 shadow-amber-500/30"
+            subtext="Live system authorization"
+          />
+          <StatCard
+            icon={<Users size={20} />}
+            title="Free Seats Available"
+            value={summary.freeSeatsCount}
+            iconBg="bg-emerald-500 shadow-emerald-500/30"
+            subtext="Ready to assign instantly"
+          />
+          <StatCard
+            icon={<XCircle size={20} />}
+            title="Expired Contracts"
+            value={summary.expiredCount}
+            iconBg="bg-rose-500 shadow-rose-500/30"
+            subtext="Requires administrative review"
+          />
+        </div>
 
-        <h3 className="mt-2 text-3xl font-black text-slate-800">
-          {value}
-        </h3>
+        {/* Table & Filtering Block */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-white">
+            <div className="flex items-center gap-2 w-full sm:max-w-xs">
+              <div className="relative w-full">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search code or user ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs font-medium placeholder:text-slate-400 text-slate-700"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-3 py-1.5 rounded-lg">
+              Live Syncing
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/70 text-slate-500 border-b border-slate-100 text-[10px] font-bold tracking-widest uppercase">
+                  <th className="p-4 pl-6">Sr. No</th>
+                  <th className="p-4">License Code</th>
+                  <th className="p-4">Assigned Target</th>
+                  <th className="p-4">System Status</th>
+                  <th className="p-4">Seat Capacity</th>
+                  <th className="p-4">Timeline Left</th>
+                  <th className="p-4 pr-6">Expiry Target</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {currentLicenses.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                      <Ticket size={28} className="mx-auto mb-2 text-slate-300" />
+                      No matching records found
+                    </td>
+                  </tr>
+                ) : (
+                  currentLicenses.map((license, index) => {
+                    const total = license.total_seats || 1;
+                    const active = license.active_sessions || 0;
+                    const percentUsed = Math.min((active / total) * 100, 100);
+
+                    return (
+                      <tr key={license._id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4 pl-6 font-bold text-slate-400">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </td>
+                        <td className="p-4 font-black text-slate-800 tracking-tight">
+                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                            {license.license_code}
+                          </span>
+                        </td>
+                        <td className="p-4 font-bold text-slate-700">
+                          {license.user_id || <span className="text-slate-300 italic font-normal">Unassigned</span>}
+                        </td>
+                        <td className="p-4">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            license.is_valid ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                          }`}>
+                            {license.is_valid ? "Active" : "Expired"}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col w-32 gap-1">
+                            <div className="flex justify-between font-bold text-slate-500 text-[10px]">
+                              <span>Capacity</span>
+                              <span className="text-blue-600">{Math.round(percentUsed)}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                              {/* Orange to Green Progress bar matching image aesthetic */}
+                              <div 
+                                className="h-full bg-gradient-to-r from-orange-500 to-emerald-500 transition-all duration-500"
+                                style={{ width: `${percentUsed}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 font-bold text-slate-600 font-mono">
+                          {license.days_remaining}d
+                        </td>
+                        <td className="p-4 pr-6 font-bold text-slate-400">
+                          {new Date(license.expiry_date).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          })}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 bg-white border border-slate-200 rounded-xl disabled:opacity-40 shadow-sm hover:bg-slate-50 transition-all"
+              >
+                <ChevronLeft size={14} /> Prev
+              </button>
+              
+              <div className="hidden sm:flex space-x-1">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      currentPage === i + 1 
+                        ? "bg-blue-600 text-white shadow-md" 
+                        : "bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 shadow-sm"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 bg-white border border-slate-200 rounded-xl disabled:opacity-40 shadow-sm hover:bg-slate-50 transition-all"
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+/* Stat Card component mirroring standard layout objects from the screenshot reference */
+const StatCard = ({ icon, title, value, iconBg, subtext }) => {
+  return (
+    <div className="relative bg-white border border-slate-100 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex items-center justify-between">
+      <div className="space-y-1">
+        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+          {title}
+        </p>
+        <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+          {value}
+        </h2>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight pt-1">
+          {subtext}
+        </p>
+      </div>
+
+      <div className={`h-11 w-11 rounded-xl flex items-center justify-center text-white shadow-lg ${iconBg}`}>
+        {icon}
+      </div>
+    </div>
+  );
+};

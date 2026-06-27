@@ -2,19 +2,24 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  ChevronRight, 
-  Search, 
-  SlidersHorizontal, 
-  Play, 
-  Headphones, 
-  FileText, 
-  BookOpen, 
-  Award, 
+import {
+  ArrowLeft,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+  Play,
+  Headphones,
+  FileText,
+  BookOpen,
+  Award,
   Clock,
-  Sparkles
+  Sparkles,
+  Music,
+  Trophy,
+  BookMarked,
 } from "lucide-react";
+
+import { motion } from "framer-motion";
 import { moduleApi } from "@/services/topic/topicApi";
 
 const CONTENT_TYPES = [
@@ -77,15 +82,203 @@ export default function ModuleListPage() {
     router.push(`/dashboard/${moduleType || type}/${moduleId}`);
   };
 
+  const backgroundStyles = {
+  video: {
+    gradient:
+      "from-orange-100 via-red-50 to-purple-100",
+    glow:
+      "bg-orange-300/30",
+  },
+  audio: {
+    gradient:
+      "from-blue-100 via-cyan-50 to-indigo-100",
+    glow:
+      "bg-cyan-300/30",
+  },
+  exercise: {
+    gradient:
+      "from-green-100 via-emerald-50 to-lime-100",
+    glow:
+      "bg-green-300/30",
+  },
+  text: {
+    gradient:
+      "from-amber-100 via-yellow-50 to-orange-50",
+    glow:
+      "bg-yellow-300/30",
+  },
+  vocabulary: {
+    gradient:
+      "from-violet-100 via-indigo-50 to-blue-100",
+    glow:
+      "bg-violet-300/30",
+  },
+};
+
+const currentBg =
+  backgroundStyles[type] ||
+  backgroundStyles.video;
+
+
+ const floatingItems = {
+  video: [
+    { Icon: Play, top: "8%", left: "78%", size: 44 },
+    { Icon: Play, top: "22%", left: "90%", size: 28 },
+    { Icon: Play, top: "48%", left: "84%", size: 36 },
+    { Icon: Play, top: "72%", left: "72%", size: 30 },
+  ],
+
+  audio: [
+    { Icon: Headphones, top: "10%", left: "78%", size: 44 },
+    { Icon: Music, top: "24%", left: "90%", size: 28 },
+    { Icon: Headphones, top: "50%", left: "84%", size: 36 },
+    { Icon: Music, top: "72%", left: "74%", size: 28 },
+  ],
+
+  exercise: [
+    { Icon: Trophy, top: "10%", left: "78%", size: 44 },
+    { Icon: Award, top: "24%", left: "90%", size: 30 },
+    { Icon: Trophy, top: "52%", left: "84%", size: 36 },
+    { Icon: Award, top: "72%", left: "74%", size: 28 },
+  ],
+
+  text: [
+    { Icon: FileText, top: "10%", left: "78%", size: 42 },
+    { Icon: BookMarked, top: "25%", left: "90%", size: 28 },
+    { Icon: FileText, top: "52%", left: "84%", size: 34 },
+    { Icon: BookMarked, top: "72%", left: "74%", size: 28 },
+  ],
+
+  vocabulary: [
+    { Icon: BookOpen, top: "10%", left: "78%", size: 42 },
+    { Icon: BookMarked, top: "25%", left: "90%", size: 28 },
+    { Icon: BookOpen, top: "52%", left: "84%", size: 34 },
+    { Icon: BookMarked, top: "72%", left: "74%", size: 28 },
+  ],
+};
+
+const pageTheme = {
+  video: {
+    title: "Video Modules",
+    subtitle: "Learn through engaging video lessons",
+    color: "orange",
+    gradient:
+      "from-orange-100 via-orange-50 to-red-100",
+    icon: Play,
+    bgIcon: "/3d/play.png",
+  },
+
+  audio: {
+    title: "Audio Modules",
+    subtitle: "Improve listening & pronunciation",
+    color: "blue",
+    gradient:
+      "from-sky-100 via-blue-50 to-indigo-100",
+    icon: Headphones,
+    bgIcon: "/3d/headphone.png",
+  },
+
+  exercise: {
+    title: "Exercise Modules",
+    subtitle: "Practice and test your skills",
+    color: "emerald",
+    gradient:
+      "from-green-100 via-emerald-50 to-lime-100",
+    icon: Trophy,
+    bgIcon: "/3d/trophy.png",
+  },
+
+  text: {
+    title: "Reading Modules",
+    subtitle: "Read and improve comprehension",
+    color: "amber",
+    gradient:
+      "from-yellow-100 via-orange-50 to-amber-100",
+    icon: FileText,
+    bgIcon: "/3d/book.png",
+  },
+
+  vocabulary: {
+    title: "Vocabulary Modules",
+    subtitle: "Build your word power",
+    color: "violet",
+    gradient:
+      "from-violet-100 via-purple-50 to-indigo-100",
+    icon: BookOpen,
+    bgIcon: "/3d/abc.png",
+  },
+};
+
+const theme = pageTheme[type] || pageTheme.video;
+
+const currentFloating =
+  floatingItems[type] || floatingItems.video;
+
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] p-4 md:p-8 overflow-hidden">
       
       {/* 3D Moving Ambient Background Layer */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-tr from-orange-200/40 to-amber-100/30 blur-[120px] animate-pulse [animation-duration:8s]" />
-        <div className="absolute bottom-[-5%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-br from-emerald-100/40 to-teal-50/20 blur-[100px] animate-pulse [animation-duration:12s]" />
-        <div className="absolute top-[30%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-purple-100/30 blur-[90px] animate-bounce [animation-duration:18s]" />
+     {/* ===== Premium 3D Animated Background ===== */}
+<div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+  {/* Background Gradient */}
+  <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
+
+  {/* Large Glow */}
+  <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-orange-300/25 blur-[140px] animate-pulse" />
+
+  <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-pink-300/20 blur-[140px] animate-pulse [animation-duration:8s]" />
+
+ <div className="absolute left-12 top-24 w-8 h-8 rounded-full bg-orange-300/40 blur-md animate-pulse" />
+
+<div className="absolute right-24 top-32 w-6 h-6 rounded-full bg-pink-300/40 blur-sm animate-pulse [animation-duration:6s]" />
+
+<div className="absolute bottom-28 left-1/3 w-10 h-10 rounded-full bg-amber-300/30 blur-lg animate-pulse [animation-duration:8s]" />
+
+<div className="absolute bottom-24 right-1/4 w-5 h-5 rounded-full bg-orange-200/50 blur-sm animate-pulse" />
+{/* Floating 3D Icons */}
+{currentFloating.map((item, index) => {
+  const Icon = item.Icon;
+
+  return (
+    <motion.div
+      key={index}
+      className="absolute"
+      style={{
+        top: item.top,
+        left: item.left,
+      }}
+      animate={{
+        y: [-15, 15, -15],
+        rotate: [-8, 8, -8],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{
+        duration: 7 + index,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <div
+        className="
+          rounded-2xl
+          bg-white/20
+          backdrop-blur-2xl
+          border border-white/30
+          shadow-[0_12px_35px_rgba(0,0,0,0.12)]
+          p-4
+        "
+      >
+        <Icon
+          size={item.size}
+          strokeWidth={1.8}
+          className="text-slate-700/50"
+        />
       </div>
+    </motion.div>
+  );
+})}
+</div>
 
       <div className="relative z-10 max-w-7xl mx-auto space-y-8">
         
