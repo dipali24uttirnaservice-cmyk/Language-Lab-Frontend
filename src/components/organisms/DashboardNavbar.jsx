@@ -51,34 +51,40 @@ useEffect(() => {
   };
 
 
+const [student, setStudent] = useState({});
+
 useEffect(() => {
-  const savedRole = Cookies.get("role");
-
-  let savedUser = null;
-
   try {
-    savedUser =
-      JSON.parse(
-        Cookies.get("studentData") ||
-          Cookies.get("userData") ||
-          "{}"
-      );
+    const studentCookie = Cookies.get("studentData");
+
+    console.log("Student Cookie:", studentCookie);
+
+    const parsedData = studentCookie
+      ? JSON.parse(studentCookie)
+      : {};
+
+    console.log("Parsed Student:", parsedData);
+
+    setStudent(parsedData);
   } catch (error) {
     console.error(error);
   }
-
-  setRole(savedRole);
-  setUser(savedUser);
 }, []);
 
-  const avatarLetter =
-    role === "student"
-      ? user?.name?.charAt(0)?.toUpperCase() ||
-        "S"
-      : user?.institute_name
-          ?.charAt(0)
-          ?.toUpperCase() || "I";
+const studentName =
+  student?.full_name || "Student";
 
+const instituteName =
+  student?.institute_name || "Institute";
+
+const avatarLetter =
+  studentName.charAt(0).toUpperCase();
+
+const profileImage =
+  student?.profile_image ||
+  "/default-avatar.png"; // optional
+
+ 
 
 
     const pathSegments = pathname.split("/").filter(Boolean);
@@ -117,7 +123,7 @@ if (!mounted) return null;
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
           >
             {isSidebarOpen ? (
-              <FaTimes size={18} />
+              <FaBars size={18} />
             ) : (
               <FaBars size={18} />
             )}
@@ -173,32 +179,31 @@ if (!mounted) return null;
   onClick={() => setShowLogoutModal(true)}
   className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all"
 >
-  <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-emerald-500 text-white font-black text-xs shadow-xs">
-    {role === "student"
-      ? user?.name?.charAt(0)?.toUpperCase() || "S"
-      : user?.institute_name
-          ?.charAt(0)
-          ?.toUpperCase() || "I"}
+  {student?.profile_image ? (
+    <div className="relative">
+      <img
+        src={profileImage}
+        alt={studentName}
+        className="h-10 w-10 rounded-xl object-cover border border-slate-200"
+      />
 
-    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-  </div>
+      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+    </div>
+  ) : (
+    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-emerald-500 text-white font-bold border border-slate-200">
+      {avatarLetter}
+
+      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+    </div>
+  )}
 
   <div className="hidden md:block">
-   <p className="text-sm font-semibold text-slate-800">
-  {role === "student"
-    ? user?.student_name ||
-      user?.name ||
-      "Student"
-    : user?.institute_name ||
-      "Institute"}
-</p>
+    <p className="text-sm font-bold text-slate-800">
+      {studentName}
+    </p>
 
-<p className="text-xs text-slate-500 capitalize">
-  {role}
-</p>
-
-    <p className="text-xs text-slate-500 capitalize">
-      {role}
+    <p className="text-xs text-slate-500">
+      {instituteName}
     </p>
   </div>
 </div>

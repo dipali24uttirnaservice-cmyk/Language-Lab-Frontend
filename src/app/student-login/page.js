@@ -98,13 +98,13 @@ export default function StudentLogin() {
       });
 
       // Store student data
-      Cookies.set(
-        "studentData",
-        JSON.stringify(apiResponse.data),
-        {
-          expires: 7,
-        }
-      );
+     Cookies.set(
+  "studentData",
+  JSON.stringify(apiResponse.data.student),
+  {
+    expires: 7,
+  }
+);
 
       setModal({
         open: true,

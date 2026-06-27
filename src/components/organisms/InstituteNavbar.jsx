@@ -118,7 +118,7 @@ const instituteName =
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
           >
             {isSidebarOpen ? (
-              <FaTimes size={18} />
+              <FaBars size={18} />
             ) : (
               <FaBars size={18} />
             )}
