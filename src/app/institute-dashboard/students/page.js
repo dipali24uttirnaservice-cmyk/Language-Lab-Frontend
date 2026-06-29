@@ -7,6 +7,7 @@ import StudentModal from "./StudentModal";
 import { studentApi } from "@/services/student/studentApi";
 import StatusModal from "@/components/molecules/StatusModal";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
+import StudentViewModal from "./StudentViewModal";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
 
@@ -20,6 +21,8 @@ export default function StudentsPage() {
 const [previewData, setPreviewData] = useState([]);
 const [selectedFile, setSelectedFile] = useState(null);
 const [showPreview, setShowPreview] = useState(false);
+const [viewOpen, setViewOpen] = useState(false);
+const [viewStudent, setViewStudent] = useState(null);
   const [statusData, setStatusData] = useState({
     open: false,
     type: "success",
@@ -47,15 +50,22 @@ setStudents(
     loadStudents();
   }, [loadStudents]);
 
-  const filteredData = useMemo(() => {
-    const keyword = search.toLowerCase();
-    return students.filter((s) =>
-      [s.full_name, s.email, s.phone, s.enrollment_no, s.course, s.batch]
-        .join(" ")
-        .toLowerCase()
-        .includes(keyword)
-    );
-  }, [students, search]);
+ const filteredData = useMemo(() => {
+  const keyword = search.toLowerCase();
+
+  return students.filter((student) =>
+    [
+      student.full_name,
+      student.email,
+      student.course,
+      student.enrollment_no,
+      student.roll_no,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(keyword)
+  );
+}, [students, search]);
 
   const handleAdd = () => {
     setMode("add");
@@ -107,39 +117,86 @@ const handleEdit = async (id) => {
     }
   };
 
-  const columns = [
-    { title: "Student Name", key: "full_name" },
-    { title: "Enrollment No", key: "enrollment_no" },
-    { title: "Email", key: "email" },
-    { title: "Phone", key: "phone" },
-    { title: "Course", key: "course" },
-    {
-      title: "Year",
-      key: "year",
-      render: (row) => <span className="font-medium">Year {row.year}</span>,
-    },
-    { title: "Batch", key: "batch" },
-    {
-      title: "Status",
-      key: "status",
-      render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${row?.is_active ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
-          {row?.is_active ? "Active" : "Inactive"}
+ const columns = [
+  {
+    title: "Student",
+    key: "student",
+    render: (row) => (
+    <button
+  onClick={() => handleView(row._id)}
+  className="text-left"
+>
+  <span className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
+    {row.full_name}
+  </span>
+
+  <div className="text-xs text-slate-500 mt-1">
+    {row.email}
+  </div>
+
+  <div className="text-xs text-slate-400">
+    {row.enrollment_no}
+  </div>
+</button>
+    ),
+  },
+
+  {
+    title: "Course",
+    key: "course",
+    render: (row) => (
+      <div>
+        <p className="font-medium">{row.course}</p>
+        <p className="text-xs text-slate-500">
+          Year {row.year}
+        </p>
+      </div>
+    ),
+  },
+
+  {
+    title: "Last Login",
+    key: "last_login",
+    render: (row) =>
+      row.last_login ? (
+        <span className="text-sm text-slate-600">
+          {new Date(row.last_login).toLocaleDateString()}
+        </span>
+      ) : (
+        <span className="text-slate-400">
+          Never
         </span>
       ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (row) => (
-        <TableActions
-          onEdit={() => handleEdit(row._id)}
-          onDelete={() => handleDelete(row._id)}
-          onView={() => console.log("view", row._id)}
-        />
-      ),
-    },
-  ];
+  },
+
+  {
+    title: "Status",
+    key: "status",
+    render: (row) => (
+      <span
+        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+          row.is_active
+            ? "bg-emerald-100 text-emerald-700"
+            : "bg-rose-100 text-rose-700"
+        }`}
+      >
+        {row.is_active ? "Active" : "Inactive"}
+      </span>
+    ),
+  },
+
+  {
+    title: "Actions",
+    key: "actions",
+    render: (row) => (
+      <TableActions
+        onView={() => handleView(row._id)}
+        onEdit={() => handleEdit(row._id)}
+        onDelete={() => handleDelete(row._id)}
+      />
+    ),
+  },
+];
 
   const handleBulkUpload = () => {
   document.getElementById("studentExcelUpload")?.click();
@@ -233,6 +290,26 @@ const userData = JSON.parse(
 console.log("USER DATA", userData);
 console.log("INSTITUTE", userData?.institute);
 console.log("INSTITUTE ID", userData?.institute?._id);
+
+const handleView = async (id) => {
+  try {
+    setLoading(true);
+
+    const response = await studentApi.getStudentById(id);
+
+    setViewStudent(response.data.data);
+    setViewOpen(true);
+  } catch (error) {
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Error",
+      message: "Unable to fetch student details.",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div>
@@ -353,6 +430,12 @@ console.log("INSTITUTE ID", userData?.institute?._id);
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      <StudentViewModal
+    open={viewOpen}
+    onClose={() => setViewOpen(false)}
+    student={viewStudent}
+/>
     </div>
   );
 }
