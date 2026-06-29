@@ -37,6 +37,8 @@ export default function InstituteProfilePage() {
   message: "",
 });
 
+
+
 useEffect(() => {
   const fetchInstituteProfile = async () => {
     try {

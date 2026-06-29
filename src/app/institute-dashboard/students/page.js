@@ -1,22 +1,27 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import DataTable from "@/components/organisms/DataTable";
 import TableActions from "@/components/molecules/TableActions";
-import StudentModal from "./StudentModal";
 import { studentApi } from "@/services/student/studentApi";
 import StatusModal from "@/components/molecules/StatusModal";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
 import StudentViewModal from "./StudentViewModal";
+import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
-
 export default function StudentsPage() {
+
+  const searchParams = useSearchParams();
+
+const studentId = searchParams.get("id");
+
+const mode = studentId ? "edit" : "add";
+const router = useRouter();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openModal, setOpenModal] = useState(false);
-  const [mode, setMode] = useState("add");
-  const [selectedStudent, setSelectedStudent] = useState(null);
+
   const [search, setSearch] = useState("");
 const [previewData, setPreviewData] = useState([]);
 const [selectedFile, setSelectedFile] = useState(null);
@@ -30,6 +35,7 @@ const [viewStudent, setViewStudent] = useState(null);
     message: "",
   });
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+const [showAddOptions, setShowAddOptions] = useState(false);
 
   const loadStudents = useCallback(async () => {
     try {
@@ -68,25 +74,13 @@ setStudents(
 }, [students, search]);
 
   const handleAdd = () => {
-    setMode("add");
-    setSelectedStudent(null);
-    setOpenModal(true);
-  };
+  setShowAddOptions(true);
+};
 
-const handleEdit = async (id) => {
-  console.log("EDIT CLICKED", id);
-
-  try {
-    const response = await studentApi.getStudentById(id);
-
-    console.log("STUDENT DATA", response.data);
-
-    setSelectedStudent(response.data.data);
-    setMode("edit");
-    setOpenModal(true);
-  } catch (error) {
-    console.error("EDIT ERROR", error);
-  }
+const handleEdit = (id) => {
+  router.push(
+    `/institute-dashboard/students/add?type=individual&id=${id}`
+  );
 };
 
   const handleDelete = (id) => {
@@ -295,7 +289,7 @@ const handleView = async (id) => {
   try {
     setLoading(true);
 
-    const response = await studentApi.getStudentById(id);
+    
 
     setViewStudent(response.data.data);
     setViewOpen(true);
@@ -334,15 +328,7 @@ const handleView = async (id) => {
   onChange={handleExcelChange}
 />
 
-      <StudentModal
-        key={openModal ? `modal-${mode}-${selectedStudent?._id || "new"}` : "closed"}
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        mode={mode}
-        student={selectedStudent}
-        onSuccess={loadStudents}
-        onShowStatus={(data) => setStatusData(data)}
-      />
+     
 
       {showPreview && (
 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center">
@@ -436,6 +422,118 @@ const handleView = async (id) => {
     onClose={() => setViewOpen(false)}
     student={viewStudent}
 />
+
+
+{showAddOptions && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+
+    <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-6 text-white">
+
+        <button
+          onClick={() => setShowAddOptions(false)}
+          className="absolute right-4 top-4 h-9 w-9 rounded-full bg-white/20 hover:bg-white/30 transition"
+        >
+          ✕
+        </button>
+
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-3xl">
+            🎓
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold">
+              Add Student
+            </h2>
+
+            <p className="mt-1 text-sm text-orange-100">
+              Select how you'd like to create student records.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-5">
+
+        <button
+          onClick={() => {
+            setShowAddOptions(false);
+            router.push(
+              "/institute-dashboard/students/add?type=individual"
+            );
+          }}
+          className="group flex w-full items-center gap-5 rounded-2xl border border-orange-200 bg-orange-50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500 hover:bg-orange-100 hover:shadow-lg"
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-500 text-2xl text-white">
+            👤
+          </div>
+
+          <div className="flex-1 text-left">
+            <h3 className="font-semibold text-slate-800 text-lg">
+              Individual Student
+            </h3>
+
+            <p className="text-sm text-slate-500">
+              Add one student using the complete registration form.
+            </p>
+          </div>
+
+          <span className="text-2xl text-orange-500 group-hover:translate-x-1 transition">
+            →
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            setShowAddOptions(false);
+            router.push(
+              "/institute-dashboard/students/add?type=bulk"
+            );
+          }}
+          className="group flex w-full items-center gap-5 rounded-2xl border border-slate-200 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500 hover:bg-orange-50 hover:shadow-lg"
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500 text-2xl text-white">
+            📄
+          </div>
+
+          <div className="flex-1 text-left">
+            <h3 className="font-semibold text-slate-800 text-lg">
+              Bulk Upload
+            </h3>
+
+            <p className="text-sm text-slate-500">
+              Upload an Excel file to add multiple students instantly.
+            </p>
+          </div>
+
+          <span className="text-2xl text-orange-500 group-hover:translate-x-1 transition">
+            →
+          </span>
+        </button>
+
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end border-t bg-slate-50 px-6 py-4">
+
+        <button
+          onClick={() => setShowAddOptions(false)}
+          className="rounded-xl border border-slate-300 px-6 py-2.5 font-medium text-slate-600 transition hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
     </div>
   );
 }

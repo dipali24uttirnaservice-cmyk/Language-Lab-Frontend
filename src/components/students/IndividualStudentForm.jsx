@@ -6,15 +6,17 @@ import Cookies from "js-cookie";
 import { motion, AnimatePresence } from "framer-motion";
 import { studentApi } from "@/services/student/studentApi";
 import { studentFormSchemaAdd, studentFormSchemaEdit } from "@/app/schemas/student.schema";
+import { useRouter } from "next/navigation";
+import StatusModal from "@/components/molecules/StatusModal";
 
-export default function StudentModal({
-  open,
-  onClose,
-  mode = "add",
-  student = null,
-  onSuccess,
-  onShowStatus,
+export default function IndividualStudentForm({
+   studentId,
+
 }) {
+
+   const router = useRouter();
+
+  const mode = studentId ? "edit" : "add";
   const [loading, setLoading] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState(null);
   const [errors, setErrors] = useState({});
@@ -33,10 +35,25 @@ export default function StudentModal({
 
   const [formData, setFormData] = useState(initialState);
 
-  useEffect(() => {
-    if (!open) return;
+  const [statusData, setStatusData] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: "",
+});
 
-    if (mode === "edit" && student) {
+ useEffect(() => {
+  if (!studentId) return;
+
+  async function loadStudent() {
+    try {
+      setLoading(true);
+
+      const response =
+        await studentApi.getStudentById(studentId);
+
+      const student = response.data.data;
+
       setFormData({
         full_name: student.full_name || "",
         email: student.email || "",
@@ -46,13 +63,17 @@ export default function StudentModal({
         batch: student.batch || "",
         course: student.course || "",
         year: student.year || "",
-        status: student?.is_active ? "active" : "inactive",
+        status: student.is_active
+          ? "active"
+          : "inactive",
       });
-    } else {
-      setFormData(initialState);
-      setStudentPhoto(null);
+    } finally {
+      setLoading(false);
     }
-  }, [open, mode, student]);
+  }
+
+  loadStudent();
+}, [studentId]);
 
   const handleChange = (name, value) => {
     setFormData((prev) => ({
@@ -66,175 +87,162 @@ export default function StudentModal({
     }));
   };
 
-  const handleSubmit = async () => {
-    try {
-      const schema = mode === "add" ? studentFormSchemaAdd : studentFormSchemaEdit;
-      // create a clean object without extra fields that might not be in schema
-      const dataToValidate = {
-        full_name: formData.full_name,
-        roll_no: formData.roll_no,
-        enrollment_no: formData.enrollment_no,
-        ...(mode === "add" && {
-          email: formData.email,
-          phone: formData.phone,
-          course: formData.course,
-          batch: formData.batch,
-          year: String(formData.year),
-        })
-      };
-      
-      await schema.validate(dataToValidate, { abortEarly: false });
-      setErrors({});
-    } catch (err) {
-      if (err.inner) {
-        const newErrors = {};
-        err.inner.forEach((error) => {
-          newErrors[error.path] = error.message;
-        });
-        setErrors(newErrors);
-      }
-      return;
-    }
-    try {
-      setLoading(true);
+ const handleSubmit = async () => {
+  try {
+    const schema =
+      mode === "add"
+        ? studentFormSchemaAdd
+        : studentFormSchemaEdit;
 
-      if (mode === "add") {
-        const userDataRaw = Cookies.get("userData");
+    const dataToValidate = {
+      full_name: formData.full_name,
+      roll_no: formData.roll_no,
+      enrollment_no: formData.enrollment_no,
+      ...(mode === "add" && {
+        email: formData.email,
+        phone: formData.phone,
+        course: formData.course,
+        batch: formData.batch,
+        year: String(formData.year),
+      }),
+    };
 
-        if (!userDataRaw) {
-          throw new Error("Login session expired");
-        }
+    await schema.validate(dataToValidate, {
+      abortEarly: false,
+    });
 
-        const userData = JSON.parse(userDataRaw);
+    setErrors({});
+  } catch (err) {
+    if (err.inner) {
+      const newErrors = {};
 
-        const instituteId =
-          userData?.institute?.id ||
-          userData?.institute?._id ||
-          userData?.institute_id;
-
-        console.log("Institute ID:", instituteId);
-
-        if (!instituteId) {
-          throw new Error("Institute ID not found");
-        }
-
-        if (!instituteId) {
-          throw new Error("Institute ID not found");
-        }
-
-        const data = new FormData();
-
-        data.append("full_name", formData.full_name);
-        data.append("email", formData.email);
-        data.append("phone", formData.phone);
-        data.append("roll_no", formData.roll_no);
-        data.append("enrollment_no", formData.enrollment_no);
-        data.append("batch", formData.batch);
-        data.append("course", formData.course);
-        data.append("year", formData.year);
-        data.append("institute_id", instituteId);
-
-        if (studentPhoto) {
-          data.append("studentPhoto", studentPhoto);
-        }
-
-        console.log("ADDING STUDENT");
-
-        for (const pair of data.entries()) {
-          console.log(pair[0], pair[1]);
-        }
-
-        await studentApi.createStudent(data);
-      } else {
-        console.log("EDIT STUDENT:", student);
-
-        const studentId = student?._id || student?.id;
-
-        if (!studentId) {
-          throw new Error("Student ID missing");
-        }
-
-        const updatePayload = {
-          full_name: formData.full_name,
-          roll_no: formData.roll_no,
-          batch: formData.batch,
-          status: formData.status,
-        };
-
-        console.log("UPDATE ID:", studentId);
-        console.log("UPDATE PAYLOAD:", updatePayload);
-
-        await studentApi.updateStudent(
-          studentId,
-          updatePayload
-        );
-      }
-
-      onShowStatus?.({
-        open: true,
-        type: "success",
-        title:
-          mode === "add"
-            ? "Student Added"
-            : "Student Updated",
-        message:
-          mode === "add"
-            ? "Student added successfully."
-            : "Student updated successfully.",
+      err.inner.forEach((error) => {
+        newErrors[error.path] = error.message;
       });
 
-      await onSuccess?.();
-
-      onClose();
-    } catch (error) {
-  const message =
-    error?.response?.data?.message ??
-    error?.message ??
-    "Something went wrong";
-
-  onShowStatus?.({
-    open: true,
-    type: "error",
-    title: "Operation Failed",
-    message,
-  });
-    } finally {
-      setLoading(false);
+      setErrors(newErrors);
     }
-  };
 
-  if (!open) return null;
+    return;
+  }
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[99999] bg-black/60 flex justify-center items-center p-4"
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl"
+  try {
+    setLoading(true);
+
+    if (mode === "add") {
+      const userDataRaw = Cookies.get("userData");
+
+      if (!userDataRaw) {
+        throw new Error("Login session expired");
+      }
+
+      const userData = JSON.parse(userDataRaw);
+
+      const instituteId =
+        userData?.institute?.id ||
+        userData?.institute?._id ||
+        userData?.institute_id;
+
+      if (!instituteId) {
+        throw new Error("Institute ID not found");
+      }
+
+      const data = new FormData();
+
+      data.append("full_name", formData.full_name);
+      data.append("email", formData.email);
+      data.append("phone", formData.phone);
+      data.append("roll_no", formData.roll_no);
+      data.append("enrollment_no", formData.enrollment_no);
+      data.append("batch", formData.batch);
+      data.append("course", formData.course);
+      data.append("year", formData.year);
+      data.append("institute_id", instituteId);
+
+      if (studentPhoto) {
+        data.append("studentPhoto", studentPhoto);
+      }
+
+      await studentApi.createStudent(data);
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Student Added",
+        message: "Student added successfully.",
+      });
+
+      setTimeout(() => {
+        router.push("/institute-dashboard/students");
+      }, 1500);
+    } else {
+      const updatePayload = {
+        full_name: formData.full_name,
+        roll_no: formData.roll_no,
+        batch: formData.batch,
+        status: formData.status,
+      };
+
+      await studentApi.updateStudent(
+        studentId,
+        updatePayload
+      );
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Student Updated",
+        message: "Student updated successfully.",
+      });
+
+      setTimeout(() => {
+        router.push("/institute-dashboard/students");
+      }, 1500);
+    }
+  } catch (error) {
+    setStatusData({
+      open: true,
+      type: "error",
+      title: mode === "add" ? "Add Failed" : "Update Failed",
+      message:
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong.",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+ return (
+  <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+      {/* Header */}
+      <div className="border-b px-6 py-5 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {mode === "add" ? "Add Student" : "Edit Student"}
+          </h1>
+
+          <p className="text-sm text-slate-500 mt-1">
+            {mode === "add"
+              ? "Fill the information below to create a student."
+              : "Update the student's information."}
+          </p>
+        </div>
+
+        <button
+          onClick={() => router.back()}
+          className="h-10 w-10 rounded-full hover:bg-slate-100 text-xl"
         >
-          <div className="border-b px-6 py-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">
-              {mode === "add"
-                ? "Add Student"
-                : "Update Student"}
-            </h2>
+          ✕
+        </button>
+      </div>
 
-            <button
-              onClick={onClose}
-              className="text-xl"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Form */}
+      <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
               <input
@@ -247,7 +255,7 @@ export default function StudentModal({
                     e.target.value
                   )
                 }
-                className={`border rounded-xl p-3 w-full ${
+                className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                   errors.full_name
                     ? "border-red-500"
                     : ""
@@ -269,7 +277,7 @@ export default function StudentModal({
                     e.target.value
                   )
                 }
-                className={`border rounded-xl p-3 w-full ${
+                className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                   errors.roll_no
                     ? "border-red-500"
                     : ""
@@ -280,28 +288,29 @@ export default function StudentModal({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Enrollment Number</label>
-              <input
-                type="text"
-                maxLength={20}
-                placeholder="Enrollment Number"
-                value={formData.enrollment_no}
-                onChange={(e) =>
-                  handleChange(
-                    "enrollment_no",
-                    e.target.value
-                  )
-                }
-              disabled={mode === "edit"}
-className={`border rounded-xl p-3 w-full ${
-  errors.enrollment_no
-    ? "border-red-500"
-    : "border-gray-300"
-} ${
-  mode === "edit"
-    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-    : "bg-white"
-}`}
-              />
+
+              
+           <input
+  type="text"
+  maxLength={20}
+  placeholder="Enrollment Number"
+  value={formData.enrollment_no}
+  onChange={(e) =>
+    handleChange("enrollment_no", e.target.value)
+  }
+  disabled={mode === "edit"}
+  className={`w-full rounded-xl border p-3 sm:p-3.5 text-sm sm:text-base
+    ${
+      errors.enrollment_no
+        ? "border-red-500"
+        : "border-gray-300"
+    }
+    ${
+      mode === "edit"
+        ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-100"
+        : "bg-white"
+    }`}
+ />
               {errors.enrollment_no && <div className="text-red-500 text-sm mt-1">{errors.enrollment_no}</div>}
             </div>
 
@@ -317,7 +326,7 @@ className={`border rounded-xl p-3 w-full ${
                     e.target.value
                   )
                 }
-                className={`border rounded-xl p-3 w-full ${
+                className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                   errors.batch
                     ? "border-red-500"
                     : ""
@@ -340,7 +349,7 @@ className={`border rounded-xl p-3 w-full ${
                         e.target.value
                       )
                     }
-                    className={`border rounded-xl p-3 w-full ${
+                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                       errors.email
                         ? "border-red-500"
                         : ""
@@ -362,7 +371,7 @@ className={`border rounded-xl p-3 w-full ${
                         e.target.value.replace(/\D/g, "")
                       )
                     }
-                    className={`border rounded-xl p-3 w-full ${
+                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                       errors.phone
                         ? "border-red-500"
                         : ""
@@ -383,7 +392,7 @@ className={`border rounded-xl p-3 w-full ${
                         e.target.value
                       )
                     }
-                    className={`border rounded-xl p-3 w-full ${
+                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                       errors.course
                         ? "border-red-500"
                         : ""
@@ -404,7 +413,7 @@ className={`border rounded-xl p-3 w-full ${
                         e.target.value
                       )
                     }
-                    className={`border rounded-xl p-3 w-full ${
+                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
                       errors.year
                         ? "border-red-500"
                         : ""
@@ -423,7 +432,7 @@ className={`border rounded-xl p-3 w-full ${
                         e.target.files?.[0]
                       )
                     }
-                    className="border rounded-xl p-3 w-full"
+                    className="border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base"
                   />
                 </div>
               </>
@@ -440,7 +449,7 @@ className={`border rounded-xl p-3 w-full ${
                       e.target.value
                     )
                   }
-                  className="border rounded-xl p-3 w-full"
+                  className="border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base"
                 >
                   <option value="active">
                     Active
@@ -452,29 +461,44 @@ className={`border rounded-xl p-3 w-full ${
               </div>
             )}
           </div>
+      {/* Footer */}
+      <div className="border-t px-6 py-5 flex justify-end gap-3">
 
-          <div className="border-t px-6 py-4 flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="px-5 py-2 border rounded-xl"
-            >
-              Cancel
-            </button>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="px-6 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-5 py-2 bg-orange-500 text-white rounded-xl disabled:opacity-50"
-            >
-              {loading
-                ? "Processing..."
-                : mode === "add"
-                  ? "Add Student"
-                  : "Update Student"}
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleSubmit}
+          className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
+        >
+          {loading
+            ? "Processing..."
+            : mode === "add"
+            ? "Add Student"
+            : "Update Student"}
+        </button>
+
+      </div>
+    </div>
+    <StatusModal
+      open={statusData.open}
+      type={statusData.type}
+      title={statusData.title}
+      message={statusData.message}
+      onClose={() =>
+        setStatusData((prev) => ({
+          ...prev,
+          open: false,
+        }))
+      }
+    />
+  </div>
+);
 }
