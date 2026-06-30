@@ -25,9 +25,19 @@ export default function InstituteProfilePage() {
 
   const [formData, setFormData] = useState({
     institute_name: "",
-    address: "",
     phone: "",
     website: "",
+    address: {
+  line1: "",
+  line2: "",
+  taluka: "",
+  dist: "",
+  state: "",
+  pincode: "",
+  autorizedName: "",
+  autorizedPhono: "",
+  nearbyLandmarks: "",
+},
   });
 
   const [statusData, setStatusData] = useState({
@@ -37,7 +47,20 @@ export default function InstituteProfilePage() {
   message: "",
 });
 
+const formatAddress = (address) => {
+  if (!address) return "-";
 
+  return [
+    address.line1,
+    address.line2,
+    address.taluka,
+    address.dist,
+    address.state,
+    address.pincode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+};
 
 useEffect(() => {
   const fetchInstituteProfile = async () => {
@@ -119,9 +142,19 @@ useEffect(() => {
   const handleCancel = () => {
     setFormData({
       institute_name: institute?.institute_name || "",
-      address: institute?.address || "",
-      phone: institute?.phone || "",
+  phone: institute?.phone || "",
       website: institute?.website || "",
+      address: institute?.address || {
+  line1: "",
+  line2: "",
+  taluka: "",
+  dist: "",
+  state: "",
+  pincode: "",
+  autorizedName: "",
+  autorizedPhono: "",
+  nearbyLandmarks: "",
+},
     });
 
     setIsEditing(false);
@@ -254,19 +287,117 @@ useEffect(() => {
             )}
 
             {isEditing ? (
-              <EditableItem
-                icon={FaMapMarkerAlt}
-                label="Location"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-              />
+             <div className="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+    Address
+  </p>
+
+  <div className="grid md:grid-cols-2 gap-4">
+
+    <input
+      type="text"
+      placeholder="Address Line 1"
+      value={formData.address.line1 || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            line1: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Address Line 2"
+      value={formData.address.line2 || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            line2: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="District"
+      value={formData.address.dist || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            dist: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="State"
+      value={formData.address.state || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            state: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Taluka"
+      value={formData.address.taluka || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            taluka: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Pincode"
+      value={formData.address.pincode || ""}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            pincode: e.target.value,
+          },
+        })
+      }
+      className="border rounded-xl p-3"
+    />
+
+  </div>
+</div>
             ) : (
-              <ProfileItem
-                icon={FaMapMarkerAlt}
-                label="Location"
-                value={institute.address}
-              />
+             <ProfileItem
+  icon={FaMapMarkerAlt}
+  label="Location"
+  value={formatAddress(institute.address)}
+/>
             )}
 
             <ProfileItem

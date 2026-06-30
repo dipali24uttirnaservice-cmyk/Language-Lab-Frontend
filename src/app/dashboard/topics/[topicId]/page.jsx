@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";import { motion } from "framer-motion";
 import {
   BookOpen,
   Layers,
@@ -10,10 +13,20 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+
 import { topicApi } from "@/services/topic/topicApi";
 export default function TopicDetailsPage() {
   const { topicId } = useParams();
-  const router = useRouter();
+const router = useRouter();
+
+const searchParams = useSearchParams();
+
+const courseId = searchParams.get("courseId");
+const type = searchParams.get("type");
+
+console.log("Topic ID:", topicId);
+console.log("Course ID:", courseId);
+console.log("Type:", type);
 
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState(null);
@@ -425,8 +438,9 @@ export default function TopicDetailsPage() {
     scale: 1.01,
   }}
   transition={{ duration: 0.25 }}
-  onClick={() => router.push(`/dashboard/subtopic/${subtopic._id}`)}
-  className="
+onClick={() =>
+  router.push(`/dashboard/module/${type}/${subtopic._id}`)
+}  className="
     group
     relative
     overflow-hidden
@@ -531,6 +545,8 @@ export default function TopicDetailsPage() {
       </div>
 
       <button
+
+      
         className="
           mt-5
           inline-flex

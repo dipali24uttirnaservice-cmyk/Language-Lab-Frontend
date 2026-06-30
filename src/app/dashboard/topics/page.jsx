@@ -11,9 +11,18 @@ import {
 } from "lucide-react";
 
 import { topicApi } from "@/services/topic/topicApi";
+import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function TopicPage() {
-    const router = useRouter();
+   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const courseId = searchParams.get("courseId");
+  const type = searchParams.get("type");
+
+  console.log(courseId);
+  console.log(type);
   const [loading, setLoading] = useState(true);
   const [topics, setTopics] = useState([]);
 
@@ -535,9 +544,11 @@ return (
             </div>
 
             <button
-              onClick={() =>
-                router.push(`/dashboard/topics/${topic._id}`)
-              }
+             onClick={() =>
+    router.push(
+      `/dashboard/topics/${topic._id}?courseId=${courseId}&type=${type}`
+    )
+  }
               className="
                 mt-5
                 inline-flex

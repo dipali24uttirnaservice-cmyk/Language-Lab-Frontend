@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter,useSearchParams } from "next/navigation";
+import { useRef } from "react";
+import { createPortal } from "react-dom";
+
 import {
   ArrowLeft,
   ChevronRight,
@@ -34,12 +37,24 @@ const CONTENT_TYPES = [
 export default function ModuleListPage() {
   const { type, subtopicId } = useParams();
   const router = useRouter();
+const searchParams = useSearchParams();
+const courseId = searchParams.get("courseId");
+
+const videoRef = useRef(null);
+const [openVideo, setOpenVideo] = useState(false);
+const [selectedVideo, setSelectedVideo] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState([]);
   const [activeTab, setActiveTab] = useState(type || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
+
+  const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
 
   useEffect(() => {
     fetchModules();
@@ -216,6 +231,7 @@ const currentFloating =
 
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] p-4 md:p-8 overflow-hidden">
+    
       
       {/* 3D Moving Ambient Background Layer */}
      {/* ===== Premium 3D Animated Background ===== */}
@@ -280,10 +296,44 @@ const currentFloating =
 })}
 </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto space-y-8">
-        
-        {/* Dynamic Theme Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-slate-100">
+     <div className="relative z-10 max-w-7xl mx-auto space-y-8">
+
+  {/* Breadcrumb */}
+  <div className="flex items-center gap-2 text-sm text-gray-500">
+    <button
+      onClick={() => router.push("/dashboard")}
+      className="hover:text-orange-500"
+    >
+      Dashboard
+    </button>
+
+    <ChevronRight size={14} />
+
+    <button
+      onClick={() => router.push("/dashboard/courses")}
+      className="hover:text-orange-500"
+    >
+      Courses
+    </button>
+
+    <ChevronRight size={14} />
+
+    <button
+      onClick={() => router.back()}
+      className="hover:text-orange-500"
+    >
+      Topic
+    </button>
+
+    <ChevronRight size={14} />
+
+    <span className="capitalize font-medium">
+      {type} Modules
+    </span>
+  </div>
+
+  {/* Dynamic Theme Banner */}
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-slate-100">
           <div className="flex items-center gap-5">
             <button
               onClick={() => router.back()}
@@ -389,38 +439,65 @@ const currentFloating =
                   className="group relative flex flex-col justify-between overflow-hidden bg-white rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(255,138,0,0.08)] hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
                 >
                   
-                  {/* VIDEO MODULE CORNER */}
-                  {currentModuleType === "video" && (
-                    <>
-                      <div className="relative overflow-hidden aspect-video bg-slate-900">
-                        <video
-                          className="h-full w-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500"
-                          src={module.video?.url}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 to-transparent" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="h-14 w-14 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-orange-600 transition-all">
-                            <Play size={20} fill="currentColor" className="ml-1" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-[#0B1A30] group-hover:text-orange-500 transition-colors line-clamp-1">{module.title}</h3>
-                          <p className="mt-1.5 text-sm text-slate-500 line-clamp-2">{module.description || "Video Lab Lesson"}</p>
-                        </div>
-                        <div className="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-bold text-slate-400">
-                          <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg">
-                            <Clock size={13} />
-                            {module.video?.duration_sec ? `${Math.floor(module.video.duration_sec / 60)} min` : "Video Lesson"}
-                          </span>
-                          <span className="text-orange-500 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                            Explore <ChevronRight size={14} />
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                 {/* VIDEO MODULE CORNER */}
+{currentModuleType === "video" && (
+  <>
+    <div className="relative overflow-hidden aspect-video bg-slate-900">
+     <video
+  src={module.video?.url}
+  muted
+  preload="metadata"
+  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+/>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+
+      {/* Play Button */}
+     <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedVideo(module.video?.url);
+    setOpenVideo(true);
+  }}
+  className="absolute inset-0 flex items-center justify-center"
+>
+  <div className="h-16 w-16 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110">
+    <Play
+      size={24}
+      fill="currentColor"
+      className="ml-1"
+    />
+  </div>
+</button>
+    </div>
+
+    <div className="p-6 flex-1 flex flex-col justify-between">
+      <div>
+        <h3 className="text-lg font-bold text-[#0B1A30] group-hover:text-orange-500 transition-colors line-clamp-1">
+          {module.title}
+        </h3>
+
+        <p className="mt-1.5 text-sm text-slate-500 line-clamp-2">
+          {module.description || "Video Lab Lesson"}
+        </p>
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400">
+        <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg">
+          <Clock size={13} />
+          {module.video?.duration_sec
+            ? `${Math.floor(module.video.duration_sec / 60)} min`
+            : "Video Lesson"}
+        </span>
+
+        <span className="text-orange-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          Explore
+          <ChevronRight size={14} />
+        </span>
+      </div>
+    </div>
+  </>
+)}
 
                   {/* AUDIO MODULE CORNER */}
                   {currentModuleType === "audio" && (
@@ -518,6 +595,39 @@ const currentFloating =
           </div>
         )}
       </div>
+      {openVideo && (
+  <div
+    className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+    onClick={() => {
+      setOpenVideo(false);
+      setSelectedVideo("");
+    }}
+  >
+    <div
+      className="relative w-full max-w-5xl rounded-3xl overflow-hidden bg-black shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close */}
+      <button
+        onClick={() => {
+          setOpenVideo(false);
+          setSelectedVideo("");
+        }}
+        className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-white text-slate-700 hover:bg-orange-500 hover:text-white transition"
+      >
+        ✕
+      </button>
+
+      <video
+        src={selectedVideo}
+        controls
+        autoPlay
+        playsInline
+        className="w-full max-h-[85vh] bg-black"
+      />
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { studentApi } from "@/services/student/studentApi";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+
 import {
   FaVideo,
   FaHeadphones,
@@ -23,7 +27,7 @@ const menus = [
     color: "from-blue-500 to-indigo-600",
   },
    {
-  name: "Topics",
+  name: "Learning Journey",
   href: "/dashboard/topics",
   icon: FaBookOpen,
   color: "from-amber-500 to-orange-600",
@@ -72,10 +76,61 @@ const menus = [
   
 ];
 
+
+
+const getAvailableCourses = async () => {
+  try {
+    setLoadingCourses(true);
+
+    const token = Cookies.get("token");
+
+    const res = await studentApi.get(
+      "/student/me/available-courses",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.data.success) {
+      setCourses(res.data.data);
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoadingCourses(false);
+  }
+};
+
 export default function DashboardSidebar({  isOpen,
   setShowLogoutModal, }) {
-  const pathname = usePathname();
+const pathname = usePathname();
+const [courses, setCourses] = useState([]);
+const [loadingCourses, setLoadingCourses] = useState(false);
+const [openLearning, setOpenLearning] = useState(false);
 
+
+
+useEffect(() => {
+  fetchCourses();
+}, []);
+
+const fetchCourses = async () => {
+  try {
+    setLoadingCourses(true);
+
+    const res = await studentApi.getAvailableCourses();
+
+    if (res.data.success) {
+      setCourses(res.data.data);
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingCourses(false);
+  }
+};
   return (
     <aside
       className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300 ease-in-out
@@ -157,113 +212,173 @@ export default function DashboardSidebar({  isOpen,
         </div>
 
         {/* Menu */}
-        <div className="space-y-2">
-          {menus.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-if (item.action === "logout") {
-  return (
-    <motion.div
-      key={item.name}
-      whileHover={{ x: 4, scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-    >
-      <button
-        type="button"
-        onClick={() => setShowLogoutModal(true)}
-        className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
-      >
-        <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 bg-white text-red-500 border-slate-200 group-hover:border-red-300">
-          <Icon className="text-sm" />
-        </div>
+       <div className="space-y-2">
+  {menus.map((item) => {
+    const Icon = item.icon;
 
-        <span className="relative z-10 text-sm font-bold text-slate-700">
-          Logout
-        </span>
+    const active =
+      item.name === "Dashboard"
+        ? pathname === "/dashboard"
+        : pathname === item.href;
 
-        <div className="ml-auto h-2 w-2 rounded-full bg-transparent group-hover:bg-red-400 transition-all" />
-      </button>
-    </motion.div>
-  );
-}
-            return (
+    // =========================
+    // LOGOUT
+    // =========================
+    if (item.action === "logout") {
+      return (
+        <motion.div
+          key={item.name}
+          whileHover={{ x: 4, scale: 1.02 }}
+          transition={{ duration: 0.2 }}
+        >
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden"
+          >
+            <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 bg-white text-red-500 border-slate-200">
+              <Icon className="text-sm" />
+            </div>
+
+            <span className="relative z-10 text-sm font-bold text-slate-700">
+              Logout
+            </span>
+          </button>
+        </motion.div>
+      );
+    }
+
+    // =========================
+    // LEARNING JOURNEY
+    // =========================
+    if (item.name === "Learning Journey") {
+const learningActive =
+  pathname.startsWith("/dashboard/course") ||
+  pathname.startsWith("/dashboard/topics");
+      return (
+        <div key={item.name}>
+          <button
+            onClick={() => setOpenLearning(!openLearning)}
+            className="relative flex items-center w-full p-3 rounded-xl hover:bg-orange-50 transition-all"
+          >
+            {learningActive && (
               <motion.div
-                key={item.name}
-                whileHover={{
-                  x: 4,
-                  scale: 1.02,
-                }}
-                transition={{
-                  duration: 0.2,
-                }}
-              >
-                 <Link
-  href={item.href}
-  className="
-    relative
-    flex
-    items-center
-    w-full
-    p-3
-    rounded-xl
-    transition-all
-    group
-    overflow-hidden
-    cursor-pointer
-  "
->
- {/* Left active indicator */}
- 
-                  {/* Active Background */}
-            {active && (
-  <motion.div
-    layoutId="activeSidebarGlow"
-    className={`
-      absolute inset-0 rounded-xl
-      bg-gradient-to-r
-      ${item.bg}
-      border-2
-      ${item.border}
-      shadow-lg
-    `}
-  />
-)}
-                  {/* Icon */}
-                <div
-  className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300
-  ${
-    active
-      ? `bg-gradient-to-br ${item.color} text-white border-transparent shadow-lg`
-      : "bg-white text-slate-500 border-slate-200 group-hover:border-slate-300"
-  }`}
->
-                    <Icon className="text-sm" />
-                  </div>
+                layoutId="activeSidebarGlow"
+                className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 border-2 border-orange-500 shadow-lg"
+              />
+            )}
 
-                  {/* Label */}
-              <span
-  className={`relative z-10 text-sm font-bold ${
-    active
-      ? `${item.text} font-extrabold`
-      : "text-slate-700 group-hover:text-slate-900"
+            <div
+              className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 ${
+                learningActive
+                  ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-transparent"
+                  : "bg-white text-orange-500 border-slate-200"
+              }`}
+            >
+              <Icon />
+            </div>
+
+            <span
+              className={`relative z-10 flex-1 text-left text-sm font-bold ${
+                learningActive
+                  ? "text-orange-700"
+                  : "text-slate-700"
+              }`}
+            >
+              Learning Journey
+            </span>
+
+            <span className="relative z-10">
+              {openLearning ? "▲" : "▼"}
+            </span>
+          </button>
+
+          {openLearning && (
+            <div className="ml-14 mt-2 space-y-1">
+              {loadingCourses ? (
+                <p className="text-xs text-gray-500 px-3 py-2">
+                  Loading...
+                </p>
+              ) : (
+                courses.map((course) => {
+                 const courseActive = pathname.startsWith(
+  `/dashboard/course/${course._id}`
+);
+
+                  return (
+                  <Link
+  key={course._id}
+  href={`/dashboard/course/${course._id}`}
+  className={`block rounded-lg px-3 py-2 text-sm transition ${
+    pathname === `/dashboard/course/${course._id}`
+      ? "bg-orange-100 text-orange-700 font-semibold"
+      : "hover:bg-orange-50 text-slate-600"
   }`}
 >
-  {item.name}
-</span>
-
-                  {/* Hover Accent Dot */}
-              <div
-  className={`relative z-10 ml-auto h-2 w-2 rounded-full transition-all duration-300 ${
-    active
-      ? item.dot
-      : "bg-transparent group-hover:bg-slate-300"
-  }`}
-/>
-                </Link>
-              </motion.div>
-            );
-          })}
+  {course.course_name}
+</Link>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
+      );
+    }
+
+    // =========================
+    // NORMAL MENU
+    // =========================
+    return (
+      <motion.div
+        key={item.name}
+        whileHover={{ x: 4, scale: 1.02 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Link
+          href={item.href}
+          className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden"
+        >
+          {active && (
+            <motion.div
+              layoutId="activeSidebarGlow"
+              className={`absolute inset-0 rounded-xl bg-gradient-to-r ${
+                item.bg || "from-blue-50 to-indigo-50"
+              } border-2 ${item.border || "border-blue-500"} shadow-lg`}
+            />
+          )}
+
+          <div
+            className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 ${
+              active
+                ? `bg-gradient-to-br ${item.color} text-white border-transparent`
+                : "bg-white text-slate-500 border-slate-200"
+            }`}
+          >
+            <Icon />
+          </div>
+
+          <span
+            className={`relative z-10 text-sm font-bold ${
+              active
+                ? item.text || "text-blue-700"
+                : "text-slate-700"
+            }`}
+          >
+            {item.name}
+          </span>
+
+          <div
+            className={`relative z-10 ml-auto h-2 w-2 rounded-full ${
+              active
+                ? item.dot || "bg-blue-500"
+                : "bg-transparent"
+            }`}
+          />
+        </Link>
+      </motion.div>
+    );
+  })}
+</div>
       </div>
 
       {/* =====================================================
