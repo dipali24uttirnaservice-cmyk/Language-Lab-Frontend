@@ -37,48 +37,13 @@ export default function instituteDashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard title="Enrolled Students" value="482" icon={GraduationCap} color="from-blue-500 to-indigo-600" sub="+12 added this week" />
-          <StatCard title="Active Teachers" value="24" icon={Users} color="from-amber-400 to-orange-500" sub="Top 5% in District" />
+          <StatCard title="Courses Licensed" value="24" icon={Users} color="from-amber-400 to-orange-500" sub="Top 5% in District" />
           <StatCard title="Certificates" value="5" icon={CheckCircle2} color="from-emerald-400 to-emerald-600" sub="Ready to export" />
           <StatCard title="License Status" value="Active" icon={ShieldCheck} color="from-rose-500 to-pink-600" sub="Expires in 6 months" />
         </div>
 
         {/* Main Layout */}
-       {/* Main Layout */}
-        <div className="grid lg:grid-cols-3 gap-8 items-start">
-          
-          {/* Recent Activity Log */}
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <Activity size={18} className="text-indigo-600" /> Recent Activity Log
-              </h3>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Live Syncing</span>
-            </div>
-            
-            <div className="space-y-0"> {/* Removed space-y-1 for tighter control */}
-              <ActivityRow icon={CheckCircle2} text="New student enrollment request approved" time="10 MINS AGO" colorClass="from-emerald-400 to-emerald-600" />
-              <ActivityRow icon={Users} text="Teacher profile updated by Administration" time="2 HOURS AGO" colorClass="from-blue-400 to-blue-600" />
-              <ActivityRow icon={GraduationCap} text="Course syllabus verified for semester" time="YESTERDAY" colorClass="from-amber-400 to-orange-500" />
-              <ActivityRow icon={ShieldCheck} text="Security credentials renewed" time="3 DAYS AGO" colorClass="from-rose-400 to-rose-600" />
-            </div>
-          </div>
-
-          {/* Campus Goal Card - UPDATED PROGRESS BAR */}
-          <motion.div whileHover={{ y: -4 }} className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-             <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 mb-4">🏆 Campus Goal</h3>
-             <p className="mb-4 text-xs font-medium text-slate-400">Reach Full Enrollment Capacity</p>
-             <div className="space-y-2">
-                <div className="flex justify-between text-xs font-black">
-                  <span>Progress</span>
-                  <span className="text-indigo-600">74%</span>
-                </div>
-                {/* Updated Gradient: matches your screenshot's orange-to-green transition */}
-                <div className="h-3 rounded-full bg-slate-100 overflow-hidden shadow-inner">
-                   <div className="h-full w-[74%] bg-gradient-to-r from-orange-400 via-amber-400 to-emerald-500" />
-                </div>
-             </div>
-          </motion.div>
-        </div>
+     
       </div>
     </div>
   );

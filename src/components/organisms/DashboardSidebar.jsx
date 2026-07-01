@@ -123,10 +123,13 @@ const fetchCourses = async () => {
     const res = await studentApi.getAvailableCourses();
 
     if (res.data.success) {
-      setCourses(res.data.data);
+      setCourses(
+        res.data.data?.purchased_courses?.courses || []
+      );
     }
   } catch (err) {
     console.error(err);
+    setCourses([]);
   } finally {
     setLoadingCourses(false);
   }

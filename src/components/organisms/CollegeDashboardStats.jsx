@@ -10,7 +10,7 @@ const stats = [
     color: "from-blue-500 to-indigo-600",
   },
   {
-    title: "ACTIVE TEACHERS",
+    title: "Courses Licensed",
     value: "24",
     sub: "Top 5% in district",
     icon: Users,

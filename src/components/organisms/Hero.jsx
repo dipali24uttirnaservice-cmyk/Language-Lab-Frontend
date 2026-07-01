@@ -71,12 +71,12 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Active Teachers 3D Tile */}
+              {/* Courses Licensed 3D Tile */}
               <div className="bg-amber-50/40 border-2 border-amber-200/70 rounded-3xl p-6 shadow-[0_8px_0_0_#fef3c7] relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-amber-500" />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-black tracking-wider text-amber-700/70 uppercase">Active Teachers</p>
+                    <p className="text-[10px] font-black tracking-wider text-amber-700/70 uppercase">Courses Licensed</p>
                     <h3 className="text-4xl font-black text-slate-800 tracking-tight mt-1">24</h3>
                   </div>
                   <div className="bg-amber-500 text-white p-3 rounded-2xl shadow-[0_4px_0_0_#b45309]">
