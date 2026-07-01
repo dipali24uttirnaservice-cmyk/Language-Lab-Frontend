@@ -17,7 +17,11 @@ export const studentApi = {
     }),
 
   updateStudent: (id, data) =>
-    api.put(`/student/${id}`, data),
+  api.put(`/student/${id}`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }),
 
   deleteStudent: (id) =>
     api.delete(`/student/${id}`),

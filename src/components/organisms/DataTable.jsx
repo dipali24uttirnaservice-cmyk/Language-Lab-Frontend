@@ -6,7 +6,7 @@ import TableToolbar from "../molecules/TableToolbar";
 import Pagination from "../molecules/Pagination";
 
 export default function DataTable({
-   title,
+  title,
   columns,
   data,
   search,
@@ -14,10 +14,14 @@ export default function DataTable({
   onAdd,
   onBulkUpload,
   loading,
-    
 
-}) {
- 
+  segment,
+  setSegment,
+  year,
+  setYear,
+  segmentOptions,
+  yearOptions,
+}){
 
   const [page, setPage] =
     useState(1);
@@ -40,12 +44,20 @@ export default function DataTable({
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
 
-    <TableToolbar
+  <TableToolbar
   title={title}
   search={search}
   setSearch={setSearch}
   onAdd={onAdd}
   onBulkUpload={onBulkUpload}
+
+  segment={segment}
+  setSegment={setSegment}
+  year={year}
+  setYear={setYear}
+
+  segmentOptions={segmentOptions}
+  yearOptions={yearOptions}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

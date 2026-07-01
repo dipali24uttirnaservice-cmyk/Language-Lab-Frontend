@@ -23,6 +23,8 @@ const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+  const [segment, setSegment] = useState("");
+const [year, setYear] = useState("");
 const [previewData, setPreviewData] = useState([]);
 const [selectedFile, setSelectedFile] = useState(null);
 const [showPreview, setShowPreview] = useState(false);
@@ -41,11 +43,10 @@ const [showAddOptions, setShowAddOptions] = useState(false);
     try {
       setLoading(true);
       const response = await studentApi.getStudents();
-setStudents(
-  (response.data.data || []).filter(
-    (student) => student.is_active
-  )
-);    } catch (error) {
+const studentList = response.data.data.students || [];
+
+setStudents(studentList); 
+  } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
@@ -56,22 +57,43 @@ setStudents(
     loadStudents();
   }, [loadStudents]);
 
- const filteredData = useMemo(() => {
-  const keyword = search.toLowerCase();
+  const segmentOptions = useMemo(() => {
+  return [...new Set(students.map((s) => s.segment).filter(Boolean))];
+}, [students]);
 
-  return students.filter((student) =>
-    [
+const yearOptions = useMemo(() => {
+  return [...new Set(students.map((s) => s.year).filter(Boolean))].sort(
+    (a, b) => a - b
+  );
+}, [students]);
+
+const filteredData = useMemo(() => {
+  const keyword = search.trim().toLowerCase();
+
+  return students.filter((student) => {
+    const matchesSearch = [
       student.full_name,
       student.email,
-      student.course,
-      student.enrollment_no,
+      student.phone,
       student.roll_no,
+      student.enrollment_no,
+      student.segment,
+      ...(student.purchased_courses || []),
     ]
+      .filter(Boolean)
       .join(" ")
       .toLowerCase()
-      .includes(keyword)
-  );
-}, [students, search]);
+      .includes(keyword);
+
+    const matchesSegment =
+      !segment || student.segment === segment;
+
+    const matchesYear =
+      !year || Number(student.year) === Number(year);
+
+    return matchesSearch && matchesSegment && matchesYear;
+  });
+}, [students, search, segment, year]);
 
   const handleAdd = () => {
   setShowAddOptions(true);
@@ -111,36 +133,51 @@ const handleEdit = (id) => {
     }
   };
 
- const columns = [
+const columns = [
   {
     title: "Student",
     key: "student",
     render: (row) => (
-    <button
-  onClick={() => handleView(row._id)}
-  className="text-left"
->
-  <span className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
+      <button
+        onClick={() => handleView(row)}
+        className="text-left group"
+      >
+        <span className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
     {row.full_name}
   </span>
 
-  <div className="text-xs text-slate-500 mt-1">
-    {row.email}
-  </div>
-
-  <div className="text-xs text-slate-400">
-    {row.enrollment_no}
-  </div>
-</button>
+        <p className="text-xs text-slate-500">
+          {row.email}
+        </p>
+      </button>
     ),
   },
 
   {
-    title: "Course",
-    key: "course",
+    title: "Roll No & Enrollment No",
+    key: "roll_no",
     render: (row) => (
       <div>
-        <p className="font-medium">{row.course}</p>
+        <p className="font-medium text-slate-700">
+          {row.roll_no}
+        </p>
+
+        <p className="text-xs text-slate-500">
+          {row.enrollment_no}
+        </p>
+      </div>
+    ),
+  },
+
+  {
+    title: "Segment & Year",
+    key: "segment_year",
+    render: (row) => (
+      <div>
+        <p className="font-medium">
+          {row.segment}
+        </p>
+
         <p className="text-xs text-slate-500">
           Year {row.year}
         </p>
@@ -148,20 +185,7 @@ const handleEdit = (id) => {
     ),
   },
 
-  {
-    title: "Last Login",
-    key: "last_login",
-    render: (row) =>
-      row.last_login ? (
-        <span className="text-sm text-slate-600">
-          {new Date(row.last_login).toLocaleDateString()}
-        </span>
-      ) : (
-        <span className="text-slate-400">
-          Never
-        </span>
-      ),
-  },
+ 
 
   {
     title: "Status",
@@ -184,9 +208,9 @@ const handleEdit = (id) => {
     key: "actions",
     render: (row) => (
       <TableActions
-        onView={() => handleView(row._id)}
-        onEdit={() => handleEdit(row._id)}
-        onDelete={() => handleDelete(row._id)}
+        onView={() => handleView(row)}
+        onEdit={() => handleEdit(row.id)}
+        onDelete={() => handleDelete(row.id)}
       />
     ),
   },
@@ -285,41 +309,32 @@ console.log("USER DATA", userData);
 console.log("INSTITUTE", userData?.institute);
 console.log("INSTITUTE ID", userData?.institute?._id);
 
-const handleView = async (id) => {
-  try {
-    setLoading(true);
-
-    
-
-    setViewStudent(response.data.data);
-    setViewOpen(true);
-  } catch (error) {
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Error",
-      message: "Unable to fetch student details.",
-    });
-  } finally {
-    setLoading(false);
-  }
+const handleView = (student) => {
+  setViewStudent(student);
+  setViewOpen(true);
 };
 
   return (
     <div>
 
-      <DataTable
-        title="Students"
-        columns={columns}
-        data={filteredData}
-        search={search}
-        setSearch={setSearch}
-        onAdd={handleAdd}
-       onBulkUpload={handleBulkUpload}
-         sampleExcel="/sample-students.xlsx"
+    <DataTable
+  title="Students"
+  columns={columns}
+  data={filteredData}
+  search={search}
+  setSearch={setSearch}
+  onAdd={handleAdd}
+  onBulkUpload={handleBulkUpload}
   loading={loading}
 
-      />
+  segment={segment}
+  setSegment={setSegment}
+  year={year}
+  setYear={setYear}
+
+  segmentOptions={segmentOptions}
+  yearOptions={yearOptions}
+/>
     <input
   id="studentExcelUpload"
   type="file"
