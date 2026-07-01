@@ -184,8 +184,29 @@ const columns = [
       </div>
     ),
   },
-
- 
+  
+  {
+    title: "Purchased Courses",
+    key: "purchased_courses",
+    render: (row) => (
+      <div className="flex flex-wrap gap-1">
+        {row.purchased_courses && row.purchased_courses.length > 0 ? (
+          row.purchased_courses.map((course, index) => (
+            <span
+              key={index}       className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"            
+          
+  >
+              {course}
+            </span>
+          ))
+        ) : (
+          <p className="text-sm text-slate-500">
+            No courses purchased
+          </p>
+        )}
+      </div>
+    ),
+  },
 
   {
     title: "Status",
