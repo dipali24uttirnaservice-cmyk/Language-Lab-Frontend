@@ -38,13 +38,15 @@ export default function TableToolbar({
           </p>
         </div>
 
-       <button
+      <button
   onClick={onAdd}
   className="
     inline-flex
     items-center
     gap-2
     rounded-xl
+    border
+    border-orange-600
     bg-gradient-to-r
     from-orange-500
     to-orange-600
@@ -52,14 +54,14 @@ export default function TableToolbar({
     py-3
     text-white
     font-semibold
-    shadow-lg
-    hover:from-orange-600
-    hover:to-orange-700
-    hover:shadow-xl
-    hover:scale-[1.02]
-    active:scale-95
+    shadow-md
     transition-all
     duration-200
+    hover:-translate-y-0.5
+    hover:shadow-xl
+    hover:from-orange-600
+    hover:to-orange-700
+    active:scale-95
   "
 >
   <Plus size={18} />
@@ -68,130 +70,135 @@ export default function TableToolbar({
 
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+     {/* Filters */}
+<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-        {/* Search */}
-        <div className="relative md:col-span-2">
+  {/* Search */}
+  <div className="relative md:col-span-2">
+    <Search
+      size={18}
+      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+    />
 
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search by Name, Roll No..."
+      className="
+        w-full
+        h-12
+        rounded-xl
+        border-2
+        border-slate-200
+        bg-white
+        pl-11
+        pr-4
+        text-sm
+        text-slate-700
+        shadow-sm
+        outline-none
+        transition-all
+        focus:border-orange-500
+        focus:ring-4
+        focus:ring-orange-100
+      "
+    />
+  </div>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by Name, Roll No..."
-            className="
-              w-full
-              h-12
-              rounded-xl
-              border
-              border-slate-200
-              bg-slate-50
-              pl-11
-              pr-4
-              text-sm
-              outline-none
-              transition-all
-              focus:bg-white
-              focus:border-indigo-500
-              focus:ring-4
-              focus:ring-indigo-100
-            "
-          />
+  {/* Segment */}
+ <select
+  value={segment}
+  onChange={(e) => setSegment(e.target.value)}
+  className={`
+    h-12
+    rounded-xl
+    border-2
+    bg-white
+    px-4
+    text-sm
+    shadow-sm
+    outline-none
+    transition-all
+    ${
+      segment
+        ? "border-orange-500 ring-4 ring-orange-100"
+        : "border-slate-200"
+    }
+    focus:border-orange-500
+    focus:ring-4
+    focus:ring-orange-100
+  `}
+>
+    <option value="">All Segments</option>
 
-        </div>
+    {segmentOptions.map((item) => (
+      <option key={item} value={item}>
+        {item}
+      </option>
+    ))}
+  </select>
 
-        {/* Segment */}
-        <select
-          value={segment}
-          onChange={(e) => setSegment(e.target.value)}
-          className="
-            h-12
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            px-4
-            text-sm
-            outline-none
-            transition
-            focus:border-indigo-500
-            focus:ring-4
-            focus:ring-indigo-100
-          "
-        >
-          <option value="">All Segments</option>
+  {/* Year + Reset */}
+  <div className="flex gap-3">
 
-          {segmentOptions.map((item) => (
-            <option
-              key={item}
-              value={item}
-            >
-              {item}
-            </option>
-          ))}
-        </select>
+  <select
+  value={year}
+  onChange={(e) => setYear(e.target.value)}
+  className={`
+    flex-1
+    h-12
+    rounded-xl
+    border-2
+    bg-white
+    px-4
+    text-sm
+    shadow-sm
+    outline-none
+    transition-all
+    ${
+      year
+        ? "border-orange-500 ring-4 ring-orange-100"
+        : "border-slate-200"
+    }
+    focus:border-orange-500
+    focus:ring-4
+    focus:ring-orange-100
+  `}
+>
+      <option value="">All Years</option>
 
-        {/* Year */}
-        <div className="flex gap-3">
+      {yearOptions.map((item) => (
+        <option key={item} value={item}>
+          Year {item}
+        </option>
+      ))}
+    </select>
 
-          <select
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="
-              flex-1
-              h-12
-              rounded-xl
-              border
-              border-slate-200
-              bg-white
-              px-4
-              text-sm
-              outline-none
-              transition
-              focus:border-indigo-500
-              focus:ring-4
-              focus:ring-indigo-100
-            "
-          >
-            <option value="">All Years</option>
+    <button
+      onClick={clearFilters}
+      className="
+        h-12
+        w-12
+        rounded-xl
+        border-2
+        border-slate-200
+        bg-white
+        flex
+        items-center
+        justify-center
+        shadow-sm
+        transition-all
+        hover:border-orange-500
+        hover:bg-orange-50
+        hover:text-orange-600
+      "
+    >
+      <RotateCcw size={18} />
+    </button>
 
-            {yearOptions.map((item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                Year {item}
-              </option>
-            ))}
-          </select>
+  </div>
 
-          <button
-            onClick={clearFilters}
-            className="
-              h-12
-              w-12
-              rounded-xl
-              border
-              border-slate-200
-              bg-white
-              flex
-              items-center
-              justify-center
-              hover:bg-slate-100
-              transition
-            "
-          >
-            <RotateCcw size={18} />
-          </button>
-
-        </div>
-
-      </div>
-
+</div>
     </div>
   );
 }
