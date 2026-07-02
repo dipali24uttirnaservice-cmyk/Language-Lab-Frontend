@@ -273,24 +273,24 @@ if (!mounted) {
           href={item.href}
           className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden cursor-pointer"
         >
-          {active && (
-            <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-indigo-600 z-20" />
-          )}
+        {active && (
+  <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-orange-500 z-20" />
+)}
 
-          {active && (
-            <motion.div
-              layoutId="activeSidebarGlow"
-              className="
-                absolute inset-0 rounded-xl
-                bg-gradient-to-r
-                from-indigo-50
-                via-blue-50
-                to-violet-50
-                border-2 border-indigo-500
-                shadow-[0_0_25px_rgba(99,102,241,0.15)]
-              "
-            />
-          )}
+         {active && (
+  <motion.div
+    layoutId="activeSidebarGlow"
+    className="
+      absolute inset-0 rounded-xl
+      bg-gradient-to-r
+      from-orange-50
+      via-amber-50
+      to-yellow-50
+      border-2 border-orange-500
+      shadow-[0_0_25px_rgba(249,115,22,0.18)]
+    "
+  />
+)}
 
           <div
             className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 transition-all duration-300 ${
