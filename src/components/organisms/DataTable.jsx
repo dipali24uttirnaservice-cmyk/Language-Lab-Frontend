@@ -76,15 +76,19 @@ export default function DataTable({
 
   <thead className="bg-slate-100">
   <tr>
-     {showSelection && (
-    <th className="p-4 w-12">
-      <input
-        type="checkbox"
-        checked={allCurrentPageSelected}
-        onChange={() => onSelectAll(paginatedData)}
-      />
-    </th>
-  )}
+    {showSelection && (
+      <th className="p-4 w-12">
+        <input
+          type="checkbox"
+          checked={allCurrentPageSelected}
+          onChange={() => onSelectAll(paginatedData)}
+        />
+      </th>
+    )}
+
+   <th className="p-4 text-left uppercase text-xs font-black tracking-wider w-20">
+  Sr. No.
+</th>
 
     {columns.map((column) => (
       <th
@@ -99,10 +103,12 @@ export default function DataTable({
 
           <tbody>
 
-            {paginatedData.map(
-              (row, index) => (
+           {paginatedData.map((row, index) => {
+  const serialNo = (page - 1) * pageSize + index + 1;
+
+  return (
                 <tr
-                  key={index}
+                   key={row.id || row._id || index}
                   className="
                     border-t
                     hover:bg-slate-50
@@ -118,6 +124,10 @@ export default function DataTable({
       />
     </td>
   )}
+
+ <td className="p-4 font-semibold text-slate-600">
+  {serialNo}
+</td>
                   {columns.map(
                     (column) => (
                       <td
@@ -137,9 +147,9 @@ export default function DataTable({
                     )
                   )}
                 </tr>
-              )
-            )}
 
+             );
+})}
           </tbody>
 
         </table>

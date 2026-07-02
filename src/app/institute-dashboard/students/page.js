@@ -45,6 +45,8 @@ const showSelection = Boolean(segment && year);
 
 const [showAssignModal, setShowAssignModal] = useState(false);
 const [selectedCourses, setSelectedCourses] = useState([]);const [courses, setCourses] = useState([]);
+const [coursesModalOpen, setCoursesModalOpen] = useState(false);
+const [selectedStudent, setSelectedStudent] = useState(null);
 
   const loadStudents = useCallback(async () => {
     try {
@@ -209,6 +211,7 @@ const handleEdit = (id) => {
 
 const columns = [
   
+  
  {
     title: "Student",
     key: "student",
@@ -260,28 +263,31 @@ const columns = [
     ),
   },
   
-  {
-    title: "Purchased Courses",
-    key: "purchased_courses",
-    render: (row) => (
-      <div className="flex flex-wrap gap-1">
-        {row.purchased_courses && row.purchased_courses.length > 0 ? (
-          row.purchased_courses.map((course, index) => (
-            <span
-              key={index}       className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"            
-          
-  >
-              {course}
-            </span>
-          ))
-        ) : (
-          <p className="text-sm text-slate-500">
-            No courses purchased
-          </p>
-        )}
-      </div>
-    ),
+{
+  title: "Courses",
+  key: "purchased_courses",
+  render: (row) => {
+    const count = row.purchased_courses?.length || 0;
+
+    return (
+      <button
+        disabled={count === 0}
+        onClick={() => {
+          setSelectedStudent(row);
+          setCoursesModalOpen(true);
+        }}
+        className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+          count > 0
+            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+            : "bg-slate-100 text-slate-500 cursor-default"
+        }`}
+      >
+        {count} {count === 1 ? "Course" : "Courses"}
+      </button>
+    );
   },
+},
+
 
   {
     title: "Status",
@@ -655,6 +661,63 @@ disabled={selectedCourses.length === 0}          onClick={assignCourse}
 
     </div>
 
+  </div>
+)}
+
+{coursesModalOpen && selectedStudent && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="w-full max-w-lg rounded-3xl bg-white shadow-xl">
+
+      <div className="border-b p-6">
+        <h2 className="text-2xl font-bold">
+          Assigned Courses
+        </h2>
+
+        <p className="mt-1 text-slate-500">
+          Student:
+          <span className="ml-2 font-semibold text-slate-800">
+            {selectedStudent.full_name}
+          </span>
+        </p>
+      </div>
+
+      <div className="max-h-[400px] overflow-y-auto p-6">
+
+        {selectedStudent.purchased_courses?.length > 0 ? (
+          <ul className="space-y-3">
+            {selectedStudent.purchased_courses.map((course, index) => (
+              <li
+                key={index}
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-sm font-bold">
+                  {index + 1}
+                </div>
+
+                <span className="font-medium">
+                  {course}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="py-12 text-center text-slate-500">
+            No courses assigned.
+          </div>
+        )}
+
+      </div>
+
+      <div className="flex justify-end border-t p-5">
+        <button
+          onClick={() => setCoursesModalOpen(false)}
+          className="rounded-xl border px-5 py-2 hover:bg-slate-100"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
   </div>
 )}
 
