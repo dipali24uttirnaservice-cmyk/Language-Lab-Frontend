@@ -33,12 +33,7 @@ const menuItems = [
     color: "from-amber-400 to-orange-500",
   },
  
-  {
-    title: "Analytics",
-    href: "/institute-dashboard/analytics",
-    icon: BarChart3,
-    color: "from-pink-500 to-rose-500",
-  },
+  
 
   {
   title: "License & Subscription",
