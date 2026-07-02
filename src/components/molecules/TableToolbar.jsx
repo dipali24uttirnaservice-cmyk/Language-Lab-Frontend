@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Search, Plus, RotateCcw } from "lucide-react";
 
 export default function TableToolbar({
@@ -7,12 +8,10 @@ export default function TableToolbar({
   search,
   setSearch,
   onAdd,
-
   segment,
   setSegment,
   year,
   setYear,
-
   segmentOptions = [],
   yearOptions = [],
 }) {
@@ -23,182 +22,112 @@ export default function TableToolbar({
   };
 
   return (
-    <div className="bg-white border-b border-slate-200 p-6">
-
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-
+    <div className="bg-white border-b border-slate-200/60 p-6 shadow-sm">
+      {/* Header Layout */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {title}
+          {/* Badge styled exactly like the screenshot */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            ✦ English Learning Dashboard
+          </span>
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            {title}{" "}
+            <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              Records
+            </span>
           </h2>
-
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm font-medium text-slate-500 mt-1">
             Manage all student records efficiently
           </p>
         </div>
 
-      <button
-  onClick={onAdd}
-  className="
-    inline-flex
-    items-center
-    gap-2
-    rounded-xl
-    border
-    border-orange-600
-    bg-gradient-to-r
-    from-orange-500
-    to-orange-600
-    px-5
-    py-3
-    text-white
-    font-semibold
-    shadow-md
-    transition-all
-    duration-200
-    hover:-translate-y-0.5
-    hover:shadow-xl
-    hover:from-orange-600
-    hover:to-orange-700
-    active:scale-95
-  "
->
-  <Plus size={18} />
-  Add Student
-</button>
-
+        {/* Primary CTA with the brand orange gradient */}
+        <motion.button
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onAdd}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition self-start sm:self-auto"
+        >
+          <Plus size={16} strokeWidth={3} />
+          Add Student
+        </motion.button>
       </div>
 
-     {/* Filters */}
-<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filters System Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Search Input Container with Orange Highlight Focus */}
+        <div className="relative md:col-span-2 group">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-orange-500"
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by Name, Roll No..."
+            className="w-full h-12 rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-800 placeholder-slate-400 shadow-sm outline-none transition duration-150 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+          />
+        </div>
 
-  {/* Search */}
-  <div className="relative md:col-span-2">
-    <Search
-      size={18}
-      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-    />
+        {/* Segment Selector */}
+        <div className="relative">
+          <select
+            value={segment}
+            onChange={(e) => setSegment(e.target.value)}
+            className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
+              segment
+                ? "border-orange-500 ring-4 ring-orange-500/10"
+                : "border-slate-200 hover:border-slate-300"
+            } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
+          >
+            <option value="">All Segments</option>
+            {segmentOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+            ▼
+          </div>
+        </div>
 
-    <input
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      placeholder="Search by Name, Roll No..."
-      className="
-        w-full
-        h-12
-        rounded-xl
-        border-2
-        border-slate-200
-        bg-white
-        pl-11
-        pr-4
-        text-sm
-        text-slate-700
-        shadow-sm
-        outline-none
-        transition-all
-        focus:border-orange-500
-        focus:ring-4
-        focus:ring-orange-100
-      "
-    />
-  </div>
+        {/* Year Selector + Reset Actions */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
+                year
+                  ? "border-orange-500 ring-4 ring-orange-500/10"
+                  : "border-slate-200 hover:border-slate-300"
+              } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
+            >
+              <option value="">All Years</option>
+              {yearOptions.map((item) => (
+                <option key={item} value={item}>
+                  Year {item}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+              ▼
+            </div>
+          </div>
 
-  {/* Segment */}
- <select
-  value={segment}
-  onChange={(e) => setSegment(e.target.value)}
-  className={`
-    h-12
-    rounded-xl
-    border-2
-    bg-white
-    px-4
-    text-sm
-    shadow-sm
-    outline-none
-    transition-all
-    ${
-      segment
-        ? "border-orange-500 ring-4 ring-orange-100"
-        : "border-slate-200"
-    }
-    focus:border-orange-500
-    focus:ring-4
-    focus:ring-orange-100
-  `}
->
-    <option value="">All Segments</option>
-
-    {segmentOptions.map((item) => (
-      <option key={item} value={item}>
-        {item}
-      </option>
-    ))}
-  </select>
-
-  {/* Year + Reset */}
-  <div className="flex gap-3">
-
-  <select
-  value={year}
-  onChange={(e) => setYear(e.target.value)}
-  className={`
-    flex-1
-    h-12
-    rounded-xl
-    border-2
-    bg-white
-    px-4
-    text-sm
-    shadow-sm
-    outline-none
-    transition-all
-    ${
-      year
-        ? "border-orange-500 ring-4 ring-orange-100"
-        : "border-slate-200"
-    }
-    focus:border-orange-500
-    focus:ring-4
-    focus:ring-orange-100
-  `}
->
-      <option value="">All Years</option>
-
-      {yearOptions.map((item) => (
-        <option key={item} value={item}>
-          Year {item}
-        </option>
-      ))}
-    </select>
-
-    <button
-      onClick={clearFilters}
-      className="
-        h-12
-        w-12
-        rounded-xl
-        border-2
-        border-slate-200
-        bg-white
-        flex
-        items-center
-        justify-center
-        shadow-sm
-        transition-all
-        hover:border-orange-500
-        hover:bg-orange-50
-        hover:text-orange-600
-      "
-    >
-      <RotateCcw size={18} />
-    </button>
-
-  </div>
-
-</div>
+          {/* Clean Neutral Reset Button with Orange Hover Interaction */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={clearFilters}
+            className="h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-500 shadow-sm transition duration-150 hover:border-orange-500 hover:bg-orange-50 hover:text-orange-600"
+            title="Reset Filters"
+          >
+            <RotateCcw size={16} strokeWidth={2.5} />
+          </motion.button>
+        </div>
+      </div>
     </div>
   );
 }

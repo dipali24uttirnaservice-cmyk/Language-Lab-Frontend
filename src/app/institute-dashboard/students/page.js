@@ -583,84 +583,103 @@ showSelection={showSelection}
 />
 
 {showAssignModal && (
-  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm mt-10 p-4">
-
-    <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl">
-
-      <div className="border-b p-6">
-        <h2 className="text-2xl font-bold">
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+    <div className="w-full max-w-2xl rounded-3xl bg-white border border-slate-200/50 shadow-2xl overflow-hidden">
+      
+      {/* Header Container */}
+      <div className="border-b border-slate-200/60 p-6 bg-gradient-to-b from-slate-50/50 to-white">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+          ✦ System Action
+        </span>
+        <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
           Assign Course
         </h2>
-
-       
-
-        <div className="mt-3 inline-flex rounded-full bg-indigo-100 px-4 py-1 text-sm font-semibold text-indigo-700">
-          {selectedStudents.length} Student Selected
+        
+        {/* Dynamic Badge matching the theme header elements */}
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600 shadow-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+          {selectedStudents.length} Student{selectedStudents.length !== 1 ? 's' : ''} Selected
         </div>
       </div>
 
-      <div className="max-h-[420px] overflow-y-auto p-6 space-y-4">
+      {/* Selectable Course Items List */}
+      <div className="max-h-[400px] overflow-y-auto p-6 space-y-3.5 bg-slate-50/30">
+        {courses.map((course) => {
+          const isSelected = selectedCourses.includes(course._id);
+          return (
+            <label
+              key={course._id}
+              className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4.5 transition duration-150 relative overflow-hidden select-none group ${
+                isSelected
+                  ? "border-orange-500 bg-gradient-to-b from-white to-orange-50/20 ring-4 ring-orange-500/10 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-slate-300 shadow-sm"
+              }`}
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                {/* Modern Custom Styled Checkbox Variant */}
+                <div className="relative flex items-center justify-center shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleCourse(course._id)}
+                    className="sr-only peer"
+                  />
+                  <div className={`h-5 w-5 rounded-md border-2 transition duration-150 flex items-center justify-center ${
+                    isSelected 
+                      ? "border-orange-500 bg-orange-500 text-white" 
+                      : "border-slate-300 group-hover:border-slate-400 bg-white"
+                  }`}>
+                    {isSelected && (
+                      <svg className="w-3 h-3 fill-none stroke-current stroke-[3.5]" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
 
-        {courses.map((course) => (
+                <div className="truncate">
+                  <h3 className={`text-base font-extrabold tracking-tight transition duration-150 ${
+                    isSelected ? "text-orange-600" : "text-slate-800"
+                  }`}>
+                    {course.course_name}
+                  </h3>
+                </div>
+              </div>
 
-          <label
-            key={course._id}
-            className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
-selectedCourses.includes(course._id)  ? "border-indigo-600 bg-indigo-50"
-                : "border-slate-200 hover:border-indigo-300"
-            }`}
-          >
-
-           <input
-  type="checkbox"
-  checked={selectedCourses.includes(course._id)}
-  onChange={() => toggleCourse(course._id)}
-  className="h-5 w-5"
-/>
-
-            <div className="flex-1">
-
-              <h3 className="font-semibold text-lg">
-                {course.course_name}
-              </h3>
-
-            
-
-            
-             
-
-            </div>
-
-          </label>
-
-        ))}
-
+              {/* Minimal structural star decoration for selected states */}
+              <span className={`text-xs font-black transition-colors ${
+                isSelected ? "text-orange-400" : "text-slate-200 group-hover:text-slate-300"
+              }`}>
+                ✦
+              </span>
+            </label>
+          );
+        })}
       </div>
 
-      <div className="flex justify-end gap-3 border-t p-5">
-
+      {/* Action Footer Actions Row */}
+      <div className="flex justify-end items-center gap-3 border-t border-slate-200/60 p-5 bg-gradient-to-t from-slate-50/50 to-white">
         <button
           onClick={() => {
             setShowAssignModal(false);
             setSelectedStudents([]);
-setSelectedCourses([]);     
-     }}
-          className="rounded-xl border px-5 py-2"
+            setSelectedCourses([]);
+          }}
+          className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition duration-150"
         >
           Cancel
         </button>
 
         <button
-disabled={selectedCourses.length === 0}          onClick={assignCourse}
-          className="rounded-xl bg-indigo-600 px-6 py-2 text-white disabled:opacity-50"
+          disabled={selectedCourses.length === 0}
+          onClick={assignCourse}
+          className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed transition duration-150"
         >
           Assign Course
         </button>
-
       </div>
 
     </div>
-
   </div>
 )}
 
@@ -684,27 +703,44 @@ disabled={selectedCourses.length === 0}          onClick={assignCourse}
       <div className="max-h-[400px] overflow-y-auto p-6">
 
         {selectedStudent.purchased_courses?.length > 0 ? (
-          <ul className="space-y-3">
-            {selectedStudent.purchased_courses.map((course, index) => (
-              <li
-                key={index}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-sm font-bold">
-                  {index + 1}
-                </div>
-
-                <span className="font-medium">
-                  {course}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="py-12 text-center text-slate-500">
-            No courses assigned.
+  <ul className="space-y-3">
+    {selectedStudent.purchased_courses.map((course, index) => (
+      <div
+        key={index}
+        className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition duration-150 group"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          {/* Index tag styled like the premium brand accent icons */}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-black shadow-md shadow-orange-500/10 border border-white/10 transition-transform group-hover:scale-105">
+            {(index + 1).toString().padStart(2, '0')}
           </div>
-        )}
+
+          <span className="text-sm font-bold text-slate-800 truncate group-hover:text-orange-600 transition duration-150">
+            {course}
+          </span>
+        </div>
+
+        {/* Subtle decorative chevron or star matching the design language */}
+        <span className="text-xs font-bold text-slate-300 tracking-normal group-hover:text-orange-400 transition duration-150 select-none px-1">
+          ✦
+        </span>
+      </div>
+    ))}
+  </ul>
+) : (
+  /* Empty state with premium styling */
+  <div className="py-12 flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-6">
+    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">
+      📚
+    </div>
+    <p className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+      No Active Enrolments
+    </p>
+    <p className="text-xs font-medium text-slate-400 mt-1 max-w-[220px]">
+      This student hasn't been assigned to any learning paths yet.
+    </p>
+  </div>
+)}
 
       </div>
 
