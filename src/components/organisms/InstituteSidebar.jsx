@@ -32,12 +32,7 @@ const menuItems = [
     icon: GraduationCap,
     color: "from-amber-400 to-orange-500",
   },
-  {
-    title: "Courses",
-    href: "/institute-dashboard/courses",
-    icon: GraduationCap,
-    color: "from-amber-400 to-orange-500",
-  },
+ 
   {
     title: "Analytics",
     href: "/institute-dashboard/analytics",

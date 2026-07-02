@@ -11,6 +11,7 @@ import StudentViewModal from "./StudentViewModal";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
+import { courseApi } from "@/services/course/courseApi";
 export default function StudentsPage() {
 
   const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ const mode = studentId ? "edit" : "add";
 const router = useRouter();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-
+const [selectedStudents, setSelectedStudents] = useState([]);
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState("");
 const [year, setYear] = useState("");
@@ -38,6 +39,12 @@ const [viewStudent, setViewStudent] = useState(null);
   });
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
 const [showAddOptions, setShowAddOptions] = useState(false);
+const showSelection = Boolean(segment && year);
+
+
+
+const [showAssignModal, setShowAssignModal] = useState(false);
+const [selectedCourses, setSelectedCourses] = useState([]);const [courses, setCourses] = useState([]);
 
   const loadStudents = useCallback(async () => {
     try {
@@ -95,6 +102,73 @@ const filteredData = useMemo(() => {
   });
 }, [students, search, segment, year]);
 
+const toggleCourse = (courseId) => {
+  setSelectedCourses((prev) =>
+    prev.includes(courseId)
+      ? prev.filter((id) => id !== courseId)
+      : [...prev, courseId]
+  );
+};
+
+const handleSelectStudent = (id) => {
+  setSelectedStudents((prev) => {
+    let updated;
+
+    if (prev.includes(id)) {
+      updated = prev.filter((x) => x !== id);
+    } else {
+      updated = [...prev, id];
+    }
+
+    if (updated.length > 0 && prev.length === 0) {
+      openAssignModal();
+    }
+
+    if (updated.length === 0) {
+      setShowAssignModal(false);
+    }
+
+    return updated;
+  });
+};
+
+const handleSelectAll = (studentsOnPage) => {
+  const ids = studentsOnPage.map((s) => s._id);
+
+  const allSelected = ids.every((id) =>
+    selectedStudents.includes(id)
+  );
+
+  if (allSelected) {
+    setSelectedStudents((prev) =>
+      prev.filter((id) => !ids.includes(id))
+    );
+    setShowAssignModal(false);
+  } else {
+    setSelectedStudents((prev) => {
+      const updated = [...new Set([...prev, ...ids])];
+
+      if (prev.length === 0) {
+        openAssignModal();
+      }
+
+      return updated;
+    });
+  }
+};
+
+const openAssignModal = async () => {
+  try {
+    const response = await courseApi.getCourses();
+
+    setCourses(response.data.data.courses || []);
+    setShowAssignModal(true);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
   const handleAdd = () => {
   setShowAddOptions(true);
 };
@@ -134,7 +208,8 @@ const handleEdit = (id) => {
   };
 
 const columns = [
-  {
+  
+ {
     title: "Student",
     key: "student",
     render: (row) => (
@@ -143,8 +218,8 @@ const columns = [
         className="text-left group"
       >
         <span className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
-    {row.full_name}
-  </span>
+          {row.full_name}
+        </span>
 
         <p className="text-xs text-slate-500">
           {row.email}
@@ -230,8 +305,8 @@ const columns = [
     render: (row) => (
       <TableActions
         onView={() => handleView(row)}
-        onEdit={() => handleEdit(row.id)}
-        onDelete={() => handleDelete(row.id)}
+        onEdit={() => handleEdit(row._id)}
+        onDelete={() => handleDelete(row._id)}
       />
     ),
   },
@@ -335,9 +410,48 @@ const handleView = (student) => {
   setViewOpen(true);
 };
 
+
+const assignCourse = async () => {
+  try {
+    await courseApi.bulkAssignCourses({
+      student_ids: selectedStudents,
+      course_ids: selectedCourses,
+    });
+
+    setStatusData({
+      open: true,
+      type: "success",
+      title: "Success",
+      message: "Courses assigned successfully.",
+    });
+
+    setShowAssignModal(false);
+    setSelectedStudents([]);
+    setSelectedCourses([]);
+
+    loadStudents();
+  } catch (err) {
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Assignment Failed",
+      message:
+        err?.response?.data?.message ||
+        err?.response?.data?.success ||
+        (Array.isArray(err?.response?.data?.message)
+          ? err.response.data.message
+              .map((e) => e.message)
+              .join(", ")
+          : "Failed to assign courses."),
+    });
+
+    console.error(err);
+  }
+};
   return (
     <div>
 
+   
     <DataTable
   title="Students"
   columns={columns}
@@ -352,9 +466,12 @@ const handleView = (student) => {
   setSegment={setSegment}
   year={year}
   setYear={setYear}
-
+showSelection={showSelection}
   segmentOptions={segmentOptions}
   yearOptions={yearOptions}
+    selectedStudents={selectedStudents}
+  onSelectStudent={handleSelectStudent}
+  onSelectAll={handleSelectAll}
 />
     <input
   id="studentExcelUpload"
@@ -458,6 +575,88 @@ const handleView = (student) => {
     onClose={() => setViewOpen(false)}
     student={viewStudent}
 />
+
+{showAssignModal && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm mt-10 p-4">
+
+    <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl">
+
+      <div className="border-b p-6">
+        <h2 className="text-2xl font-bold">
+          Assign Course
+        </h2>
+
+       
+
+        <div className="mt-3 inline-flex rounded-full bg-indigo-100 px-4 py-1 text-sm font-semibold text-indigo-700">
+          {selectedStudents.length} Student Selected
+        </div>
+      </div>
+
+      <div className="max-h-[420px] overflow-y-auto p-6 space-y-4">
+
+        {courses.map((course) => (
+
+          <label
+            key={course._id}
+            className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
+selectedCourses.includes(course._id)  ? "border-indigo-600 bg-indigo-50"
+                : "border-slate-200 hover:border-indigo-300"
+            }`}
+          >
+
+           <input
+  type="checkbox"
+  checked={selectedCourses.includes(course._id)}
+  onChange={() => toggleCourse(course._id)}
+  className="h-5 w-5"
+/>
+
+            <div className="flex-1">
+
+              <h3 className="font-semibold text-lg">
+                {course.course_name}
+              </h3>
+
+            
+
+            
+             
+
+            </div>
+
+          </label>
+
+        ))}
+
+      </div>
+
+      <div className="flex justify-end gap-3 border-t p-5">
+
+        <button
+          onClick={() => {
+            setShowAssignModal(false);
+            setSelectedStudents([]);
+setSelectedCourses([]);     
+     }}
+          className="rounded-xl border px-5 py-2"
+        >
+          Cancel
+        </button>
+
+        <button
+disabled={selectedCourses.length === 0}          onClick={assignCourse}
+          className="rounded-xl bg-indigo-600 px-6 py-2 text-white disabled:opacity-50"
+        >
+          Assign Course
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
 
 {showAddOptions && (

@@ -21,6 +21,11 @@ export default function DataTable({
   setYear,
   segmentOptions,
   yearOptions,
+   selectedStudents,
+  onSelectStudent,
+  onSelectAll,
+    showSelection,
+
 }){
 
   const [page, setPage] =
@@ -41,6 +46,11 @@ export default function DataTable({
       page * pageSize
     );
 
+   const allCurrentPageSelected =
+  paginatedData.length > 0 &&
+  paginatedData.every((student) =>
+    selectedStudents.includes(student._id)
+  );
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
 
@@ -64,29 +74,28 @@ export default function DataTable({
 
         <table className="w-full">
 
-     <thead className="bg-slate-100">   
-              <tr className="bg-slate-100">
+  <thead className="bg-slate-100">
+  <tr>
+     {showSelection && (
+    <th className="p-4 w-12">
+      <input
+        type="checkbox"
+        checked={allCurrentPageSelected}
+        onChange={() => onSelectAll(paginatedData)}
+      />
+    </th>
+  )}
 
-              {columns.map(
-                (column) => (
-                  <th
-                    key={column.key}
-                    className="
-                      p-4
-                      text-left
-                      uppercase
-                      text-xs
-                      font-black
-                      tracking-wider
-                    "
-                  >
-                    {column.title}
-                  </th>
-                )
-              )}
-
-            </tr>
-          </thead>
+    {columns.map((column) => (
+      <th
+        key={column.key}
+        className="p-4 text-left uppercase text-xs font-black tracking-wider"
+      >
+        {column.title}
+      </th>
+    ))}
+  </tr>
+</thead>
 
           <tbody>
 
@@ -99,6 +108,16 @@ export default function DataTable({
                     hover:bg-slate-50
                   "
                 >
+                  {showSelection && (
+    <td className="p-4">
+      <input
+        type="checkbox"
+        checked={selectedStudents.includes(row._id)}
+        
+        onChange={() => onSelectStudent(row._id)}
+      />
+    </td>
+  )}
                   {columns.map(
                     (column) => (
                       <td
