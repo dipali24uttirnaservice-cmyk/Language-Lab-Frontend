@@ -256,7 +256,13 @@ const fetchCourses = async () => {
     if (item.name === "Learning Journey") {
 const learningActive =
   pathname.startsWith("/dashboard/course") ||
-  pathname.startsWith("/dashboard/topics");
+  pathname.startsWith("/dashboard/topics") ||
+  pathname.startsWith("/dashboard/module") ||
+  pathname.startsWith("/dashboard/video") ||
+  pathname.startsWith("/dashboard/audio") ||
+  pathname.startsWith("/dashboard/text") ||
+  pathname.startsWith("/dashboard/exercise") ||
+  pathname.startsWith("/dashboard/vocabulary");
       return (
         <div key={item.name}>
           <button
@@ -308,9 +314,11 @@ const learningActive =
 );
 
                   return (
-                  <Link
+                 <Link
   key={course._id}
-  href={`/dashboard/course/${course._id}`}
+  href={`/dashboard/course/${course._id}?courseName=${encodeURIComponent(
+    course.course_name
+  )}`}
   className={`block rounded-lg px-3 py-2 text-sm transition ${
     pathname === `/dashboard/course/${course._id}`
       ? "bg-orange-100 text-orange-700 font-semibold"

@@ -1,10 +1,18 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import LearningModules from "@/components/organisms/LearningModules";
 
 export default function CoursePage() {
   const { courseId } = useParams();
+  const searchParams = useSearchParams();
 
-  return <LearningModules courseId={courseId} />;
+  const courseName = searchParams.get("courseName");
+
+  return (
+    <LearningModules
+      courseId={courseId}
+      courseName={courseName}
+    />
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter,useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -12,8 +12,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function LearningModules({ courseId }) {
+
+export default function LearningModules({ courseId, courseName }) {
   const router = useRouter();
+
+
+
+
+
 
   const modules = [
     {
@@ -58,38 +64,7 @@ export default function LearningModules({ courseId }) {
 
       <div className="max-w-7xl mx-auto px-6 py-10">
 
-        {/* Header */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl bg-white shadow-xl border border-orange-100 p-8 mb-10"
-        >
-          <div className="flex items-center gap-5">
-
-            <button
-              onClick={() => router.back()}
-              className="h-14 w-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center hover:bg-orange-500 hover:text-white transition"
-            >
-              <ArrowLeft />
-            </button>
-
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center">
-              <BookOpen size={30} />
-            </div>
-
-            <div>
-              <h1 className="text-3xl font-black">
-                Learning Modules
-              </h1>
-
-              <p className="text-slate-500 mt-2">
-                Choose a module to begin learning.
-              </p>
-            </div>
-
-          </div>
-        </motion.div>
+       
 
         {/* Cards */}
 
@@ -103,11 +78,16 @@ export default function LearningModules({ courseId }) {
                 key={module.type}
                 whileHover={{ y: -8, scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
-             onClick={() =>
-  router.push(
-    `/dashboard/topics?courseId=${courseId}&type=${module.type}`
-  )
-}
+           onClick={() => {
+  const params = new URLSearchParams();
+
+
+params.set("courseId", courseId);
+params.set("courseName", courseName);
+params.set("type", module.type);
+
+router.push(`/dashboard/topics?${params.toString()}`);
+}}
 
                 className="cursor-pointer rounded-3xl bg-white p-6 shadow-lg border hover:shadow-2xl transition"
               >

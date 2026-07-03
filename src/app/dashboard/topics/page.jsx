@@ -8,6 +8,7 @@ import {
   BookOpen,
   Layers3,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 
 import { topicApi } from "@/services/topic/topicApi";
@@ -15,16 +16,28 @@ import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
 export default function TopicPage() {
-   const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const courseId = searchParams.get("courseId");
+  const courseName = searchParams.get("courseName");
   const type = searchParams.get("type");
+
+const topicName = searchParams.get("topicName");
+
+
+
+ 
+
 
   console.log(courseId);
   console.log(type);
   const [loading, setLoading] = useState(true);
   const [topics, setTopics] = useState([]);
+
+
+
+
 
   useEffect(() => {
     fetchTopics();
@@ -191,8 +204,35 @@ return (
 >
   {/* Left */}
 
-  <div>
+ <div className="flex items-start gap-5">
+  {/* Back Button */}
+  <motion.button
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.96 }}
+    onClick={() => router.back()}
+    className="
+      h-14
+      w-14
+      rounded-2xl
+      bg-white/80
+      backdrop-blur-xl
+      border
+      border-orange-100
+      flex
+      items-center
+      justify-center
+      shadow-lg
+      text-orange-600
+      hover:bg-orange-50
+      transition-all
+      shrink-0
+    "
+  >
+    <ArrowLeft size={22} />
+  </motion.button>
 
+  {/* Title Section */}
+  <div>
     <div
       className="
         inline-flex
@@ -211,7 +251,7 @@ return (
       <span className="text-lg">✨</span>
 
       <span className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">
-        Language Lab
+        Learning Journey
       </span>
     </div>
 
@@ -219,9 +259,11 @@ return (
       Learning Topics
     </h1>
 
-   
-
+    <p className="mt-2 text-slate-500 max-w-xl">
+      Browse all available topics and continue your learning journey.
+    </p>
   </div>
+</div>
 
   {/* Right Badge */}
 
@@ -544,11 +586,16 @@ return (
             </div>
 
             <button
-             onClick={() =>
-    router.push(
-      `/dashboard/topics/${topic._id}?courseId=${courseId}&type=${type}`
-    )
-  }
+       onClick={() => {
+  const params = new URLSearchParams(searchParams.toString());
+
+  params.set("courseId", courseId);
+  params.set("courseName", courseName);
+  params.set("type", type);
+  params.set("topicName", topic.title);
+
+  router.push(`/dashboard/topics/${topic._id}?${params.toString()}`);
+}}
               className="
                 mt-5
                 inline-flex

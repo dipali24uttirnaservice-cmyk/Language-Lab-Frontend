@@ -16,18 +16,30 @@ import {
 
 import { topicApi } from "@/services/topic/topicApi";
 export default function TopicDetailsPage() {
-  const { topicId } = useParams();
-const router = useRouter();
+    const { topicId } = useParams();
 
+  const router = useRouter();
 const searchParams = useSearchParams();
 
 const courseId = searchParams.get("courseId");
+const courseName = searchParams.get("courseName");
 const type = searchParams.get("type");
+const topicName = searchParams.get("topicName");
+
+
+
 
 console.log("Topic ID:", topicId);
 console.log("Course ID:", courseId);
 console.log("Type:", type);
 
+
+
+
+
+  console.log(courseName);
+  console.log(type);
+  console.log(topicName);
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState(null);
 
@@ -438,9 +450,23 @@ console.log("Type:", type);
     scale: 1.01,
   }}
   transition={{ duration: 0.25 }}
-onClick={() =>
-  router.push(`/dashboard/module/${type}/${subtopic._id}`)
-}  className="
+onClick={() => {
+ const params = new URLSearchParams(searchParams.toString());
+
+// Remove lesson because we're not on the lesson page yet
+params.delete("lessonName");
+
+params.set("courseId", courseId);
+params.set("courseName", courseName);
+params.set("type", type);
+params.set("topicId", topicId);
+params.set("topicName", topicName);
+
+params.set("subTopicId", subtopic._id);
+params.set("subTopicName", subtopic.title);
+
+  router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
+}}  className="
     group
     relative
     overflow-hidden

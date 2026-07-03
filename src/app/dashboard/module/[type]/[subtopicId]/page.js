@@ -93,9 +93,18 @@ useEffect(() => {
       });
   }, [modules, activeTab, searchQuery, sortBy, type]);
 
-  const handleModuleClick = (moduleId, moduleType) => {
-    router.push(`/dashboard/${moduleType || type}/${moduleId}`);
-  };
+ const handleModuleClick = (moduleId, moduleType, moduleTitle) => {
+  const params = new URLSearchParams(searchParams.toString());
+
+params.set("lessonName", moduleTitle);
+
+// keep previous ids
+params.set("topicId", searchParams.get("topicId"));
+params.set("subTopicId", searchParams.get("subTopicId"));
+  router.push(
+    `/dashboard/${moduleType || type}/${moduleId}?${params.toString()}`
+  );
+};
 
   const backgroundStyles = {
   video: {
@@ -298,39 +307,7 @@ const currentFloating =
 
      <div className="relative z-10 max-w-7xl mx-auto space-y-8">
 
-  {/* Breadcrumb */}
-  <div className="flex items-center gap-2 text-sm text-gray-500">
-    <button
-      onClick={() => router.push("/dashboard")}
-      className="hover:text-orange-500"
-    >
-      Dashboard
-    </button>
-
-    <ChevronRight size={14} />
-
-    <button
-      onClick={() => router.push("/dashboard/courses")}
-      className="hover:text-orange-500"
-    >
-      Courses
-    </button>
-
-    <ChevronRight size={14} />
-
-    <button
-      onClick={() => router.back()}
-      className="hover:text-orange-500"
-    >
-      Topic
-    </button>
-
-    <ChevronRight size={14} />
-
-    <span className="capitalize font-medium">
-      {type} Modules
-    </span>
-  </div>
+  
 
   {/* Dynamic Theme Banner */}
   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-slate-100">
@@ -435,8 +412,13 @@ const currentFloating =
               return (
                 <div
                   key={module._id}
-                  onClick={() => handleModuleClick(module._id, currentModuleType)}
-                  className="group relative flex flex-col justify-between overflow-hidden bg-white rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(255,138,0,0.08)] hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
+onClick={() =>
+  handleModuleClick(
+    module._id,
+    currentModuleType,
+    module.title
+  )
+}                  className="group relative flex flex-col justify-between overflow-hidden bg-white rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(255,138,0,0.08)] hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
                 >
                   
                  {/* VIDEO MODULE CORNER */}
