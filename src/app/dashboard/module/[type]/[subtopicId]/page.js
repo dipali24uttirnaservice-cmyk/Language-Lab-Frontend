@@ -310,30 +310,7 @@ const currentFloating =
   
 
   {/* Dynamic Theme Banner */}
-  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-slate-100">
-          <div className="flex items-center gap-5">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center justify-center h-12 w-12 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 border border-orange-200 rounded-full text-[11px] font-bold text-orange-600 tracking-wider uppercase mb-1.5 shadow-sm">
-                <Sparkles size={12} className="text-orange-500 animate-spin [animation-duration:6s]" />
-                Language Lab
-              </div>
-              <h1 className="text-2xl md:text-3xl font-black text-[#0B1A30] capitalize tracking-tight">
-                {type === "all" || !type ? "Learning" : type} Modules
-              </h1>
-            </div>
-          </div>
-
-          <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-5 py-3 rounded-2xl text-sm font-bold self-start md:self-auto flex items-center gap-2.5 shadow-sm">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            {filteredModules.length} Lessons Loaded
-          </div>
-        </div>
+  
 
         {/* Filters and Inputs */}
         <div className="space-y-4">
