@@ -43,7 +43,14 @@ export default function ModuleListPage() {
   const [activeTab, setActiveTab] = useState(type || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
-
+const [resultData, setResultData] = useState(null);
+  const [isQuizActive, setIsQuizActive] = useState(false);
+const [showResults, setShowResults] = useState(false);
+const [finalScore, setFinalScore] = useState(0);
+const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+const [userAnswers, setUserAnswers] = useState({}); // To store answers
+// Add this near your other state declarations
+const startTimeRef = React.useRef(Date.now());
   useEffect(() => {
     if (type) {
       setActiveTab(type);
@@ -112,6 +119,60 @@ export default function ModuleListPage() {
 
   const currentModuleType = selectedModule?.module_type || type;
 
+// Inside ModuleListPage component...
+const handleSubmit = async () => {
+  const formattedAnswers = Object.keys(userAnswers).map((index) => ({
+    question_index: Number(index),
+    given_answer: userAnswers[index],
+  }));
+
+  const timeSpent = Math.floor(
+    (Date.now() - startTimeRef.current) / 1000
+  );
+
+  const payload = {
+    answers: formattedAnswers,
+    time_spent_sec: timeSpent,
+  };
+
+  try {
+    const response = await moduleApi.submitExercise(
+      selectedModule._id,
+      payload
+    );
+
+    console.log("Exercise Submit Response:", response);
+
+    // Get the attempt object
+const attempt =
+  response?.data?.data?.attempt ||
+  response?.data?.attempt ||
+  response?.attempt ||
+  response?.data;    console.log("Attempt =", attempt);
+console.log("Score =", attempt?.score);
+console.log("ResultData before set =", resultData);
+
+   if (attempt) {
+  console.log("Attempt:", attempt);
+
+  setResultData({
+    score: attempt.score,
+    max_score: attempt.max_score,
+    accuracy: attempt.accuracy,
+    is_passed: attempt.is_passed,
+  });
+
+  setIsQuizActive(false);
+  setShowResults(true);
+}else {
+      console.error("Attempt data not found.", response);
+      alert("Unable to load result.");
+    }
+  } catch (error) {
+    console.error("Submission failed:", error);
+    alert("Could not submit answers. Please try again.");
+  }
+};
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
       
@@ -406,68 +467,155 @@ export default function ModuleListPage() {
                 </div>
               </div>
             </div>
-          ) : currentModuleType === "exercise" ? (
-            /* Quiz / Exercise Active View Details Block */
-            <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
-              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative">
-                <div className="absolute top-0 right-0 p-6 opacity-10">
-                  <Award size={100} />
-                </div>
-                <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 mb-3">
-                  <Award size={12} /> Challenge Activity
-                </span>
-                <h2 className="text-2xl font-black tracking-tight">{selectedModule.title}</h2>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Format</p>
-                    <p className="text-xs font-black text-slate-800 mt-1 uppercase">
-                      {selectedModule.exercise_type === "mcq" ? "Multiple Choice" : selectedModule.exercise_type || "Exercise"}
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Score</p>
-                    <p className="text-xs font-black text-slate-800 mt-1">
-                      {selectedModule.total_marks ? `${selectedModule.total_marks} Pts` : "Practice"}
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Time Limit</p>
-                    <p className="text-xs font-black text-slate-800 mt-1">
-                      {selectedModule.time_limit_sec ? `${Math.ceil(selectedModule.time_limit_sec / 60)} mins` : "Untimed"}
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Allowed Max Attempts</p>
-                    <p className="text-xs font-black text-slate-800 mt-1">{selectedModule.max_attempts || 1} Times</p>
-                  </div>
-                </div>
+         ) : currentModuleType === "exercise" ? (
+  /* Quiz / Exercise Active View Details Block */
+  <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
+    {/* 1. Header Area */}
+    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative">
+      <div className="absolute top-0 right-0 p-6 opacity-10">
+        <Award size={100} />
+      </div>
+      <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 mb-3">
+        <Award size={12} /> Challenge Activity
+      </span>
+      <h2 className="text-2xl font-black tracking-tight">{selectedModule.title}</h2>
+    </div>
 
-                <div className="bg-orange-500/[0.02] border border-orange-500/10 rounded-xl p-4 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-                    <Sparkles className="text-orange-500" size={14} /> Evaluation Rules Configuration
-                  </h4>
-                  <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
-                    {selectedModule.shuffle_questions && <li>Questions ordering are randomized dynamically.</li>}
-                    {selectedModule.shuffle_options && <li>Answer choice keys shuffle per attempt session.</li>}
-                    {selectedModule.show_explanation && <li>Step-by-step resolution breakdowns displayed instantly post-submission.</li>}
-                  </ul>
-                </div>
+    {/* 2. Content Area: Logic to switch between Intro, Active Quiz, and Results */}
+    <div className="p-6 space-y-6">
+      {!isQuizActive && !showResults ? (
+        // --- PRE-ASSESSMENT VIEW ---
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {/* ... (Keep your existing stats cards here) ... */}
+          </div>
+          <div className="bg-orange-500/[0.02] border border-orange-500/10 rounded-xl p-4 space-y-2">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+              <Sparkles className="text-orange-500" size={14} /> Evaluation Rules
+            </h4>
+            <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
+              {selectedModule.shuffle_questions && <li>Questions randomized dynamically.</li>}
+              {selectedModule.show_explanation && <li>Step-by-step resolution provided.</li>}
+            </ul>
+          </div>
+          <button
+            onClick={() => setIsQuizActive(true)} // Toggle to show quiz interface
+            className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold rounded-xl transition-all shadow-md"
+          >
+            Start Assessment Activity Now &rarr;
+          </button>
+        </>
+      ) : showResults ? (
+        // --- POST-ASSESSMENT RESULTS VIEW ---
+       <div className="text-center py-10 animate-fade-in">
+    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <Award size={40} />
+    </div>
+    
+    <h3 className="text-xl font-black text-slate-900">
+      {resultData?.is_passed ? "Assessment Passed!" : "Assessment Complete!"}
+    </h3>
+    
+    <div className="mt-6 grid grid-cols-2 gap-4 max-w-xs mx-auto">
+      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+        <p className="text-[10px] uppercase font-bold text-slate-400">Score</p>
+        <p className="font-black text-orange-600 text-lg">
+ {resultData?.score} / {resultData?.max_score}        </p>
+      </div>
+      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+        <p className="text-[10px] uppercase font-bold text-slate-400">Accuracy</p>
+        <p className="font-black text-slate-800 text-lg">{resultData?.accuracy}%</p>
+      </div>
+    </div>
 
+    <button 
+      onClick={() => setShowResults(false)}
+      className="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold underline"
+    >
+      Review Answers
+    </button>
+  </div>
+      ) : (
+        // --- ACTIVE QUIZ COMPONENT ---
+       <div className="space-y-8">
+ {/* --- ACTIVE QUIZ COMPONENT --- */}
+{/* --- ACTIVE QUIZ COMPONENT --- */}
+<div className="min-h-[300px]">
+  {selectedModule.questions && selectedModule.questions.length > 0 ? (
+    (() => {
+      const q = selectedModule.questions[currentQuestionIndex];
+      const isLastQuestion = currentQuestionIndex === selectedModule.questions.length - 1;
+
+     
+
+      return (
+        <div className="space-y-6">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            Question {currentQuestionIndex + 1} of {selectedModule.questions.length}
+          </div>
+
+          <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
+
+          <div className="space-y-3">
+            {q.question_type === "mcq" ? (
+              q.options.map((opt, i) => (
                 <button
-                  onClick={() => {
-                    const nextParams = new URLSearchParams(searchParams?.toString() || "");
-                    nextParams.set("lessonName", selectedModule.title || "");
-                    router.push(`/dashboard/exercise/${selectedModule._id}?${nextParams.toString()}`);
-                  }}
-                  className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-md shadow-orange-500/20 active:scale-[0.99] flex items-center justify-center gap-2"
+                  key={i}
+                  onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                    userAnswers[currentQuestionIndex] === opt 
+                    ? "border-orange-500 bg-orange-50" 
+                    : "border-slate-200"
+                  }`}
                 >
-                  Start Assessment Activity Now &rarr;
+                  {opt}
                 </button>
-              </div>
-            </div>
-          ) : (
+              ))
+            ) : (
+              <input
+                type="text"
+                placeholder="Type your answer..."
+                value={userAnswers[currentQuestionIndex] || ""}
+                onChange={(e) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: e.target.value })}
+                className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-orange-500 outline-none"
+              />
+            )}
+          </div>
+
+          {/* NAVIGATION BUTTONS */}
+          <div className="flex gap-3">
+            {!isLastQuestion ? (
+              <button
+                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                disabled={!userAnswers[currentQuestionIndex]}
+                className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-xl disabled:opacity-50"
+              >
+                Next Question
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit} // Trigger the API call
+                disabled={!userAnswers[currentQuestionIndex]}
+                className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl disabled:opacity-50"
+              >
+                Submit All Answers
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    })()
+  ) : (
+    <p>No questions available.</p>
+  )}
+</div>
+  
+ 
+</div>
+      )}
+    </div>
+  </div>
+) : (
             /* Text layout view fallback default */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
