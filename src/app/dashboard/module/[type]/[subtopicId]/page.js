@@ -974,6 +974,7 @@ where to add this in audio type
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
                 <div>
+
                   <div className="flex flex-wrap gap-2 items-center mb-3">
                     <span className="bg-orange-50 text-orange-600 border border-orange-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
                       Text Lesson
@@ -1000,58 +1001,236 @@ where to add this in audio type
 
                 <hr className="border-slate-100" />
 
-                <div
-                  className="text-slate-800 text-sm md:text-base leading-relaxed prose prose-slate max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "No document reading context content configured." }}
-                />
+                {/* Reading Content */}
+<div
+  className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
+  dangerouslySetInnerHTML={{
+    __html: selectedModule.content?.body || "",
+  }}
+/>
+
+{/* Related Reading Queue */}
+<div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+  <div className="p-4 border-b border-slate-200 bg-white">
+    <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+      <BookOpen className="text-blue-500" size={14} />
+      Related Reading Lessons
+    </h3>
+  </div>
+
+  <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+    {textModules.map((item) => {
+      const isReading = selectedModule?._id === item._id;
+
+      return (
+        <button
+          key={item._id}
+          onClick={() => {
+            setSelectedModule(item);
+            setExpandedQ(null);
+            setSelectedAnswers({});
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
+          }}
+          className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
+            isReading
+              ? "bg-blue-50 border-blue-300"
+              : "hover:bg-slate-50 border-transparent"
+          }`}
+        >
+          <div
+            className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+              isReading
+                ? "bg-blue-500 text-white"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            <BookOpen size={18} />
+          </div>
+
+          <div className="flex-1">
+            <h4
+              className={`text-xs font-bold ${
+                isReading
+                  ? "text-blue-600"
+                  : "text-slate-800"
+              }`}
+            >
+              {item.title}
+            </h4>
+
+            <span className="text-[10px] text-slate-400">
+              {item.content?.read_time_min
+                ? `${item.content.read_time_min} min read`
+                : "Reading Lesson"}
+            </span>
+          </div>
+        </button>
+      );
+    })}
+  </div>
+</div>
+              
+          
+
+                
+
+                
               </div>
+
+              
 
               {/* Text Sidebar Queue */}
-              <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
-                <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
-                  <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <FileText className="text-orange-500" size={14} />
-                    Related Readings Queue
-                  </h3>
-                  <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
-                    {textModules.length} lessons
-                  </span>
-                </div>
+             <div className="lg:col-span-4">
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-50/40">
-                  {textModules.map((item) => {
-                    if (!item) return null;
-                    const isReading = selectedModule?._id === item._id;
+    <div className="sticky top-0 bg-white p-5 border-b border-slate-200">
+      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+        <BookOpen className="text-indigo-500" size={15} />
+        Knowledge Check
+      </h3>
+    </div>
+
+    <div className="max-h-[650px] overflow-y-auto p-4 space-y-3 custom-scrollbar">
+
+      {selectedModule.questions?.length ? (
+
+        selectedModule.questions.map((q, idx) => {
+
+          const isExpanded = expandedQ === idx;
+          const feedback = selectedAnswers[idx];
+
+          const validOptions =
+            q.question_type === "true_false"
+              ? ["True", "False"]
+              : q.options.filter(opt => opt && opt.trim() !== "");
+
+          return (
+
+            <div
+              key={idx}
+              className="border rounded-xl overflow-hidden"
+            >
+
+              <button
+                onClick={() =>
+                  setExpandedQ(isExpanded ? null : idx)
+                }
+                className="w-full p-4 flex justify-between items-center bg-slate-50"
+              >
+
+                <span className="text-xs font-bold text-left">
+                  {idx + 1}. {q.question_text}
+                </span>
+
+                <ChevronDown
+                  size={15}
+                  className={`transition-transform ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+
+              </button>
+
+              {isExpanded && (
+
+                <div className="p-4 space-y-2">
+
+                  {validOptions.map((opt, i) => {
+
+                    const normalizedCorrect =
+                      ["A","B","C","D"].includes(q.correct_answer)
+                        ? validOptions[
+                            ["A","B","C","D"].indexOf(q.correct_answer)
+                          ]
+                        : q.correct_answer.trim();
+
+                    const isSelected =
+                      feedback?.selected === opt;
+
+                    const isCorrect =
+                      opt.trim() === normalizedCorrect;
+
+                    let style =
+                      "border-slate-200 hover:border-indigo-300";
+
+                    if (feedback) {
+                      if (isCorrect)
+                        style =
+                          "bg-green-50 border-green-500 text-green-700";
+                      else if (isSelected)
+                        style =
+                          "bg-red-50 border-red-500 text-red-700";
+                      else
+                        style =
+                          "opacity-40 bg-slate-50 border-slate-100";
+                    }
+
                     return (
                       <button
-                        key={item._id}
-                        onClick={() => {
-                          setSelectedModule(item);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${isReading
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm"
-                            : "hover:bg-white border-transparent shadow-sm hover:shadow"
-                          }`}
+                        key={i}
+                        disabled={!!feedback}
+                        onClick={() =>
+                          handleAnswer(
+                            idx,
+                            opt,
+                            normalizedCorrect
+                          )
+                        }
+                        className={`w-full border rounded-lg p-2 text-left text-xs ${style}`}
                       >
-                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isReading ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-500 group-hover/item:bg-orange-50'}`}>
-                          <FileText className={isReading ? "text-white" : "group-hover/item:text-orange-500"} size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className={`font-bold text-xs leading-snug line-clamp-1 transition-colors duration-200 ${isReading ? "text-orange-600" : "text-slate-800 group-hover/item:text-orange-600"}`}>
-                            {item.title}
-                          </h4>
-                          {item.content?.level && (
-                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                              Level {item.content.level} • {item.content.read_time_min || "5"}m read
-                            </span>
-                          )}
-                        </div>
+                        {opt}
                       </button>
                     );
+
                   })}
+
+                  {feedback && (
+                    <div
+                      className={`mt-3 rounded-lg p-3 text-xs ${
+                        feedback.isCorrect
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      <div className="font-bold mb-2">
+                        {feedback.isCorrect
+                          ? "Correct"
+                          : "Explanation"}
+                      </div>
+
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: q.explanation,
+                        }}
+                      />
+                    </div>
+                  )}
+
                 </div>
-              </div>
+
+              )}
+
+            </div>
+
+          );
+
+        })
+
+      ) : (
+
+        <div className="text-center py-10 text-slate-400">
+          No questions available.
+        </div>
+
+      )}
+
+    </div>
+
+  </div>
+</div>
             </div>
                    
           ) : (
