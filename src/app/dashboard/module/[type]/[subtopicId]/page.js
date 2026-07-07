@@ -17,6 +17,9 @@ import {
   HelpCircle,
   RotateCcw,
   Sparkles,
+  CheckCircle2,
+  XCircle,
+  ChevronDown
 } from "lucide-react";
 import { moduleApi } from "@/services/topic/topicApi";
 
@@ -50,6 +53,20 @@ export default function ModuleListPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({}); // To store answers
   // Add this near your other state declarations
+  // 1. State for managing interactions
+const [expandedQ, setExpandedQ] = useState(null);
+const [selectedAnswers, setSelectedAnswers] = useState({});
+
+// 2. Handler for user selections
+const handleAnswer = (qIndex, option, correct) => {
+  setSelectedAnswers(prev => ({ 
+    ...prev, 
+    [qIndex]: { 
+      selected: option, 
+      isCorrect: option === correct 
+    } 
+  }));
+};
   const startTimeRef = React.useRef(Date.now());
   useEffect(() => {
     if (type) {
@@ -173,6 +190,17 @@ export default function ModuleListPage() {
       alert("Could not submit answers. Please try again.");
     }
   };
+
+  const handleAnswerClick = (qIndex, option, correctAnswer) => {
+  setSelectedAnswers(prev => ({
+    ...prev,
+    [qIndex]: {
+      selected: option,
+      isCorrect: option === correctAnswer
+    }
+  }));
+};
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
 
@@ -181,172 +209,173 @@ export default function ModuleListPage() {
 
       <div className="max-w-[1700px] mx-auto space-y-8 relative z-10">
 
-        {/* Header section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">
-          <div className="flex items-center gap-3.5">
-            {selectedModule && (
-              <button
-                onClick={() => setSelectedModule(null)}
-                className="p-2 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm rounded-xl transition-all text-slate-600 active:scale-95"
-              >
-                <ArrowLeft size={18} />
-              </button>
-            )}
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-                {selectedModule
-                  ? currentModuleType === "video"
-                    ? "Now Playing"
-                    : currentModuleType === "audio"
-                      ? "Audio Lesson"
-                      : currentModuleType === "exercise"
-                        ? "Quiz Overview"
-                        : "Reading Lesson"
-                  : "Explore Lessons"}
-              </h1>
-
-              <div className="hidden md:flex items-center bg-orange-500/[0.04] backdrop-blur-xl px-3 py-1 rounded-full border border-orange-500/20 shadow-[inset_0_1px_12px_rgba(249,115,22,0.08)]">
-                <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent text-[10px] font-black tracking-wider uppercase">
-                  Enjoy Your Learning Journey
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-            <input
-              type="text"
-              placeholder="Search course content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all shadow-sm"
-            />
-          </div>
-        </div>
+       
+      
 
         {/* Selected Module Detail Views */}
         {selectedModule ? (
-          currentModuleType === "video" ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
-              <div className="lg:col-span-8 space-y-4">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video relative shadow-xl shadow-slate-200 border border-slate-200">
-                  {selectedModule?.video?.url ? (
-                    <video
-                      key={selectedModule._id}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain"
-                      src={selectedModule.video.url}
+      currentModuleType === "video" ? (
+  <div className="max-w-7xl mx-auto animate-fade-in space-y-8">
+    
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* --- Main Player (8 Columns) --- */}
+      <div className="lg:col-span-8 space-y-6">
+        <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
+          <video
+            key={selectedModule._id}
+            controls
+            autoPlay
+            playsInline
+            className="w-full h-full object-contain"
+            src={selectedModule.video.url}
+          />
+        </div>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">{selectedModule.title}</h1>
+        </div>
+      </div>
+
+      {/* --- Sidebar: Practice Questions (4 Columns) --- */}
+<div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm max-h-[600px] h-fit overflow-y-auto custom-scrollbar">  {/* Sticky Header stays fixed while content scrolls */}
+  <div className="sticky top-0 bg-white p-6 border-b border-slate-100 z-10">
+    <h3 className="font-bold text-slate-800 uppercase text-xs tracking-wider flex items-center gap-2">
+      <BookOpen size={16} className="text-indigo-500" />
+      Knowledge Check
+    </h3>
+  </div>
+
+  <div className="p-6 space-y-3">
+    {selectedModule.questions?.length > 0 ? (
+      selectedModule.questions.map((q, idx) => {
+        const isExpanded = expandedQ === idx;
+        const feedback = selectedAnswers[idx];
+        const validOptions = q.options.filter(opt => opt && opt.trim() !== "");
+
+        return (
+          <div key={idx} className="border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300 transition-colors">
+            <button 
+              onClick={() => setExpandedQ(isExpanded ? null : idx)}
+              className="w-full p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-left transition-colors"
+            >
+              <span className="font-bold text-xs text-slate-700 leading-tight">
+                {idx + 1}. {q.question_text}
+              </span>
+              <ChevronDown size={16} className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isExpanded && (
+              <div className="p-4 space-y-2 border-t border-slate-100 bg-white">
+                {validOptions.map((opt, i) => {
+                  const isSelected = feedback?.selected === opt;
+                  const isCorrect = opt === q.correct_answer;
+                  let btnStyle = "bg-white border-slate-200 hover:border-indigo-100";
+                  
+                  if (feedback) {
+                    if (isCorrect) btnStyle = "bg-green-50 border-green-500 text-green-700 font-semibold";
+                    else if (isSelected && !isCorrect) btnStyle = "bg-red-50 border-red-500 text-red-700";
+                    else btnStyle = "opacity-40 border-slate-100 bg-slate-50";
+                  }
+
+                  return (
+                    <button 
+                      key={i} 
+                      disabled={!!feedback}
+                      onClick={() => handleAnswer(idx, opt, q.correct_answer)}
+                      className={`block w-full text-left px-3 py-2 text-[11px] rounded-lg border transition-all ${btnStyle}`}
                     >
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
-                      No active media source URL available.
+                      {opt}
+                    </button>
+                  );
+                })}
+                
+                {feedback && (
+                  <div className={`mt-3 p-3 rounded-lg text-[10px] ${feedback.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                    <div className="flex items-center gap-2 mb-1 font-bold uppercase">
+                      {feedback.isCorrect ? <CheckCircle2 size={12}/> : <XCircle size={12}/>}
+                      {feedback.isCorrect ? "Correct" : "Explanation"}
                     </div>
-                  )}
-                </div>
-
-                <div className="pt-1">
-                  <h1 className="text-xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug line-clamp-2">
-                    {selectedModule.title}
-                  </h1>
-
-                  <div className="mt-4 p-5 bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-md shadow-slate-100/50">
-                    <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider mb-2.5">
-                      <Clock className="animate-pulse" size={14} />
-                      <span>
-                        {selectedModule.video?.duration_sec
-                          ? `${Math.floor(selectedModule.video.duration_sec / 60)} minutes duration`
-                          : "Video Module"}
-                      </span>
-                    </div>
-                    <div
-                      className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none"
-                      dangerouslySetInnerHTML={{ __html: selectedModule.description || "No description available." }}
-                    />
+                    <div className="leading-relaxed" dangerouslySetInnerHTML={{ __html: q.explanation }} />
                   </div>
-                </div>
+                )}
               </div>
+            )}
+          </div>
+        );
+      })
+    ) : (
+      <div className="text-center py-10 text-slate-400 text-sm italic">
+        No questions available.
+      </div>
+    )}
+  </div>
+</div>
+    </div>
 
-              {/* Video Sidebar Queue */}
-              <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
-                <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
-                  <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <Play className="text-orange-500 fill-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.3)]" size={14} />
-                    Dynamic Course Queue
-                  </h3>
-                  <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
-                    {videoModules.length} lessons
-                  </span>
-                </div>
+    {/* --- Bottom: Other Videos (Course Queue) --- */}
+  <div>
+  <h3 className="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">More Lessons</h3>
+  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {videoModules.filter(m => m._id !== selectedModule._id).map((item) => (
+      <button
+        key={item._id}
+        onClick={() => setSelectedModule(item)}
+        className="group block text-left bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+      >
+        {/* --- Thumbnail Section --- */}
+ <div className="relative aspect-video bg-slate-100 overflow-hidden">
 
-                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-50/40">
-                  {videoModules.map((item) => {
-                    if (!item) return null;
-                    const isPlaying = selectedModule?._id === item._id;
-                    const thumbnailSource = item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
+  {item.thumbnail || item.video?.thumbnail_url ? (
+    <img
+      src={item.thumbnail || item.video?.thumbnail_url}
+      alt={item.title}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+    />
+  ) : item.video?.url ? (
+    <video
+      src={`${item.video.url}#t=2`}
+      preload="metadata"
+      muted
+      playsInline
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center bg-slate-200">
+      <Play className="text-slate-400 fill-current" size={24} />
+    </div>
+  )}
 
-                    return (
-                      <button
-                        key={item._id}
-                        onClick={() => {
-                          setSelectedModule(item);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className={`w-full p-2.5 rounded-xl flex gap-3 text-left transition-all duration-200 group/item ${isPlaying
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border border-orange-300 shadow-sm"
-                            : "hover:bg-white border border-transparent shadow-sm hover:shadow"
-                          }`}
-                      >
-                        <div className="relative w-28 h-16 rounded-lg bg-slate-950 flex-shrink-0 overflow-hidden border border-slate-200/80 shadow-inner flex items-center justify-center">
-                          {thumbnailSource ? (
-                            <img
-                              src={thumbnailSource}
-                              alt={item.title}
-                              className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-300"
-                            />
-                          ) : item.video?.url ? (
-                            <video
-                              src={`${item.video.url}#t=2`}
-                              preload="metadata"
-                              muted
-                              playsInline
-                              className="w-full h-full object-cover opacity-60 pointer-events-none"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                              <Play className="text-slate-500 fill-slate-500" size={16} />
-                            </div>
-                          )}
+  {/* Play Overlay */}
+  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition">
+    <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+      <Play className="fill-current ml-0.5 text-slate-900" size={18} />
+    </div>
+  </div>
 
-                          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-200 bg-black/30 backdrop-blur-[1px] ${isPlaying ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'}`}>
-                            <div className="h-7 w-7 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md transform scale-90 group-hover/item:scale-100 transition-transform">
-                              <Play className="fill-white ml-0.5" size={10} />
-                            </div>
-                          </div>
+  {/* Badge */}
+  <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
+    Video
+  </div>
 
-                          {item.video?.duration_sec && (
-                            <span className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-sm text-[9px] font-mono px-1 py-0.5 rounded font-bold text-white z-10">
-                              {Math.floor(item.video.duration_sec / 60)}m
-                            </span>
-                          )}
-                        </div>
+  {/* Duration */}
+  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-0.5 rounded text-[9px]">
+    {item.video?.duration_sec
+      ? `${Math.floor(item.video.duration_sec / 60)}m`
+      : item.duration || "5m"}
+  </div>
+</div>
 
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <h4 className={`font-bold text-xs leading-snug line-clamp-2 transition-colors duration-200 ${isPlaying ? "text-orange-600" : "text-slate-800 group-hover/item:text-orange-600"}`}>
-                            {item.title}
-                          </h4>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : currentModuleType === "audio" ? (
+        {/* --- Title Only --- */}
+        <div className="p-3">
+          <h4 className="font-bold text-xs text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
+            {item.title}
+          </h4>
+        </div>
+      </button>
+    ))}
+  </div>
+</div>
+  </div>
+) : currentModuleType === "audio" ? (
             /* Dedicated Audio Player Layout View */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 space-y-6">
