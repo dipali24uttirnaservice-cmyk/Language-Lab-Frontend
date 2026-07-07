@@ -447,52 +447,190 @@ const handleAnswer = (qIndex, option, correct) => {
                     </div>
                   )}
                 </div>
+                 {/* Related Audios */}
+  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+    <div className="p-4 border-b border-slate-200 bg-white">
+      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+        <Headphones className="text-orange-500" size={14} />
+        Related Audios Queue
+      </h3>
+    </div>
+
+    <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+      {audioModules.map((item) => {
+        const isListening = selectedModule?._id === item._id;
+
+        return (
+          <button
+            key={item._id}
+            onClick={() => {
+              setSelectedModule(item);
+              setExpandedQ(null);
+              setSelectedAnswers({});
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
+              isListening
+                ? "bg-orange-50 border-orange-300"
+                : "hover:bg-slate-50 border-transparent"
+            }`}
+          >
+            <div
+              className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                isListening
+                  ? "bg-orange-500 text-white"
+                  : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              <Headphones size={18} />
+            </div>
+
+            <div className="flex-1">
+              <h4
+                className={`text-xs font-bold ${
+                  isListening ? "text-orange-600" : "text-slate-800"
+                }`}
+              >
+                {item.title}
+              </h4>
+
+              <span className="text-[10px] text-slate-400">
+                {item.audio?.duration_sec
+                  ? `${Math.floor(item.audio.duration_sec / 60)}m`
+                  : "Audio"}
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+where to add this in audio type 
               </div>
 
               {/* Related Audio Lessons Queue Sidebar */}
-              <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
-                <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
-                  <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <Headphones className="text-orange-500" size={14} />
-                    Related Audios Queue
-                  </h3>
-                  <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
-                    {audioModules.length} lessons
-                  </span>
-                </div>
+            <div className="lg:col-span-4 space-y-6">
 
-                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-50/40">
-                  {audioModules.map((item) => {
-                    if (!item) return null;
-                    const isListening = selectedModule?._id === item._id;
+            
+
+ 
+
+  {/* Knowledge Check */}
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <div className="sticky top-0 bg-white p-5 border-b">
+      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+        <BookOpen className="text-indigo-500" size={15} />
+        Knowledge Check
+      </h3>
+    </div>
+
+    <div className="max-h-[350px] overflow-y-auto p-4 space-y-3 custom-scrollbar">
+
+      {selectedModule.questions?.length ? (
+        selectedModule.questions.map((q, idx) => {
+          const isExpanded = expandedQ === idx;
+          const feedback = selectedAnswers[idx];
+          const validOptions = q.options.filter(Boolean);
+
+          return (
+            <div
+              key={idx}
+              className="border rounded-xl overflow-hidden"
+            >
+              <button
+                onClick={() =>
+                  setExpandedQ(isExpanded ? null : idx)
+                }
+                className="w-full flex justify-between items-center p-4 bg-slate-50"
+              >
+                <span className="text-xs font-bold text-left">
+                  {idx + 1}. {q.question_text}
+                </span>
+
+                <ChevronDown
+                  size={15}
+                  className={`transition-transform ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isExpanded && (
+                <div className="p-4 space-y-2">
+
+                  {validOptions.map((opt, i) => {
+                    const isSelected = feedback?.selected === opt;
+                    const isCorrect = opt === q.correct_answer;
+
+                    let style =
+                      "border-slate-200 hover:border-indigo-300";
+
+                    if (feedback) {
+                      if (isCorrect)
+                        style =
+                          "bg-green-50 border-green-500 text-green-700";
+                      else if (isSelected)
+                        style =
+                          "bg-red-50 border-red-500 text-red-700";
+                      else
+                        style =
+                          "opacity-40 bg-slate-50 border-slate-100";
+                    }
+
                     return (
                       <button
-                        key={item._id}
-                        onClick={() => {
-                          setSelectedModule(item);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${isListening
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm"
-                            : "hover:bg-white border-transparent shadow-sm hover:shadow"
-                          }`}
+                        key={i}
+                        disabled={!!feedback}
+                        onClick={() =>
+                          handleAnswer(
+                            idx,
+                            opt,
+                            q.correct_answer
+                          )
+                        }
+                        className={`w-full border rounded-lg p-2 text-left text-xs ${style}`}
                       >
-                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isListening ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-500 group-hover/item:bg-orange-50'}`}>
-                          <Headphones className={isListening ? "text-white" : "group-hover/item:text-orange-500"} size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className={`font-bold text-xs leading-snug line-clamp-1 transition-colors duration-200 ${isListening ? "text-orange-600" : "text-slate-800 group-hover/item:text-orange-600"}`}>
-                            {item.title}
-                          </h4>
-                          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                            {item.audio?.language || "Audio"} • {item.audio?.duration_sec ? `${Math.floor(item.audio.duration_sec / 60)}m` : "Play"}
-                          </span>
-                        </div>
+                        {opt}
                       </button>
                     );
                   })}
+
+                  {feedback && (
+                    <div
+                      className={`mt-3 rounded-lg p-3 text-xs ${
+                        feedback.isCorrect
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      <div className="font-bold mb-2">
+                        {feedback.isCorrect
+                          ? "Correct"
+                          : "Explanation"}
+                      </div>
+
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: q.explanation,
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+            </div>
+          );
+        })
+      ) : (
+        <div className="text-center text-sm text-slate-400 py-8">
+          No questions available.
+        </div>
+      )}
+    </div>
+  </div>
+  
+</div>
             </div>
           ) : currentModuleType === "exercise" ? (
             /* Quiz / Exercise Active View Details Block */
@@ -644,55 +782,113 @@ const handleAnswer = (qIndex, option, correct) => {
        ) : currentModuleType === "vocabulary" ? (
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
     {/* Main Content */}
-    <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
-      <div>
-        <div className="flex flex-wrap gap-2 items-center mb-3">
-          <span className="bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-            <BookOpen size={12} />
-            Vocabulary Lesson
-          </span>
+  {/* Related Audio Lessons */}
+<div className="space-y-4">
+  <div className="flex items-center justify-between">
+    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+      <Headphones className="text-orange-500" size={16} />
+      More Audio Lessons
+    </h3>
 
-          {selectedModule.level && (
-            <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-              <GraduationCap size={12} />
-              Level {selectedModule.level}
-            </span>
-          )}
+    <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
+      {audioModules.length} Lessons
+    </span>
+  </div>
 
-          {selectedModule.time_limit_sec && (
-            <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-              <Clock size={12} />
-              {selectedModule.time_limit_sec}s
-            </span>
-          )}
-        </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {audioModules.map((item) => {
+      const isCurrent = selectedModule?._id === item._id;
 
-        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-          {selectedModule.title}
-        </h1>
-
-        <div
-          className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
-          dangerouslySetInnerHTML={{
-            __html: selectedModule.description || "",
+      return (
+        <button
+          key={item._id}
+          onClick={() => {
+            setSelectedModule(item);
+            setExpandedQ(null);
+            setSelectedAnswers({});
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
           }}
-        />
-      </div>
+          className={`group relative rounded-2xl border transition-all duration-300 overflow-hidden text-left
+          ${
+            isCurrent
+              ? "border-orange-500 bg-orange-50 shadow-lg"
+              : "border-slate-200 bg-white hover:border-orange-300 hover:shadow-lg"
+          }`}
+        >
+          {/* Top */}
+          <div className="flex items-center gap-4 p-4">
 
-      <hr className="border-slate-100" />
+            <div
+              className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0
+              ${
+                isCurrent
+                  ? "bg-orange-500 text-white"
+                  : "bg-slate-100 text-slate-500 group-hover:bg-orange-100"
+              }`}
+            >
+              <Headphones size={24} />
+            </div>
 
-      {/* Vocabulary Content */}
-      <div
-        className="text-slate-800 text-sm md:text-base leading-relaxed prose prose-slate max-w-none"
-        dangerouslySetInnerHTML={{
-          __html:
-            selectedModule.content?.body ||
-            selectedModule.body ||
-            selectedModule.vocabulary ||
-            "<p>No vocabulary content available.</p>",
-        }}
-      />
-    </div>
+            <div className="flex-1 min-w-0">
+
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] uppercase font-bold bg-orange-100 text-orange-600 px-2 py-1 rounded">
+                  Audio
+                </span>
+
+                {isCurrent && (
+                  <span className="text-[10px] uppercase font-bold bg-green-100 text-green-700 px-2 py-1 rounded">
+                    Playing
+                  </span>
+                )}
+              </div>
+
+              <h4
+                className={`font-bold text-sm line-clamp-2
+                ${
+                  isCurrent
+                    ? "text-orange-600"
+                    : "text-slate-900 group-hover:text-orange-600"
+                }`}
+              >
+                {item.title}
+              </h4>
+
+              <p className="text-xs text-slate-500 mt-2 flex items-center gap-3">
+
+                <span>
+                  {item.audio?.language || "French"}
+                </span>
+
+                <span>
+                  {item.audio?.duration_sec
+                    ? `${Math.floor(item.audio.duration_sec / 60)}m ${item.audio.duration_sec % 60}s`
+                    : "Audio"}
+                </span>
+
+              </p>
+            </div>
+
+            <div
+              className={`h-10 w-10 rounded-full flex items-center justify-center transition
+              ${
+                isCurrent
+                  ? "bg-orange-500 text-white"
+                  : "bg-slate-100 group-hover:bg-orange-500 group-hover:text-white"
+              }`}
+            >
+              <Play className="fill-current ml-0.5" size={16} />
+            </div>
+
+          </div>
+        </button>
+      );
+    })}
+  </div>
+</div>
 
     {/* Sidebar */}
     <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
