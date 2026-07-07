@@ -123,7 +123,7 @@ export default function InstituteDashboard() {
             sub="+12 added this week"
           />
           <StatCard
-            title="Teachers"
+            title="Courses"
             value="15"
             icon={GraduationCap}
             color="from-emerald-400 to-emerald-600"

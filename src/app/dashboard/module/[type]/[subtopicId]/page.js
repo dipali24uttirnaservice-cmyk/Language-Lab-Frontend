@@ -43,14 +43,14 @@ export default function ModuleListPage() {
   const [activeTab, setActiveTab] = useState(type || "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
-const [resultData, setResultData] = useState(null);
+  const [resultData, setResultData] = useState(null);
   const [isQuizActive, setIsQuizActive] = useState(false);
-const [showResults, setShowResults] = useState(false);
-const [finalScore, setFinalScore] = useState(0);
-const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-const [userAnswers, setUserAnswers] = useState({}); // To store answers
-// Add this near your other state declarations
-const startTimeRef = React.useRef(Date.now());
+  const [showResults, setShowResults] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({}); // To store answers
+  // Add this near your other state declarations
+  const startTimeRef = React.useRef(Date.now());
   useEffect(() => {
     if (type) {
       setActiveTab(type);
@@ -119,73 +119,73 @@ const startTimeRef = React.useRef(Date.now());
 
   const currentModuleType = selectedModule?.module_type || type;
 
-// Inside ModuleListPage component...
-const handleSubmit = async () => {
-  const formattedAnswers = Object.keys(userAnswers).map((index) => ({
-    question_index: Number(index),
-    given_answer: userAnswers[index],
-  }));
+  // Inside ModuleListPage component...
+  const handleSubmit = async () => {
+    const formattedAnswers = Object.keys(userAnswers).map((index) => ({
+      question_index: Number(index),
+      given_answer: userAnswers[index],
+    }));
 
-  const timeSpent = Math.floor(
-    (Date.now() - startTimeRef.current) / 1000
-  );
-
-  const payload = {
-    answers: formattedAnswers,
-    time_spent_sec: timeSpent,
-  };
-
-  try {
-    const response = await moduleApi.submitExercise(
-      selectedModule._id,
-      payload
+    const timeSpent = Math.floor(
+      (Date.now() - startTimeRef.current) / 1000
     );
 
-    console.log("Exercise Submit Response:", response);
+    const payload = {
+      answers: formattedAnswers,
+      time_spent_sec: timeSpent,
+    };
 
-    // Get the attempt object
-const attempt =
-  response?.data?.data?.attempt ||
-  response?.data?.attempt ||
-  response?.attempt ||
-  response?.data;    console.log("Attempt =", attempt);
-console.log("Score =", attempt?.score);
-console.log("ResultData before set =", resultData);
+    try {
+      const response = await moduleApi.submitExercise(
+        selectedModule._id,
+        payload
+      );
 
-   if (attempt) {
-  console.log("Attempt:", attempt);
+      console.log("Exercise Submit Response:", response);
 
-  setResultData({
-    score: attempt.score,
-    max_score: attempt.max_score,
-    accuracy: attempt.accuracy,
-    is_passed: attempt.is_passed,
-  });
+      // Get the attempt object
+      const attempt =
+        response?.data?.data?.attempt ||
+        response?.data?.attempt ||
+        response?.attempt ||
+        response?.data; console.log("Attempt =", attempt);
+      console.log("Score =", attempt?.score);
+      console.log("ResultData before set =", resultData);
 
-  setIsQuizActive(false);
-  setShowResults(true);
-}else {
-      console.error("Attempt data not found.", response);
-      alert("Unable to load result.");
+      if (attempt) {
+        console.log("Attempt:", attempt);
+
+        setResultData({
+          score: attempt.score,
+          max_score: attempt.max_score,
+          accuracy: attempt.accuracy,
+          is_passed: attempt.is_passed,
+        });
+
+        setIsQuizActive(false);
+        setShowResults(true);
+      } else {
+        console.error("Attempt data not found.", response);
+        alert("Unable to load result.");
+      }
+    } catch (error) {
+      console.error("Submission failed:", error);
+      alert("Could not submit answers. Please try again.");
     }
-  } catch (error) {
-    console.error("Submission failed:", error);
-    alert("Could not submit answers. Please try again.");
-  }
-};
+  };
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
-      
+
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-orange-400/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/10 blur-[150px] pointer-events-none" />
 
       <div className="max-w-[1700px] mx-auto space-y-8 relative z-10">
-        
+
         {/* Header section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">
           <div className="flex items-center gap-3.5">
             {selectedModule && (
-              <button 
+              <button
                 onClick={() => setSelectedModule(null)}
                 className="p-2 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm rounded-xl transition-all text-slate-600 active:scale-95"
               >
@@ -194,17 +194,17 @@ console.log("ResultData before set =", resultData);
             )}
             <div className="flex items-center gap-3">
               <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-                {selectedModule 
-                  ? currentModuleType === "video" 
-                    ? "Now Playing" 
+                {selectedModule
+                  ? currentModuleType === "video"
+                    ? "Now Playing"
                     : currentModuleType === "audio"
-                    ? "Audio Lesson"
-                    : currentModuleType === "exercise"
-                    ? "Quiz Overview"
-                    : "Reading Lesson"
+                      ? "Audio Lesson"
+                      : currentModuleType === "exercise"
+                        ? "Quiz Overview"
+                        : "Reading Lesson"
                   : "Explore Lessons"}
               </h1>
-              
+
               <div className="hidden md:flex items-center bg-orange-500/[0.04] backdrop-blur-xl px-3 py-1 rounded-full border border-orange-500/20 shadow-[inset_0_1px_12px_rgba(249,115,22,0.08)]">
                 <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent text-[10px] font-black tracking-wider uppercase">
                   Enjoy Your Learning Journey
@@ -233,7 +233,7 @@ console.log("ResultData before set =", resultData);
                 <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video relative shadow-xl shadow-slate-200 border border-slate-200">
                   {selectedModule?.video?.url ? (
                     <video
-                      key={selectedModule._id} 
+                      key={selectedModule._id}
                       controls
                       autoPlay
                       playsInline
@@ -253,17 +253,17 @@ console.log("ResultData before set =", resultData);
                   <h1 className="text-xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug line-clamp-2">
                     {selectedModule.title}
                   </h1>
-                  
+
                   <div className="mt-4 p-5 bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-md shadow-slate-100/50">
                     <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider mb-2.5">
                       <Clock className="animate-pulse" size={14} />
                       <span>
-                        {selectedModule.video?.duration_sec 
+                        {selectedModule.video?.duration_sec
                           ? `${Math.floor(selectedModule.video.duration_sec / 60)} minutes duration`
                           : "Video Module"}
                       </span>
                     </div>
-                    <div 
+                    <div
                       className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none"
                       dangerouslySetInnerHTML={{ __html: selectedModule.description || "No description available." }}
                     />
@@ -275,7 +275,7 @@ console.log("ResultData before set =", resultData);
               <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
                 <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
                   <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <Play className="text-orange-500 fill-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.3)]" size={14} /> 
+                    <Play className="text-orange-500 fill-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.3)]" size={14} />
                     Dynamic Course Queue
                   </h3>
                   <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
@@ -288,7 +288,7 @@ console.log("ResultData before set =", resultData);
                     if (!item) return null;
                     const isPlaying = selectedModule?._id === item._id;
                     const thumbnailSource = item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
-                    
+
                     return (
                       <button
                         key={item._id}
@@ -296,21 +296,20 @@ console.log("ResultData before set =", resultData);
                           setSelectedModule(item);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className={`w-full p-2.5 rounded-xl flex gap-3 text-left transition-all duration-200 group/item ${
-                          isPlaying 
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border border-orange-300 shadow-sm" 
+                        className={`w-full p-2.5 rounded-xl flex gap-3 text-left transition-all duration-200 group/item ${isPlaying
+                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border border-orange-300 shadow-sm"
                             : "hover:bg-white border border-transparent shadow-sm hover:shadow"
-                        }`}
+                          }`}
                       >
                         <div className="relative w-28 h-16 rounded-lg bg-slate-950 flex-shrink-0 overflow-hidden border border-slate-200/80 shadow-inner flex items-center justify-center">
                           {thumbnailSource ? (
-                            <img 
-                              src={thumbnailSource} 
+                            <img
+                              src={thumbnailSource}
                               alt={item.title}
                               className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-300"
                             />
                           ) : item.video?.url ? (
-                            <video 
+                            <video
                               src={`${item.video.url}#t=2`}
                               preload="metadata"
                               muted
@@ -328,7 +327,7 @@ console.log("ResultData before set =", resultData);
                               <Play className="fill-white ml-0.5" size={10} />
                             </div>
                           </div>
-                          
+
                           {item.video?.duration_sec && (
                             <span className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-sm text-[9px] font-mono px-1 py-0.5 rounded font-bold text-white z-10">
                               {Math.floor(item.video.duration_sec / 60)}m
@@ -352,7 +351,7 @@ console.log("ResultData before set =", resultData);
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 space-y-6">
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6">
-                  
+
                   {/* Title and Top Context Metadata tags */}
                   <div>
                     <div className="flex flex-wrap gap-2 items-center mb-3">
@@ -373,7 +372,7 @@ console.log("ResultData before set =", resultData);
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
                       {selectedModule.title}
                     </h1>
-                    <div 
+                    <div
                       className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
                       dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
                     />
@@ -395,10 +394,10 @@ console.log("ResultData before set =", resultData);
                         </p>
                       </div>
                     </div>
-                    <audio 
+                    <audio
                       key={selectedModule._id}
-                      src={selectedModule.audio?.url} 
-                      controls 
+                      src={selectedModule.audio?.url}
+                      controls
                       autoPlay
                       className="w-full sm:w-72 md:w-96 focus:outline-none"
                     />
@@ -412,7 +411,7 @@ console.log("ResultData before set =", resultData);
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <FileText size={14} /> Audio Lesson Transcript
                       </h3>
-                      <div 
+                      <div
                         className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
                         dangerouslySetInnerHTML={{ __html: selectedModule.audio.transcript }}
                       />
@@ -425,7 +424,7 @@ console.log("ResultData before set =", resultData);
               <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
                 <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
                   <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <Headphones className="text-orange-500" size={14} /> 
+                    <Headphones className="text-orange-500" size={14} />
                     Related Audios Queue
                   </h3>
                   <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
@@ -444,11 +443,10 @@ console.log("ResultData before set =", resultData);
                           setSelectedModule(item);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${
-                          isListening 
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm" 
+                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${isListening
+                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm"
                             : "hover:bg-white border-transparent shadow-sm hover:shadow"
-                        }`}
+                          }`}
                       >
                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isListening ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-500 group-hover/item:bg-orange-50'}`}>
                           <Headphones className={isListening ? "text-white" : "group-hover/item:text-orange-500"} size={18} />
@@ -467,155 +465,286 @@ console.log("ResultData before set =", resultData);
                 </div>
               </div>
             </div>
-         ) : currentModuleType === "exercise" ? (
-  /* Quiz / Exercise Active View Details Block */
-  <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
-    {/* 1. Header Area */}
-    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative">
-      <div className="absolute top-0 right-0 p-6 opacity-10">
-        <Award size={100} />
+          ) : currentModuleType === "exercise" ? (
+            /* Quiz / Exercise Active View Details Block */
+            <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
+              {/* 1. Header Area */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative">
+                <div className="absolute top-0 right-0 p-6 opacity-10">
+                  <Award size={100} />
+                </div>
+                <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 mb-3">
+                  <Award size={12} /> Challenge Activity
+                </span>
+                <h2 className="text-2xl font-black tracking-tight">{selectedModule.title}</h2>
+              </div>
+
+              {/* 2. Content Area: Logic to switch between Intro, Active Quiz, and Results */}
+              <div className="p-6 space-y-6">
+                {!isQuizActive && !showResults ? (
+                  // --- PRE-ASSESSMENT VIEW ---
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {/* ... (Keep your existing stats cards here) ... */}
+                    </div>
+                    <div className="bg-orange-500/[0.02] border border-orange-500/10 rounded-xl p-4 space-y-2">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <Sparkles className="text-orange-500" size={14} /> Evaluation Rules
+                      </h4>
+                      <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
+                        {selectedModule.shuffle_questions && <li>Questions randomized dynamically.</li>}
+                        {selectedModule.show_explanation && <li>Step-by-step resolution provided.</li>}
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => setIsQuizActive(true)} // Toggle to show quiz interface
+                      className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold rounded-xl transition-all shadow-md"
+                    >
+                      Start Assessment Activity Now &rarr;
+                    </button>
+                  </>
+                ) : showResults ? (
+                  // --- POST-ASSESSMENT RESULTS VIEW ---
+                  <div className="text-center py-10 animate-fade-in">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Award size={40} />
+                    </div>
+
+                    <h3 className="text-xl font-black text-slate-900">
+                      {resultData?.is_passed ? "Assessment Passed!" : "Assessment Complete!"}
+                    </h3>
+
+                    <div className="mt-6 grid grid-cols-2 gap-4 max-w-xs mx-auto">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Score</p>
+                        <p className="font-black text-orange-600 text-lg">
+                          {resultData?.score} / {resultData?.max_score}        </p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Accuracy</p>
+                        <p className="font-black text-slate-800 text-lg">{resultData?.accuracy}%</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setShowResults(false)}
+                      className="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold underline"
+                    >
+                      Review Answers
+                    </button>
+                  </div>
+                ) : (
+                  // --- ACTIVE QUIZ COMPONENT ---
+                  <div className="space-y-8">
+                    {/* --- ACTIVE QUIZ COMPONENT --- */}
+                    {/* --- ACTIVE QUIZ COMPONENT --- */}
+                    <div className="min-h-[300px]">
+                      {selectedModule.questions && selectedModule.questions.length > 0 ? (
+                        (() => {
+                          const q = selectedModule.questions[currentQuestionIndex];
+                          const isLastQuestion = currentQuestionIndex === selectedModule.questions.length - 1;
+
+
+
+                          return (
+                            <div className="space-y-6">
+                              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                Question {currentQuestionIndex + 1} of {selectedModule.questions.length}
+                              </div>
+
+                              <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
+
+                              <div className="space-y-3">
+                                {q.question_type === "mcq" ? (
+                                  q.options.map((opt, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
+                                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === opt
+                                          ? "border-orange-500 bg-orange-50"
+                                          : "border-slate-200"
+                                        }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <input
+                                    type="text"
+                                    placeholder="Type your answer..."
+                                    value={userAnswers[currentQuestionIndex] || ""}
+                                    onChange={(e) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: e.target.value })}
+                                    className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-orange-500 outline-none"
+                                  />
+                                )}
+                              </div>
+
+                              {/* NAVIGATION BUTTONS */}
+                              <div className="flex gap-3">
+                                {!isLastQuestion ? (
+                                  <button
+                                    onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                                    disabled={!userAnswers[currentQuestionIndex]}
+                                    className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-xl disabled:opacity-50"
+                                  >
+                                    Next Question
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={handleSubmit} // Trigger the API call
+                                    disabled={!userAnswers[currentQuestionIndex]}
+                                    className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl disabled:opacity-50"
+                                  >
+                                    Submit All Answers
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <p>No questions available.</p>
+                      )}
+                    </div>
+
+
+                  </div>
+                )}
+              </div>
+            </div>
+       ) : currentModuleType === "vocabulary" ? (
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
+    {/* Main Content */}
+    <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
+      <div>
+        <div className="flex flex-wrap gap-2 items-center mb-3">
+          <span className="bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+            <BookOpen size={12} />
+            Vocabulary Lesson
+          </span>
+
+          {selectedModule.level && (
+            <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+              <GraduationCap size={12} />
+              Level {selectedModule.level}
+            </span>
+          )}
+
+          {selectedModule.time_limit_sec && (
+            <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+              <Clock size={12} />
+              {selectedModule.time_limit_sec}s
+            </span>
+          )}
+        </div>
+
+        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+          {selectedModule.title}
+        </h1>
+
+        <div
+          className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
+          dangerouslySetInnerHTML={{
+            __html: selectedModule.description || "",
+          }}
+        />
       </div>
-      <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 mb-3">
-        <Award size={12} /> Challenge Activity
-      </span>
-      <h2 className="text-2xl font-black tracking-tight">{selectedModule.title}</h2>
+
+      <hr className="border-slate-100" />
+
+      {/* Vocabulary Content */}
+      <div
+        className="text-slate-800 text-sm md:text-base leading-relaxed prose prose-slate max-w-none"
+        dangerouslySetInnerHTML={{
+          __html:
+            selectedModule.content?.body ||
+            selectedModule.body ||
+            selectedModule.vocabulary ||
+            "<p>No vocabulary content available.</p>",
+        }}
+      />
     </div>
 
-    {/* 2. Content Area: Logic to switch between Intro, Active Quiz, and Results */}
-    <div className="p-6 space-y-6">
-      {!isQuizActive && !showResults ? (
-        // --- PRE-ASSESSMENT VIEW ---
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {/* ... (Keep your existing stats cards here) ... */}
-          </div>
-          <div className="bg-orange-500/[0.02] border border-orange-500/10 rounded-xl p-4 space-y-2">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-              <Sparkles className="text-orange-500" size={14} /> Evaluation Rules
-            </h4>
-            <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
-              {selectedModule.shuffle_questions && <li>Questions randomized dynamically.</li>}
-              {selectedModule.show_explanation && <li>Step-by-step resolution provided.</li>}
-            </ul>
-          </div>
-          <button
-            onClick={() => setIsQuizActive(true)} // Toggle to show quiz interface
-            className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold rounded-xl transition-all shadow-md"
-          >
-            Start Assessment Activity Now &rarr;
-          </button>
-        </>
-      ) : showResults ? (
-        // --- POST-ASSESSMENT RESULTS VIEW ---
-       <div className="text-center py-10 animate-fade-in">
-    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-      <Award size={40} />
-    </div>
-    
-    <h3 className="text-xl font-black text-slate-900">
-      {resultData?.is_passed ? "Assessment Passed!" : "Assessment Complete!"}
-    </h3>
-    
-    <div className="mt-6 grid grid-cols-2 gap-4 max-w-xs mx-auto">
-      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-        <p className="text-[10px] uppercase font-bold text-slate-400">Score</p>
-        <p className="font-black text-orange-600 text-lg">
- {resultData?.score} / {resultData?.max_score}        </p>
+    {/* Sidebar */}
+    <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
+      <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
+        <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
+          <BookOpen className="text-amber-500" size={14} />
+          Vocabulary Queue
+        </h3>
+
+        <span className="text-xs text-amber-600 font-bold bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full shadow-sm">
+          {
+            modules.filter(
+              (m) => (m.module_type || type) === "vocabulary"
+            ).length
+          }{" "}
+          lessons
+        </span>
       </div>
-      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-        <p className="text-[10px] uppercase font-bold text-slate-400">Accuracy</p>
-        <p className="font-black text-slate-800 text-lg">{resultData?.accuracy}%</p>
-      </div>
-    </div>
 
-    <button 
-      onClick={() => setShowResults(false)}
-      className="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold underline"
-    >
-      Review Answers
-    </button>
-  </div>
-      ) : (
-        // --- ACTIVE QUIZ COMPONENT ---
-       <div className="space-y-8">
- {/* --- ACTIVE QUIZ COMPONENT --- */}
-{/* --- ACTIVE QUIZ COMPONENT --- */}
-<div className="min-h-[300px]">
-  {selectedModule.questions && selectedModule.questions.length > 0 ? (
-    (() => {
-      const q = selectedModule.questions[currentQuestionIndex];
-      const isLastQuestion = currentQuestionIndex === selectedModule.questions.length - 1;
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-50/40">
+        {modules
+          .filter((m) => (m.module_type || type) === "vocabulary")
+          .map((item) => {
+            const isCurrent = selectedModule?._id === item._id;
 
-     
-
-      return (
-        <div className="space-y-6">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Question {currentQuestionIndex + 1} of {selectedModule.questions.length}
-          </div>
-
-          <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
-
-          <div className="space-y-3">
-            {q.question_type === "mcq" ? (
-              q.options.map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                    userAnswers[currentQuestionIndex] === opt 
-                    ? "border-orange-500 bg-orange-50" 
-                    : "border-slate-200"
+            return (
+              <button
+                key={item._id}
+                onClick={() => {
+                  setSelectedModule(item);
+                  window.scrollTo({
+                    top: 0,
+                    behavior: "smooth",
+                  });
+                }}
+                className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group border ${
+                  isCurrent
+                    ? "bg-gradient-to-r from-amber-500/5 to-transparent border-amber-300 shadow-sm"
+                    : "hover:bg-white border-transparent shadow-sm hover:shadow"
+                }`}
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    isCurrent
+                      ? "bg-amber-500 text-white"
+                      : "bg-slate-100 text-slate-500 group-hover:bg-amber-50"
                   }`}
                 >
-                  {opt}
-                </button>
-              ))
-            ) : (
-              <input
-                type="text"
-                placeholder="Type your answer..."
-                value={userAnswers[currentQuestionIndex] || ""}
-                onChange={(e) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: e.target.value })}
-                className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-orange-500 outline-none"
-              />
-            )}
-          </div>
+                  <BookOpen
+                    className={
+                      isCurrent
+                        ? "text-white"
+                        : "group-hover:text-amber-500"
+                    }
+                    size={18}
+                  />
+                </div>
 
-          {/* NAVIGATION BUTTONS */}
-          <div className="flex gap-3">
-            {!isLastQuestion ? (
-              <button
-                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-                disabled={!userAnswers[currentQuestionIndex]}
-                className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-xl disabled:opacity-50"
-              >
-                Next Question
+                <div className="flex-1 min-w-0">
+                  <h4
+                    className={`font-bold text-xs leading-snug line-clamp-1 ${
+                      isCurrent
+                        ? "text-amber-600"
+                        : "text-slate-800 group-hover:text-amber-600"
+                    }`}
+                  >
+                    {item.title}
+                  </h4>
+
+                  <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                    {item.total_marks || 0} Words •{" "}
+                    {item.max_attempts || 0} Attempts
+                  </span>
+                </div>
               </button>
-            ) : (
-              <button
-                onClick={handleSubmit} // Trigger the API call
-                disabled={!userAnswers[currentQuestionIndex]}
-                className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl disabled:opacity-50"
-              >
-                Submit All Answers
-              </button>
-            )}
-          </div>
-        </div>
-      );
-    })()
-  ) : (
-    <p>No questions available.</p>
-  )}
-</div>
-  
- 
-</div>
-      )}
+            );
+          })}
+      </div>
     </div>
   </div>
-) : (
+) : currentModuleType === "text" ? (
             /* Text layout view fallback default */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
@@ -638,7 +767,7 @@ console.log("ResultData before set =", resultData);
                   <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
                     {selectedModule.title}
                   </h1>
-                  <div 
+                  <div
                     className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
                     dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
                   />
@@ -646,7 +775,7 @@ console.log("ResultData before set =", resultData);
 
                 <hr className="border-slate-100" />
 
-                <div 
+                <div
                   className="text-slate-800 text-sm md:text-base leading-relaxed prose prose-slate max-w-none"
                   dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "No document reading context content configured." }}
                 />
@@ -656,7 +785,7 @@ console.log("ResultData before set =", resultData);
               <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
                 <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
                   <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-                    <FileText className="text-orange-500" size={14} /> 
+                    <FileText className="text-orange-500" size={14} />
                     Related Readings Queue
                   </h3>
                   <span className="text-xs text-orange-600 font-bold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full shadow-sm">
@@ -675,11 +804,10 @@ console.log("ResultData before set =", resultData);
                           setSelectedModule(item);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${
-                          isReading 
-                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm" 
+                        className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group/item border ${isReading
+                            ? "bg-gradient-to-r from-orange-500/5 to-transparent border-orange-300 shadow-sm"
                             : "hover:bg-white border-transparent shadow-sm hover:shadow"
-                        }`}
+                          }`}
                       >
                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isReading ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-500 group-hover/item:bg-orange-50'}`}>
                           <FileText className={isReading ? "text-white" : "group-hover/item:text-orange-500"} size={18} />
@@ -700,6 +828,11 @@ console.log("ResultData before set =", resultData);
                 </div>
               </div>
             </div>
+                   
+          ) : (
+            <div className="p-10 text-center text-slate-500">
+              Unsupported module type.
+            </div>
           )
         ) : (
           /* Grid list view for unselected state modules cards */
@@ -713,11 +846,10 @@ console.log("ResultData before set =", resultData);
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
-                        isActive 
-                          ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 transform -translate-y-0.5" 
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${isActive
+                          ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 transform -translate-y-0.5"
                           : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
-                      }`}
+                        }`}
                     >
                       <Icon size={14} />
                       {tab.label}
@@ -739,6 +871,7 @@ console.log("ResultData before set =", resultData);
                   const isAudio = (item.module_type || type) === "audio";
                   const isText = (item.module_type || type) === "text";
                   const isExercise = (item.module_type || type) === "exercise";
+                  const isVocabulary = (item.module_type || type) === "vocabulary";
                   const thumbnailSource = item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
 
                   /* EXERCISE COMPONENT UI BLOCK - HIGHER CONVERTING INTERACTIVE LIST COMPONENT BANNER */
@@ -823,7 +956,7 @@ console.log("ResultData before set =", resultData);
                           </div>
 
                           <div className="hidden md:block md:col-span-4">
-                            <div 
+                            <div
                               className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
                               dangerouslySetInnerHTML={{ __html: item.description || "No context description." }}
                             />
@@ -833,8 +966,8 @@ console.log("ResultData before set =", resultData);
                             <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
                               <Clock size={12} className="text-slate-400" />
                               <span>
-                                {item.audio?.duration_sec 
-                                  ? `${Math.floor(item.audio.duration_sec / 60)}m` 
+                                {item.audio?.duration_sec
+                                  ? `${Math.floor(item.audio.duration_sec / 60)}m`
                                   : "Listen"}
                               </span>
                             </div>
@@ -855,7 +988,7 @@ console.log("ResultData before set =", resultData);
                         className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-500" />
-                        
+
                         <div className="flex items-start gap-4 mb-3">
                           <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
                             <FileText size={24} />
@@ -890,6 +1023,60 @@ console.log("ResultData before set =", resultData);
                           <span className="text-orange-500 font-bold group-hover:underline flex items-center gap-1">
                             Read Document &rarr;
                           </span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  /* VOCABULARY MODULE CARD */
+                  if (isVocabulary) {
+                    return (
+                      <div
+                        key={item._id}
+                        onClick={() => setSelectedModule(item)}
+                        className="group relative bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-amber-300 transition-all duration-300 flex items-center gap-5 cursor-pointer col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4"
+                      >
+                        {/* Left Icon */}
+                        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition">
+                          <BookOpen className="text-white" size={28} />
+                        </div>
+
+                        {/* Center */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="px-2 py-1 text-[10px] rounded-full bg-amber-100 text-amber-700 font-bold uppercase">
+                              Vocabulary
+                            </span>
+
+                            <span className="px-2 py-1 text-[10px] rounded-full bg-slate-100 text-slate-600 font-semibold">
+                              {item.total_marks} Words
+                            </span>
+                          </div>
+
+                          <h3 className="font-black text-lg text-slate-900 group-hover:text-orange-600 transition">
+                            {item.title}
+                          </h3>
+
+                          <div
+                            className="text-sm text-slate-500 line-clamp-2 mt-2"
+                            dangerouslySetInnerHTML={{
+                              __html: item.description,
+                            }}
+                          />
+                        </div>
+
+                        {/* Right */}
+                        <div className="flex flex-col items-end gap-3">
+                          <div className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border">
+                            ⏱ {item.time_limit_sec}s
+                          </div>
+
+                          <div className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border">
+                            🔄 {item.max_attempts} Attempts
+                          </div>
+
+                          <button className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold shadow hover:scale-105 transition">
+                            Learn →
+                          </button>
                         </div>
                       </div>
                     );
@@ -941,7 +1128,7 @@ console.log("ResultData before set =", resultData);
                             {Math.floor(item.video.duration_sec / 60)}m
                           </span>
                         )}
-                        
+
                         <span className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm border border-slate-200 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md text-slate-700 shadow-sm z-10">
                           {item.module_type || type || "lesson"}
                         </span>
@@ -974,6 +1161,8 @@ console.log("ResultData before set =", resultData);
               </div>
             )}
           </div>
+
+
         )}
 
       </div>
