@@ -64,11 +64,8 @@ const topicName = searchParams.get("topicName");
   }
 
 return (
-  <div className="relative min-h-screen overflow-hidden">
+  <div className="relative min-h-screen overflow-hidden p-2">
 
-    {/* ================================================= */}
-    {/* PREMIUM ANIMATED BACKGROUND */}
-    {/* ================================================= */}
 
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
@@ -189,270 +186,51 @@ return (
       <div className="absolute left-10 top-10 w-[520px] h-[520px] rounded-full border border-orange-200/20" />
     </div>
 
-    {/* ================================================= */}
-    {/* PAGE CONTENT */}
-    {/* ================================================= */}
+   
 
     <div className="relative z-10 space-y-8">
 
-    {/* Header */}
-
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
->
-  {/* Left */}
-
- <div className="flex items-start gap-5">
-  {/* Back Button */}
+    
+{/* Header Section */}
+<div className="flex items-center justify-between mb-8">
+  {/* Left: Back Button */}
   <motion.button
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.96 }}
     onClick={() => router.back()}
-    className="
-      h-14
-      w-14
-      rounded-2xl
-      bg-white/80
-      backdrop-blur-xl
-      border
-      border-orange-100
-      flex
-      items-center
-      justify-center
-      shadow-lg
-      text-orange-600
-      hover:bg-orange-50
-      transition-all
-      shrink-0
-    "
+    className="h-14 w-14 rounded-2xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-lg text-orange-600 hover:bg-orange-50 transition-all shrink-0"
   >
     <ArrowLeft size={22} />
   </motion.button>
 
-  {/* Title Section */}
-  <div>
-    <div
-      className="
-        inline-flex
-        items-center
-        gap-2
-        rounded-full
-        border
-        border-orange-200
-        bg-white/80
-        backdrop-blur-xl
-        px-4
-        py-2
-        shadow-md
-      "
-    >
-      <span className="text-lg">✨</span>
-
-      <span className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">
-        Learning Journey
-      </span>
-    </div>
-
-    <h1 className="mt-4 text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
-      Learning Topics
+   <div className="flex-1 min-w-0 px-4">
+    <h1 className="text-lg md:text-xl font-black text-slate-800 truncate text-center">
+      {courseName || "Course Details"}
     </h1>
-
-    <p className="mt-2 text-slate-500 max-w-xl">
-      Browse all available topics and continue your learning journey.
-    </p>
+  </div>
+  {/* Right: Compact Statistics Container */}
+  <div className="flex items-center gap-3">
+    {[
+      { label: "Topics", value: topics.length, icon: <BookOpen size={16} /> },
+      { label: "Subtopics", value: topics.reduce((acc, item) => acc + item.subtopic_count, 0), icon: <Layers3 size={16} /> },
+      { label: "Progress", value: "0%", icon: "📈" }
+    ].map((stat, i) => (
+      <div 
+        key={i} 
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 backdrop-blur-xl border border-orange-100 shadow-md"
+      >
+        <span className="text-orange-500">{stat.icon}</span>
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase font-bold text-slate-400">{stat.label}</span>
+          <span className="text-sm font-black text-slate-900 leading-none">{stat.value}</span>
+        </div>
+      </div>
+    ))}
   </div>
 </div>
 
-  {/* Right Badge */}
-
-  <motion.div
-    whileHover={{
-      scale: 1.05,
-      rotate: -2,
-    }}
-    className="
-      self-start
-      rounded-3xl
-      border
-      border-orange-100
-      bg-white/80
-      backdrop-blur-xl
-      px-6
-      py-4
-      shadow-lg
-    "
-  >
-    <p className="text-xs uppercase tracking-widest text-slate-500">
-      Welcome Back
-    </p>
-
-    <h3 className="mt-1 text-lg font-black text-orange-600">
-      Continue Learning 🚀
-    </h3>
-  </motion.div>
-
-</motion.div>
-     {/* Premium Statistics */}
-
-<div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-
-  {/* Total Topics */}
-
-  <motion.div
-    whileHover={{ y: -5 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-3xl
-      bg-white/80
-      backdrop-blur-xl
-      border
-      border-orange-100
-      p-5
-      shadow-lg
-    "
-  >
-    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-orange-200/30 blur-2xl" />
-
-    <div className="relative flex items-center justify-between">
-
-      <div>
-        <p className="text-sm text-slate-500 font-medium">
-          Total Topics
-        </p>
-
-        <h2 className="mt-2 text-4xl font-black text-slate-900">
-          {topics.length}
-        </h2>
-      </div>
-
-      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg">
-        <BookOpen size={26} />
-      </div>
-
-    </div>
-  </motion.div>
-
-  {/* Total Subtopics */}
-
-  <motion.div
-    whileHover={{ y: -5 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-3xl
-      bg-white/80
-      backdrop-blur-xl
-      border
-      border-emerald-100
-      p-5
-      shadow-lg
-    "
-  >
-    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-emerald-200/30 blur-2xl" />
-
-    <div className="relative flex items-center justify-between">
-
-      <div>
-        <p className="text-sm text-slate-500 font-medium">
-          Total Subtopics
-        </p>
-
-        <h2 className="mt-2 text-4xl font-black text-emerald-600">
-          {topics.reduce(
-            (acc, item) => acc + item.subtopic_count,
-            0
-          )}
-        </h2>
-      </div>
-
-      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center text-white shadow-lg">
-        <Layers3 size={26} />
-      </div>
-
-    </div>
-  </motion.div>
-
-  {/* Progress */}
-
-  <motion.div
-    whileHover={{ y: -5 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-3xl
-      bg-white/80
-      backdrop-blur-xl
-      border
-      border-violet-100
-      p-5
-      shadow-lg
-    "
-  >
-    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-violet-200/30 blur-2xl" />
-
-    <div className="relative flex items-center justify-between">
-
-      <div>
-        <p className="text-sm text-slate-500 font-medium">
-          Progress
-        </p>
-
-        <h2 className="mt-2 text-4xl font-black text-violet-600">
-          0%
-        </h2>
-      </div>
-
-      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white shadow-lg">
-        📈
-      </div>
-
-    </div>
-  </motion.div>
-
-  {/* Level */}
-
-  <motion.div
-    whileHover={{ y: -5 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-3xl
-      bg-white/80
-      backdrop-blur-xl
-      border
-      border-blue-100
-      p-5
-      shadow-lg
-    "
-  >
-    <div className="absolute top-0 right-0 h-20 w-20 rounded-full bg-blue-200/30 blur-2xl" />
-
-    <div className="relative flex items-center justify-between">
-
-      <div>
-        <p className="text-sm text-slate-500 font-medium">
-          Current Level
-        </p>
-
-        <h2 className="mt-2 text-4xl font-black text-blue-600">
-          A1
-        </h2>
-      </div>
-
-      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg">
-        🎯
-      </div>
-
-    </div>
-  </motion.div>
-
-</div>
-
       {/* Topics */}
-     <div className="space-y-5">
+     <div className="space-y-5 p-0">
 
   {topics.map((topic, index) => {
 
@@ -522,8 +300,8 @@ return (
                 scale: 1.08,
               }}
               className={`
-                h-20
-                w-20
+                h-10
+                w-10
                 rounded-3xl
                 bg-gradient-to-br
                 ${color}
@@ -534,7 +312,7 @@ return (
                 shadow-xl
               `}
             >
-              <BookOpen size={34} />
+              <BookOpen size={20} />
             </motion.div>
 
             <div>
