@@ -249,37 +249,70 @@ const handleAnswer = (qIndex, option, correct) => {
 
       {/* --- Sidebar: Practice Questions (4 Columns) --- */}
 {/* --- Improved Sidebar Area --- */}
-<div className="lg:col-span-4">
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
-    
-    {/* Icon Container: Updated to Orange */}
-    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-      <BookOpen size={24} />
-    </div>
-    
-    <div>
-      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
-      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
+{/* Right Sidebar */}
+<div className="lg:col-span-4 space-y-6">
+
+  {/* Knowledge Check */}
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+      <BookOpen size={26} />
     </div>
 
-    {/* Button: Updated to Orange Theme */}
+    <h3 className="text-xl font-bold text-slate-900">
+      Knowledge Check
+    </h3>
+
+    <p className="text-sm text-slate-500 mt-2 mb-6">
+      Test what you've learned from this lesson.
+    </p>
+
     <button
-      onClick={() => {
-        console.log("Button clicked");
+      onClick={() =>
         router.push(
           `/dashboard/module/practice-quations?data=${encodeURIComponent(
             JSON.stringify(selectedModule)
           )}`
-        );
-        console.log(selectedModule._id);
-        console.log(currentModuleType);
-      }}
-      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+        )
+      }
+      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
     >
       Start Practice
-      <ChevronRight size={16} />
+      <ChevronRight size={18} />
     </button>
   </div>
+
+  {/* Lesson Exercise */}
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+      <Award size={26} />
+    </div>
+
+    <h3 className="text-xl font-bold text-slate-900">
+      Lesson Exercise
+    </h3>
+
+    <p className="text-sm text-slate-500 mt-2 mb-6">
+      Complete the exercise to improve your understanding.
+    </p>
+
+   <button
+  onClick={() => {
+    router.push(
+      `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+      &subTopicId=${selectedModule.sub_topic_id._id}
+      &courseId=${searchParams.get("courseId")}
+      &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
+      &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
+      &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
+    );
+  }}
+  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+>
+  Start Exercise
+  <ChevronRight size={18} />
+</button>
+  </div>
+
 </div>
   </div>
 

@@ -8,6 +8,7 @@ import DashboardSidebar from "@/components/organisms/DashboardSidebar";
 import DashboardNavbar from "@/components/organisms/DashboardNavbar";
 import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
+import { Toaster } from "react-hot-toast";
 
 export default function DashboardLayout({ children }) {
     const router = useRouter();
@@ -60,6 +61,29 @@ const handleLogout = async () => {
         {/* Scrollable Content Only */}
     <main className="flex-1 overflow-y-auto ">
   {children}
+ <Toaster 
+          position="top-right"
+          toastOptions={{
+            error: {
+              style: {
+                background: '#fee2e2', // Light red background
+                color: '#991b1b',      // Dark red text
+                border: '1px solid #f87171',
+              },
+              iconTheme: {
+                primary: '#dc2626',    // Red icon
+                secondary: '#fee2e2',
+              },
+            },
+            success: {
+              style: {
+                background: '#f0fdf4',
+                color: '#166534',
+                border: '1px solid #86efac',
+              },
+            },
+          }}
+        />
 </main>
       </div>
   <LogoutModal
