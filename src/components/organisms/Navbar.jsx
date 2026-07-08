@@ -8,11 +8,15 @@ import {
   GraduationCap,
   Building2,
 } from "lucide-react";
+import { useFeaturedInstitute } from "@/hooks/useFeaturedInstitute";
+
+const DEFAULT_INSTITUTE_LOGO = "/collage-logo.png";
 
 export default function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState({ code: "EN", flag: "🇺🇸" });
+  const institute = useFeaturedInstitute();
 
   const languages = [
     { name: "English", code: "EN", flag: "🇺🇸" },
@@ -27,7 +31,12 @@ export default function Navbar() {
         <div className="mt-4 flex h-16 items-center justify-between rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-xl px-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
           
           {/* Brand Logo - Font size increased to text-2xl/3xl */}
-          <Link href="/">
+          <Link href="/" className="flex items-center gap-2.5">
+            <img
+              src={institute?.logo || DEFAULT_INSTITUTE_LOGO}
+              alt={institute?.institute_name || "Institute logo"}
+              className="h-10 w-10 rounded-lg object-contain"
+            />
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tighter text-slate-900 cursor-pointer">
               Language<span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">Lab</span>
             </h2>

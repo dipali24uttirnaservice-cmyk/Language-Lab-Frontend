@@ -1,226 +1,174 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import {
+  MapPin,
+  Globe,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+  Headphones,
+  Video,
+  FileText,
+  BookOpen,
+  PenTool,
+} from "lucide-react";
+import { useFeaturedInstitute } from "@/hooks/useFeaturedInstitute";
 import { useRouter } from "next/navigation";
-import AIAvatarCoach from "./AIAvatarCoach";
+
+const INSTITUTE_PLACEHOLDER = "/institute-placeholder.svg";
+
+const HERO_CAROUSEL_IMAGES = ["/image.jpg", "/image1.jpg", "/image2.png"];
+
+const FEATURE_CHIPS = [
+  { name: "Audio", icon: Headphones, color: "bg-violet-100 border-violet-300 text-violet-700" },
+  { name: "Video", icon: Video, color: "bg-blue-100 border-blue-300 text-blue-700" },
+  { name: "Text", icon: FileText, color: "bg-emerald-100 border-emerald-300 text-emerald-700" },
+  { name: "Vocabulary", icon: BookOpen, color: "bg-pink-100 border-pink-300 text-pink-700" },
+  { name: "Exercise", icon: PenTool, color: "bg-amber-100 border-amber-300 text-amber-700" },
+];
 
 export default function Hero() {
   const router = useRouter();
-  const mainVideoRef = useRef(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceAccent, setVoiceAccent] = useState("en-IN");
-  const [voiceGender, setVoiceGender] = useState("female");
-  const [mainVideoFinished, setMainVideoFinished] = useState(false);
-  const [isPlayingMain, setIsPlayingMain] = useState(false);
+  const institute = useFeaturedInstitute();
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlide((prev) => (prev + 1) % HERO_CAROUSEL_IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <section className="relative w-full h-screen min-h-[700px] flex items-center overflow-hidden bg-gradient-to-br from-orange-50 via-white to-red-50 text-slate-900">
-      {/* Background Refraction Masks */}
+    <section className="relative w-full min-h-screen flex flex-col justify-center bg-gradient-to-br from-orange-50 via-white to-red-50">
+      {/* Background refraction mask */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-100/40 via-orange-50/20 to-slate-50 pointer-events-none" />
-      
-      <div className="relative z-10 mx-auto max-w-7xl px-6 w-full flex flex-col justify-center pt-20">
-        <div className="grid items-center gap-12 lg:grid-cols-12">
-          
-          {/* LEFT COLUMN: Text Mechanics */}
-          <div className="lg:col-span-5 space-y-6 text-left z-10 order-2 lg:order-1">
-            
-            {/* Top pill badge */}
-            <div className="inline-flex items-center gap-2 bg-white border border-amber-200 text-amber-800 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm shadow-amber-100">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
-              New AI Testimonial Feature is live
-            </div>
 
-            {/* Header Title - Increased size to match navbar prominence */}
-           {/* Hero Title Container */}
-{/* Hero Title Container - Slightly smaller, more refined sizing */}
-<div className="flex flex-col items-start text-left max-w-2xl">
-  <div className="text-4xl md:text-5xl font-extrabold leading-[1.1] tracking-tighter text-slate-900">
-    Your Personal <br />
-    <span className="text-red-500">AI</span>{" "}
-    <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-600 bg-clip-text text-transparent">
-      English Coach
-    </span>
-  </div>
-  
- 
-</div>
-
-            <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-              Master fluent English with real-time feedback, personalized AI tutoring, and interactive speech analysis.
-            </p>
-
-            {/* CTA Buttons */}
-           <div className="grid grid-cols-3 gap-5 max-w-xl mt-8">
-  {/* Learners */}
-  <div
-    className="
-      relative overflow-hidden
-      rounded-3xl
-      border border-orange-200
-      bg-gradient-to-br from-orange-50 via-white to-amber-100
-      p-5
-      shadow-[0_10px_30px_rgba(251,146,60,0.15)]
-      hover:-translate-y-2
-      hover:shadow-[0_20px_40px_rgba(251,146,60,0.25)]
-      transition-all duration-300
-    "
-  >
-    {/* Glow */}
-    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-orange-300/30 blur-2xl" />
-
-    {/* Stripe Pattern */}
-    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#f97316_0px,#f97316_1px,transparent_1px,transparent_12px)]" />
-
-    <div className="relative z-10">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl shadow-inner">
-        🎓
-      </div>
-
-      <h4 className="text-3xl font-black text-orange-600">
-        10K+
-      </h4>
-
-      <p className="mt-1 text-sm font-medium text-slate-600">
-        Active Learners
-      </p>
-    </div>
-  </div>
-
-  {/* Improvement */}
-  <div
-    className="
-      relative overflow-hidden
-      rounded-3xl
-      border border-emerald-200
-      bg-gradient-to-br from-emerald-50 via-white to-green-100
-      p-5
-      shadow-[0_10px_30px_rgba(16,185,129,0.15)]
-      hover:-translate-y-2
-      hover:shadow-[0_20px_40px_rgba(16,185,129,0.25)]
-      transition-all duration-300
-    "
-  >
-    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-emerald-300/30 blur-2xl" />
-
-    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#10b981_0px,#10b981_1px,transparent_1px,transparent_12px)]" />
-
-    <div className="relative z-10">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl shadow-inner">
-        📈
-      </div>
-
-      <h4 className="text-3xl font-black text-emerald-600">
-        95%
-      </h4>
-
-      <p className="mt-1 text-sm font-medium text-slate-600">
-        Improvement Rate
-      </p>
-    </div>
-  </div>
-
-  {/* AI Coach */}
-  <div
-    className="
-      relative overflow-hidden
-      rounded-3xl
-      border border-indigo-200
-      bg-gradient-to-br from-indigo-50 via-white to-violet-100
-      p-5
-      shadow-[0_10px_30px_rgba(99,102,241,0.15)]
-      hover:-translate-y-2
-      hover:shadow-[0_20px_40px_rgba(99,102,241,0.25)]
-      transition-all duration-300
-    "
-  >
-    <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-indigo-300/30 blur-2xl" />
-
-    <div className="absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(135deg,#6366f1_0px,#6366f1_1px,transparent_1px,transparent_12px)]" />
-
-    <div className="relative z-10">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-xl shadow-inner">
-        🤖
-      </div>
-
-      <h4 className="text-3xl font-black text-indigo-600">
-        24/7
-      </h4>
-
-      <p className="mt-1 text-sm font-medium text-slate-600">
-        AI Coach Support
-      </p>
-    </div>
-  </div>
-</div>
-
-            {/* Voice Settings Card */}
-          {/* Voice Settings Card - Now larger and more prominent */}
-<div className="relative mt-8 max-w-md">
-  {/* Background glow effect to make the card "pop" */}
-  <div className="absolute -inset-1 bg-gradient-to-r from-amber-200 to-orange-200 rounded-2xl blur opacity-30"></div>
-  
-  <div className="relative p-6 bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl shadow-orange-100/20">
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
-        🎙️ Configure Coach Profile
-      </span>
-     
-    </div>
-    
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-1">
-        <label className="text-[10px] font-bold text-slate-400 uppercase">Accent</label>
-        <select 
-          value={voiceAccent} 
-          onChange={(e) => setVoiceAccent(e.target.value)} 
-          className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
-        >
-          <option value="en-IN">🇮🇳 Indian English</option>
-          <option value="en-US">🇺🇸 US English</option>
-          <option value="en-GB">🇬🇧 UK English</option>
-        </select>
-      </div>
-      
-      <div className="space-y-1">
-        <label className="text-[10px] font-bold text-slate-400 uppercase">Voice</label>
-        <select 
-          value={voiceGender} 
-          onChange={(e) => setVoiceGender(e.target.value)} 
-          className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
-        >
-          <option value="female">🙋‍♀️ Female Coach</option>
-          <option value="male">🙋‍♂️ Male Coach</option>
-        </select>
-      </div>
-    </div>
-  </div>
-</div>
+      {/* TOP: Hero content */}
+      <div className="relative z-10 mx-auto max-w-7xl w-full px-6 sm:px-10 lg:px-16 pt-24 pb-10 grid lg:grid-cols-2 gap-10 items-center">
+        {/* LEFT: Text panel */}
+        <div className="flex flex-col">
+          {/* Top pill badge */}
+          <div className="relative inline-flex w-fit items-center gap-2 bg-white border border-amber-200 text-amber-800 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm shadow-amber-100">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            New AI Testimonial Feature is live
           </div>
 
-          {/* RIGHT COLUMN: Interactive Avatar */}
-          <div className="lg:col-span-7 flex items-center justify-center order-1 lg:order-2">
-            <div className="w-full max-w-lg transition-transform duration-500 hover:scale-[1.02]">
-              <AIAvatarCoach
-                voiceGender={voiceGender}
-                voiceAccent={voiceAccent}
-                isSpeaking={isSpeaking}
-                mouseCoords={mouseCoords}
-                isHovered={isHovered}
-                setIsHovered={setIsHovered}
-                setMouseCoords={setMouseCoords}
-                mainVideoFinished={mainVideoFinished}
-                setMainVideoFinished={setMainVideoFinished}
-                isPlayingMain={isPlayingMain}
-                setIsPlayingMain={setIsPlayingMain}
-                mainVideoRef={mainVideoRef}
+          <h1 className="mt-4 max-w-lg text-3xl md:text-4xl xl:text-5xl font-extrabold leading-[1.1] tracking-tighter text-slate-900">
+            {institute?.institute_name || (
+              <>
+                Your Personal <span className="text-red-500">AI</span>{" "}
+                <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-600 bg-clip-text text-transparent">
+                  English Coach
+                </span>
+              </>
+            )}
+          </h1>
+
+          <p className="mt-3 text-base text-slate-600 max-w-md leading-relaxed">
+            Learn to speak with confidence through immersive, AI-guided lessons
+            built around real conversations. Practice at your own pace with
+            audio, video, and interactive exercises designed to turn every
+            session into visible progress.
+          </p>
+
+          {/* CTAs */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => router.push("/student-login")}
+              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+            >
+              Explore More
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </div>
+
+          {/* Feature chips */}
+          <ul className="mt-6 flex flex-wrap gap-3 max-w-md">
+            {FEATURE_CHIPS.map(({ name, icon: Icon, color }) => (
+              <li
+                key={name}
+                className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2 shadow-[3px_3px_0_rgba(15,23,42,0.12)] hover:-translate-y-0.5 hover:shadow-[4px_5px_0_rgba(15,23,42,0.18)] transition-all duration-200 ${color}`}
+              >
+                <Icon size={16} />
+                <span className="text-sm font-bold">{name}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Institute identity strip */}
+          <div className="mt-6 flex items-center gap-4 max-w-md">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 shadow-[0_10px_25px_rgba(245,158,11,0.4)]">
+              <img
+                src={INSTITUTE_PLACEHOLDER}
+                alt={institute?.institute_name || "Institute"}
+                className="h-6 w-6 object-contain"
               />
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-extrabold text-slate-900 truncate">
+                  {institute?.institute_name || "Your Institute"}
+                </h3>
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                {(institute?.address?.dist || institute?.address?.state) && (
+                  <p className="flex items-center gap-1 text-xs text-slate-600">
+                    <MapPin size={11} className="text-amber-600" />
+                    {[institute.address.dist, institute.address.state].filter(Boolean).join(", ")}
+                  </p>
+                )}
+                {institute?.website && (
+                  <a
+                    href={institute.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700"
+                  >
+                    <Globe size={11} />
+                    {institute.website.replace(/^https?:\/\//, "")}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Showcase image carousel */}
+        <div className="relative">
+          <div className="absolute -inset-6 bg-gradient-to-tr from-amber-400/25 to-orange-400/25 blur-3xl rounded-full -z-10" />
+          <div className="relative h-80 md:h-112 overflow-hidden rounded-3xl border-2 border-white shadow-[0_25px_60px_rgba(0,0,0,0.18)] transition-transform duration-500 hover:scale-[1.015]">
+            {HERO_CAROUSEL_IMAGES.map((src, idx) => (
+              <img
+                key={src}
+                src={src}
+                alt={institute?.institute_name || "Institute campus"}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${idx === slide ? "opacity-100" : "opacity-0"
+                  }`}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+            <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-white/90 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm">
+              <Sparkles size={12} />
+              Featured Institute
+            </div>
+            {/* Carousel dots */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              {HERO_CAROUSEL_IMAGES.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSlide(idx)}
+                  aria-label={`Show slide ${idx + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === slide ? "w-5 bg-white" : "w-1.5 bg-white/60"
+                    }`}
+                />
+              ))}
             </div>
           </div>
         </div>
