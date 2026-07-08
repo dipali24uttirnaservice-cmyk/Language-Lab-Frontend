@@ -213,7 +213,7 @@ if (lessonName) {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/70 backdrop-blur-xl px-6 h-16 flex items-center justify-between">
         {/* Left Side */}
-        <div className="flex items-center gap-4">
+<div className="flex items-center gap-4 min-w-0 flex-1">
           <button
             onClick={() => setIsOpen(!isSidebarOpen)}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
@@ -226,30 +226,37 @@ if (lessonName) {
               {breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard"}
             </h1>
 
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
-              {breadcrumbs.map((crumb, index) => {
-                const isLast = index === breadcrumbs.length - 1;
-                
-                return (
-                  <div key={crumb.href + index} className="flex items-center gap-1.5">
-                    {index > 0 && <span className="text-slate-300 font-normal">/</span>}
+         <div className="max-w-[700px] overflow-x-auto scrollbar-thin scrollbar-hide">
+  <div className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold text-slate-400 min-w-max">
+    {breadcrumbs.map((crumb, index) => {
+      const isLast = index === breadcrumbs.length - 1;
 
-                 {isLast || !crumb.href ? (
-                      <span className="text-orange-600 font-extrabold">
-                        {crumb.label}
-                      </span>
-                    ) : (
-                      <Link
-                        href={crumb.href}
-                        className="hover:text-orange-500 transition-colors"
-                      >
-                        {crumb.label}
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+      return (
+        <div
+          key={`${crumb.href}-${index}`}
+          className="flex items-center gap-1.5 flex-shrink-0"
+        >
+          {index > 0 && (
+            <span className="text-slate-300 font-normal">/</span>
+          )}
+
+          {isLast || !crumb.href ? (
+            <span className="text-orange-600 font-extrabold">
+              {crumb.label}
+            </span>
+          ) : (
+            <Link
+              href={crumb.href}
+              className="hover:text-orange-500 transition-colors"
+            >
+              {crumb.label}
+            </Link>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</div>
           </div>
         </div>
 

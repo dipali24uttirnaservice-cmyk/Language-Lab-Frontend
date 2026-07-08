@@ -19,9 +19,11 @@ import {
   Sparkles,
   CheckCircle2,
   XCircle,
-  ChevronDown
+  ChevronDown,
+  ChevronRight 
 } from "lucide-react";
 import { moduleApi } from "@/services/topic/topicApi";
+
 
 const CONTENT_TYPES = [
   { id: "all", label: "All Content", icon: BookOpen },
@@ -52,6 +54,8 @@ export default function ModuleListPage() {
   const [finalScore, setFinalScore] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({}); // To store answers
+  const [showExercise, setShowExercise] = useState(false);
+  const [showPractice, setShowPractice] = useState(false);
   // Add this near your other state declarations
   // 1. State for managing interactions
 const [expandedQ, setExpandedQ] = useState(null);
@@ -125,6 +129,12 @@ const handleAnswer = (qIndex, option, correct) => {
     if (!Array.isArray(modules)) return [];
     return modules.filter((item) => item && (item.module_type || type) === "text");
   }, [modules, type]);
+
+  const vocabularyModules = useMemo(() => {
+  return modules.filter(
+    (m) => (m.module_type || type) === "vocabulary"
+  );
+}, [modules, type]);
 
   if (loading) {
     return (
@@ -201,6 +211,8 @@ const handleAnswer = (qIndex, option, correct) => {
   }));
 };
 
+
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
 
@@ -236,80 +248,40 @@ const handleAnswer = (qIndex, option, correct) => {
       </div>
 
       {/* --- Sidebar: Practice Questions (4 Columns) --- */}
-<div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm max-h-[600px] h-fit overflow-y-auto custom-scrollbar">  {/* Sticky Header stays fixed while content scrolls */}
-  <div className="sticky top-0 bg-white p-6 border-b border-slate-100 z-10">
-    <h3 className="font-bold text-slate-800 uppercase text-xs tracking-wider flex items-center gap-2">
-      <BookOpen size={16} className="text-indigo-500" />
-      Knowledge Check
-    </h3>
-  </div>
+{/* --- Improved Sidebar Area --- */}
+<div className="lg:col-span-4">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+    
+    {/* Icon Container: Updated to Orange */}
+    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+      <BookOpen size={24} />
+    </div>
+    
+    <div>
+      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
+      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
+    </div>
 
-  <div className="p-6 space-y-3">
-    {selectedModule.questions?.length > 0 ? (
-      selectedModule.questions.map((q, idx) => {
-        const isExpanded = expandedQ === idx;
-        const feedback = selectedAnswers[idx];
-        const validOptions = q.options.filter(opt => opt && opt.trim() !== "");
-
-        return (
-          <div key={idx} className="border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300 transition-colors">
-            <button 
-              onClick={() => setExpandedQ(isExpanded ? null : idx)}
-              className="w-full p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-left transition-colors"
-            >
-              <span className="font-bold text-xs text-slate-700 leading-tight">
-                {idx + 1}. {q.question_text}
-              </span>
-              <ChevronDown size={16} className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isExpanded && (
-              <div className="p-4 space-y-2 border-t border-slate-100 bg-white">
-                {validOptions.map((opt, i) => {
-                  const isSelected = feedback?.selected === opt;
-                  const isCorrect = opt === q.correct_answer;
-                  let btnStyle = "bg-white border-slate-200 hover:border-indigo-100";
-                  
-                  if (feedback) {
-                    if (isCorrect) btnStyle = "bg-green-50 border-green-500 text-green-700 font-semibold";
-                    else if (isSelected && !isCorrect) btnStyle = "bg-red-50 border-red-500 text-red-700";
-                    else btnStyle = "opacity-40 border-slate-100 bg-slate-50";
-                  }
-
-                  return (
-                    <button 
-                      key={i} 
-                      disabled={!!feedback}
-                      onClick={() => handleAnswer(idx, opt, q.correct_answer)}
-                      className={`block w-full text-left px-3 py-2 text-[11px] rounded-lg border transition-all ${btnStyle}`}
-                    >
-                      {opt}
-                    </button>
-                  );
-                })}
-                
-                {feedback && (
-                  <div className={`mt-3 p-3 rounded-lg text-[10px] ${feedback.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    <div className="flex items-center gap-2 mb-1 font-bold uppercase">
-                      {feedback.isCorrect ? <CheckCircle2 size={12}/> : <XCircle size={12}/>}
-                      {feedback.isCorrect ? "Correct" : "Explanation"}
-                    </div>
-                    <div className="leading-relaxed" dangerouslySetInnerHTML={{ __html: q.explanation }} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+    {/* Button: Updated to Orange Theme */}
+    <button
+      onClick={() => {
+        console.log("Button clicked");
+        router.push(
+          `/dashboard/module/practice-quations?data=${encodeURIComponent(
+            JSON.stringify(selectedModule)
+          )}`
         );
-      })
-    ) : (
-      <div className="text-center py-10 text-slate-400 text-sm italic">
-        No questions available.
-      </div>
-    )}
+        console.log(selectedModule._id);
+        console.log(currentModuleType);
+      }}
+      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+    >
+      Start Practice
+      <ChevronRight size={16} />
+    </button>
   </div>
 </div>
-    </div>
+  </div>
 
     {/* --- Bottom: Other Videos (Course Queue) --- */}
   <div>
@@ -509,127 +481,37 @@ where to add this in audio type
               </div>
 
               {/* Related Audio Lessons Queue Sidebar */}
-            <div className="lg:col-span-4 space-y-6">
-
-            
-
- 
-
-  {/* Knowledge Check */}
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-    <div className="sticky top-0 bg-white p-5 border-b">
-      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-        <BookOpen className="text-indigo-500" size={15} />
-        Knowledge Check
-      </h3>
+           <div className="lg:col-span-4">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+    
+    {/* Icon Container: Updated to Orange */}
+    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+      <BookOpen size={24} />
+    </div>
+    
+    <div>
+      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
+      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
     </div>
 
-    <div className="max-h-[350px] overflow-y-auto p-4 space-y-3 custom-scrollbar">
-
-      {selectedModule.questions?.length ? (
-        selectedModule.questions.map((q, idx) => {
-          const isExpanded = expandedQ === idx;
-          const feedback = selectedAnswers[idx];
-          const validOptions = q.options.filter(Boolean);
-
-          return (
-            <div
-              key={idx}
-              className="border rounded-xl overflow-hidden"
-            >
-              <button
-                onClick={() =>
-                  setExpandedQ(isExpanded ? null : idx)
-                }
-                className="w-full flex justify-between items-center p-4 bg-slate-50"
-              >
-                <span className="text-xs font-bold text-left">
-                  {idx + 1}. {q.question_text}
-                </span>
-
-                <ChevronDown
-                  size={15}
-                  className={`transition-transform ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isExpanded && (
-                <div className="p-4 space-y-2">
-
-                  {validOptions.map((opt, i) => {
-                    const isSelected = feedback?.selected === opt;
-                    const isCorrect = opt === q.correct_answer;
-
-                    let style =
-                      "border-slate-200 hover:border-indigo-300";
-
-                    if (feedback) {
-                      if (isCorrect)
-                        style =
-                          "bg-green-50 border-green-500 text-green-700";
-                      else if (isSelected)
-                        style =
-                          "bg-red-50 border-red-500 text-red-700";
-                      else
-                        style =
-                          "opacity-40 bg-slate-50 border-slate-100";
-                    }
-
-                    return (
-                      <button
-                        key={i}
-                        disabled={!!feedback}
-                        onClick={() =>
-                          handleAnswer(
-                            idx,
-                            opt,
-                            q.correct_answer
-                          )
-                        }
-                        className={`w-full border rounded-lg p-2 text-left text-xs ${style}`}
-                      >
-                        {opt}
-                      </button>
-                    );
-                  })}
-
-                  {feedback && (
-                    <div
-                      className={`mt-3 rounded-lg p-3 text-xs ${
-                        feedback.isCorrect
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-700"
-                      }`}
-                    >
-                      <div className="font-bold mb-2">
-                        {feedback.isCorrect
-                          ? "Correct"
-                          : "Explanation"}
-                      </div>
-
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: q.explanation,
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })
-      ) : (
-        <div className="text-center text-sm text-slate-400 py-8">
-          No questions available.
-        </div>
-      )}
-    </div>
+    {/* Button: Updated to Orange Theme */}
+    <button
+      onClick={() => {
+        console.log("Button clicked");
+        router.push(
+          `/dashboard/module/practice-quations?data=${encodeURIComponent(
+            JSON.stringify(selectedModule)
+          )}`
+        );
+        console.log(selectedModule._id);
+        console.log(currentModuleType);
+      }}
+      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+    >
+      Start Practice
+      <ChevronRight size={16} />
+    </button>
   </div>
-  
 </div>
             </div>
           ) : currentModuleType === "exercise" ? (
@@ -781,195 +663,78 @@ where to add this in audio type
             </div>
        ) : currentModuleType === "vocabulary" ? (
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
-    {/* Main Content */}
-  {/* Related Audio Lessons */}
-<div className="space-y-4">
-  <div className="flex items-center justify-between">
-    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-      <Headphones className="text-orange-500" size={16} />
-      More Audio Lessons
-    </h3>
+    
+    {/* --- LEFT COLUMN: Vocabulary Content --- */}
+    <div className="lg:col-span-8 space-y-6">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 className="text-2xl font-black text-slate-900 mb-2">{selectedModule.title}</h2>
+        <div className="text-slate-600 mb-6" dangerouslySetInnerHTML={{ __html: selectedModule.description }} />
 
-    <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
-      {audioModules.length} Lessons
-    </span>
-  </div>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {audioModules.map((item) => {
-      const isCurrent = selectedModule?._id === item._id;
-
-      return (
-        <button
-          key={item._id}
-          onClick={() => {
-            setSelectedModule(item);
-            setExpandedQ(null);
-            setSelectedAnswers({});
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-          }}
-          className={`group relative rounded-2xl border transition-all duration-300 overflow-hidden text-left
-          ${
-            isCurrent
-              ? "border-orange-500 bg-orange-50 shadow-lg"
-              : "border-slate-200 bg-white hover:border-orange-300 hover:shadow-lg"
-          }`}
-        >
-          {/* Top */}
-          <div className="flex items-center gap-4 p-4">
-
-            <div
-              className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0
-              ${
-                isCurrent
-                  ? "bg-orange-500 text-white"
-                  : "bg-slate-100 text-slate-500 group-hover:bg-orange-100"
-              }`}
-            >
-              <Headphones size={24} />
-            </div>
-
-            <div className="flex-1 min-w-0">
-
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] uppercase font-bold bg-orange-100 text-orange-600 px-2 py-1 rounded">
-                  Audio
-                </span>
-
-                {isCurrent && (
-                  <span className="text-[10px] uppercase font-bold bg-green-100 text-green-700 px-2 py-1 rounded">
-                    Playing
-                  </span>
-                )}
-              </div>
-
-              <h4
-                className={`font-bold text-sm line-clamp-2
-                ${
-                  isCurrent
-                    ? "text-orange-600"
-                    : "text-slate-900 group-hover:text-orange-600"
-                }`}
-              >
-                {item.title}
-              </h4>
-
-              <p className="text-xs text-slate-500 mt-2 flex items-center gap-3">
-
-                <span>
-                  {item.audio?.language || "French"}
-                </span>
-
-                <span>
-                  {item.audio?.duration_sec
-                    ? `${Math.floor(item.audio.duration_sec / 60)}m ${item.audio.duration_sec % 60}s`
-                    : "Audio"}
-                </span>
-
+        {/* Word Grid */}
+        <div className="grid grid-cols-1 gap-4">
+          {selectedModule.words?.map((wordObj, i) => (
+            <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <h4 className="text-lg font-bold text-amber-700">{wordObj.word}</h4>
+              <p className="text-xs text-slate-500 italic mb-2">/{wordObj.pronunciation}/ • {wordObj.part_of_speech}</p>
+              <p className="text-sm text-slate-700 mb-2">{wordObj.meaning}</p>
+              <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
+                <span className="font-bold text-slate-800">Example: </span>
+                {wordObj.example}
               </p>
             </div>
-
-            <div
-              className={`h-10 w-10 rounded-full flex items-center justify-center transition
-              ${
-                isCurrent
-                  ? "bg-orange-500 text-white"
-                  : "bg-slate-100 group-hover:bg-orange-500 group-hover:text-white"
-              }`}
-            >
-              <Play className="fill-current ml-0.5" size={16} />
-            </div>
-
-          </div>
-        </button>
-      );
-    })}
-  </div>
-</div>
-
-    {/* Sidebar */}
-    <div className="lg:col-span-4 bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-[400px] lg:h-[680px] shadow-xl shadow-slate-100">
-      <div className="p-4 border-b border-slate-200 bg-white/90 flex items-center justify-between backdrop-blur-sm">
-        <h3 className="font-bold text-xs tracking-wider text-slate-700 uppercase flex items-center gap-2">
-          <BookOpen className="text-amber-500" size={14} />
-          Vocabulary Queue
-        </h3>
-
-        <span className="text-xs text-amber-600 font-bold bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full shadow-sm">
-          {
-            modules.filter(
-              (m) => (m.module_type || type) === "vocabulary"
-            ).length
-          }{" "}
-          lessons
-        </span>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-50/40">
-        {modules
-          .filter((m) => (m.module_type || type) === "vocabulary")
-          .map((item) => {
-            const isCurrent = selectedModule?._id === item._id;
-
-            return (
-              <button
-                key={item._id}
-                onClick={() => {
-                  setSelectedModule(item);
-                  window.scrollTo({
-                    top: 0,
-                    behavior: "smooth",
-                  });
-                }}
-                className={`w-full p-3 rounded-xl flex gap-3 items-center text-left transition-all duration-200 group border ${
-                  isCurrent
-                    ? "bg-gradient-to-r from-amber-500/5 to-transparent border-amber-300 shadow-sm"
-                    : "hover:bg-white border-transparent shadow-sm hover:shadow"
-                }`}
-              >
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    isCurrent
-                      ? "bg-amber-500 text-white"
-                      : "bg-slate-100 text-slate-500 group-hover:bg-amber-50"
-                  }`}
-                >
-                  <BookOpen
-                    className={
-                      isCurrent
-                        ? "text-white"
-                        : "group-hover:text-amber-500"
-                    }
-                    size={18}
-                  />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <h4
-                    className={`font-bold text-xs leading-snug line-clamp-1 ${
-                      isCurrent
-                        ? "text-amber-600"
-                        : "text-slate-800 group-hover:text-amber-600"
-                    }`}
-                  >
-                    {item.title}
-                  </h4>
-
-                  <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                    {item.total_marks || 0} Words •{" "}
-                    {item.max_attempts || 0} Attempts
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+      {/* Related vo Lessons */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <BookOpen className="text-orange-500" size={16} /> More vocabulary Lessons
+          </h3>
+          <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
+            {vocabularyModules.length} Lessons
+          </span>
+        </div>
+        {/* ... existing audio grid code ... */}
       </div>
     </div>
+
+    {/* --- RIGHT COLUMN: Queue & Knowledge Check --- */}
+     <div className="lg:col-span-4">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+    
+    {/* Icon Container: Updated to Orange */}
+    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+      <BookOpen size={24} />
+    </div>
+    
+    <div>
+      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
+      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
+    </div>
+
+    {/* Button: Updated to Orange Theme */}
+    <button
+      onClick={() => {
+        console.log("Button clicked");
+        router.push(
+          `/dashboard/module/practice-quations?data=${encodeURIComponent(
+            JSON.stringify(selectedModule)
+          )}`
+        );
+        console.log(selectedModule._id);
+        console.log(currentModuleType);
+      }}
+      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+    >
+      Start Practice
+      <ChevronRight size={16} />
+    </button>
   </div>
-) : currentModuleType === "text" ? (
+</div>
+  </div>
+)  : currentModuleType === "text" ? (
             /* Text layout view fallback default */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
@@ -1084,152 +849,38 @@ where to add this in audio type
 
               {/* Text Sidebar Queue */}
              <div className="lg:col-span-4">
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-    <div className="sticky top-0 bg-white p-5 border-b border-slate-200">
-      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-        <BookOpen className="text-indigo-500" size={15} />
-        Knowledge Check
-      </h3>
+<div className="lg:col-span-4">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+    
+    {/* Icon Container: Updated to Orange */}
+    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+      <BookOpen size={24} />
+    </div>
+    
+    <div>
+      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
+      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
     </div>
 
-    <div className="max-h-[650px] overflow-y-auto p-4 space-y-3 custom-scrollbar">
-
-      {selectedModule.questions?.length ? (
-
-        selectedModule.questions.map((q, idx) => {
-
-          const isExpanded = expandedQ === idx;
-          const feedback = selectedAnswers[idx];
-
-          const validOptions =
-            q.question_type === "true_false"
-              ? ["True", "False"]
-              : q.options.filter(opt => opt && opt.trim() !== "");
-
-          return (
-
-            <div
-              key={idx}
-              className="border rounded-xl overflow-hidden"
-            >
-
-              <button
-                onClick={() =>
-                  setExpandedQ(isExpanded ? null : idx)
-                }
-                className="w-full p-4 flex justify-between items-center bg-slate-50"
-              >
-
-                <span className="text-xs font-bold text-left">
-                  {idx + 1}. {q.question_text}
-                </span>
-
-                <ChevronDown
-                  size={15}
-                  className={`transition-transform ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                />
-
-              </button>
-
-              {isExpanded && (
-
-                <div className="p-4 space-y-2">
-
-                  {validOptions.map((opt, i) => {
-
-                    const normalizedCorrect =
-                      ["A","B","C","D"].includes(q.correct_answer)
-                        ? validOptions[
-                            ["A","B","C","D"].indexOf(q.correct_answer)
-                          ]
-                        : q.correct_answer.trim();
-
-                    const isSelected =
-                      feedback?.selected === opt;
-
-                    const isCorrect =
-                      opt.trim() === normalizedCorrect;
-
-                    let style =
-                      "border-slate-200 hover:border-indigo-300";
-
-                    if (feedback) {
-                      if (isCorrect)
-                        style =
-                          "bg-green-50 border-green-500 text-green-700";
-                      else if (isSelected)
-                        style =
-                          "bg-red-50 border-red-500 text-red-700";
-                      else
-                        style =
-                          "opacity-40 bg-slate-50 border-slate-100";
-                    }
-
-                    return (
-                      <button
-                        key={i}
-                        disabled={!!feedback}
-                        onClick={() =>
-                          handleAnswer(
-                            idx,
-                            opt,
-                            normalizedCorrect
-                          )
-                        }
-                        className={`w-full border rounded-lg p-2 text-left text-xs ${style}`}
-                      >
-                        {opt}
-                      </button>
-                    );
-
-                  })}
-
-                  {feedback && (
-                    <div
-                      className={`mt-3 rounded-lg p-3 text-xs ${
-                        feedback.isCorrect
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-700"
-                      }`}
-                    >
-                      <div className="font-bold mb-2">
-                        {feedback.isCorrect
-                          ? "Correct"
-                          : "Explanation"}
-                      </div>
-
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: q.explanation,
-                        }}
-                      />
-                    </div>
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-          );
-
-        })
-
-      ) : (
-
-        <div className="text-center py-10 text-slate-400">
-          No questions available.
-        </div>
-
-      )}
-
-    </div>
-
+    {/* Button: Updated to Orange Theme */}
+    <button
+      onClick={() => {
+        console.log("Button clicked");
+        router.push(
+          `/dashboard/module/practice-quations?data=${encodeURIComponent(
+            JSON.stringify(selectedModule)
+          )}`
+        );
+        console.log(selectedModule._id);
+        console.log(currentModuleType);
+      }}
+      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+    >
+      Start Practice
+      <ChevronRight size={16} />
+    </button>
   </div>
+</div>
 </div>
             </div>
                    
