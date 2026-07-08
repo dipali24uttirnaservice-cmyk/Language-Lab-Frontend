@@ -12,6 +12,7 @@ import {
   FileText,
   BookOpen,
   PenTool,
+
 } from "lucide-react";
 import { useFeaturedInstitute } from "@/hooks/useFeaturedInstitute";
 import { useRouter } from "next/navigation";
@@ -176,8 +177,6 @@ export default function Hero() {
         </div>
 
         {/* Floating Background Sparkle Bits */}
-        <div className="absolute top-1/4 right-8 text-amber-400 animate-pulse hidden lg:block"><Sparkles className="w-8 h-8" /></div>
-        <div className="absolute bottom-12 left-12 text-indigo-400 animate-spin hidden lg:block"><Compass className="w-6 h-6" /></div>
 
       </div>
     </section>
