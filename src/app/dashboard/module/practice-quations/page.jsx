@@ -188,46 +188,60 @@ const resetPractice = () => {
         <h3 className={`font-bold mb-1 ${answers[current].isCorrect ? "text-green-700" : "text-red-700"}`}>
           {answers[current].isCorrect ? "Correct!" : "Incorrect"}
         </h3>
-        <div className="text-slate-600 text-sm" dangerouslySetInnerHTML={{ __html: question.explanation }} />
       </div>
     )}
 
-    {/* Navigation Row */}
-    <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
-      <button
-        onClick={() => setCurrent((p) => p - 1)}
-        disabled={current === 0}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
-      >
-        <ChevronLeft size={20} />
-        Previous
-      </button>
+ {/* Navigation Row */}
+<div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
+  <button
+    onClick={() => setCurrent((p) => p - 1)}
+    disabled={current === 0}
+    className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
+  >
+    <ChevronLeft size={20} />
+    Previous
+  </button>
 
-     {allAttempted ? (
-  <button
-    onClick={resetPractice}
-    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-orange-200"
-  >
-    🔄 Try Again
-  </button>
-) : (
-  <button
-    onClick={submitAnswer}
-    disabled={isAnswered || !selectedOptions[current]}
-    className="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-500 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-orange-200"
-  >
-    Submit
-  </button>
-)}
+  {/* Dynamic Button Area */}
+  <div className="flex gap-2">
+    {/* RED: Try Again Button (Shown only when incorrect) */}
+    {isAnswered && !answers[current].isCorrect && (
       <button
-        onClick={() => setCurrent((p) => p + 1)}
-        disabled={current === questions.length - 1}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
+        onClick={() => {
+          setAnswers((prev) => {
+            const newState = { ...prev };
+            delete newState[current];
+            return newState;
+          });
+          setSelectedOptions((prev) => ({ ...prev, [current]: "" }));
+        }}
+        className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-red-200"
       >
-        Next
-        <ChevronRight size={20} />
+        Try Again
       </button>
-    </div>
+    )}
+
+    {/* ORANGE: Submit Button (Shown only when not answered) */}
+    {!isAnswered && (
+      <button
+        onClick={submitAnswer}
+        disabled={!selectedOptions[current]}
+        className="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-500 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-orange-200"
+      >
+        Submit
+      </button>
+    )}
+  </div>
+
+  <button
+    onClick={() => setCurrent((p) => p + 1)}
+    disabled={current === questions.length - 1}
+    className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
+  >
+    Next
+    <ChevronRight size={20} />
+  </button>
+</div>
   </div>
 </div>
     </div>
