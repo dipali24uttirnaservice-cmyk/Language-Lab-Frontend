@@ -211,7 +211,33 @@ const handleAnswer = (qIndex, option, correct) => {
   }));
 };
 
+// Current module list based on selected content type
+const currentModuleList =
+  currentModuleType === "video"
+    ? videoModules
+    : currentModuleType === "audio"
+    ? audioModules
+    : currentModuleType === "text"
+    ? textModules
+    : currentModuleType === "vocabulary"
+    ? vocabularyModules
+    : [];
 
+// Current selected module index
+const currentModuleIndex = currentModuleList.findIndex(
+  (item) => item._id === selectedModule?._id
+);
+
+// Previous & Next modules
+const previousModule =
+  currentModuleIndex > 0
+    ? currentModuleList[currentModuleIndex - 1]
+    : null;
+
+const nextModule =
+  currentModuleIndex < currentModuleList.length - 1
+    ? currentModuleList[currentModuleIndex + 1]
+    : null;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
@@ -242,9 +268,43 @@ const handleAnswer = (qIndex, option, correct) => {
             src={selectedModule.video.url}
           />
         </div>
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">{selectedModule.title}</h1>
-        </div>
+       <div className="space-y-5">
+  <h1 className="text-2xl font-extrabold text-slate-900">
+    {selectedModule.title}
+  </h1>
+
+ <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+  <button
+    disabled={!previousModule}
+    onClick={() => previousModule && setSelectedModule(previousModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      previousModule
+        ? "bg-slate-900 text-white hover:bg-slate-800"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    ← Previous
+  </button>
+
+  <span className="text-sm font-medium text-slate-500">
+    {currentModuleIndex + 1} / {currentModuleList.length}
+  </span>
+
+  <button
+    disabled={!nextModule}
+    onClick={() => nextModule && setSelectedModule(nextModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      nextModule
+        ? "bg-orange-500 text-white hover:bg-orange-600"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    Next →
+  </button>
+
+</div>
+</div>
       </div>
 
       {/* --- Sidebar: Practice Questions (4 Columns) --- */}
@@ -451,6 +511,38 @@ const handleAnswer = (qIndex, option, correct) => {
                       />
                     </div>
                   )}
+                    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+  <button
+    disabled={!previousModule}
+    onClick={() => previousModule && setSelectedModule(previousModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      previousModule
+        ? "bg-slate-900 text-white hover:bg-slate-800"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    ← Previous
+  </button>
+
+  <span className="text-sm font-medium text-slate-500">
+    {currentModuleIndex + 1} / {currentModuleList.length}
+  </span>
+
+  <button
+    disabled={!nextModule}
+    onClick={() => nextModule && setSelectedModule(nextModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      nextModule
+        ? "bg-orange-500 text-white hover:bg-orange-600"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    Next →
+  </button>
+
+</div>
+                    
                 </div>
                  {/* Related Audios */}
   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
@@ -749,6 +841,37 @@ where to add this in audio type
             </div>
           ))}
         </div>
+        <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+  <button
+    disabled={!previousModule}
+    onClick={() => previousModule && setSelectedModule(previousModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      previousModule
+        ? "bg-slate-900 text-white hover:bg-slate-800"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    ← Previous
+  </button>
+
+  <span className="text-sm font-medium text-slate-500">
+    {currentModuleIndex + 1} / {currentModuleList.length}
+  </span>
+
+  <button
+    disabled={!nextModule}
+    onClick={() => nextModule && setSelectedModule(nextModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      nextModule
+        ? "bg-orange-500 text-white hover:bg-orange-600"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    Next →
+  </button>
+
+</div>
       </div>
 
       {/* Related vo Lessons */}
@@ -761,7 +884,57 @@ where to add this in audio type
             {vocabularyModules.length} Lessons
           </span>
         </div>
-        {/* ... existing audio grid code ... */}
+       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+ 
+
+  <div className="max-h-[300px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+    {vocabularyModules
+      .filter((item) => item._id !== selectedModule._id)
+      .map((item) => {
+        const isSelected = selectedModule?._id === item._id;
+
+        return (
+          <button
+            key={item._id}
+            onClick={() => {
+              setSelectedModule(item);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
+              isSelected
+                ? "bg-orange-50 border-orange-300"
+                : "hover:bg-slate-50 border-transparent"
+            }`}
+          >
+            <div
+              className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                isSelected
+                  ? "bg-orange-500 text-white"
+                  : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              <BookOpen size={18} />
+            </div>
+
+            <div className="flex-1">
+              <h4
+                className={`text-sm font-bold ${
+                  isSelected ? "text-orange-600" : "text-slate-800"
+                }`}
+              >
+                {item.title}
+              </h4>
+
+              <span className="text-[11px] text-slate-400">
+                {item.words?.length || 0} Words •{" "}
+                {item.questions?.length || 0} Questions
+              </span>
+            </div>
+          </button>
+        );
+      })}
+  </div>
+</div>
       </div>
     </div>
 
@@ -869,7 +1042,39 @@ where to add this in audio type
   dangerouslySetInnerHTML={{
     __html: selectedModule.content?.body || "",
   }}
+    
 />
+<div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+  <button
+    disabled={!previousModule}
+    onClick={() => previousModule && setSelectedModule(previousModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      previousModule
+        ? "bg-slate-900 text-white hover:bg-slate-800"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    ← Previous
+  </button>
+
+  <span className="text-sm font-medium text-slate-500">
+    {currentModuleIndex + 1} / {currentModuleList.length}
+  </span>
+
+  <button
+    disabled={!nextModule}
+    onClick={() => nextModule && setSelectedModule(nextModule)}
+    className={`px-5 py-3 rounded-xl font-semibold transition ${
+      nextModule
+        ? "bg-orange-500 text-white hover:bg-orange-600"
+        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+    }`}
+  >
+    Next →
+  </button>
+
+</div>
 
 {/* Related Reading Queue */}
 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
