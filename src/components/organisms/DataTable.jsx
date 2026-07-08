@@ -6,7 +6,7 @@ import TableToolbar from "../molecules/TableToolbar";
 import Pagination from "../molecules/Pagination";
 
 export default function DataTable({
-   title,
+  title,
   columns,
   data,
   search,
@@ -14,10 +14,19 @@ export default function DataTable({
   onAdd,
   onBulkUpload,
   loading,
-    
 
-}) {
- 
+  segment,
+  setSegment,
+  year,
+  setYear,
+  segmentOptions,
+  yearOptions,
+   selectedStudents,
+  onSelectStudent,
+  onSelectAll,
+    showSelection,
+
+}){
 
   const [page, setPage] =
     useState(1);
@@ -37,56 +46,88 @@ export default function DataTable({
       page * pageSize
     );
 
+   const allCurrentPageSelected =
+  paginatedData.length > 0 &&
+  paginatedData.every((student) =>
+    selectedStudents.includes(student._id)
+  );
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
 
-    <TableToolbar
+  <TableToolbar
   title={title}
   search={search}
   setSearch={setSearch}
   onAdd={onAdd}
   onBulkUpload={onBulkUpload}
+
+  segment={segment}
+  setSegment={setSegment}
+  year={year}
+  setYear={setYear}
+
+  segmentOptions={segmentOptions}
+  yearOptions={yearOptions}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
         <table className="w-full">
 
-     <thead className="bg-slate-100">   
-              <tr className="bg-slate-100">
+  <thead className="bg-slate-100">
+  <tr>
+    {showSelection && (
+      <th className="p-4 w-12">
+        <input
+          type="checkbox"
+          checked={allCurrentPageSelected}
+          onChange={() => onSelectAll(paginatedData)}
+        />
+      </th>
+    )}
 
-              {columns.map(
-                (column) => (
-                  <th
-                    key={column.key}
-                    className="
-                      p-4
-                      text-left
-                      uppercase
-                      text-xs
-                      font-black
-                      tracking-wider
-                    "
-                  >
-                    {column.title}
-                  </th>
-                )
-              )}
+   <th className="p-4 text-left uppercase text-xs font-black tracking-wider w-20">
+  Sr. No.
+</th>
 
-            </tr>
-          </thead>
+    {columns.map((column) => (
+      <th
+        key={column.key}
+        className="p-4 text-left uppercase text-xs font-black tracking-wider"
+      >
+        {column.title}
+      </th>
+    ))}
+  </tr>
+</thead>
 
           <tbody>
 
-            {paginatedData.map(
-              (row, index) => (
+           {paginatedData.map((row, index) => {
+  const serialNo = (page - 1) * pageSize + index + 1;
+
+  return (
                 <tr
-                  key={index}
+                   key={row.id || row._id || index}
                   className="
                     border-t
                     hover:bg-slate-50
                   "
                 >
+                  {showSelection && (
+    <td className="p-4">
+      <input
+        type="checkbox"
+        checked={selectedStudents.includes(row._id)}
+        
+        onChange={() => onSelectStudent(row._id)}
+      />
+    </td>
+  )}
+
+ <td className="p-4 font-semibold text-slate-600">
+  {serialNo}
+</td>
                   {columns.map(
                     (column) => (
                       <td
@@ -106,9 +147,9 @@ export default function DataTable({
                     )
                   )}
                 </tr>
-              )
-            )}
 
+             );
+})}
           </tbody>
 
         </table>

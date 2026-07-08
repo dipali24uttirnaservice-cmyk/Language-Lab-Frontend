@@ -81,61 +81,61 @@ export default function StudentViewModal({
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-1">
+          <div className="p-6 space-y-1">
 
-              <DetailRow
-                icon={<Mail size={16} />}
-                label="Email"
-                value={student.email}
-              />
+  <DetailRow
+    icon={<Mail size={16} />}
+    label="Email"
+    value={student.email}
+  />
 
-              <DetailRow
-                icon={<Phone size={16} />}
-                label="Phone"
-                value={student.phone}
-              />
+  <DetailRow
+    icon={<Phone size={16} />}
+    label="Phone"
+    value={student.phone}
+  />
 
-              <DetailRow
-                icon={<GraduationCap size={16} />}
-                label="Course"
-                value={student.course}
-              />
+  <DetailRow
+    icon={<BadgeCheck size={16} />}
+    label="Roll Number"
+    value={student.roll_no}
+  />
 
-              <DetailRow
-                icon={<BadgeCheck size={16} />}
-                label="Enrollment"
-                value={student.enrollment_no}
-              />
+  <DetailRow
+    icon={<BadgeCheck size={16} />}
+    label="Enrollment Number"
+    value={student.enrollment_no}
+  />
 
-              <DetailRow
-                icon={<GraduationCap size={16} />}
-                label="Year"
-                value={`Year ${student.year}`}
-              />
+  <DetailRow
+    icon={<GraduationCap size={16} />}
+    label="Segment"
+    value={student.segment}
+  />
 
-              <DetailRow
-                icon={<Calendar size={16} />}
-                label="Batch"
-                value={student.batch}
-              />
+  <DetailRow
+    icon={<GraduationCap size={16} />}
+    label="Segment Year"
+    value={`Year ${student.year}`}
+  />
 
-              <DetailRow
-                icon={<Building2 size={16} />}
-                label="Institute"
-                value={student.institute?.institute_name}
-              />
+  <DetailRow
+    icon={<GraduationCap size={16} />}
+    label="Purchased Courses"
+    value={
+      student.purchased_courses?.length
+        ? student.purchased_courses.join(", ")
+        : "No Courses Purchased"
+    }
+  />
 
-              <DetailRow
-                icon={<Calendar size={16} />}
-                label="Last Login"
-                value={
-                  student.last_login
-                    ? new Date(student.last_login).toLocaleDateString()
-                    : "-"
-                }
-              />
+  <DetailRow
+    icon={<Calendar size={16} />}
+    label="Created On"
+    value={new Date(student.createdAt).toLocaleDateString()}
+  />
 
-            </div>
+</div>
 
             {/* Footer */}
             <div className="border-t bg-slate-50 px-6 py-4 flex justify-end">

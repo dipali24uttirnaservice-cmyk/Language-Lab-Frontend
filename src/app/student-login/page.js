@@ -105,14 +105,8 @@ export default function StudentLogin() {
     expires: 7,
   }
 );
-
-      setModal({
-        open: true,
-        type: "success",
-        title: "Login Successful",
-        message:
-          "Welcome to LanguageLab",
-      });
+ router.push("/dashboard");
+ 
     } catch (error) {
       console.error(error);
 

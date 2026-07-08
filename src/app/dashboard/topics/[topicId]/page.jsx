@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";import { motion } from "framer-motion";
 import {
   BookOpen,
   Layers,
@@ -10,11 +13,33 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+
 import { topicApi } from "@/services/topic/topicApi";
 export default function TopicDetailsPage() {
-  const { topicId } = useParams();
-  const router = useRouter();
+    const { topicId } = useParams();
 
+  const router = useRouter();
+const searchParams = useSearchParams();
+
+const courseId = searchParams.get("courseId");
+const courseName = searchParams.get("courseName");
+const type = searchParams.get("type");
+const topicName = searchParams.get("topicName");
+
+
+
+
+console.log("Topic ID:", topicId);
+console.log("Course ID:", courseId);
+console.log("Type:", type);
+
+
+
+
+
+  console.log(courseName);
+  console.log(type);
+  console.log(topicName);
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState(null);
 
@@ -45,7 +70,7 @@ export default function TopicDetailsPage() {
   return (
 
     
-   <div className="relative min-h-screen overflow-hidden">
+   <div className="relative min-h-screen overflow-hidden p-2">
 {/* ================================================= */}
 {/* PREMIUM 3D ANIMATED BACKGROUND */}
 {/* ================================================= */}
@@ -211,189 +236,53 @@ export default function TopicDetailsPage() {
 </div>
 
 <motion.div
-  initial={{ opacity: 0, y: 20 }}
+  initial={{ opacity: 0, y: 10 }}
   animate={{ opacity: 1, y: 0 }}
-  className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 px-6 py-6"
+  className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-6 py-4"
 >
-  {/* Left */}
-  <div className="flex items-start gap-5">
-
-    {/* Back Button */}
+  {/* Left: Back Button & Title */}
+  <div className="flex items-center gap-4">
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.96 }}
       onClick={() => router.back()}
-      className="
-        h-14
-        w-14
-        rounded-2xl
-        bg-white/80
-        backdrop-blur-xl
-        border
-        border-orange-100
-        flex
-        items-center
-        justify-center
-        shadow-lg
-        text-orange-600
-      "
+      className="h-10 w-10 rounded-xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-md text-orange-600 shrink-0"
     >
-      <ArrowLeft size={22} />
+      <ArrowLeft size={18} />
     </motion.button>
 
-    <div>
-      <div
-        className="
-          inline-flex
-          items-center
-          gap-2
-          rounded-full
-          border
-          border-orange-200
-          bg-white/80
-          backdrop-blur-xl
-          px-4
-          py-2
-          shadow-md
-        "
-      >
-        <span className="text-lg">📚</span>
-
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">
-          Language Lab
-        </span>
-      </div>
-
-      <h1 className="mt-4 text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
+    <div className="min-w-0">
+      <h1 className="text-xl font-black text-slate-900 truncate">
         {topic?.title}
       </h1>
-
-      <p className="mt-3 max-w-2xl text-slate-500 leading-7">
+      <p className="text-xs text-slate-500 truncate max-w-sm">
         {topic?.description}
       </p>
     </div>
-
   </div>
 
- 
-
-  {/* Right Side */}
-
-{/* Right Side - Compact Stats */}
-
-{/* Right Side */}
-
-<div className="flex flex-wrap justify-end gap-4">
-
-  {/* Subtopics */}
-
-  <motion.div
-    whileHover={{ y: -5, scale: 1.05 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-2xl
-      border
-      border-orange-100
-      bg-white/80
-      backdrop-blur-xl
-      px-5
-      py-4
-      shadow-lg
-      min-w-[130px]
-    "
-  >
-    <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-orange-200/40 blur-xl" />
-
-    <p className="text-xs uppercase tracking-wider text-slate-500">
-      Subtopics
-    </p>
-
-    <div className="mt-2 flex items-center justify-between">
-      <h3 className="text-3xl font-black text-orange-600">
-        {topic?.subtopic_count || 0}
-      </h3>
-
-      <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center">
-        📚
+  {/* Right Side: Compact Stats */}
+  <div className="flex items-center gap-2">
+    {[
+      { label: "Subtopics", value: topic?.subtopic_count || 0, icon: "📚", color: "text-orange-600" },
+      { label: "Order", value: `#${topic?.order}`, icon: "🔖", color: "text-blue-600" },
+      { label: "Status", value: "Active", icon: "✓", color: "text-emerald-600" },
+    ].map((item, idx) => (
+      <div
+        key={idx}
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-sm"
+      >
+        <div className="flex flex-col">
+          <span className="text-[9px] font-bold text-slate-400 uppercase">{item.label}</span>
+          <span className={`text-sm font-black ${item.color}`}>{item.value}</span>
+        </div>
+        <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-xs opacity-70">
+          {item.icon}
+        </div>
       </div>
-    </div>
-  </motion.div>
-
-  {/* Order */}
-
-  <motion.div
-    whileHover={{ y: -5, scale: 1.05 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-2xl
-      border
-      border-blue-100
-      bg-white/80
-      backdrop-blur-xl
-      px-5
-      py-4
-      shadow-lg
-      min-w-[130px]
-    "
-  >
-    <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-blue-200/40 blur-xl" />
-
-    <p className="text-xs uppercase tracking-wider text-slate-500">
-      Order
-    </p>
-
-    <div className="mt-2 flex items-center justify-between">
-      <h3 className="text-3xl font-black text-blue-600">
-        #{topic?.order}
-      </h3>
-
-      <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
-        🔖
-      </div>
-    </div>
-  </motion.div>
-
-  {/* Status */}
-
-  <motion.div
-    whileHover={{ y: -5, scale: 1.05 }}
-    className="
-      relative
-      overflow-hidden
-      rounded-2xl
-      border
-      border-emerald-100
-      bg-white/80
-      backdrop-blur-xl
-      px-5
-      py-4
-      shadow-lg
-      min-w-[130px]
-    "
-  >
-    <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-emerald-200/40 blur-xl" />
-
-    <p className="text-xs uppercase tracking-wider text-slate-500">
-      Status
-    </p>
-
-    <div className="mt-2 flex items-center justify-between">
-      <h3 className="text-lg font-black text-emerald-600">
-        Active
-      </h3>
-
-      <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-        ✓
-      </div>
-    </div>
-  </motion.div>
-
-</div>
-
+    ))}
+  </div>
 </motion.div>
-
  
 
   {/* SubTopics */}
@@ -425,8 +314,23 @@ export default function TopicDetailsPage() {
     scale: 1.01,
   }}
   transition={{ duration: 0.25 }}
-  onClick={() => router.push(`/dashboard/subtopic/${subtopic._id}`)}
-  className="
+onClick={() => {
+ const params = new URLSearchParams(searchParams.toString());
+
+// Remove lesson because we're not on the lesson page yet
+params.delete("lessonName");
+
+params.set("courseId", courseId);
+params.set("courseName", courseName);
+params.set("type", type);
+params.set("topicId", topicId);
+params.set("topicName", topicName);
+
+params.set("subTopicId", subtopic._id);
+params.set("subTopicName", subtopic.title);
+
+  router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
+}}  className="
     group
     relative
     overflow-hidden
@@ -471,8 +375,8 @@ export default function TopicDetailsPage() {
           scale: 1.08,
         }}
         className={`
-          h-20
-          w-20
+          h-10
+          w-10
           rounded-3xl
           bg-gradient-to-br
           ${color}
@@ -483,7 +387,7 @@ export default function TopicDetailsPage() {
           shadow-xl
         `}
       >
-        <Layers size={34} />
+        <Layers size={20} />
       </motion.div>
 
       <div>
@@ -531,6 +435,8 @@ export default function TopicDetailsPage() {
       </div>
 
       <button
+
+      
         className="
           mt-5
           inline-flex

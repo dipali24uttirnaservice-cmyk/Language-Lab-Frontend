@@ -20,18 +20,18 @@ export default function IndividualStudentForm({
   const [loading, setLoading] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState(null);
   const [errors, setErrors] = useState({});
+  const [photoPreview, setPhotoPreview] = useState("");
 
-  const initialState = {
-    full_name: "",
-    email: "",
-    phone: "",
-    roll_no: "",
-    enrollment_no: "",
-    batch: "",
-    course: "",
-    year: "",
-    status: "active",
-  };
+const initialState = {
+  full_name: "",
+  email: "",
+  phone: "",
+  roll_no: "",
+  enrollment_no: "",
+  segment: "",
+  year: "",
+  status: "active",
+};
 
   const [formData, setFormData] = useState(initialState);
 
@@ -53,20 +53,20 @@ export default function IndividualStudentForm({
         await studentApi.getStudentById(studentId);
 
       const student = response.data.data;
+console.log("Student Object:", student);
+console.log("Roll No:", student.roll_no);
+   setFormData({
+  full_name: student.full_name || "",
+  email: student.email || "",
+  phone: student.phone || "",
+  roll_no: student.roll_no || "",
+  enrollment_no: student.enrollment_no || "",
+  segment: student.segment || "",
+  year: String(student.year || ""),
+  status: student.is_active ? "active" : "inactive",
+});
 
-      setFormData({
-        full_name: student.full_name || "",
-        email: student.email || "",
-        phone: student.phone || "",
-        roll_no: student.roll_no || "",
-        enrollment_no: student.enrollment_no || "",
-        batch: student.batch || "",
-        course: student.course || "",
-        year: student.year || "",
-        status: student.is_active
-          ? "active"
-          : "inactive",
-      });
+setPhotoPreview(student.profilePhoto || "");
     } finally {
       setLoading(false);
     }
@@ -94,18 +94,15 @@ export default function IndividualStudentForm({
         ? studentFormSchemaAdd
         : studentFormSchemaEdit;
 
-    const dataToValidate = {
-      full_name: formData.full_name,
-      roll_no: formData.roll_no,
-      enrollment_no: formData.enrollment_no,
-      ...(mode === "add" && {
-        email: formData.email,
-        phone: formData.phone,
-        course: formData.course,
-        batch: formData.batch,
-        year: String(formData.year),
-      }),
-    };
+ const dataToValidate = {
+  full_name: formData.full_name,
+  email: formData.email,
+  phone: formData.phone,
+  roll_no: formData.roll_no,
+  enrollment_no: formData.enrollment_no,
+  segment: formData.segment,
+  year: String(formData.year),
+};
 
     await schema.validate(dataToValidate, {
       abortEarly: false,
@@ -146,25 +143,28 @@ export default function IndividualStudentForm({
       if (!instituteId) {
         throw new Error("Institute ID not found");
       }
+const data = new FormData();
 
-      const data = new FormData();
+data.append("full_name", formData.full_name);
+data.append("email", formData.email);
+data.append("roll_no", formData.roll_no);
+data.append("enrollment_no", formData.enrollment_no);
+data.append("segment", formData.segment);
+data.append("year", formData.year);
+data.append("phone", formData.phone);
+data.append("institute_id", instituteId);
+data.append(
+  "is_active",
+  formData.status === "active"
+);
 
-      data.append("full_name", formData.full_name);
-      data.append("email", formData.email);
-      data.append("phone", formData.phone);
-      data.append("roll_no", formData.roll_no);
-      data.append("enrollment_no", formData.enrollment_no);
-      data.append("batch", formData.batch);
-      data.append("course", formData.course);
-      data.append("year", formData.year);
-      data.append("institute_id", instituteId);
 
-      if (studentPhoto) {
-        data.append("studentPhoto", studentPhoto);
-      }
 
-      await studentApi.createStudent(data);
+if (studentPhoto) {
+  data.append("studentPhoto", studentPhoto);
+}
 
+await studentApi.createStudent(data);
       setStatusData({
         open: true,
         type: "success",
@@ -175,32 +175,44 @@ export default function IndividualStudentForm({
       setTimeout(() => {
         router.push("/institute-dashboard/students");
       }, 1500);
-    } else {
-      const updatePayload = {
-        full_name: formData.full_name,
-        roll_no: formData.roll_no,
-        batch: formData.batch,
-        status: formData.status,
-      };
+    }  else {
+  const data = new FormData();
 
-      await studentApi.updateStudent(
-        studentId,
-        updatePayload
-      );
+  data.append("full_name", formData.full_name);
+  data.append("email", formData.email);
+  data.append("phone", formData.phone);
+  data.append("roll_no", formData.roll_no);
+  data.append("enrollment_no", formData.enrollment_no);
+  data.append("segment", formData.segment);
+  data.append("year", formData.year);
+  data.append(
+    "is_active",
+    formData.status === "active"
+  );
 
-      setStatusData({
-        open: true,
-        type: "success",
-        title: "Student Updated",
-        message: "Student updated successfully.",
-      });
+  if (studentPhoto) {
+    data.append("studentPhoto", studentPhoto);
+  }
 
-      setTimeout(() => {
-        router.push("/institute-dashboard/students");
-      }, 1500);
-    }
-  } catch (error) {
-    setStatusData({
+  await studentApi.updateStudent(studentId, data);
+
+  setStatusData({
+    open: true,
+    type: "success",
+    title: "Student Updated",
+    message: "Student updated successfully.",
+  });
+
+  setTimeout(() => {
+    router.push("/institute-dashboard/students");
+  }, 1500);
+}
+  }  catch (error) {
+  console.log("Student API Error:", error);
+  console.log("Response:", error.response);
+  console.log("Response Data:", error.response?.data);
+
+  setStatusData({
       open: true,
       type: "error",
       title: mode === "add" ? "Add Failed" : "Update Failed",
@@ -266,76 +278,44 @@ export default function IndividualStudentForm({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Roll Number</label>
-              <input
-                type="number"
-                maxLength={20}
-                placeholder="Roll Number"
-                value={formData.roll_no}
-                onChange={(e) =>
-                  handleChange(
-                    "roll_no",
-                    e.target.value
-                  )
-                }
-                className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
-                  errors.roll_no
-                    ? "border-red-500"
-                    : ""
-                }`}
-              />
+             <input
+  type="text"
+  maxLength={20}
+  placeholder="Roll Number"
+  value={formData.roll_no || ""}
+  onChange={(e) =>
+    handleChange("roll_no", e.target.value)
+  }
+  className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
+    errors.roll_no ? "border-red-500" : ""
+  }`}
+/>
               {errors.roll_no && <div className="text-red-500 text-sm mt-1">{errors.roll_no}</div>}
             </div>
 
-            <div>
+              <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Enrollment Number</label>
-
-              
-           <input
+             <input
   type="text"
   maxLength={20}
   placeholder="Enrollment Number"
-  value={formData.enrollment_no}
+  value={formData.enrollment_no || ""}
   onChange={(e) =>
     handleChange("enrollment_no", e.target.value)
   }
-  disabled={mode === "edit"}
-  className={`w-full rounded-xl border p-3 sm:p-3.5 text-sm sm:text-base
-    ${
-      errors.enrollment_no
-        ? "border-red-500"
-        : "border-gray-300"
-    }
-    ${
-      mode === "edit"
-        ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-100"
-        : "bg-white"
-    }`}
- />
+  className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
+    errors.enrollment_no ? "border-red-500" : ""
+  }`}
+/>
               {errors.enrollment_no && <div className="text-red-500 text-sm mt-1">{errors.enrollment_no}</div>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Batch</label>
-              <input
-                type="text"
-                placeholder="2024-2026"
-                value={formData.batch}
-                onChange={(e) =>
-                  handleChange(
-                    "batch",
-                    e.target.value
-                  )
-                }
-                className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
-                  errors.batch
-                    ? "border-red-500"
-                    : ""
-                }`}
-              />
-              {errors.batch && <div className="text-red-500 text-sm mt-1">{errors.batch}</div>}
-            </div>
+            
 
-            {mode === "add" && (
+          
+
+           
+
               <>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
@@ -381,24 +361,24 @@ export default function IndividualStudentForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Course Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Segment</label>
                   <input
                     type="text"
-                    placeholder="Enter Course Name"
-                    value={formData.course}
+                    placeholder="Enter Segment Name"
+                    value={formData.segment}
                     onChange={(e) =>
                       handleChange(
-                        "course",
+                        "segment",
                         e.target.value
                       )
                     }
                     className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
-                      errors.course
+                      errors.segment
                         ? "border-red-500"
                         : ""
                     }`}
                   />
-                  {errors.course && <div className="text-red-500 text-sm mt-1">{errors.course}</div>}
+                  {errors.segment && <div className="text-red-500 text-sm mt-1">{errors.segment}</div>}
                 </div>
 
                 <div>
@@ -422,24 +402,7 @@ export default function IndividualStudentForm({
                   {errors.year && <div className="text-red-500 text-sm mt-1">{errors.year}</div>}
                 </div>
 
-                <div className="col-span-full">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      setStudentPhoto(
-                        e.target.files?.[0]
-                      )
-                    }
-                    className="border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base"
-                  />
-                </div>
-              </>
-            )}
-
-            {mode === "edit" && (
-              <div>
+                 <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
                 <select
                   value={formData.status}
@@ -459,7 +422,84 @@ export default function IndividualStudentForm({
                   </option>
                 </select>
               </div>
-            )}
+            
+
+                <div className="col-span-full">
+  <label className="block text-sm font-medium text-slate-700 mb-3">
+    Student Photo
+  </label>
+
+  <div className="flex flex-col sm:flex-row items-center gap-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+
+    {/* Image Preview */}
+    <div className="relative">
+      {photoPreview ? (
+        <img
+          src={photoPreview}
+          alt="Student"
+          className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg"
+        />
+      ) : (
+        <div className="h-32 w-32 rounded-full bg-slate-200 flex items-center justify-center border-4 border-white shadow-lg">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-12 w-12 text-slate-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.8}
+              d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        </div>
+      )}
+    </div>
+
+    {/* Upload Section */}
+    <div className="flex-1 w-full">
+      <label
+        htmlFor="student-photo"
+        className="inline-flex items-center justify-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl cursor-pointer transition"
+      >
+        Choose Photo
+      </label>
+
+      <input
+        id="student-photo"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+
+          if (!file) return;
+
+          setStudentPhoto(file);
+          setPhotoPreview(URL.createObjectURL(file));
+        }}
+      />
+
+      <p className="mt-3 text-sm text-slate-500">
+        JPG, PNG or WEBP
+      </p>
+
+      {studentPhoto && (
+        <p className="mt-1 text-sm text-green-600 font-medium">
+          {studentPhoto.name}
+        </p>
+      )}
+    </div>
+
+  </div>
+</div>
+              </>
+            
+
+             
           </div>
       {/* Footer */}
       <div className="border-t px-6 py-5 flex justify-end gap-3">

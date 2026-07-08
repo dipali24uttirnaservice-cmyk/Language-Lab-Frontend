@@ -25,19 +25,28 @@ export const subtopicApi = {
 
 // ==================== MODULE ====================
 
+// ==================== MODULE ====================
+
 export const moduleApi = {
   // Get Modules By Subtopic
-  getModulesBySubtopic: (
-    type,
-    subtopicId
-  ) =>
-    api.get(
-      `/module/${type}?subtopic_id=${subtopicId}`
-    ),
+  getModulesBySubtopic: (type, subtopicId) =>
+    api.get(`/module/${type}?subtopic_id=${subtopicId}`),
 
   // Get Single Module
   getModuleById: (type, moduleId) =>
-    api.get(
-      `/module/${type}/${moduleId}`
-    ),
+    api.get(`/module/${type}/${moduleId}`),
+
+  // --- Exercise Specific Endpoints ---
+
+  // Submit Exercise Answers
+  submitExercise: (exerciseId, payload) =>
+    api.post(`/module/exercise/${exerciseId}/submit`, payload),
+
+  // Get Latest Attempt Result
+  getExerciseResult: (exerciseId) =>
+    api.get(`/module/exercise/${exerciseId}/result`),
+
+  // Get All Attempt History
+  getExerciseAttempts: (exerciseId) =>
+    api.get(`/module/exercise/${exerciseId}/attempts`),
 };
