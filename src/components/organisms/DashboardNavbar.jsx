@@ -34,6 +34,20 @@ const lessonName = searchParams.get("lessonName");
   }, []);
 
   useEffect(() => {
+  const autoClose =
+    pathname.startsWith("/dashboard/video") ||
+    pathname.startsWith("/dashboard/audio") ||
+    pathname.startsWith("/dashboard/text") ||
+    pathname.startsWith("/dashboard/exercise") ||
+    pathname.startsWith("/dashboard/vocabulary") ||
+    pathname.startsWith("/dashboard/module/practice-quations");
+
+  if (autoClose) {
+    setIsOpen(false);
+  }
+}, [pathname, setIsOpen]);
+
+  useEffect(() => {
     try {
       const studentCookie = Cookies.get("studentData");
       const parsedData = studentCookie ? JSON.parse(studentCookie) : {};

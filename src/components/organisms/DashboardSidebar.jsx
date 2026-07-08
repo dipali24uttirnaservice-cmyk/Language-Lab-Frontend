@@ -135,10 +135,10 @@ const fetchCourses = async () => {
   }
 };
   return (
-    <aside
-      className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300 ease-in-out
-      ${isOpen ? "w-72 opacity-100 p-6" : "w-0 opacity-0 overflow-hidden p-0"}`}
-    >
+   <aside
+  className={`relative overflow-hidden bg-white border-r border-slate-200 flex flex-col justify-between min-h-screen z-20 transition-all duration-300
+  ${isOpen ? "w-72 p-6" : "w-24 p-3"}`}
+>
       {/* =====================================================
           PREMIUM 3D ANIMATED BACKGROUND
       ===================================================== */}
@@ -188,7 +188,7 @@ const fetchCourses = async () => {
         />
 
         {/* Glass Reflection */}
-        <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-white/50 via-white/10 to-transparent blur-md" />
+        <div className="absolute top-0 left-0 h-full w-24 bg-gradient-to-r from-white/50 via-white/10 to-transparent blur-md" />
 
         {/* Vertical Accent Line */}
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-amber-300/40 to-transparent" />
@@ -197,21 +197,28 @@ const fetchCourses = async () => {
       {/* =====================================================
           CONTENT
       ===================================================== */}
-      <div className={`relative z-10 ${!isOpen ? "hidden" : "block"}`}>
-        {/* Brand Header */}
-        <div className="flex items-center gap-3 px-2 py-1 mb-10">
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-2.5 rounded-xl text-white shadow-lg shadow-amber-500/20">
+<div className="relative z-10">        {/* Brand Header */}
+<div
+  className={`flex items-center ${
+    isOpen
+      ? "gap-3 px-2"
+      : "justify-center"
+  } mb-10`}
+>         <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-2.5 rounded-xl text-white shadow-lg shadow-amber-500/20">
             <FaGraduationCap />
           </div>
 
-          <div>
-            <h2 className="text-xl font-black text-slate-800 tracking-tight">
-              English Lab
-            </h2>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              AI Learning Platform
-            </p>
-          </div>
+         {isOpen && (
+  <div>
+    <h2 className="text-xl font-black text-slate-800">
+      English Lab
+    </h2>
+
+    <p className="text-[10px] uppercase font-bold text-slate-400">
+      AI Learning Platform
+    </p>
+  </div>
+)}
         </div>
 
         {/* Menu */}
@@ -242,9 +249,11 @@ const fetchCourses = async () => {
               <Icon className="text-sm" />
             </div>
 
-            <span className="relative z-10 text-sm font-bold text-slate-700">
-              Logout
-            </span>
+          {isOpen && (
+<span className="relative z-10 text-sm font-bold">
+    Logout
+</span>
+)}
           </button>
         </motion.div>
       );
@@ -266,8 +275,23 @@ const learningActive =
       return (
         <div key={item.name}>
           <button
-            onClick={() => setOpenLearning(!openLearning)}
-            className="relative flex items-center w-full p-3 rounded-xl hover:bg-orange-50 transition-all"
+onClick={() => {
+  if (!isOpen) {
+    if (courses.length > 0) {
+      const firstCourse = courses[0];
+
+      router.push(
+        `/dashboard/course/${firstCourse._id}?courseId=${firstCourse._id}&courseName=${encodeURIComponent(firstCourse.course_name)}`
+      );
+    } else {
+      router.push("/dashboard/topics");
+    }
+
+    return;
+  }
+
+  setOpenLearning(!openLearning);
+}}            className="relative flex items-center w-full p-3 rounded-xl hover:bg-orange-50 transition-all"
           >
             {learningActive && (
               <motion.div
@@ -286,23 +310,24 @@ const learningActive =
               <Icon />
             </div>
 
-            <span
-              className={`relative z-10 flex-1 text-left text-sm font-bold ${
-                learningActive
-                  ? "text-orange-700"
-                  : "text-slate-700"
-              }`}
-            >
-              Learning Journey
-            </span>
+          {isOpen && (
+<>
+    <span className="relative z-10 flex-1 text-left text-sm font-bold">
+        Learning Journey
+    </span>
 
-            <span className="relative z-10">
-              {openLearning ? "▲" : "▼"}
-            </span>
+{isOpen && (
+  <span className="relative z-10">
+    {openLearning ? "▲" : "▼"}
+  </span>
+)}</>
+)}
+
+           
           </button>
 
-          {openLearning && (
-            <div className="ml-14 mt-2 space-y-1">
+{isOpen && openLearning && (      
+      <div className="ml-14 mt-2 space-y-1">
               {loadingCourses ? (
                 <p className="text-xs text-gray-500 px-3 py-2">
                   Loading...
@@ -345,10 +370,15 @@ const learningActive =
         whileHover={{ x: 4, scale: 1.02 }}
         transition={{ duration: 0.2 }}
       >
-        <Link
-          href={item.href}
-          className="relative flex items-center w-full p-3 rounded-xl transition-all group overflow-hidden"
-        >
+       <Link
+  href={item.href}
+ className={`relative flex items-center rounded-xl transition-all overflow-hidden
+${
+  isOpen
+    ? "justify-start px-3 py-3"
+    : "justify-center w-14 h-14 mx-auto"
+}`}
+>
           {active && (
             <motion.div
               layoutId="activeSidebarGlow"
@@ -358,16 +388,17 @@ const learningActive =
             />
           )}
 
-          <div
-            className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border mr-3 ${
-              active
-                ? `bg-gradient-to-br ${item.color} text-white border-transparent`
-                : "bg-white text-slate-500 border-slate-200"
-            }`}
-          >
+         <div
+ className={`relative flex items-center rounded-xl transition-all overflow-hidden
+${
+  isOpen
+    ? "justify-start px-3 py-3"
+    : "justify-center w-14 h-14 mx-auto"
+}`}
+>
             <Icon />
           </div>
-
+{isOpen && (
           <span
             className={`relative z-10 text-sm font-bold ${
               active
@@ -377,14 +408,18 @@ const learningActive =
           >
             {item.name}
           </span>
+          )}
 
-          <div
-            className={`relative z-10 ml-auto h-2 w-2 rounded-full ${
-              active
-                ? item.dot || "bg-blue-500"
-                : "bg-transparent"
-            }`}
-          />
+          {isOpen && (
+<div
+ className={`relative flex items-center rounded-xl transition-all overflow-hidden
+${
+  isOpen
+    ? "justify-start px-3 py-3"
+    : "justify-center w-14 h-14 mx-auto"
+}`}
+/>
+)}
         </Link>
       </motion.div>
     );
@@ -395,26 +430,31 @@ const learningActive =
       {/* =====================================================
           FOOTER PROFILE
       ===================================================== */}
-      <div
-        className={`relative z-10 pt-5 border-t border-slate-100 flex items-center gap-3 px-2 ${
-          !isOpen && "hidden"
-        }`}
-      >
-        <div className="relative">
+<div
+  className={`relative z-10 pt-5 border-t border-slate-100 ${
+    isOpen
+      ? "flex items-center gap-3 px-2"
+      : "flex justify-center"
+  }`}
+>
+         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md" />
           <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-white shadow-sm">
             <FaUserCircle className="text-slate-500 text-lg" />
           </div>
         </div>
 
-        <div>
-          <p className="text-sm font-black text-slate-800">
-            Student Name
-          </p>
-          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-            Premium Member
-          </p>
-        </div>
+       {isOpen && (
+<div>
+   <p className="text-sm font-black text-slate-800">
+      Student Name
+   </p>
+
+   <p className="text-[10px] text-amber-600 uppercase">
+      Premium Member
+   </p>
+</div>
+)}
       </div>
     </aside>
   );
