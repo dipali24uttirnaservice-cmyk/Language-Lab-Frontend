@@ -3,42 +3,42 @@
 import { motion } from "framer-motion";
 import { FaBook, FaRobot, FaAward, FaFire } from "react-icons/fa";
 
-const stats = [
-  {
-    title: "Enrolled Courses",
-    value: "12",
-    icon: <FaBook />,
-    color: "from-blue-500 to-indigo-600",
-    shadow: "rgba(79,70,229,0.15)",
-    label: "+2 added this week"
-  },
-  {
-    title: "AI Chat Interactions",
-    value: "84",
-    icon: <FaRobot />,
-    color: "from-amber-400 to-orange-500",
-    shadow: "rgba(245,158,11,0.15)",
-    label: "Top 5% in institute"
-  },
-  {
-    title: "Certificates Earned",
-    value: "5",
-    icon: <FaAward />,
-    color: "from-emerald-400 to-teal-500",
-    shadow: "rgba(16,185,129,0.15)",
-    label: "Ready to export"
-  },
-  {
-    title: "Active Learning Streak",
-    value: "21 Days",
-    icon: <FaFire />,
-    color: "from-orange-500 to-red-500",
-    shadow: "rgba(239,68,68,0.15)",
-    label: "🔥 Setting local campus record"
-  },
-];
+export default function DashboardStats({ statsData = {} }) {
+  const stats = [
+    {
+      title: "Enrolled Courses",
+      value: statsData.enrolledCourses !== undefined ? String(statsData.enrolledCourses) : "0",
+      icon: <FaBook />,
+      color: "from-blue-500 to-indigo-600",
+      shadow: "rgba(79,70,229,0.15)",
+      label: "Active course enrollment"
+    },
+    {
+      title: "AI Chat Interactions",
+      value: statsData.aiInteractions !== undefined ? String(statsData.aiInteractions) : "0",
+      icon: <FaRobot />,
+      color: "from-amber-400 to-orange-500",
+      shadow: "rgba(245,158,11,0.15)",
+      label: "Tutor queries logged"
+    },
+    {
+      title: "Attendance Rate",
+      value: statsData.attendanceRate !== undefined ? `${statsData.attendanceRate}%` : "0%",
+      icon: <FaAward />,
+      color: "from-emerald-400 to-teal-500",
+      shadow: "rgba(16,185,129,0.15)",
+      label: statsData.attendanceRate < 75 ? "⚠️ Below 75% threshold" : "✅ In good standing"
+    },
+    {
+      title: "Active Learning Streak",
+      value: statsData.streakDays !== undefined ? `${statsData.streakDays} Days` : "0 Days",
+      icon: <FaFire />,
+      color: "from-orange-500 to-red-500",
+      shadow: "rgba(239,68,68,0.15)",
+      label: "Keep learning daily! 🔥"
+    },
+  ];
 
-export default function DashboardStats() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((item, index) => (
