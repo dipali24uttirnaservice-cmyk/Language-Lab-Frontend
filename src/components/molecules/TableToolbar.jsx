@@ -80,7 +80,6 @@ export default function TableToolbar({
                 : "border-slate-200 hover:border-slate-300"
             } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
           >
-            <option value="">All Segments</option>
             {segmentOptions.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -104,7 +103,6 @@ export default function TableToolbar({
                   : "border-slate-200 hover:border-slate-300"
               } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
             >
-              <option value="">All Years</option>
               {yearOptions.map((item) => (
                 <option key={item} value={item}>
                   Year {item}
