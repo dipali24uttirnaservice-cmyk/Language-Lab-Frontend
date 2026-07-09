@@ -148,15 +148,20 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   const handleLogout = async () => {
     try {
       await logoutStudent();
+    } catch (error) {
+      console.error("Logout Error:", error);
+    } finally {
       Cookies.remove("token");
       Cookies.remove("role");
       Cookies.remove("studentData");
+
       setShowLogoutModal(false);
+
       router.replace("/student-login");
-    } catch (error) {
-      console.error("Logout Error:", error);
+      // or window.location.href = "/student-login";
     }
   };
+
 
   // ─── Derived student display values ──────────────────────────────────────
   const studentName = student?.full_name || "Student";
