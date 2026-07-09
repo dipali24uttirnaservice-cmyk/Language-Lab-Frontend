@@ -137,14 +137,9 @@ const handleLogin = async (e) => {
 
     const institute = apiResponse?.data?.institute;
 
-    setModal({
-      open: true,
-      type: "success",
-      title: "Institute Login Successfully",
-      message: `Welcome ${
-        institute?.institute_name || ""
-      }`,
-    });
+   router.replace(
+      "/institute-dashboard"
+    );
   } catch (error) {
     console.error("Login Error:", error);
 

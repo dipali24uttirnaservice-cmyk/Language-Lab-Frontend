@@ -1,61 +1,62 @@
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
-  const token =
-    request.cookies.get("token")?.value;
+  const token = request.cookies.get("token")?.value;
+  const role = request.cookies.get("role")?.value;
+  const pathname = request.nextUrl.pathname;
 
-  const role =
-    request.cookies.get("role")?.value;
+  // Public routes
+  const publicRoutes = ["/", "/login", "/student-login"];
 
-  const pathname =
-    request.nextUrl.pathname;
-
-  // Not logged in
-  if (!token) {
-    if (
-      pathname.startsWith(
-        "/dashboard"
-      ) ||
-      pathname.startsWith(
-        "/institute-dashboard"
-      )
-    ) {
+  // If logged in, prevent access to landing & login pages
+  if (token && publicRoutes.includes(pathname)) {
+    if (role === "student") {
       return NextResponse.redirect(
-        new URL(
-          "/login",
-          request.url
-        )
+        new URL("/dashboard", request.url)
+      );
+    }
+
+    if (role === "institute") {
+      return NextResponse.redirect(
+        new URL("/institute-dashboard", request.url)
       );
     }
   }
 
-  // Student trying to access institute routes
+  // Not logged in
+  if (!token) {
+    if (pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(
+        new URL("/student-login", request.url)
+      );
+    }
+
+    if (pathname.startsWith("/institute-dashboard")) {
+      return NextResponse.redirect(
+        new URL("/login", request.url)
+      );
+    }
+  }
+
+  // Student cannot access institute dashboard
   if (
-    pathname.startsWith(
-      "/institute-dashboard"
-    ) &&
+    token &&
+    pathname.startsWith("/institute-dashboard") &&
     role !== "institute"
   ) {
     return NextResponse.redirect(
-      new URL(
-        "/dashboard",
-        request.url
-      )
+      new URL("/dashboard", request.url)
     );
   }
 
-  // Institute trying to access student routes
+  // Institute cannot access student dashboard
   if (
-    pathname.startsWith(
-      "/dashboard"
-    ) &&
+    token &&
+    pathname.startsWith("/dashboard") &&
     role !== "student"
   ) {
     return NextResponse.redirect(
-      new URL(
-        "/institute-dashboard",
-        request.url
-      )
+      new URL("/institute-dashboard", request.url)
     );
   }
 
@@ -64,6 +65,9 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
+    "/",
+    "/login",
+    "/student-login",
     "/dashboard/:path*",
     "/institute-dashboard/:path*",
   ],
