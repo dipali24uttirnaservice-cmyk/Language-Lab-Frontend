@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { courseApi } from "@/services/course/courseApi";
 import {
   ArrowLeft,
   Video,
@@ -17,6 +18,25 @@ import {
 export default function LearningModules({ courseId, courseName }) {
   const router = useRouter();
   const canvasRef = useRef(null);
+  const [moduleCounts, setModuleCounts] = useState({});
+  const [countsLoading, setCountsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!courseId) return;
+    const fetchCounts = async () => {
+      try {
+        const res = await courseApi.getModuleCount(courseId);
+        // API → { success: true, data: { module_counts: { video, audio, text, vocabulary, exercise } } }
+        const counts = res.data?.data?.module_counts || {};
+        setModuleCounts(counts);
+      } catch (err) {
+        console.error("[ModuleCount] Failed:", err?.response?.status);
+      } finally {
+        setCountsLoading(false);
+      }
+    };
+    fetchCounts();
+  }, [courseId]);
 
   // 3D Floating Network Mesh Canvas Background Animation
   useEffect(() => {
@@ -188,15 +208,15 @@ export default function LearningModules({ courseId, courseName }) {
       <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] rounded-full bg-indigo-400/10 blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10 space-y-12">
-        
+
         {/* INTERACTIVE HEADER: Fills out empty top space beautifully */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-100/50"
         >
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => router.back()}
               className="h-11 w-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-orange-500 hover:border-orange-200 hover:shadow-md hover:shadow-orange-500/5 transition-all group"
             >
@@ -212,15 +232,15 @@ export default function LearningModules({ courseId, courseName }) {
               </h1>
             </div>
           </div>
-       <div className="hidden md:flex items-center bg-slate-950/80 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 shadow-2xl">
-  <span className="bg-gradient-to-r from-orange-400 via-amber-200 to-white bg-clip-text text-transparent text-xs font-black tracking-wide uppercase">
-    Enjoy Your Learning Journey
-  </span>
-</div>
+          <div className="hidden md:flex items-center bg-slate-950/80 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 shadow-2xl">
+            <span className="bg-gradient-to-r from-orange-400 via-amber-200 to-white bg-clip-text text-transparent text-xs font-black tracking-wide uppercase">
+              Enjoy Your Learning Journey
+            </span>
+          </div>
         </motion.div>
 
         {/* CARDS GRID SYSTEM */}
-        <motion.div 
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={{
@@ -242,8 +262,8 @@ export default function LearningModules({ courseId, courseName }) {
                   hidden: { opacity: 0, y: 30 },
                   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
                 }}
-                whileHover={{ 
-                  y: -10, 
+                whileHover={{
+                  y: -10,
                   scale: 1.03,
                   boxShadow: `0 20px 30px -10px ${module.shadowColor}, 0 1px 3px 0 rgba(0,0,0,0.05)`
                 }}
@@ -258,10 +278,22 @@ export default function LearningModules({ courseId, courseName }) {
                 className="cursor-pointer rounded-3xl bg-white/80 backdrop-blur-md p-6 border border-slate-200/80 shadow-lg shadow-slate-100 transition-all group flex flex-col justify-between min-h-[250px]"
               >
                 <div>
-                  <div
-                    className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${module.color} text-white flex items-center justify-center shadow-md transform group-hover:rotate-6 transition-transform duration-300`}
-                  >
-                    <Icon size={24} />
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${module.color} text-white flex items-center justify-center shadow-md transform group-hover:rotate-6 transition-transform duration-300`}
+                    >
+                      <Icon size={24} />
+                    </div>
+                    {/* Module count badge */}
+                    {countsLoading ? (
+                      <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
+                    ) : moduleCounts[module.type] !== undefined ? (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-gradient-to-br ${module.color} text-white shadow-sm`}
+                      >
+                        {moduleCounts[module.type]}
+                      </span>
+                    ) : null}
                   </div>
 
                   <h3 className="mt-6 text-lg font-black tracking-tight text-slate-800 group-hover:text-slate-900 transition-colors">
@@ -282,7 +314,7 @@ export default function LearningModules({ courseId, courseName }) {
             );
           })}
         </motion.div>
-        
+
       </div>
     </div>
   );

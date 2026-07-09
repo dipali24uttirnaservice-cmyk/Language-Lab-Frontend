@@ -49,7 +49,7 @@ export default function StudentLogin() {
     if (!token) return;
 
     if (role === "student") {
-      router.replace("/student-dashboard");
+      router.replace("/dashboard");
     }
   }, [router]);
 
@@ -98,15 +98,15 @@ export default function StudentLogin() {
       });
 
       // Store student data
-     Cookies.set(
-  "studentData",
-  JSON.stringify(apiResponse.data.student),
-  {
-    expires: 7,
-  }
-);
- router.push("/dashboard");
- 
+      Cookies.set(
+        "studentData",
+        JSON.stringify(apiResponse.data.student),
+        {
+          expires: 7,
+        }
+      );
+      router.push("/dashboard");
+
     } catch (error) {
       console.error(error);
 
@@ -161,11 +161,11 @@ export default function StudentLogin() {
           shadow-[0_20px_80px_rgba(249,115,22,0.15)]
         "
       >
-      <div className="flex items-center gap-3 mb-6">
-  <button
-    type="button"
-    onClick={() => router.push("/")}
-    className="
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="
       h-10 w-10
       flex items-center justify-center
       rounded-xl
@@ -178,15 +178,15 @@ export default function StudentLogin() {
       hover:shadow-md
       transition-all duration-300
     "
-  >
-    <ArrowLeft size={18} />
-  </button>
+          >
+            <ArrowLeft size={18} />
+          </button>
 
-  <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-   🤖 AI Learning Hub
-  </div>
-</div>
-     
+          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+            🤖 AI Learning Hub
+          </div>
+        </div>
+
 
         <h1 className="text-3xl font-black text-slate-900">
           Student Login
