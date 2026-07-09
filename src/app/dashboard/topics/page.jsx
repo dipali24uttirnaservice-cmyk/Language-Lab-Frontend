@@ -40,20 +40,22 @@ const topicName = searchParams.get("topicName");
 
 
   useEffect(() => {
-    fetchTopics();
-  }, []);
+  if (!courseId) return;
 
-  const fetchTopics = async () => {
-    try {
-      const response = await topicApi.getTopics();
+  fetchTopics();
+}, [courseId]);
 
-      setTopics(response.data.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchTopics = async () => {
+  try {
+    const response = await topicApi.getTopics(courseId);
+
+    setTopics(response.data.data || []);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading) {
     return (

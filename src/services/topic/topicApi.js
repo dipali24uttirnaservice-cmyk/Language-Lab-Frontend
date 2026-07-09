@@ -3,14 +3,14 @@ import api from "../apiMethod/apiMethod";
 // ==================== TOPIC ====================
 
 export const topicApi = {
-  // Get All Topics
-  getTopics: () => api.get("/topic"),
+  // Get Topics By Course
+  getTopics: (courseId) =>
+    api.get(`/topic?course_id=${courseId}`),
 
   // Get Single Topic
   getTopicById: (topicId) =>
     api.get(`/topic/${topicId}`),
 };
-
 // ==================== SUBTOPIC ====================
 
 export const subtopicApi = {
