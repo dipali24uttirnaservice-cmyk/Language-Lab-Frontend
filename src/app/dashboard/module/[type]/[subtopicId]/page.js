@@ -230,7 +230,33 @@ export default function ModuleListPage() {
     }));
   };
 
+  // Current module list based on selected content type
+  const currentModuleList =
+    currentModuleType === "video"
+      ? videoModules
+      : currentModuleType === "audio"
+        ? audioModules
+        : currentModuleType === "text"
+          ? textModules
+          : currentModuleType === "vocabulary"
+            ? vocabularyModules
+            : [];
 
+  // Current selected module index
+  const currentModuleIndex = currentModuleList.findIndex(
+    (item) => item._id === selectedModule?._id
+  );
+
+  // Previous & Next modules
+  const previousModule =
+    currentModuleIndex > 0
+      ? currentModuleList[currentModuleIndex - 1]
+      : null;
+
+  const nextModule =
+    currentModuleIndex < currentModuleList.length - 1
+      ? currentModuleList[currentModuleIndex + 1]
+      : null;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
@@ -261,44 +287,109 @@ export default function ModuleListPage() {
                       src={selectedModule.video.url}
                     />
                   </div>
-                  <div>
-                    <h1 className="text-2xl font-extrabold text-slate-900">{selectedModule.title}</h1>
+                  <div className="space-y-5">
+                    <h1 className="text-2xl font-extrabold text-slate-900">
+                      {selectedModule.title}
+                    </h1>
+
+                    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+                      <button
+                        disabled={!previousModule}
+                        onClick={() => previousModule && setSelectedModule(previousModule)}
+                        className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                            ? "bg-slate-900 text-white hover:bg-slate-800"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          }`}
+                      >
+                        ← Previous
+                      </button>
+
+                      <span className="text-sm font-medium text-slate-500">
+                        {currentModuleIndex + 1} / {currentModuleList.length}
+                      </span>
+
+                      <button
+                        disabled={!nextModule}
+                        onClick={() => nextModule && setSelectedModule(nextModule)}
+                        className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                            ? "bg-orange-500 text-white hover:bg-orange-600"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          }`}
+                      >
+                        Next →
+                      </button>
+
+                    </div>
                   </div>
                 </div>
 
                 {/* --- Sidebar: Practice Questions (4 Columns) --- */}
                 {/* --- Improved Sidebar Area --- */}
-                <div className="lg:col-span-4">
-                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+                {/* Right Sidebar */}
+                <div className="lg:col-span-4 space-y-6">
 
-                    {/* Icon Container: Updated to Orange */}
-                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-                      <BookOpen size={24} />
+                  {/* Knowledge Check */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                      <BookOpen size={26} />
                     </div>
 
-                    <div>
-                      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
-                      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
-                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Knowledge Check
+                    </h3>
 
-                    {/* Button: Updated to Orange Theme */}
+                    <p className="text-sm text-slate-500 mt-2 mb-6">
+                      Test what you've learned from this lesson.
+                    </p>
+
                     <button
-                      onClick={() => {
-                        console.log("Button clicked");
+                      onClick={() =>
                         router.push(
                           `/dashboard/module/practice-quations?data=${encodeURIComponent(
                             JSON.stringify(selectedModule)
                           )}`
-                        );
-                        console.log(selectedModule._id);
-                        console.log(currentModuleType);
-                      }}
-                      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+                        )
+                      }
+                      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
                     >
                       Start Practice
-                      <ChevronRight size={16} />
+                      <ChevronRight size={18} />
                     </button>
                   </div>
+
+                  {/* Lesson Exercise */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                      <Award size={26} />
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Lesson Exercise
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mt-2 mb-6">
+                      Complete the exercise to improve your understanding.
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        router.push(
+                          `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+      &subTopicId=${selectedModule.sub_topic_id._id}
+      &courseId=${searchParams.get("courseId")}
+      &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
+      &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
+      &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
+                        );
+                      }}
+                      className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                    >
+                      Start Exercise
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+
                 </div>
               </div>
 
@@ -437,6 +528,36 @@ export default function ModuleListPage() {
                       />
                     </div>
                   )}
+                  <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+                    <button
+                      disabled={!previousModule}
+                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                          ? "bg-slate-900 text-white hover:bg-slate-800"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span className="text-sm font-medium text-slate-500">
+                      {currentModuleIndex + 1} / {currentModuleList.length}
+                    </span>
+
+                    <button
+                      disabled={!nextModule}
+                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      Next →
+                    </button>
+
+                  </div>
+
                 </div>
                 {/* Related Audios */}
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
@@ -497,37 +618,69 @@ export default function ModuleListPage() {
               </div>
 
               {/* Related Audio Lessons Queue Sidebar */}
-              <div className="lg:col-span-4">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+              <div className="lg:col-span-4 space-y-6">
 
-                  {/* Icon Container: Updated to Orange */}
-                  <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-                    <BookOpen size={24} />
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-slate-900">Knowledge Check</h3>
-                    <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
-                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
 
-                  {/* Button: Updated to Orange Theme */}
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
+
                   <button
-                    onClick={() => {
-                      console.log("Button clicked");
+                    onClick={() =>
                       router.push(
                         `/dashboard/module/practice-quations?data=${encodeURIComponent(
                           JSON.stringify(selectedModule)
                         )}`
-                      );
-                      console.log(selectedModule._id);
-                      console.log(currentModuleType);
-                    }}
-                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
                   >
                     Start Practice
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
+
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+      &subTopicId=${selectedModule.sub_topic_id._id}
+      &courseId=${searchParams.get("courseId")}
+      &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
+      &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
+      &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
               </div>
             </div>
           ) : currentModuleType === "exercise" ? (
@@ -700,6 +853,35 @@ export default function ModuleListPage() {
                       </div>
                     ))}
                   </div>
+                  <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+                    <button
+                      disabled={!previousModule}
+                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                          ? "bg-slate-900 text-white hover:bg-slate-800"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span className="text-sm font-medium text-slate-500">
+                      {currentModuleIndex + 1} / {currentModuleList.length}
+                    </span>
+
+                    <button
+                      disabled={!nextModule}
+                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      Next →
+                    </button>
+
+                  </div>
                 </div>
 
                 {/* Related vo Lessons */}
@@ -712,42 +894,121 @@ export default function ModuleListPage() {
                       {vocabularyModules.length} Lessons
                     </span>
                   </div>
-                  {/* ... existing audio grid code ... */}
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+
+
+                    <div className="max-h-[300px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                      {vocabularyModules
+                        .filter((item) => item._id !== selectedModule._id)
+                        .map((item) => {
+                          const isSelected = selectedModule?._id === item._id;
+
+                          return (
+                            <button
+                              key={item._id}
+                              onClick={() => {
+                                setSelectedModule(item);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isSelected
+                                  ? "bg-orange-50 border-orange-300"
+                                  : "hover:bg-slate-50 border-transparent"
+                                }`}
+                            >
+                              <div
+                                className={`h-10 w-10 rounded-lg flex items-center justify-center ${isSelected
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-slate-100 text-slate-500"
+                                  }`}
+                              >
+                                <BookOpen size={18} />
+                              </div>
+
+                              <div className="flex-1">
+                                <h4
+                                  className={`text-sm font-bold ${isSelected ? "text-orange-600" : "text-slate-800"
+                                    }`}
+                                >
+                                  {item.title}
+                                </h4>
+
+                                <span className="text-[11px] text-slate-400">
+                                  {item.words?.length || 0} Words •{" "}
+                                  {item.questions?.length || 0} Questions
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* --- RIGHT COLUMN: Queue & Knowledge Check --- */}
-              <div className="lg:col-span-4">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+              <div className="lg:col-span-4 space-y-6">
 
-                  {/* Icon Container: Updated to Orange */}
-                  <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-                    <BookOpen size={24} />
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-slate-900">Knowledge Check</h3>
-                    <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
-                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
 
-                  {/* Button: Updated to Orange Theme */}
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
+
                   <button
-                    onClick={() => {
-                      console.log("Button clicked");
+                    onClick={() =>
                       router.push(
                         `/dashboard/module/practice-quations?data=${encodeURIComponent(
                           JSON.stringify(selectedModule)
                         )}`
-                      );
-                      console.log(selectedModule._id);
-                      console.log(currentModuleType);
-                    }}
-                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
                   >
                     Start Practice
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
+
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+      &subTopicId=${selectedModule.sub_topic_id._id}
+      &courseId=${searchParams.get("courseId")}
+      &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
+      &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
+      &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
               </div>
             </div>
           ) : currentModuleType === "text" ? (
@@ -788,7 +1049,37 @@ export default function ModuleListPage() {
                   dangerouslySetInnerHTML={{
                     __html: selectedModule.content?.body || "",
                   }}
+
                 />
+                <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+
+                  <button
+                    disabled={!previousModule}
+                    onClick={() => previousModule && setSelectedModule(previousModule)}
+                    className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                        ? "bg-slate-900 text-white hover:bg-slate-800"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      }`}
+                  >
+                    ← Previous
+                  </button>
+
+                  <span className="text-sm font-medium text-slate-500">
+                    {currentModuleIndex + 1} / {currentModuleList.length}
+                  </span>
+
+                  <button
+                    disabled={!nextModule}
+                    onClick={() => nextModule && setSelectedModule(nextModule)}
+                    className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      }`}
+                  >
+                    Next →
+                  </button>
+
+                </div>
 
                 {/* Related Reading Queue */}
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
@@ -861,39 +1152,69 @@ export default function ModuleListPage() {
 
 
               {/* Text Sidebar Queue */}
-              <div className="lg:col-span-4">
-                <div className="lg:col-span-4">
-                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center gap-4">
+              <div className="lg:col-span-4 space-y-6">
 
-                    {/* Icon Container: Updated to Orange */}
-                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
-                      <BookOpen size={24} />
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-slate-900">Knowledge Check</h3>
-                      <p className="text-xs text-slate-500 mt-1">Test what you've learned from this lesson.</p>
-                    </div>
-
-                    {/* Button: Updated to Orange Theme */}
-                    <button
-                      onClick={() => {
-                        console.log("Button clicked");
-                        router.push(
-                          `/dashboard/module/practice-quations?data=${encodeURIComponent(
-                            JSON.stringify(selectedModule)
-                          )}`
-                        );
-                        console.log(selectedModule._id);
-                        console.log(currentModuleType);
-                      }}
-                      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-orange-200 flex items-center justify-center gap-2"
-                    >
-                      Start Practice
-                      <ChevronRight size={16} />
-                    </button>
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
                   </div>
+
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
+
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/module/practice-quations?data=${encodeURIComponent(
+                          JSON.stringify(selectedModule)
+                        )}`
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
+                  >
+                    Start Practice
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
+
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+      &subTopicId=${selectedModule.sub_topic_id._id}
+      &courseId=${searchParams.get("courseId")}
+      &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
+      &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
+      &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
               </div>
             </div>
 
