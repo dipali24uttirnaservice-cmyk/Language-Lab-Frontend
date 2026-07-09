@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
-import { ChevronRight, Award, Sparkles, CheckCircle2, XCircle } from "lucide-react";
+import { ChevronRight, Award, Sparkles, CheckCircle2, XCircle,ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
+
 
 export default function ExercisePage() {
   const searchParams = useSearchParams();
   const subTopicId = searchParams.get("subTopicId");
-
+const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
   const [selectedExercise, setSelectedExercise] = useState(null);
@@ -19,6 +20,7 @@ export default function ExercisePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [resultData, setResultData] = useState(null);
+
 
   useEffect(() => { fetchExercise(); }, [subTopicId]);
 
@@ -63,8 +65,11 @@ export default function ExercisePage() {
 
   return (
     <div className="flex h-screen bg-white">
+  
+      
       {/* Sidebar - Structured like PracticeQuestionsPage */}
       <div className="w-80 border-r p-4 overflow-auto bg-slate-50">
+      
         <h2 className="font-bold text-xl mb-6 px-2 text-slate-800">Exercises</h2>
         {exercises.map((item) => (
           <button 
@@ -81,9 +86,19 @@ export default function ExercisePage() {
         ))}
       </div>
 
+    
+
       {/* Main Content Area */}
       <div className="flex-1 p-10 overflow-auto bg-slate-50">
+        <button
+  onClick={() => router.back()}
+  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-medium transition"
+>
+  <ArrowLeft size={20} />
+  <span>Back</span>
+</button>
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border-2 border-orange-200">
+      
           
           {!isQuizActive && !showResults ? (
             <div className="space-y-6">
