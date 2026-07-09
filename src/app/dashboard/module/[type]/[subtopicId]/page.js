@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   XCircle,
   ChevronDown,
-  ChevronRight 
+  ChevronRight
 } from "lucide-react";
 import { moduleApi } from "@/services/topic/topicApi";
 
@@ -53,30 +53,49 @@ export default function ModuleListPage() {
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({}); // To store answers
+  const [userAnswers, setUserAnswers] = useState({});
   const [showExercise, setShowExercise] = useState(false);
   const [showPractice, setShowPractice] = useState(false);
-  // Add this near your other state declarations
-  // 1. State for managing interactions
-const [expandedQ, setExpandedQ] = useState(null);
-const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [expandedQ, setExpandedQ] = useState(null);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
 
-// 2. Handler for user selections
-const handleAnswer = (qIndex, option, correct) => {
-  setSelectedAnswers(prev => ({ 
-    ...prev, 
-    [qIndex]: { 
-      selected: option, 
-      isCorrect: option === correct 
-    } 
-  }));
-};
+  const handleAnswer = (qIndex, option, correct) => {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [qIndex]: { selected: option, isCorrect: option === correct }
+    }));
+  };
+
   const startTimeRef = React.useRef(Date.now());
+
   useEffect(() => {
-    if (type) {
-      setActiveTab(type);
-    }
+    if (type) setActiveTab(type);
   }, [type]);
+
+  // Sync selectedModule with URL to allow breadcrumb back navigation
+  useEffect(() => {
+    const lessonId = searchParams.get("lessonId");
+    if (!lessonId) {
+      setSelectedModule(null);
+    } else if (modules.length > 0 && (!selectedModule || selectedModule._id !== lessonId)) {
+      const found = modules.find(m => m._id === lessonId);
+      if (found) setSelectedModule(found);
+    }
+  }, [searchParams, modules, selectedModule]);
+
+  const handleModuleSelection = (item) => {
+    if (item) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("lessonId", item._id);
+      params.set("lessonName", item.title);
+      router.push(`?${params.toString()}`);
+    } else {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("lessonId");
+      params.delete("lessonName");
+      router.push(`?${params.toString()}`);
+    }
+  };
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -131,10 +150,10 @@ const handleAnswer = (qIndex, option, correct) => {
   }, [modules, type]);
 
   const vocabularyModules = useMemo(() => {
-  return modules.filter(
-    (m) => (m.module_type || type) === "vocabulary"
-  );
-}, [modules, type]);
+    return modules.filter(
+      (m) => (m.module_type || type) === "vocabulary"
+    );
+  }, [modules, type]);
 
   if (loading) {
     return (
@@ -202,42 +221,42 @@ const handleAnswer = (qIndex, option, correct) => {
   };
 
   const handleAnswerClick = (qIndex, option, correctAnswer) => {
-  setSelectedAnswers(prev => ({
-    ...prev,
-    [qIndex]: {
-      selected: option,
-      isCorrect: option === correctAnswer
-    }
-  }));
-};
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [qIndex]: {
+        selected: option,
+        isCorrect: option === correctAnswer
+      }
+    }));
+  };
 
-// Current module list based on selected content type
-const currentModuleList =
-  currentModuleType === "video"
-    ? videoModules
-    : currentModuleType === "audio"
-    ? audioModules
-    : currentModuleType === "text"
-    ? textModules
-    : currentModuleType === "vocabulary"
-    ? vocabularyModules
-    : [];
+  // Current module list based on selected content type
+  const currentModuleList =
+    currentModuleType === "video"
+      ? videoModules
+      : currentModuleType === "audio"
+        ? audioModules
+        : currentModuleType === "text"
+          ? textModules
+          : currentModuleType === "vocabulary"
+            ? vocabularyModules
+            : [];
 
-// Current selected module index
-const currentModuleIndex = currentModuleList.findIndex(
-  (item) => item._id === selectedModule?._id
-);
+  // Current selected module index
+  const currentModuleIndex = currentModuleList.findIndex(
+    (item) => item._id === selectedModule?._id
+  );
 
-// Previous & Next modules
-const previousModule =
-  currentModuleIndex > 0
-    ? currentModuleList[currentModuleIndex - 1]
-    : null;
+  // Previous & Next modules
+  const previousModule =
+    currentModuleIndex > 0
+      ? currentModuleList[currentModuleIndex - 1]
+      : null;
 
-const nextModule =
-  currentModuleIndex < currentModuleList.length - 1
-    ? currentModuleList[currentModuleIndex + 1]
-    : null;
+  const nextModule =
+    currentModuleIndex < currentModuleList.length - 1
+      ? currentModuleList[currentModuleIndex + 1]
+      : null;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
@@ -247,200 +266,198 @@ const nextModule =
 
       <div className="max-w-[1700px] mx-auto space-y-8 relative z-10">
 
-       
-      
+
+
 
         {/* Selected Module Detail Views */}
         {selectedModule ? (
-      currentModuleType === "video" ? (
-  <div className="max-w-7xl mx-auto animate-fade-in space-y-8">
-    
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* --- Main Player (8 Columns) --- */}
-      <div className="lg:col-span-8 space-y-6">
-        <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
-          <video
-            key={selectedModule._id}
-            controls
-            autoPlay
-            playsInline
-            className="w-full h-full object-contain"
-            src={selectedModule.video.url}
-          />
-        </div>
-       <div className="space-y-5">
-  <h1 className="text-2xl font-extrabold text-slate-900">
-    {selectedModule.title}
-  </h1>
+          currentModuleType === "video" ? (
+            <div className="max-w-7xl mx-auto animate-fade-in space-y-8">
 
- <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* --- Main Player (8 Columns) --- */}
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
+                    <video
+                      key={selectedModule._id}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                      src={selectedModule.video.url}
+                    />
+                  </div>
+                  <div className="space-y-5">
+                    <h1 className="text-2xl font-extrabold text-slate-900">
+                      {selectedModule.title}
+                    </h1>
 
-  <button
-    disabled={!previousModule}
-    onClick={() => previousModule && setSelectedModule(previousModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      previousModule
-        ? "bg-slate-900 text-white hover:bg-slate-800"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    ← Previous
-  </button>
+                    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
 
-  <span className="text-sm font-medium text-slate-500">
-    {currentModuleIndex + 1} / {currentModuleList.length}
-  </span>
+                      <button
+                        disabled={!previousModule}
+                        onClick={() => previousModule && setSelectedModule(previousModule)}
+                        className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                            ? "bg-slate-900 text-white hover:bg-slate-800"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          }`}
+                      >
+                        ← Previous
+                      </button>
 
-  <button
-    disabled={!nextModule}
-    onClick={() => nextModule && setSelectedModule(nextModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      nextModule
-        ? "bg-orange-500 text-white hover:bg-orange-600"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    Next →
-  </button>
+                      <span className="text-sm font-medium text-slate-500">
+                        {currentModuleIndex + 1} / {currentModuleList.length}
+                      </span>
 
-</div>
-</div>
-      </div>
+                      <button
+                        disabled={!nextModule}
+                        onClick={() => nextModule && setSelectedModule(nextModule)}
+                        className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                            ? "bg-orange-500 text-white hover:bg-orange-600"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          }`}
+                      >
+                        Next →
+                      </button>
 
-      {/* --- Sidebar: Practice Questions (4 Columns) --- */}
-{/* --- Improved Sidebar Area --- */}
-{/* Right Sidebar */}
-<div className="lg:col-span-4 space-y-6">
+                    </div>
+                  </div>
+                </div>
 
-  {/* Knowledge Check */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
-      <BookOpen size={26} />
-    </div>
+                {/* --- Sidebar: Practice Questions (4 Columns) --- */}
+                {/* --- Improved Sidebar Area --- */}
+                {/* Right Sidebar */}
+                <div className="lg:col-span-4 space-y-6">
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Knowledge Check
-    </h3>
+                  {/* Knowledge Check */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                      <BookOpen size={26} />
+                    </div>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Test what you've learned from this lesson.
-    </p>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Knowledge Check
+                    </h3>
 
-    <button
-      onClick={() =>
-        router.push(
-          `/dashboard/module/practice-quations?data=${encodeURIComponent(
-            JSON.stringify(selectedModule)
-          )}`
-        )
-      }
-      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
-    >
-      Start Practice
-      <ChevronRight size={18} />
-    </button>
-  </div>
+                    <p className="text-sm text-slate-500 mt-2 mb-6">
+                      Test what you've learned from this lesson.
+                    </p>
 
-  {/* Lesson Exercise */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
-      <Award size={26} />
-    </div>
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/module/practice-quations?data=${encodeURIComponent(
+                            JSON.stringify(selectedModule)
+                          )}`
+                        )
+                      }
+                      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
+                    >
+                      Start Practice
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Lesson Exercise
-    </h3>
+                  {/* Lesson Exercise */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                      <Award size={26} />
+                    </div>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Complete the exercise to improve your understanding.
-    </p>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Lesson Exercise
+                    </h3>
 
-   <button
-  onClick={() => {
-    router.push(
-      `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+                    <p className="text-sm text-slate-500 mt-2 mb-6">
+                      Complete the exercise to improve your understanding.
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        router.push(
+                          `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
       &subTopicId=${selectedModule.sub_topic_id._id}
       &courseId=${searchParams.get("courseId")}
       &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
       &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
       &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
-    );
-  }}
-  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
->
-  Start Exercise
-  <ChevronRight size={18} />
-</button>
-  </div>
+                        );
+                      }}
+                      className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                    >
+                      Start Exercise
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
 
-</div>
-  </div>
+                </div>
+              </div>
 
-    {/* --- Bottom: Other Videos (Course Queue) --- */}
-  <div>
-  <h3 className="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">More Lessons</h3>
-  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-    {videoModules.filter(m => m._id !== selectedModule._id).map((item) => (
-      <button
-        key={item._id}
-        onClick={() => setSelectedModule(item)}
-        className="group block text-left bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
-      >
-        {/* --- Thumbnail Section --- */}
- <div className="relative aspect-video bg-slate-100 overflow-hidden">
+              {/* --- Bottom: Other Videos (Course Queue) --- */}
+              <div>
+                <h3 className="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">More Lessons</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {videoModules.filter(m => m._id !== selectedModule._id).map((item) => (
+                    <button
+                      key={item._id}
+                      onClick={() => handleModuleSelection(item)}
+                      className="group block text-left bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                    >
+                      {/* --- Thumbnail Section --- */}
+                      <div className="relative aspect-video bg-slate-100 overflow-hidden">
 
-  {item.thumbnail || item.video?.thumbnail_url ? (
-    <img
-      src={item.thumbnail || item.video?.thumbnail_url}
-      alt={item.title}
-      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-    />
-  ) : item.video?.url ? (
-    <video
-      src={`${item.video.url}#t=2`}
-      preload="metadata"
-      muted
-      playsInline
-      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center bg-slate-200">
-      <Play className="text-slate-400 fill-current" size={24} />
-    </div>
-  )}
+                        {item.thumbnail || item.video?.thumbnail_url ? (
+                          <img
+                            src={item.thumbnail || item.video?.thumbnail_url}
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : item.video?.url ? (
+                          <video
+                            src={`${item.video.url}#t=2`}
+                            preload="metadata"
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                            <Play className="text-slate-400 fill-current" size={24} />
+                          </div>
+                        )}
 
-  {/* Play Overlay */}
-  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition">
-    <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-      <Play className="fill-current ml-0.5 text-slate-900" size={18} />
-    </div>
-  </div>
+                        {/* Play Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition">
+                          <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                            <Play className="fill-current ml-0.5 text-slate-900" size={18} />
+                          </div>
+                        </div>
 
-  {/* Badge */}
-  <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
-    Video
-  </div>
+                        {/* Badge */}
+                        <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
+                          Video
+                        </div>
 
-  {/* Duration */}
-  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-0.5 rounded text-[9px]">
-    {item.video?.duration_sec
-      ? `${Math.floor(item.video.duration_sec / 60)}m`
-      : item.duration || "5m"}
-  </div>
-</div>
+                        {/* Duration */}
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-0.5 rounded text-[9px]">
+                          {item.video?.duration_sec
+                            ? `${Math.floor(item.video.duration_sec / 60)}m`
+                            : item.duration || "5m"}
+                        </div>
+                      </div>
 
-        {/* --- Title Only --- */}
-        <div className="p-3">
-          <h4 className="font-bold text-xs text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
-            {item.title}
-          </h4>
-        </div>
-      </button>
-    ))}
-  </div>
-</div>
-  </div>
-) : currentModuleType === "audio" ? (
+                      {/* --- Title Only --- */}
+                      <div className="p-3">
+                        <h4 className="font-bold text-xs text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          {item.title}
+                        </h4>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : currentModuleType === "audio" ? (
             /* Dedicated Audio Player Layout View */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 space-y-6">
@@ -511,165 +528,160 @@ const nextModule =
                       />
                     </div>
                   )}
-                    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+                  <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
 
-  <button
-    disabled={!previousModule}
-    onClick={() => previousModule && setSelectedModule(previousModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      previousModule
-        ? "bg-slate-900 text-white hover:bg-slate-800"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    ← Previous
-  </button>
+                    <button
+                      disabled={!previousModule}
+                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                          ? "bg-slate-900 text-white hover:bg-slate-800"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      ← Previous
+                    </button>
 
-  <span className="text-sm font-medium text-slate-500">
-    {currentModuleIndex + 1} / {currentModuleList.length}
-  </span>
+                    <span className="text-sm font-medium text-slate-500">
+                      {currentModuleIndex + 1} / {currentModuleList.length}
+                    </span>
 
-  <button
-    disabled={!nextModule}
-    onClick={() => nextModule && setSelectedModule(nextModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      nextModule
-        ? "bg-orange-500 text-white hover:bg-orange-600"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    Next →
-  </button>
+                    <button
+                      disabled={!nextModule}
+                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      Next →
+                    </button>
 
-</div>
-                    
+                  </div>
+
                 </div>
-                 {/* Related Audios */}
-  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
-    <div className="p-4 border-b border-slate-200 bg-white">
-      <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-        <Headphones className="text-orange-500" size={14} />
-        Related Audios Queue
-      </h3>
-    </div>
+                {/* Related Audios */}
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+                  <div className="p-4 border-b border-slate-200 bg-white">
+                    <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                      <Headphones className="text-orange-500" size={14} />
+                      Related Audios Queue
+                    </h3>
+                  </div>
 
-    <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
-      {audioModules.map((item) => {
-        const isListening = selectedModule?._id === item._id;
+                  <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                    {audioModules.map((item) => {
+                      const isListening = selectedModule?._id === item._id;
 
-        return (
-          <button
-            key={item._id}
-            onClick={() => {
-              setSelectedModule(item);
-              setExpandedQ(null);
-              setSelectedAnswers({});
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-              isListening
-                ? "bg-orange-50 border-orange-300"
-                : "hover:bg-slate-50 border-transparent"
-            }`}
-          >
-            <div
-              className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                isListening
-                  ? "bg-orange-500 text-white"
-                  : "bg-slate-100 text-slate-500"
-              }`}
-            >
-              <Headphones size={18} />
-            </div>
+                      return (
+                        <button
+                          key={item._id}
+                          onClick={() => {
+                            handleModuleSelection(item);
+                            setExpandedQ(null);
+                            setSelectedAnswers({});
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isListening
+                            ? "bg-orange-50 border-orange-300"
+                            : "hover:bg-slate-50 border-transparent"
+                            }`}
+                        >
+                          <div
+                            className={`h-10 w-10 rounded-lg flex items-center justify-center ${isListening
+                              ? "bg-orange-500 text-white"
+                              : "bg-slate-100 text-slate-500"
+                              }`}
+                          >
+                            <Headphones size={18} />
+                          </div>
 
-            <div className="flex-1">
-              <h4
-                className={`text-xs font-bold ${
-                  isListening ? "text-orange-600" : "text-slate-800"
-                }`}
-              >
-                {item.title}
-              </h4>
+                          <div className="flex-1">
+                            <h4
+                              className={`text-xs font-bold ${isListening ? "text-orange-600" : "text-slate-800"
+                                }`}
+                            >
+                              {item.title}
+                            </h4>
 
-              <span className="text-[10px] text-slate-400">
-                {item.audio?.duration_sec
-                  ? `${Math.floor(item.audio.duration_sec / 60)}m`
-                  : "Audio"}
-              </span>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  </div>
-where to add this in audio type 
+                            <span className="text-[10px] text-slate-400">
+                              {item.audio?.duration_sec
+                                ? `${Math.floor(item.audio.duration_sec / 60)}m`
+                                : "Audio"}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                where to add this in audio type
               </div>
 
               {/* Related Audio Lessons Queue Sidebar */}
-        <div className="lg:col-span-4 space-y-6">
+              <div className="lg:col-span-4 space-y-6">
 
-  {/* Knowledge Check */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
-      <BookOpen size={26} />
-    </div>
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
+                  </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Knowledge Check
-    </h3>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Test what you've learned from this lesson.
-    </p>
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
 
-    <button
-      onClick={() =>
-        router.push(
-          `/dashboard/module/practice-quations?data=${encodeURIComponent(
-            JSON.stringify(selectedModule)
-          )}`
-        )
-      }
-      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
-    >
-      Start Practice
-      <ChevronRight size={18} />
-    </button>
-  </div>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/module/practice-quations?data=${encodeURIComponent(
+                          JSON.stringify(selectedModule)
+                        )}`
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
+                  >
+                    Start Practice
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-  {/* Lesson Exercise */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
-      <Award size={26} />
-    </div>
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Lesson Exercise
-    </h3>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Complete the exercise to improve your understanding.
-    </p>
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
 
-   <button
-  onClick={() => {
-    router.push(
-      `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
       &subTopicId=${selectedModule.sub_topic_id._id}
       &courseId=${searchParams.get("courseId")}
       &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
       &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
       &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
-    );
-  }}
-  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
->
-  Start Exercise
-  <ChevronRight size={18} />
-</button>
-  </div>
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-</div>
+              </div>
             </div>
           ) : currentModuleType === "exercise" ? (
             /* Quiz / Exercise Active View Details Block */
@@ -837,8 +849,8 @@ where to add this in audio type
                                       key={i}
                                       onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
                                       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === opt
-                                          ? "border-orange-500 bg-orange-50"
-                                          : "border-slate-200"
+                                        ? "border-orange-500 bg-orange-50"
+                                        : "border-slate-200"
                                         }`}
                                     >
                                       {opt}
@@ -888,193 +900,188 @@ where to add this in audio type
                 )}
               </div>
             </div>
-       ) : currentModuleType === "vocabulary" ? (
-  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
-    
-    {/* --- LEFT COLUMN: Vocabulary Content --- */}
-    <div className="lg:col-span-8 space-y-6">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-black text-slate-900 mb-2">{selectedModule.title}</h2>
-        <div className="text-slate-600 mb-6" dangerouslySetInnerHTML={{ __html: selectedModule.description }} />
+          ) : currentModuleType === "vocabulary" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-        {/* Word Grid */}
-        <div className="grid grid-cols-1 gap-4">
-          {selectedModule.words?.map((wordObj, i) => (
-            <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-              <h4 className="text-lg font-bold text-amber-700">{wordObj.word}</h4>
-              <p className="text-xs text-slate-500 italic mb-2">/{wordObj.pronunciation}/ • {wordObj.part_of_speech}</p>
-              <p className="text-sm text-slate-700 mb-2">{wordObj.meaning}</p>
-              <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
-                <span className="font-bold text-slate-800">Example: </span>
-                {wordObj.example}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+              {/* --- LEFT COLUMN: Vocabulary Content --- */}
+              <div className="lg:col-span-8 space-y-6">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">{selectedModule.title}</h2>
+                  <div className="text-slate-600 mb-6" dangerouslySetInnerHTML={{ __html: selectedModule.description }} />
 
-  <button
-    disabled={!previousModule}
-    onClick={() => previousModule && setSelectedModule(previousModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      previousModule
-        ? "bg-slate-900 text-white hover:bg-slate-800"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    ← Previous
-  </button>
+                  {/* Word Grid */}
+                  <div className="grid grid-cols-1 gap-4">
+                    {selectedModule.words?.map((wordObj, i) => (
+                      <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <h4 className="text-lg font-bold text-amber-700">{wordObj.word}</h4>
+                        <p className="text-xs text-slate-500 italic mb-2">/{wordObj.pronunciation}/ • {wordObj.part_of_speech}</p>
+                        <p className="text-sm text-slate-700 mb-2">{wordObj.meaning}</p>
+                        <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
+                          <span className="font-bold text-slate-800">Example: </span>
+                          {wordObj.example}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
 
-  <span className="text-sm font-medium text-slate-500">
-    {currentModuleIndex + 1} / {currentModuleList.length}
-  </span>
+                    <button
+                      disabled={!previousModule}
+                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                          ? "bg-slate-900 text-white hover:bg-slate-800"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      ← Previous
+                    </button>
 
-  <button
-    disabled={!nextModule}
-    onClick={() => nextModule && setSelectedModule(nextModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      nextModule
-        ? "bg-orange-500 text-white hover:bg-orange-600"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    Next →
-  </button>
+                    <span className="text-sm font-medium text-slate-500">
+                      {currentModuleIndex + 1} / {currentModuleList.length}
+                    </span>
 
-</div>
-      </div>
+                    <button
+                      disabled={!nextModule}
+                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        }`}
+                    >
+                      Next →
+                    </button>
 
-      {/* Related vo Lessons */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <BookOpen className="text-orange-500" size={16} /> More vocabulary Lessons
-          </h3>
-          <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
-            {vocabularyModules.length} Lessons
-          </span>
-        </div>
-       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
- 
+                  </div>
+                </div>
 
-  <div className="max-h-[300px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
-    {vocabularyModules
-      .filter((item) => item._id !== selectedModule._id)
-      .map((item) => {
-        const isSelected = selectedModule?._id === item._id;
+                {/* Related vo Lessons */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <BookOpen className="text-orange-500" size={16} /> More vocabulary Lessons
+                    </h3>
+                    <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
+                      {vocabularyModules.length} Lessons
+                    </span>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
 
-        return (
-          <button
-            key={item._id}
-            onClick={() => {
-              setSelectedModule(item);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-              isSelected
-                ? "bg-orange-50 border-orange-300"
-                : "hover:bg-slate-50 border-transparent"
-            }`}
-          >
-            <div
-              className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                isSelected
-                  ? "bg-orange-500 text-white"
-                  : "bg-slate-100 text-slate-500"
-              }`}
-            >
-              <BookOpen size={18} />
-            </div>
 
-            <div className="flex-1">
-              <h4
-                className={`text-sm font-bold ${
-                  isSelected ? "text-orange-600" : "text-slate-800"
-                }`}
-              >
-                {item.title}
-              </h4>
+                    <div className="max-h-[300px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                      {vocabularyModules
+                        .filter((item) => item._id !== selectedModule._id)
+                        .map((item) => {
+                          const isSelected = selectedModule?._id === item._id;
 
-              <span className="text-[11px] text-slate-400">
-                {item.words?.length || 0} Words •{" "}
-                {item.questions?.length || 0} Questions
-              </span>
-            </div>
-          </button>
-        );
-      })}
-  </div>
-</div>
-      </div>
-    </div>
+                          return (
+                            <button
+                              key={item._id}
+                              onClick={() => {
+                                setSelectedModule(item);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isSelected
+                                  ? "bg-orange-50 border-orange-300"
+                                  : "hover:bg-slate-50 border-transparent"
+                                }`}
+                            >
+                              <div
+                                className={`h-10 w-10 rounded-lg flex items-center justify-center ${isSelected
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-slate-100 text-slate-500"
+                                  }`}
+                              >
+                                <BookOpen size={18} />
+                              </div>
 
-    {/* --- RIGHT COLUMN: Queue & Knowledge Check --- */}
-    <div className="lg:col-span-4 space-y-6">
+                              <div className="flex-1">
+                                <h4
+                                  className={`text-sm font-bold ${isSelected ? "text-orange-600" : "text-slate-800"
+                                    }`}
+                                >
+                                  {item.title}
+                                </h4>
 
-  {/* Knowledge Check */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
-      <BookOpen size={26} />
-    </div>
+                                <span className="text-[11px] text-slate-400">
+                                  {item.words?.length || 0} Words •{" "}
+                                  {item.questions?.length || 0} Questions
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Knowledge Check
-    </h3>
+              {/* --- RIGHT COLUMN: Queue & Knowledge Check --- */}
+              <div className="lg:col-span-4 space-y-6">
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Test what you've learned from this lesson.
-    </p>
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
+                  </div>
 
-    <button
-      onClick={() =>
-        router.push(
-          `/dashboard/module/practice-quations?data=${encodeURIComponent(
-            JSON.stringify(selectedModule)
-          )}`
-        )
-      }
-      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
-    >
-      Start Practice
-      <ChevronRight size={18} />
-    </button>
-  </div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
 
-  {/* Lesson Exercise */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
-      <Award size={26} />
-    </div>
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Lesson Exercise
-    </h3>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/module/practice-quations?data=${encodeURIComponent(
+                          JSON.stringify(selectedModule)
+                        )}`
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
+                  >
+                    Start Practice
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Complete the exercise to improve your understanding.
-    </p>
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
 
-   <button
-  onClick={() => {
-    router.push(
-      `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
       &subTopicId=${selectedModule.sub_topic_id._id}
       &courseId=${searchParams.get("courseId")}
       &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
       &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
       &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
-    );
-  }}
-  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
->
-  Start Exercise
-  <ChevronRight size={18} />
-</button>
-  </div>
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-</div>
-  </div>
-)  : currentModuleType === "text" ? (
+              </div>
+            </div>
+          ) : currentModuleType === "text" ? (
             /* Text layout view fallback default */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
               <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
@@ -1107,185 +1114,180 @@ where to add this in audio type
                 <hr className="border-slate-100" />
 
                 {/* Reading Content */}
-<div
-  className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
-  dangerouslySetInnerHTML={{
-    __html: selectedModule.content?.body || "",
-  }}
-    
-/>
-<div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
+                <div
+                  className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: selectedModule.content?.body || "",
+                  }}
 
-  <button
-    disabled={!previousModule}
-    onClick={() => previousModule && setSelectedModule(previousModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      previousModule
-        ? "bg-slate-900 text-white hover:bg-slate-800"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    ← Previous
-  </button>
+                />
+                <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
 
-  <span className="text-sm font-medium text-slate-500">
-    {currentModuleIndex + 1} / {currentModuleList.length}
-  </span>
+                  <button
+                    disabled={!previousModule}
+                    onClick={() => previousModule && setSelectedModule(previousModule)}
+                    className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
+                        ? "bg-slate-900 text-white hover:bg-slate-800"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      }`}
+                  >
+                    ← Previous
+                  </button>
 
-  <button
-    disabled={!nextModule}
-    onClick={() => nextModule && setSelectedModule(nextModule)}
-    className={`px-5 py-3 rounded-xl font-semibold transition ${
-      nextModule
-        ? "bg-orange-500 text-white hover:bg-orange-600"
-        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-    }`}
-  >
-    Next →
-  </button>
+                  <span className="text-sm font-medium text-slate-500">
+                    {currentModuleIndex + 1} / {currentModuleList.length}
+                  </span>
 
-</div>
+                  <button
+                    disabled={!nextModule}
+                    onClick={() => nextModule && setSelectedModule(nextModule)}
+                    className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      }`}
+                  >
+                    Next →
+                  </button>
 
-{/* Related Reading Queue */}
-<div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
-  <div className="p-4 border-b border-slate-200 bg-white">
-    <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-      <BookOpen className="text-blue-500" size={14} />
-      Related Reading Lessons
-    </h3>
-  </div>
+                </div>
 
-  <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
-    {textModules.map((item) => {
-      const isReading = selectedModule?._id === item._id;
+                {/* Related Reading Queue */}
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
+                  <div className="p-4 border-b border-slate-200 bg-white">
+                    <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                      <BookOpen className="text-blue-500" size={14} />
+                      Related Reading Lessons
+                    </h3>
+                  </div>
 
-      return (
-        <button
-          key={item._id}
-          onClick={() => {
-            setSelectedModule(item);
-            setExpandedQ(null);
-            setSelectedAnswers({});
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-          }}
-          className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-            isReading
-              ? "bg-blue-50 border-blue-300"
-              : "hover:bg-slate-50 border-transparent"
-          }`}
-        >
-          <div
-            className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-              isReading
-                ? "bg-blue-500 text-white"
-                : "bg-slate-100 text-slate-500"
-            }`}
-          >
-            <BookOpen size={18} />
-          </div>
+                  <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                    {textModules.map((item) => {
+                      const isReading = selectedModule?._id === item._id;
 
-          <div className="flex-1">
-            <h4
-              className={`text-xs font-bold ${
-                isReading
-                  ? "text-blue-600"
-                  : "text-slate-800"
-              }`}
-            >
-              {item.title}
-            </h4>
+                      return (
+                        <button
+                          key={item._id}
+                          onClick={() => {
+                            setSelectedModule(item);
+                            setExpandedQ(null);
+                            setSelectedAnswers({});
+                            window.scrollTo({
+                              top: 0,
+                              behavior: "smooth",
+                            });
+                          }}
+                          className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isReading
+                            ? "bg-blue-50 border-blue-300"
+                            : "hover:bg-slate-50 border-transparent"
+                            }`}
+                        >
+                          <div
+                            className={`h-10 w-10 rounded-lg flex items-center justify-center ${isReading
+                              ? "bg-blue-500 text-white"
+                              : "bg-slate-100 text-slate-500"
+                              }`}
+                          >
+                            <BookOpen size={18} />
+                          </div>
 
-            <span className="text-[10px] text-slate-400">
-              {item.content?.read_time_min
-                ? `${item.content.read_time_min} min read`
-                : "Reading Lesson"}
-            </span>
-          </div>
-        </button>
-      );
-    })}
-  </div>
-</div>
-              
-          
+                          <div className="flex-1">
+                            <h4
+                              className={`text-xs font-bold ${isReading
+                                ? "text-blue-600"
+                                : "text-slate-800"
+                                }`}
+                            >
+                              {item.title}
+                            </h4>
 
-                
+                            <span className="text-[10px] text-slate-400">
+                              {item.content?.read_time_min
+                                ? `${item.content.read_time_min} min read`
+                                : "Reading Lesson"}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                
+
+
+
+
+
               </div>
 
-              
+
 
               {/* Text Sidebar Queue */}
-          <div className="lg:col-span-4 space-y-6">
+              <div className="lg:col-span-4 space-y-6">
 
-  {/* Knowledge Check */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
-      <BookOpen size={26} />
-    </div>
+                {/* Knowledge Check */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-4">
+                    <BookOpen size={26} />
+                  </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Knowledge Check
-    </h3>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Knowledge Check
+                  </h3>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Test what you've learned from this lesson.
-    </p>
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Test what you've learned from this lesson.
+                  </p>
 
-    <button
-      onClick={() =>
-        router.push(
-          `/dashboard/module/practice-quations?data=${encodeURIComponent(
-            JSON.stringify(selectedModule)
-          )}`
-        )
-      }
-      className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
-    >
-      Start Practice
-      <ChevronRight size={18} />
-    </button>
-  </div>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/module/practice-quations?data=${encodeURIComponent(
+                          JSON.stringify(selectedModule)
+                        )}`
+                      )
+                    }
+                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center justify-center gap-2"
+                  >
+                    Start Practice
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-  {/* Lesson Exercise */}
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-    <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
-      <Award size={26} />
-    </div>
+                {/* Lesson Exercise */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                    <Award size={26} />
+                  </div>
 
-    <h3 className="text-xl font-bold text-slate-900">
-      Lesson Exercise
-    </h3>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Lesson Exercise
+                  </h3>
 
-    <p className="text-sm text-slate-500 mt-2 mb-6">
-      Complete the exercise to improve your understanding.
-    </p>
+                  <p className="text-sm text-slate-500 mt-2 mb-6">
+                    Complete the exercise to improve your understanding.
+                  </p>
 
-   <button
-  onClick={() => {
-    router.push(
-      `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
+                  <button
+                    onClick={() => {
+                      router.push(
+                        `/dashboard/exercise?topicId=${selectedModule.topic_id._id}
       &subTopicId=${selectedModule.sub_topic_id._id}
       &courseId=${searchParams.get("courseId")}
       &courseName=${encodeURIComponent(searchParams.get("courseName") || "")}
       &topicName=${encodeURIComponent(searchParams.get("topicName") || "")}
       &subTopicName=${encodeURIComponent(searchParams.get("subTopicName") || "")}`
-    );
-  }}
-  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
->
-  Start Exercise
-  <ChevronRight size={18} />
-</button>
-  </div>
+                      );
+                    }}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    Start Exercise
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
-</div>
+              </div>
             </div>
-                   
+
           ) : (
             <div className="p-10 text-center text-slate-500">
               Unsupported module type.
@@ -1304,8 +1306,8 @@ where to add this in audio type
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${isActive
-                          ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 transform -translate-y-0.5"
-                          : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
+                        ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 transform -translate-y-0.5"
+                        : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
                         }`}
                     >
                       <Icon size={14} />
@@ -1336,7 +1338,7 @@ where to add this in audio type
                     return (
                       <div
                         key={item._id}
-                        onClick={() => setSelectedModule(item)}
+                        onClick={() => handleModuleSelection(item)}
                         className="group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 cursor-pointer col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4"
                       >
                         {/* Interactive Quiz Decorative Block Icon */}
@@ -1388,7 +1390,7 @@ where to add this in audio type
                     return (
                       <div
                         key={item._id}
-                        onClick={() => setSelectedModule(item)}
+                        onClick={() => handleModuleSelection(item)}
                         className="group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 cursor-pointer col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4"
                       >
                         <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center flex-shrink-0 text-white shadow-md relative overflow-hidden group-hover:from-orange-500 group-hover:to-orange-600 transition-all duration-300">
@@ -1544,7 +1546,7 @@ where to add this in audio type
                       key={item._id}
                       onClick={() => {
                         if (isVideo) {
-                          setSelectedModule(item);
+                          handleModuleSelection(item);
                         } else {
                           const nextParams = new URLSearchParams(searchParams?.toString() || "");
                           nextParams.set("lessonName", item.title || "");

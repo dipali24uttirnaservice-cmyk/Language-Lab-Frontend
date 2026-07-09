@@ -5,4 +5,7 @@ export const courseApi = {
 
   bulkAssignCourses: (data) =>
     api.post("/student/bulk-assign-courses", data),
+
+  getModuleCount: (courseId) =>
+    api.get(`/module/course/${courseId}/count`),
 };
