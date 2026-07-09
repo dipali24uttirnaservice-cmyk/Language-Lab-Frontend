@@ -1,13 +1,13 @@
-import { getApi } from "../apiMethod/apiMethod";
+import api from "../apiMethod/apiMethod";
 
 export const publicInstituteApi = {
   // GET Institute (public, no auth) — for landing page display
-  getById: (id) => getApi(`/institute/public/${id}`),
+  getById: (id) => api.get(`/institute/public/${id}`),
 
   // GET Institute by subdomain (public, no auth)
-  getBySubdomain: (subdomain) => getApi(`/institute/public/subdomain/${subdomain}`),
+  getBySubdomain: (subdomain) => api.get(`/institute/public/subdomain/${subdomain}`),
 
   // GET Institute by domain (public, no auth)
-  getByDomain: (domain) => getApi(`/institute/public`, { domain }),
+  getByDomain: (domain) => api.get(`/institute/public`, { domain }),
 };
 
