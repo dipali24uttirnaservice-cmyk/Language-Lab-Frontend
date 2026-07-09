@@ -1,6 +1,5 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import { clearAuthData } from "../../utils/cookie";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -18,22 +17,6 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
-      const role = Cookies.get("role");
-      clearAuthData();
-
-      if (typeof window !== "undefined") {
-        window.location.href = role === "institute" ? "/login" : "/student-login";
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
 
 export const getApi = (url, params = {}) =>
   api.get(url, { params });
