@@ -55,9 +55,12 @@ const router = useRouter();
         setShowResults(true);
         toast.success("Submitted successfully!");
       } else {
-        toast.error(response?.data?.message || "Something went wrong.");
+  toast.error(error?.response?.data?.message || "Something went wrong.");
       }
-    } catch (error) { toast.error("Submission failed."); }
+    }catch (error) {
+  toast.error(error?.response?.data?.message || "Submission failed.");
+      
+      }
   };
 
   if (loading) return <div className="p-10 text-center animate-pulse text-slate-400">Loading...</div>;
@@ -97,20 +100,26 @@ const router = useRouter();
   <ArrowLeft size={20} />
   <span>Back</span>
 </button>
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border-2 border-orange-200">
-      
-          
+      <div className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl border border-orange-200 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.15)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_25px_70px_rgba(249,115,22,0.25)]">
+
+  {/* Decorative Background */}
+  <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-60 blur-2xl"></div>
+  <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-60 blur-2xl"></div>
+
+  <div className="relative">
           {!isQuizActive && !showResults ? (
             <div className="space-y-6">
               <h1 className="text-3xl font-bold text-slate-800">{selectedExercise.title}</h1>
-              <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
-                <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2"><Sparkles size={18}/> Assessment Details</h4>
+<div className="rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-6 shadow-sm">                <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2"><Sparkles size={18}/> Assessment Details</h4>
                 <p className="text-sm text-orange-700">Total Questions: {selectedExercise.questions?.length}</p>
                 <p className="text-sm text-orange-700">Time Limit: {selectedExercise.time_limit_sec}s</p>
               </div>
-              <button onClick={() => setIsQuizActive(true)} className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition">
-                Start Assessment
-              </button>
+             <button
+  onClick={() => setIsQuizActive(true)}
+  className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-orange-300"
+>
+  Start Assessment
+</button>
             </div>
           ) : showResults ? (
             <div className="text-center py-10">
@@ -125,23 +134,69 @@ const router = useRouter();
               <button onClick={() => { setShowResults(false); setIsQuizActive(false); }} className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold">Back to Exercises</button>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="text-sm font-bold text-orange-500 uppercase">Question {currentQuestionIndex + 1}</div>
-              <p className="text-2xl font-bold text-slate-800">{selectedExercise.questions[currentQuestionIndex].question_text}</p>
-              {selectedExercise.questions[currentQuestionIndex].question_type === "mcq" ? (
-                selectedExercise.questions[currentQuestionIndex].options.map((opt, i) => (
-                  <button key={i} onClick={() => setUserAnswers({...userAnswers, [currentQuestionIndex]: opt})} className={`w-full text-left p-4 rounded-xl border-2 ${userAnswers[currentQuestionIndex] === opt ? "border-orange-500 bg-orange-50" : "border-slate-100 hover:border-orange-100"}`}>{opt}</button>
-                ))
-              ) : (
-                <input type="text" onChange={(e) => setUserAnswers({...userAnswers, [currentQuestionIndex]: e.target.value})} className="w-full p-4 rounded-xl border-2 border-slate-200" placeholder="Type answer..." />
-              )}
-              <button onClick={() => currentQuestionIndex < selectedExercise.questions.length - 1 ? setCurrentQuestionIndex(currentQuestionIndex + 1) : handleSubmit()} disabled={!userAnswers[currentQuestionIndex]} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold disabled:opacity-50">
-                {currentQuestionIndex === selectedExercise.questions.length - 1 ? "Submit" : "Next Question"}
-              </button>
-            </div>
+           <div className="space-y-6">
+  <div className="text-sm font-bold text-orange-500 uppercase">
+    Question {currentQuestionIndex + 1}
+  </div>
+
+  <p className="text-2xl font-bold text-slate-800">
+    {selectedExercise.questions[currentQuestionIndex].question_text}
+  </p>
+
+  {selectedExercise.questions[currentQuestionIndex].question_type === "mcq" ? (
+    selectedExercise.questions[currentQuestionIndex].options.map((opt, i) => (
+      <button
+        key={i}
+        onClick={() =>
+          setUserAnswers({
+            ...userAnswers,
+            [currentQuestionIndex]: opt,
+          })
+        }
+        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
+          userAnswers[currentQuestionIndex] === opt
+            ? "border-emerald-500 bg-emerald-50 hover:border-emerald-500 shadow-sm"
+            : "border-orange-300 hover:border-orange-100 bg-white"
+        }`}
+      >
+        {opt}
+      </button>
+    ))
+  ) : (
+   
+   <input
+  type="text"
+  value={userAnswers[currentQuestionIndex] || ""}
+  onChange={(e) =>
+    setUserAnswers({
+      ...userAnswers,
+      [currentQuestionIndex]: e.target.value,
+    })
+  }
+  className="w-full p-4 rounded-xl border-2 border-orange-300 focus:border-orange-500 outline-none transition-all"
+  placeholder="Type answer..."
+/>
+  )}
+
+  <button
+    onClick={() =>
+      currentQuestionIndex < selectedExercise.questions.length - 1
+        ? setCurrentQuestionIndex(currentQuestionIndex + 1)
+        : handleSubmit()
+    }
+    disabled={!userAnswers[currentQuestionIndex]}
+    className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold disabled:opacity-50"
+  >
+    {currentQuestionIndex === selectedExercise.questions.length - 1
+      ? "Submit"
+      : "Next Question"}
+  </button>
+</div>
           )}
         </div>
       </div>
     </div>
+    </div>
+    
   );
 }

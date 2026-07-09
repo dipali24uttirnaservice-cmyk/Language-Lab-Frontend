@@ -336,11 +336,7 @@ export default function ProfilePage() {
             value={profile.roll_no}
           />
 
-          <ReadOnlyCard
-            icon="📚"
-            label="Batch"
-            value={profile.batch}
-          />
+         
 
           <ReadOnlyCard
             icon="🏆"
