@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "react-hot-toast";
 import {
   Search,
   Play,
@@ -212,11 +213,11 @@ export default function ModuleListPage() {
         setShowResults(true);
       } else {
         console.error("Attempt data not found.", response);
-        alert("Unable to load result.");
+        toast.error( error?.response?.data?.message || "Unable to load result.");
       }
     } catch (error) {
       console.error("Submission failed:", error);
-      alert("Could not submit answers. Please try again.");
+      toast.error( error?.response?.data?.message || "Failed to submit answers." );
     }
   };
 
