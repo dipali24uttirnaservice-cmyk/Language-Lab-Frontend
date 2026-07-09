@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams,useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   BookOpen,
@@ -8,11 +8,12 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft
 } from "lucide-react";
 
 export default function PracticeQuestionsPage() {
   const searchParams = useSearchParams();
-
+ const router = useRouter();
   const moduleData = useMemo(() => {
     const data = searchParams.get("data");
     if (!data) return null;
@@ -140,6 +141,13 @@ const resetPractice = () => {
 
       {/* Right Question Container */}
 <div className="flex-1 p-10 overflow-auto bg-slate-50">
+  <button
+  onClick={() => router.back()}
+  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-medium transition"
+>
+  <ArrowLeft size={20} />
+  <span>Back</span>
+</button>
   <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border-2 border-orange-200 hover:border-orange-300 transition-colors duration-300">
     
     {/* Question Header */}

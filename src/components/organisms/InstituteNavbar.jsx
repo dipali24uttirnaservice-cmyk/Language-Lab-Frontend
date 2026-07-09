@@ -14,7 +14,6 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 
-import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutUser } from "@/services/auth/logoutApi";
 
 export default function InstituteNavbar({
@@ -55,24 +54,7 @@ const instituteName =
       ?.charAt(0)
       ?.toUpperCase() || "I";
 
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
 
-      Cookies.remove("token");
-      Cookies.remove("role");
-      Cookies.remove("userData");
-
-      setShowLogoutModal(false);
-
-      router.replace("/login");
-    } catch (error) {
-      console.error(
-        "Logout Error:",
-        error
-      );
-    }
-  };
 
   const breadcrumbs = pathname
   .split("/")

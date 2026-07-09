@@ -10,9 +10,7 @@ export const saveAuthData = ({
     expires: 7,
   });
 I
-  Cookies.set("role", role, {
-    expires: 7,
-  });
+ 
 
   // Institute Data
   if (userData) {

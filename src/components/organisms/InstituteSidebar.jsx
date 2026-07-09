@@ -92,21 +92,7 @@ if (!mounted) {
   const instituteLogo =
     institute?.logo || "/default-logo.png";
 
-    const handleLogout = async () => {
-  try {
-    await logoutUser();
-
-    Cookies.remove("token");
-    Cookies.remove("role");
-    Cookies.remove("userData");
-
-    setShowLogoutModal(false);
-
-    router.replace("/login");
-  } catch (error) {
-    console.error("Logout Error:", error);
-  }
-};
+ ;
   return (
     <aside
       className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300 ease-in-out
