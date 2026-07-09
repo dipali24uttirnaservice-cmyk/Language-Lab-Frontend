@@ -675,15 +675,29 @@ where to add this in audio type
             /* Quiz / Exercise Active View Details Block */
             <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
               {/* 1. Header Area */}
-              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative">
-                <div className="absolute top-0 right-0 p-6 opacity-10">
-                  <Award size={100} />
-                </div>
-                <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm inline-flex items-center gap-1.5 mb-3">
-                  <Award size={12} /> Challenge Activity
-                </span>
-                <h2 className="text-2xl font-black tracking-tight">{selectedModule.title}</h2>
-              </div>
+             <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 p-6 text-white">
+  {/* Background Icon */}
+  <div className="absolute top-0 right-0 p-6 opacity-10">
+    <Award size={100} />
+  </div>
+
+  {/* Decorative Glow */}
+  <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
+  <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
+
+  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-md mb-3">
+    <Award size={12} />
+    Challenge Activity
+  </span>
+
+  <h2 className="relative text-2xl font-black tracking-tight">
+    {selectedModule.title}
+  </h2>
+
+  <p className="relative mt-1 text-sm text-orange-50">
+    Complete the challenge to test your understanding.
+  </p>
+</div>
 
               {/* 2. Content Area: Logic to switch between Intro, Active Quiz, and Results */}
               <div className="p-6 space-y-6">
@@ -711,34 +725,90 @@ where to add this in audio type
                   </>
                 ) : showResults ? (
                   // --- POST-ASSESSMENT RESULTS VIEW ---
-                  <div className="text-center py-10 animate-fade-in">
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Award size={40} />
-                    </div>
+                 <div className="py-10 animate-fade-in">
+  <div className="max-w-lg mx-auto">
 
-                    <h3 className="text-xl font-black text-slate-900">
-                      {resultData?.is_passed ? "Assessment Passed!" : "Assessment Complete!"}
-                    </h3>
+    {/* Success Icon */}
+    <div className="flex justify-center">
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-orange-400 blur-2xl opacity-30"></div>
 
-                    <div className="mt-6 grid grid-cols-2 gap-4 max-w-xs mx-auto">
-                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <p className="text-[10px] uppercase font-bold text-slate-400">Score</p>
-                        <p className="font-black text-orange-600 text-lg">
-                          {resultData?.score} / {resultData?.max_score}        </p>
-                      </div>
-                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <p className="text-[10px] uppercase font-bold text-slate-400">Accuracy</p>
-                        <p className="font-black text-slate-800 text-lg">{resultData?.accuracy}%</p>
-                      </div>
-                    </div>
+        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center shadow-xl shadow-orange-300/40">
+          <Award size={42} className="text-white" />
+        </div>
+      </div>
+    </div>
 
-                    <button
-                      onClick={() => setShowResults(false)}
-                      className="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold underline"
-                    >
-                      Review Answers
-                    </button>
-                  </div>
+    {/* Heading */}
+    <div className="text-center mt-6">
+      <h3 className="text-3xl font-black bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">
+        {resultData?.is_passed
+          ? "Congratulations!"
+          : "Assessment Completed"}
+      </h3>
+
+      <p className="mt-2 text-slate-500">
+        {resultData?.is_passed
+          ? "Excellent work! You successfully passed this assessment."
+          : "Nice effort!Try again and keep improving."}
+      </p>
+    </div>
+
+    {/* Stats */}
+    <div className="grid grid-cols-2 gap-5 mt-8">
+
+      <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
+        <p className="text-xs uppercase tracking-widest font-bold text-orange-500">
+          Score
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black text-slate-900">
+          {resultData?.score}
+          <span className="text-lg text-slate-400">
+            {" "}
+            / {resultData?.max_score}
+          </span>
+        </h2>
+      </div>
+
+      <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+        <p className="text-xs uppercase tracking-widest font-bold text-amber-500">
+          Accuracy
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black text-slate-900">
+          {resultData?.accuracy}
+          <span className="text-lg text-slate-400">%</span>
+        </h2>
+      </div>
+
+    </div>
+
+    {/* Status Badge */}
+    <div className="mt-8 flex justify-center">
+      <div
+        className={`px-6 py-3 rounded-full text-sm font-bold ${
+          resultData?.is_passed
+            ? "bg-green-100 text-green-700"
+            : "bg-orange-100 text-orange-700"
+        }`}
+      >
+        {resultData?.is_passed
+          ? "🎉 Passed Successfully"
+          : "📖 Keep Practicing"}
+      </div>
+    </div>
+
+    {/* Button */}
+  <button
+  onClick={() => router.back()}
+  className="mt-10 w-full rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-300/40 transition-all duration-300 hover:scale-[1.02]"
+>
+  ← Back to Exercises
+</button>
+
+  </div>
+</div>
                 ) : (
                   // --- ACTIVE QUIZ COMPONENT ---
                   <div className="space-y-8">
