@@ -148,8 +148,7 @@ const resetPractice = () => {
   <ArrowLeft size={20} />
   <span>Back</span>
 </button>
-  <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border-2 border-orange-200 hover:border-orange-300 transition-colors duration-300">
-    
+<div className="max-w-2xl mx-auto relative overflow-hidden rounded-3xl border border-orange-200 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.15)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_25px_70px_rgba(249,115,22,0.25)]">    
     {/* Question Header */}
     <div className="mb-8">
       <span className="text-orange-500 font-semibold text-sm uppercase tracking-wider">
@@ -170,8 +169,8 @@ const resetPractice = () => {
             onClick={() => setSelectedOptions((prev) => ({ ...prev, [current]: opt }))}
             className={`block w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
               selectedOptions[current] === opt
-                ? "border-orange-500 bg-orange-50"
-                : "border-slate-100 hover:border-orange-200 bg-white"
+                ? "border-emerald-500 hover:border-emerald-500"
+                : "border-orange-300 hover:border-orange-100 bg-white"
             }`}
           >
             {opt}
@@ -183,7 +182,8 @@ const resetPractice = () => {
           type="text"
           disabled={isAnswered}
           value={selectedOptions[current] || ""}
-          onChange={(e) => setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))}
+          onChange={(e) => 
+            setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))}
           className="border-2 border-slate-200 rounded-xl p-4 w-full focus:border-orange-500 outline-none transition-colors"
           placeholder="Type your answer here..."
         />
@@ -192,7 +192,7 @@ const resetPractice = () => {
 
     {/* Feedback Section */}
     {isAnswered && (
-      <div className={`mt-8 p-5 rounded-xl border ${answers[current].isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+      <div className={` mt-2 p-2 rounded-xl border ${answers[current].isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
         <h3 className={`font-bold mb-1 ${answers[current].isCorrect ? "text-green-700" : "text-red-700"}`}>
           {answers[current].isCorrect ? "Correct!" : "Incorrect"}
         </h3>
@@ -200,7 +200,7 @@ const resetPractice = () => {
     )}
 
  {/* Navigation Row */}
-<div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
+<div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-300 hover:border-orange-400">
   <button
     onClick={() => setCurrent((p) => p - 1)}
     disabled={current === 0}
