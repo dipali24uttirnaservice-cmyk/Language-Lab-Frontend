@@ -23,15 +23,15 @@ useEffect(() => {
 const handleLogout = async () => {
   try {
     await logoutStudent();
-
-    Cookies.remove("token");
-    Cookies.remove("role");
-    Cookies.remove("studentData");
-
-    window.location.href = "/student-login";
   } catch (error) {
     console.error(error);
   }
+
+  Cookies.remove("token");
+  Cookies.remove("role");
+  Cookies.remove("studentData");
+
+  router.replace("/student-login");
 };
 
 

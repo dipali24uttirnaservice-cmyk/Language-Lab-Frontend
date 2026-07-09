@@ -28,17 +28,20 @@ export default function InstituteDashboardLayout({ children }) {
     }
   }, []);
   
-  const handleLogout = async () => {
+ const handleLogout = async () => {
   try {
     await logoutUser();
-
+  } catch (error) {
+    console.error("Logout API Error:", error);
+  } finally {
     Cookies.remove("token");
     Cookies.remove("role");
     Cookies.remove("userData");
 
-    window.location.href = "/login";
-  } catch (error) {
-    console.error(error);
+    setShowLogoutModal(false);
+
+    router.replace("/login");
+    // or window.location.href = "/login";
   }
 };
 

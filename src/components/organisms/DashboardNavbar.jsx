@@ -71,18 +71,22 @@ const lessonName = searchParams.get("lessonName");
     fetchCourses();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await logoutStudent();
-      Cookies.remove("token");
-      Cookies.remove("role");
-      Cookies.remove("studentData");
-      setShowLogoutModal(false);
-      router.replace("/student-login");
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
-  };
+ const handleLogout = async () => {
+  try {
+    await logoutStudent();
+  } catch (error) {
+    console.error("Logout Error:", error);
+  } finally {
+    Cookies.remove("token");
+    Cookies.remove("role");
+    Cookies.remove("studentData");
+
+    setShowLogoutModal(false);
+
+    router.replace("/student-login");
+    // or window.location.href = "/student-login";
+  }
+};
 
   const studentName = student?.full_name || "Student";
   const instituteName = student?.institute_name || "Institute";
