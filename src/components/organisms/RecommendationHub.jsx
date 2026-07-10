@@ -130,7 +130,7 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
         {/* Left Side: Pie Chart & Legend */}
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={130} minHeight={130}>
               <PieChart>
                 <Pie
                   data={chartData}

@@ -49,7 +49,7 @@ export default function AttendanceWidget({ attendance = {} }) {
       <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
         {/* Donut Chart */}
         <div className="relative w-[140px] h-[140px] flex items-center justify-center shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={140} minHeight={140}>
             <PieChart>
               <Pie
                 data={chartData}

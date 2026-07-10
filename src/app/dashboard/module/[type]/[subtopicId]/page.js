@@ -24,6 +24,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { moduleApi } from "@/services/topic/topicApi";
+import { activityApi } from "@/services/activity/activityApi";
 
 
 const CONTENT_TYPES = [
@@ -68,6 +69,7 @@ export default function ModuleListPage() {
   };
 
   const startTimeRef = React.useRef(Date.now());
+  const attendanceLoggedRef = React.useRef(false);
 
   useEffect(() => {
     if (type) setActiveTab(type);
@@ -83,6 +85,30 @@ export default function ModuleListPage() {
       if (found) setSelectedModule(found);
     }
   }, [searchParams, modules, selectedModule]);
+
+  const logModuleActivity = async (module, activity_type, extra = {}) => {
+    if (!module) return;
+    try {
+      await activityApi.logActivity({
+        topic_id: module.topic_id?._id || module.topic_id,
+        sub_topic_id: module.sub_topic_id?._id || module.sub_topic_id,
+        module_id: module._id,
+        module_type: module.module_type || type,
+        activity_type,
+        ...extra,
+      });
+    } catch (error) {
+      console.error("Failed to log activity:", error);
+    }
+  };
+
+  // Mark today's attendance the first time a module is opened in this visit
+  useEffect(() => {
+    if (selectedModule && !attendanceLoggedRef.current) {
+      attendanceLoggedRef.current = true;
+      logModuleActivity(selectedModule, "attendance_marked");
+    }
+  }, [selectedModule]);
 
   const handleModuleSelection = (item) => {
     if (item) {
@@ -209,6 +235,13 @@ export default function ModuleListPage() {
           is_passed: attempt.is_passed,
         });
 
+        logModuleActivity(selectedModule, "exercise_complete", {
+          score: attempt.score,
+          max_score: attempt.max_score,
+          accuracy: attempt.accuracy,
+          time_spent_sec: timeSpent,
+        });
+
         setIsQuizActive(false);
         setShowResults(true);
       } else {
@@ -286,6 +319,7 @@ export default function ModuleListPage() {
                       playsInline
                       className="w-full h-full object-contain"
                       src={selectedModule.video.url}
+                      onEnded={() => logModuleActivity(selectedModule, "video_complete")}
                     />
                   </div>
                   <div className="space-y-5">
@@ -512,6 +546,7 @@ export default function ModuleListPage() {
                       controls
                       autoPlay
                       className="w-full sm:w-72 md:w-96 focus:outline-none"
+                      onEnded={() => logModuleActivity(selectedModule, "audio_complete")}
                     />
                   </div>
 
@@ -730,7 +765,10 @@ export default function ModuleListPage() {
                       </ul>
                     </div>
                     <button
-                      onClick={() => setIsQuizActive(true)} // Toggle to show quiz interface
+                      onClick={() => {
+                        logModuleActivity(selectedModule, "exercise_start");
+                        setIsQuizActive(true);
+                      }} // Toggle to show quiz interface
                       className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold rounded-xl transition-all shadow-md"
                     >
                       Start Assessment Activity Now &rarr;
@@ -928,7 +966,12 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!previousModule}
-                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      onClick={() => {
+                        if (previousModule) {
+                          logModuleActivity(selectedModule, "vocabulary_complete");
+                          setSelectedModule(previousModule);
+                        }
+                      }}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                           ? "bg-slate-900 text-white hover:bg-slate-800"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -943,7 +986,12 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!nextModule}
-                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      onClick={() => {
+                        if (nextModule) {
+                          logModuleActivity(selectedModule, "vocabulary_complete");
+                          setSelectedModule(nextModule);
+                        }
+                      }}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                           ? "bg-orange-500 text-white hover:bg-orange-600"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -978,6 +1026,7 @@ export default function ModuleListPage() {
                             <button
                               key={item._id}
                               onClick={() => {
+                                logModuleActivity(selectedModule, "vocabulary_complete");
                                 setSelectedModule(item);
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
@@ -1126,7 +1175,12 @@ export default function ModuleListPage() {
 
                   <button
                     disabled={!previousModule}
-                    onClick={() => previousModule && setSelectedModule(previousModule)}
+                    onClick={() => {
+                      if (previousModule) {
+                        logModuleActivity(selectedModule, "text_complete");
+                        setSelectedModule(previousModule);
+                      }
+                    }}
                     className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                         ? "bg-slate-900 text-white hover:bg-slate-800"
                         : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -1141,7 +1195,12 @@ export default function ModuleListPage() {
 
                   <button
                     disabled={!nextModule}
-                    onClick={() => nextModule && setSelectedModule(nextModule)}
+                    onClick={() => {
+                      if (nextModule) {
+                        logModuleActivity(selectedModule, "text_complete");
+                        setSelectedModule(nextModule);
+                      }
+                    }}
                     className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                         ? "bg-orange-500 text-white hover:bg-orange-600"
                         : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -1169,6 +1228,9 @@ export default function ModuleListPage() {
                         <button
                           key={item._id}
                           onClick={() => {
+                            if (item._id !== selectedModule._id) {
+                              logModuleActivity(selectedModule, "text_complete");
+                            }
                             setSelectedModule(item);
                             setExpandedQ(null);
                             setSelectedAnswers({});

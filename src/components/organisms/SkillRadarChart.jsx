@@ -106,7 +106,7 @@ export default function SkillRadarChart({ progress = [] }) {
 
       <div className="flex-1 flex items-center justify-center min-h-[300px]">
         {hasData ? (
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
             <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
               <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
               <PolarAngleAxis

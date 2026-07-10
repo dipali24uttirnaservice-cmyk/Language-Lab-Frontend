@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FaCheckCircle, FaMicrophone, FaGraduationCap, FaCheck, FaRobot, FaBookOpen } from "react-icons/fa";
+import { FaCheckCircle, FaMicrophone, FaCheck, FaRobot, FaBookOpen } from "react-icons/fa";
 
 export default function RecentActivity({ activitiesData = [] }) {
-  const displayActivities = activitiesData.length > 0
+  const hasActivity = activitiesData.length > 0;
+
+  const displayActivities = hasActivity
     ? activitiesData.slice(0, 5).map((act, index) => {
       let icon = <FaCheckCircle className="text-indigo-500" />;
       if (act.activity_type === "ai_query") {
@@ -39,13 +41,7 @@ export default function RecentActivity({ activitiesData = [] }) {
 
       return { text, time, icon };
     })
-    : [
-      { text: "Completed English Vocabulary Lesson 5", time: "10 mins ago", icon: <FaCheckCircle className="text-indigo-500" /> },
-      { text: "Practiced Conversational Speaking for 20 mins", time: "2 hours ago", icon: <FaMicrophone className="text-orange-500" /> },
-      { text: "Passed Level Assessment Grammar Quiz", time: "Yesterday", icon: <FaCheck className="text-emerald-500" /> },
-      { text: "Earned Certified Beginner Fluency Certificate", time: "3 days ago", icon: <FaGraduationCap className="text-orange-500" /> },
-      { text: "Interacted with AI Language Coach", time: "4 days ago", icon: <FaRobot className="text-amber-500" /> },
-    ]
+    : [];
 
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white/80 backdrop-blur-xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.025)] h-full">
@@ -58,12 +54,18 @@ export default function RecentActivity({ activitiesData = [] }) {
           </h3>
           <p className="text-xs font-medium text-slate-400 mt-0.5">Automated learning ledger</p>
         </div>
-        <span className="text-[10px] font-extrabold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
-          Live Syncing
-        </span>
+        {hasActivity && (
+          <span className="text-[10px] font-extrabold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
+            Live Syncing
+          </span>
+        )}
       </div>
 
-      {/* Chronological Vertical Timeline Core */}
+      {!hasActivity ? (
+        <p className="text-xs font-medium text-slate-400 text-center py-8">
+          No activity yet. Start a lesson to see it show up here.
+        </p>
+      ) : (
       <div className="relative pl-4 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
         {displayActivities.map((item, index) => (
           <motion.div
@@ -92,6 +94,7 @@ export default function RecentActivity({ activitiesData = [] }) {
           </motion.div>
         ))}
       </div>
+      )}
 
     </div>
   );

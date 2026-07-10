@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
+import { activityApi } from "@/services/activity/activityApi";
 import { ChevronRight, Award, Sparkles, CheckCircle2, XCircle,ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -9,6 +10,7 @@ import { toast } from "react-hot-toast";
 export default function ExercisePage() {
   const searchParams = useSearchParams();
   const subTopicId = searchParams.get("subTopicId");
+  const topicId = searchParams.get("topicId");
 const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
@@ -50,10 +52,25 @@ const router = useRouter();
     try {
       const response = await moduleApi.submitExercise(selectedExercise._id, { answers: formattedAnswers, time_spent_sec: 10 });
       if (response?.data?.success) {
-        setResultData(response.data.data.attempt);
+        const attempt = response.data.data.attempt;
+        setResultData(attempt);
         setIsQuizActive(false);
         setShowResults(true);
         toast.success("Submitted successfully!");
+
+        if (topicId && subTopicId) {
+          activityApi.logActivity({
+            topic_id: topicId,
+            sub_topic_id: subTopicId,
+            module_id: selectedExercise._id,
+            module_type: "exercise",
+            activity_type: "exercise_complete",
+            score: attempt?.score,
+            max_score: attempt?.max_score,
+            accuracy: attempt?.accuracy,
+            time_spent_sec: 10,
+          }).catch((err) => console.error("Failed to log activity:", err));
+        }
       } else {
   toast.error(error?.response?.data?.message || "Something went wrong.");
       }
@@ -115,7 +132,18 @@ const router = useRouter();
                 <p className="text-sm text-orange-700">Time Limit: {selectedExercise.time_limit_sec}s</p>
               </div>
              <button
-  onClick={() => setIsQuizActive(true)}
+  onClick={() => {
+    if (topicId && subTopicId) {
+      activityApi.logActivity({
+        topic_id: topicId,
+        sub_topic_id: subTopicId,
+        module_id: selectedExercise._id,
+        module_type: "exercise",
+        activity_type: "exercise_start",
+      }).catch((err) => console.error("Failed to log activity:", err));
+    }
+    setIsQuizActive(true);
+  }}
   className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-orange-300"
 >
   Start Assessment

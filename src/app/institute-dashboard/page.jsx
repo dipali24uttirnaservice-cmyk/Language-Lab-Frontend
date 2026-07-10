@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -22,49 +23,99 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { dashboardApi } from "@/services/institute/dashboardApi";
 
-// --- Mock Data ---
-const studentGrowth = [
-  { month: "Jan", students: 50 },
-  { month: "Feb", students: 80 },
-  { month: "Mar", students: 120 },
-  { month: "Apr", students: 170 },
-  { month: "May", students: 240 },
-  { month: "Jun", students: 312 },
-];
+const STATUS_COLORS = {
+  active: "#4F46E5",
+  inactive: "#E11D48",
+  suspended: "#F59E0B",
+};
 
-const statusData = [
-  { name: "Active", value: 260 },
-  { name: "Inactive", value: 52 },
-];
-
-const COLORS = ["#4F46E5", "#E11D48"];
-
-const activities = [
-  {
+const ACTIVITY_META = {
+  student_registered: {
     title: "New Student Registered",
-    description: "Rahul Sharma joined IELTS Course",
-    time: "2 Mins Ago",
     icon: UserPlus,
     colorClass: "from-blue-500 to-indigo-600",
   },
-  {
-    title: "License Updated",
-    description: "Student capacity increased to 500",
-    time: "3 Hours Ago",
-    icon: ShieldCheck,
-    colorClass: "from-amber-400 to-orange-500",
-  },
-  {
+  course_completed: {
     title: "Course Completed",
-    description: "25 students completed Spoken English",
-    time: "Yesterday",
     icon: Award,
     colorClass: "from-rose-500 to-pink-600",
   },
-];
+};
+const DEFAULT_ACTIVITY_META = {
+  title: "Activity Update",
+  icon: ShieldCheck,
+  colorClass: "from-amber-400 to-orange-500",
+};
+
+function timeAgo(timestamp) {
+  if (!timestamp) return "";
+  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+
+  if (seconds < 60) return "Just Now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} Min${minutes > 1 ? "s" : ""} Ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} Hour${hours > 1 ? "s" : ""} Ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} Days Ago`;
+
+  return new Date(timestamp).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function InstituteDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [dashboard, setDashboard] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const response = await dashboardApi.getDashboard();
+        if (response.data.success) {
+          setDashboard(response.data.data);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="h-12 w-12 rounded-full border-4 border-slate-200 border-t-indigo-500 animate-spin" />
+        <p className="text-sm font-extrabold uppercase tracking-wider text-slate-400">Loading Dashboard...</p>
+      </div>
+    );
+  }
+
+  const enrolledStudents = dashboard?.enrolled_students ?? { total: 0, new_this_week: 0 };
+  const coursesLicensed = dashboard?.courses_licensed ?? { total: 0 };
+  const licenseUsage = dashboard?.license_usage ?? { total_seats: 0, used_seats: 0, active_licenses: 0 };
+  const completionRate = dashboard?.completion_rate ?? 0;
+  const studentGrowth = dashboard?.student_growth ?? [];
+  const statusBreakdown = dashboard?.student_status_breakdown ?? { active: 0, inactive: 0, suspended: 0, total: 0 };
+  const recentActivity = dashboard?.recent_activity ?? [];
+  const instituteName = dashboard?.institute_name || "Administrator";
+
+  const statusData = [
+    { name: "Active", value: statusBreakdown.active, color: STATUS_COLORS.active },
+    { name: "Inactive", value: statusBreakdown.inactive, color: STATUS_COLORS.inactive },
+    ...(statusBreakdown.suspended > 0
+      ? [{ name: "Suspended", value: statusBreakdown.suspended, color: STATUS_COLORS.suspended }]
+      : []),
+  ];
+
   return (
     <div className="relative min-h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col justify-center">
       {/* Background Floating Ambient Orbs */}
@@ -92,7 +143,7 @@ export default function InstituteDashboard() {
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight md:text-4xl">
               Welcome Back,{" "}
               <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Administrator 👋
+                {instituteName} 👋
               </span>
             </h1>
           </div>
@@ -103,7 +154,7 @@ export default function InstituteDashboard() {
                 Operational
               </span>
             </div>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/10 transition duration-150"
@@ -117,31 +168,31 @@ export default function InstituteDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard
             title="Enrolled Students"
-            value="312"
+            value={enrolledStudents.total}
             icon={Users}
             color="from-blue-500 to-indigo-600"
-            sub="+12 added this week"
-          />
-          <StatCard
-            title="Courses"
-            value="15"
-            icon={GraduationCap}
-            color="from-emerald-400 to-emerald-600"
-            sub="Active Instructors"
+            sub={`+${enrolledStudents.new_this_week} added this week`}
           />
           <StatCard
             title="Courses Licensed"
-            value="8"
+            value={coursesLicensed.total}
             icon={BookOpen}
             color="from-amber-400 to-orange-500"
-            sub="Top 5% in District"
+            sub={`${licenseUsage.active_licenses} active license${licenseUsage.active_licenses === 1 ? "" : "s"}`}
+          />
+          <StatCard
+            title="Seat Usage"
+            value={`${licenseUsage.used_seats}/${licenseUsage.total_seats}`}
+            icon={GraduationCap}
+            color="from-emerald-400 to-emerald-600"
+            sub="Seats currently in use"
           />
           <StatCard
             title="Completion Rate"
-            value="92%"
+            value={`${completionRate}%`}
             icon={TrendingUp}
             color="from-rose-500 to-pink-600"
-            sub="Ready to export"
+            sub="Across all module progress"
           />
         </div>
 
@@ -149,7 +200,7 @@ export default function InstituteDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Chart Area */}
           <div className="lg:col-span-2">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition duration-300 h-full flex flex-col justify-between"
@@ -181,7 +232,7 @@ export default function InstituteDashboard() {
           {/* Sidebar Components Column */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
             {/* Student Distribution Pie Chart */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -193,9 +244,9 @@ export default function InstituteDashboard() {
                   <h2 className="text-lg font-extrabold text-slate-900 leading-tight">Student Status</h2>
                 </div>
                 <div className="space-y-1.5">
-                  {statusData.map((data, idx) => (
+                  {statusData.map((data) => (
                     <div key={data.name} className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx] }} />
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: data.color }} />
                       <span className="text-sm font-semibold text-slate-600 truncate">{data.name}: {data.value}</span>
                     </div>
                   ))}
@@ -213,15 +264,15 @@ export default function InstituteDashboard() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {statusData.map((entry, index) => (
-                        <Cell key={index} fill={COLORS[index]} className="cursor-pointer transition-opacity hover:opacity-80" />
+                      {statusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} className="cursor-pointer transition-opacity hover:opacity-80" />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="text-center">
-                    <h3 className="text-xl font-extrabold text-slate-900 leading-none">312</h3>
+                    <h3 className="text-xl font-extrabold text-slate-900 leading-none">{statusBreakdown.total}</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total</p>
                   </div>
                 </div>
@@ -229,7 +280,7 @@ export default function InstituteDashboard() {
             </motion.div>
 
             {/* Timeline Recent Activity Container */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -240,16 +291,23 @@ export default function InstituteDashboard() {
                 <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
               </div>
               <div className="flex flex-col space-y-3.5">
-                {activities.map((item, index) => (
-                  <ActivityRow
-                    key={index}
-                    icon={item.icon}
-                    text={item.title}
-                    sub={item.description}
-                    time={item.time}
-                    colorClass={item.colorClass}
-                  />
-                ))}
+                {recentActivity.length === 0 ? (
+                  <p className="text-xs font-semibold text-slate-400">No recent activity yet.</p>
+                ) : (
+                  recentActivity.map((item, index) => {
+                    const meta = ACTIVITY_META[item.type] || DEFAULT_ACTIVITY_META;
+                    return (
+                      <ActivityRow
+                        key={index}
+                        icon={meta.icon}
+                        text={meta.title}
+                        sub={item.message}
+                        time={timeAgo(item.timestamp)}
+                        colorClass={meta.colorClass}
+                      />
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           </div>
@@ -264,7 +322,7 @@ export default function InstituteDashboard() {
 
 function StatCard({ title, value, icon: Icon, color, sub }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/60 rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:border-slate-300 transition duration-150 group cursor-pointer"
@@ -288,7 +346,7 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
 
 function ActivityRow({ icon: Icon, text, sub, time, colorClass }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ x: 3 }}
       className="flex items-center gap-3.5 group cursor-pointer"
     >

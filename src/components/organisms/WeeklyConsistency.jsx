@@ -129,15 +129,17 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
         </div>
 
         {/* Streak Fire Widget */}
-        {/* <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-md shadow-orange-500/20">
-          <FaFire className="text-xl animate-bounce" /> 
-           <div>
-            <p className="text-[9px] font-bold text-orange-100 uppercase tracking-widest leading-none">
-              Daily Streak
-            </p>
-            <p className="text-sm font-black tracking-tight">{streak || 1} Days Active</p>
+        {streak > 0 && (
+          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-md shadow-orange-500/20">
+            <FaFire className="text-xl animate-bounce" />
+            <div>
+              <p className="text-[9px] font-bold text-orange-100 uppercase tracking-widest leading-none">
+                Daily Streak
+              </p>
+              <p className="text-sm font-black tracking-tight">{streak} Days Active</p>
+            </div>
           </div>
-        </div> */}
+        )}
       </div>
 
       {/* Mini Stats Summary */}
@@ -158,7 +160,7 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
 
       {/* Recharts Core */}
       <div className="flex-1 min-h-[250px]">
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={260}>
           <ComposedChart data={dailyData} margin={{ top: 10, right: -5, left: -25, bottom: 0 }}>
             <CartesianGrid stroke="#f1f5f9" vertical={false} />
             <XAxis
