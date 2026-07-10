@@ -10,6 +10,7 @@ import SkillRadarChart from "@/components/organisms/SkillRadarChart";
 import WeeklyConsistency from "@/components/organisms/WeeklyConsistency";
 import RecommendationHub from "@/components/organisms/RecommendationHub";
 import AttendanceWidget from "@/components/organisms/AttendanceWidget";
+import OverallScoreGauge from "@/components/organisms/OverallScoreGauge";
 
 import { progressApi } from "@/services/progress/progressApi";
 import { activityApi } from "@/services/activity/activityApi";
@@ -19,6 +20,9 @@ import { studentApi } from "@/services/student/studentApi";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
   const [progress, setProgress] = useState([]);
   const [activities, setActivities] = useState([]);
   const [attendance, setAttendance] = useState({
@@ -31,17 +35,27 @@ export default function DashboardPage() {
     aiInteractions: 0,
     attendanceRate: 0,
     streakDays: 0,
+    pendingModules: 0,
+    totalLessons: 0,
+    completedLessons: 0,
+    incompleteLessons: 0,
+    inProgressLessons: 0,
+    notStartedLessons: 0,
+    moduleBreakdown: {
+      video: { completed: 0, total: 0 },
+      audio: { completed: 0, total: 0 },
+      text: { completed: 0, total: 0 },
+      exercise: { completed: 0, total: 0 },
+      vocabulary: { completed: 0, total: 0 },
+    },
   });
 
-  // Derived metrics for Weekly Goal Card
-  const [goalMetrics, setGoalMetrics] = useState({
-    progressPercent: 74,
-    vocabCount: 125,
-    speakingScore: 8.2,
-  });
-
+  // 1. Fetch live database records from backend APIs
   useEffect(() => {
     async function fetchAllData() {
+      // Only fetch if we are NOT in demo mock mode
+      if (isDemoMode) return;
+
       try {
         setLoading(true);
 
@@ -51,12 +65,14 @@ export default function DashboardPage() {
           attendanceRes,
           aiRes,
           coursesRes,
+          kpiRes,
         ] = await Promise.allSettled([
           progressApi.getMyProgress(),
           activityApi.getMyActivity(),
           attendanceApi.getMyAttendance(),
           aiApi.getHistory(),
           studentApi.getEnrolledCourses(),
+          progressApi.getDashboardKPI(),
         ]);
 
         let progressList = [];
@@ -98,13 +114,34 @@ export default function DashboardPage() {
           }
         }
 
-        // 1. Calculate attendance rate
+        let kpiData = {
+          totalLessons: 0,
+          completedLessons: 0,
+          incompleteLessons: 0,
+          inProgressLessons: 0,
+          notStartedLessons: 0,
+          totalModules: 0,
+          completedModules: 0,
+          pendingModules: 0,
+          moduleBreakdown: {
+            video: { completed: 0, total: 0 },
+            audio: { completed: 0, total: 0 },
+            text: { completed: 0, total: 0 },
+            exercise: { completed: 0, total: 0 },
+            vocabulary: { completed: 0, total: 0 },
+          },
+        };
+        if (kpiRes.status === "fulfilled" && kpiRes.value?.data?.data) {
+          kpiData = kpiRes.value.data.data;
+        }
+
+        // Calculate attendance rate
         const totalDays = attendanceData.summary?.total_days || 0;
         const presentDays = attendanceData.summary?.present || 0;
         const attendanceRate =
           totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
 
-        // 2. Calculate learning streak from attendance records
+        // Calculate learning streak from attendance records
         let streak = 0;
         const presentDates = new Set(
           (attendanceData.records || [])
@@ -136,42 +173,19 @@ export default function DashboardPage() {
         }
 
         setStatsData({
-          enrolledCourses: coursesCount || 1, // Fallback to 1 course minimum
+          enrolledCourses: coursesCount || 1,
           aiInteractions: aiData.length,
           attendanceRate,
           streakDays: streak || 1,
+          pendingModules: kpiData.pendingModules,
+          totalLessons: kpiData.totalLessons,
+          completedLessons: kpiData.completedLessons,
+          incompleteLessons: kpiData.incompleteLessons,
+          inProgressLessons: kpiData.inProgressLessons,
+          notStartedLessons: kpiData.notStartedLessons,
+          moduleBreakdown: kpiData.moduleBreakdown,
         });
 
-        // 3. Compute detailed metrics for "Weekly Goal" Card
-        const completedModules = progressList.filter((p) => p.is_completed);
-        const totalModulesCount = progressList.length;
-        const calculatedProgress =
-          totalModulesCount > 0
-            ? Math.round((completedModules.length / totalModulesCount) * 100)
-            : 74;
-
-        // Vocabulary count calculation
-        const vocabCompleted = progressList.filter(
-          (p) => p.module_type === "vocabulary" && p.is_completed
-        ).length;
-        const calculatedVocab = vocabCompleted > 0 ? vocabCompleted * 10 : 125; // 10 words per module baseline
-
-        // Audio/Speaking score calculation
-        const audioScores = progressList
-          .filter((p) => p.module_type === "audio" && p.score > 0)
-          .map((p) => p.score);
-        const avgAudioScore =
-          audioScores.length > 0
-            ? Number(
-                (audioScores.reduce((sum, s) => sum + s, 0) / audioScores.length / 10).toFixed(1)
-              )
-            : 8.2;
-
-        setGoalMetrics({
-          progressPercent: calculatedProgress,
-          vocabCount: calculatedVocab,
-          speakingScore: avgAudioScore,
-        });
       } catch (err) {
         console.error("Error loading student dashboard details:", err);
       } finally {
@@ -180,13 +194,101 @@ export default function DashboardPage() {
     }
 
     fetchAllData();
-  }, []);
+  }, [isDemoMode, reloadTrigger]);
+
+  // 2. Load Rich Mockup/Dummy Dataset
+  const loadDummyData = () => {
+    setLoading(true);
+    setTimeout(() => {
+      const dummyProgress = [
+        { module_type: "audio", is_completed: true, score: 85, progress_percentage: 100, subtopic: { title: "Daily Greeting Dialogues" }, subtopic_id: "dummy1" },
+        { module_type: "audio", is_completed: true, score: 90, progress_percentage: 100, subtopic: { title: "Asking for Directions" }, subtopic_id: "dummy2" },
+        { module_type: "audio", is_completed: true, score: 80, progress_percentage: 100, subtopic: { title: "Restaurant Ordering" }, subtopic_id: "dummy3" },
+        { module_type: "audio", is_completed: false, score: 0, progress_percentage: 45, subtopic: { title: "Job Interview Practice" }, subtopic_id: "dummy4" },
+        { module_type: "video", is_completed: true, score: 95, progress_percentage: 100, subtopic: { title: "Introduction to English Phonetics" }, subtopic_id: "dummy5" },
+        { module_type: "video", is_completed: true, score: 90, progress_percentage: 100, subtopic: { title: "Understanding Accents" }, subtopic_id: "dummy6" },
+        { module_type: "video", is_completed: false, score: 0, progress_percentage: 60, subtopic: { title: "Formal Presentation Basics" }, subtopic_id: "dummy7" },
+        { module_type: "text", is_completed: true, score: 80, progress_percentage: 100, subtopic: { title: "Reading: Business Emails" }, subtopic_id: "dummy8" },
+        { module_type: "text", is_completed: true, score: 85, progress_percentage: 100, subtopic: { title: "Reading: News Articles" }, subtopic_id: "dummy9" },
+        { module_type: "exercise", is_completed: true, score: 75, progress_percentage: 100, subtopic: { title: "Quiz: Present Perfect Tense" }, subtopic_id: "dummy10" },
+        { module_type: "exercise", is_completed: false, score: 0, progress_percentage: 20, subtopic: { title: "Quiz: Conditional Sentences" }, subtopic_id: "dummy11" },
+        { module_type: "vocabulary", is_completed: true, score: 82, progress_percentage: 100, subtopic: { title: "Vocab: Business Terms" }, subtopic_id: "dummy12" },
+        { module_type: "vocabulary", is_completed: true, score: 88, progress_percentage: 100, subtopic: { title: "Vocab: Travel Terms" }, subtopic_id: "dummy13" },
+        { module_type: "vocabulary", is_completed: false, score: 0, progress_percentage: 10, subtopic: { title: "Vocab: Academic Phrases" }, subtopic_id: "dummy14" },
+      ];
+
+      const dummyActivities = [
+        { activity_type: "ai_query", module_type: "audio", time_spent_sec: 120, logged_at: new Date().toISOString() },
+        { activity_type: "audio_complete", module_type: "audio", time_spent_sec: 340, logged_at: new Date().toISOString() },
+        { activity_type: "attendance_marked", time_spent_sec: 0, logged_at: new Date().toISOString() },
+        { activity_type: "video_complete", module_type: "video", time_spent_sec: 600, logged_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString() },
+        { activity_type: "ai_query", module_type: "text", time_spent_sec: 80, logged_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString() },
+        { activity_type: "exercise_complete", module_type: "exercise", time_spent_sec: 450, logged_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString() },
+        { activity_type: "attendance_marked", time_spent_sec: 0, logged_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString() },
+        { activity_type: "vocabulary_complete", module_type: "vocabulary", time_spent_sec: 200, logged_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString() },
+        { activity_type: "attendance_marked", time_spent_sec: 0, logged_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString() },
+        { activity_type: "audio_complete", module_type: "audio", time_spent_sec: 400, logged_at: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString() },
+        { activity_type: "attendance_marked", time_spent_sec: 0, logged_at: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString() },
+      ];
+
+      const dummyAttendance = {
+        summary: { total_days: 15, present: 14, absent: 1 },
+        records: [
+          { date: new Date().toISOString(), status: "present" },
+          { date: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), status: "present" },
+          { date: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(), status: "present" },
+          { date: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(), status: "present" },
+          { date: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(), status: "present" },
+          { date: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(), status: "absent" },
+          { date: new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString(), status: "present" },
+          { date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(), status: "present" },
+        ]
+      };
+
+      setProgress(dummyProgress);
+      setActivities(dummyActivities);
+      setAttendance(dummyAttendance);
+      setStatsData({
+        enrolledCourses: 3,
+        aiInteractions: 42,
+        attendanceRate: 93,
+        streakDays: 5,
+        pendingModules: dummyProgress.filter(p => !p.is_completed).length,
+        totalLessons: 14,
+        completedLessons: 10,
+        incompleteLessons: 4,
+        inProgressLessons: 3,
+        notStartedLessons: 1,
+        moduleBreakdown: {
+          video: { completed: 2, total: 3 },
+          audio: { completed: 3, total: 3 },
+          text: { completed: 2, total: 2 },
+          exercise: { completed: 2, total: 3 },
+          vocabulary: { completed: 1, total: 3 },
+        },
+      });
+      setLoading(false);
+    }, 400);
+  };
+
+  // 3. Toggle Demo Mode button click
+  const toggleDemoMode = () => {
+    if (isDemoMode) {
+      setIsDemoMode(false);
+      setReloadTrigger(prev => prev + 1); // trigger reload fetch from live API
+    } else {
+      setIsDemoMode(true);
+      loadDummyData();
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 p-6 md:p-10 flex flex-col items-center justify-center space-y-4">
         <div className="h-10 w-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-sm font-bold text-slate-500 animate-pulse">Syncing Learning Records...</p>
+        <p className="text-sm font-bold text-slate-500 animate-pulse">
+          {isDemoMode ? "Generating Demo Records..." : "Syncing Learning Records..."}
+        </p>
       </div>
     );
   }
@@ -227,9 +329,9 @@ export default function DashboardPage() {
 
       {/* Content Container */}
       <div className="relative z-10 max-w-7xl mx-auto space-y-10">
-        
+
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-md">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 shadow-sm mb-2">
               ✦ English Learning Dashboard
@@ -247,11 +349,24 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-white bg-white/80 p-2.5 shadow-sm backdrop-blur-md self-start sm:self-auto">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">
-              AI Coach Connected
-            </span>
+          {/* Action Row containing Demo toggle and Coach status */}
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <button
+              onClick={toggleDemoMode}
+              className={`rounded-2xl px-4 py-2 text-xs font-black transition-all duration-200 shadow-sm border cursor-pointer ${isDemoMode
+                  ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
+                  : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
+                }`}
+            >
+              {isDemoMode ? "⚡ Restore Live Data" : "📊 Fill Demo Data"}
+            </button>
+            {/* 
+            <div className="flex items-center gap-2 rounded-2xl border border-white bg-white/80 p-2.5 shadow-sm backdrop-blur-md">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">
+                AI Coach Connected
+              </span>
+            </div> */}
           </div>
         </div>
 
@@ -260,14 +375,14 @@ export default function DashboardPage() {
 
         {/* Dynamic Charts Grid Layout */}
         <div className="grid gap-8 lg:grid-cols-3">
-          
+
           {/* Main Visual: Study Time Analysis */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 h-full">
             <WeeklyConsistency activities={activities} attendance={attendance} />
           </div>
 
           {/* Side Widget: Attendance Donut Ring */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full">
             <AttendanceWidget attendance={attendance} />
           </div>
 
@@ -275,81 +390,31 @@ export default function DashboardPage() {
 
         {/* Skill Radar Map and Recommendation Hub */}
         <div className="grid gap-8 lg:grid-cols-3">
-          
+
           {/* Skill Radar Chart */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full">
             <SkillRadarChart progress={progress} />
           </div>
 
           {/* AI Decision Recommendations & Weak Spot Revise Hub */}
-          <div className="lg:col-span-2">
-            <RecommendationHub progress={progress} />
+          <div className="lg:col-span-2 h-full">
+            <RecommendationHub progress={progress} moduleBreakdown={statsData.moduleBreakdown} />
           </div>
 
         </div>
 
         {/* Recent timeline logs and goal settings */}
-        <div className="grid gap-8 lg:grid-cols-3 items-start">
-          
+        <div className="grid gap-8 lg:grid-cols-3">
+
           {/* Real activity logger */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 h-full">
             <RecentActivity activitiesData={activities} />
           </div>
 
-          {/* Visual Goal Card */}
-          <motion.div
-            whileHover={{ y: -4 }}
-            className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col justify-between"
-          >
-            <div>
-              <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
-                🏆 Weekly Study Goal
-              </h3>
-              <p className="mb-4 text-xs text-slate-400 font-bold">
-                Target: Complete active syllabus modules
-              </p>
-
-              <div className="space-y-2 mt-4">
-                <div className="flex justify-between text-xs font-bold">
-                  <span>Current Progress</span>
-                  <span className="text-orange-500">{goalMetrics.progressPercent}%</span>
-                </div>
-
-                <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goalMetrics.progressPercent}%` }}
-                    transition={{ duration: 1 }}
-                    className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 border-t border-slate-100 pt-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 font-bold">Daily XP Status</span>
-                <span className="font-bold text-slate-700">Active</span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 font-bold">Vocabulary Learned</span>
-                <span className="font-bold text-indigo-600">{goalMetrics.vocabCount} Words</span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 font-bold">Speaking Evaluation</span>
-                <span className="font-bold text-emerald-600">{goalMetrics.speakingScore} / 10</span>
-              </div>
-            </div>
-
-            <Link
-              href="/dashboard/subLesson"
-              className="mt-6 w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs text-center transition-all duration-200 shadow-sm"
-            >
-              Resume Learning Journey
-            </Link>
-          </motion.div>
+          {/* Overall Score Gauge Widget */}
+          <div className="lg:col-span-1 h-full">
+            <OverallScoreGauge progress={progress} />
+          </div>
 
         </div>
 

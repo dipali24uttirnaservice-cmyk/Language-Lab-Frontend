@@ -100,7 +100,7 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
               <p className="text-sm font-black text-indigo-600 flex items-center gap-1.5">
                 <FaCalendarCheck className="text-xs" /> {payload[1].value} Lessons Completed
               </p>
-            )}qqqq
+            )}
           </div>
         </div>
       );
@@ -129,15 +129,15 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
         </div>
 
         {/* Streak Fire Widget */}
-        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-md shadow-orange-500/20">
-          <FaFire className="text-xl animate-bounce" />
-          <div>
+        {/* <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-md shadow-orange-500/20">
+          <FaFire className="text-xl animate-bounce" /> 
+           <div>
             <p className="text-[9px] font-bold text-orange-100 uppercase tracking-widest leading-none">
               Daily Streak
             </p>
             <p className="text-sm font-black tracking-tight">{streak || 1} Days Active</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Mini Stats Summary */}

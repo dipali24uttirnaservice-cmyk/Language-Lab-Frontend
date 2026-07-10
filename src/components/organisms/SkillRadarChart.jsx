@@ -40,7 +40,11 @@ export default function SkillRadarChart({ progress = [] }) {
   progress.forEach((item) => {
     const type = item.module_type;
     if (aggregates[type] !== undefined) {
-      aggregates[type].total += item.score || item.progress_percentage || 0;
+      const scoreValue =
+        type === "exercise"
+          ? (item.score !== undefined && item.score !== null ? item.score : 0)
+          : (item.progress_percentage || 0);
+      aggregates[type].total += scoreValue;
       aggregates[type].count += 1;
     }
   });
@@ -64,6 +68,7 @@ export default function SkillRadarChart({ progress = [] }) {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
+
         <div className="rounded-2xl border border-slate-100 bg-white/90 p-3 shadow-xl backdrop-blur-md">
           <p className="text-xs font-bold text-slate-800">{payload[0].name}</p>
           <p className="text-lg font-black text-indigo-600 mt-1">
@@ -84,7 +89,8 @@ export default function SkillRadarChart({ progress = [] }) {
       whileHover={{ y: -4 }}
       className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col h-full"
     >
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+      <div className
+        ="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
         <div>
           <h3 className="text-lg font-black text-slate-900 tracking-tight">
             Skill Competency Map
@@ -93,9 +99,9 @@ export default function SkillRadarChart({ progress = [] }) {
             Real-time cognitive proficiency breakdown
           </p>
         </div>
-        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+        {/* <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
           AI Evaluated
-        </span>
+        </span> */}
       </div>
 
       <div className="flex-1 flex items-center justify-center min-h-[300px]">

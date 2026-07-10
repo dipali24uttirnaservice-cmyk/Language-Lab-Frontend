@@ -1,46 +1,57 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FaBook, FaRobot, FaAward, FaFire } from "react-icons/fa";
+import {
+  FaGraduationCap,
+  FaBookOpen,
+  FaHourglassHalf,
+} from "react-icons/fa";
 
 export default function DashboardStats({ statsData = {} }) {
   const stats = [
     {
       title: "Enrolled Courses",
-      value: statsData.enrolledCourses !== undefined ? String(statsData.enrolledCourses) : "0",
-      icon: <FaBook />,
-      color: "from-blue-500 to-indigo-600",
-      shadow: "rgba(79,70,229,0.15)",
-      label: "Active course enrollment"
+      value:
+        statsData.enrolledCourses !== undefined
+          ? String(statsData.enrolledCourses)
+          : "0",
+      icon: <FaGraduationCap />,
+      color: "from-blue-500 to-cyan-500",
+      shadow: "rgba(59,130,246,0.18)",
+      label: "Active course enrollment",
     },
+
     {
-      title: "AI Chat Interactions",
-      value: statsData.aiInteractions !== undefined ? String(statsData.aiInteractions) : "0",
-      icon: <FaRobot />,
-      color: "from-amber-400 to-orange-500",
-      shadow: "rgba(245,158,11,0.15)",
-      label: "Tutor queries logged"
+      title: "Total Lessons",
+      value:
+        statsData.totalLessons !== undefined
+          ? String(statsData.totalLessons)
+          : "0",
+      icon: <FaBookOpen />,
+      color: "from-violet-500 to-purple-600",
+      shadow: "rgba(139,92,246,0.18)",
+      label: `Completed: ${statsData.completedLessons !== undefined
+        ? statsData.completedLessons
+        : 0
+        } lessons`,
     },
+
     {
-      title: "Attendance Rate",
-      value: statsData.attendanceRate !== undefined ? `${statsData.attendanceRate}%` : "0%",
-      icon: <FaAward />,
-      color: "from-emerald-400 to-teal-500",
-      shadow: "rgba(16,185,129,0.15)",
-      label: statsData.attendanceRate < 75 ? "⚠️ Below 75% threshold" : "✅ In good standing"
-    },
-    {
-      title: "Active Learning Streak",
-      value: statsData.streakDays !== undefined ? `${statsData.streakDays} Days` : "0 Days",
-      icon: <FaFire />,
-      color: "from-orange-500 to-red-500",
-      shadow: "rgba(239,68,68,0.15)",
-      label: "Keep learning daily! 🔥"
+      title: "Incomplete Lessons",
+      value:
+        statsData.incompleteLessons !== undefined
+          ? String(statsData.incompleteLessons)
+          : "0",
+      icon: <FaHourglassHalf />,
+      color: "from-amber-500 to-orange-600",
+      shadow: "rgba(245,158,11,0.18)",
+      label: `In Progress: ${statsData.inProgressLessons || 0
+        } | Not Started: ${statsData.notStartedLessons || 0}`,
     },
   ];
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {stats.map((item, index) => (
         <motion.div
           key={item.title}
@@ -58,7 +69,7 @@ export default function DashboardStats({ statsData = {} }) {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.title}</p>
               <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-1">{item.value}</h3>
             </div>
-            
+
             {/* Beautiful Floating Colored Icon Hub */}
             <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white text-lg shadow-sm`}>
               {item.icon}

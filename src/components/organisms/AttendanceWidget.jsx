@@ -38,12 +38,12 @@ export default function AttendanceWidget({ attendance = {} }) {
             <FaUserCheck className="text-emerald-500 text-base" /> Attendance Record
           </h3>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            College requirement tracking details
+            Attendance Summary
           </p>
         </div>
-        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+        {/* <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
           Officially Tracked
-        </span>
+        </span> */}
       </div>
 
       <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
