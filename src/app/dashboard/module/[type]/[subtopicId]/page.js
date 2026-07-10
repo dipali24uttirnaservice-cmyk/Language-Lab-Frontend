@@ -297,7 +297,7 @@ export default function ModuleListPage() {
 
                       <button
                         disabled={!previousModule}
-                        onClick={() => previousModule && setSelectedModule(previousModule)}
+                        onClick={() => previousModule && handleModuleSelection(previousModule)}
                         className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                             ? "bg-slate-900 text-white hover:bg-slate-800"
                             : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -312,7 +312,7 @@ export default function ModuleListPage() {
 
                       <button
                         disabled={!nextModule}
-                        onClick={() => nextModule && setSelectedModule(nextModule)}
+                        onClick={() => nextModule && handleModuleSelection(nextModule)}
                         className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                             ? "bg-orange-500 text-white hover:bg-orange-600"
                             : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -533,7 +533,7 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!previousModule}
-                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      onClick={() => previousModule && handleModuleSelection(previousModule)}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                           ? "bg-slate-900 text-white hover:bg-slate-800"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -548,7 +548,7 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!nextModule}
-                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      onClick={() => nextModule && handleModuleSelection(nextModule)}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                           ? "bg-orange-500 text-white hover:bg-orange-600"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -928,7 +928,7 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!previousModule}
-                      onClick={() => previousModule && setSelectedModule(previousModule)}
+                      onClick={() => previousModule && handleModuleSelection(previousModule)}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                           ? "bg-slate-900 text-white hover:bg-slate-800"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -943,7 +943,7 @@ export default function ModuleListPage() {
 
                     <button
                       disabled={!nextModule}
-                      onClick={() => nextModule && setSelectedModule(nextModule)}
+                      onClick={() => nextModule && handleModuleSelection(nextModule)}
                       className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                           ? "bg-orange-500 text-white hover:bg-orange-600"
                           : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -978,7 +978,7 @@ export default function ModuleListPage() {
                             <button
                               key={item._id}
                               onClick={() => {
-                                setSelectedModule(item);
+                                handleModuleSelection(item);
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
                               className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isSelected
@@ -1126,7 +1126,7 @@ export default function ModuleListPage() {
 
                   <button
                     disabled={!previousModule}
-                    onClick={() => previousModule && setSelectedModule(previousModule)}
+                    onClick={() => previousModule && handleModuleSelection(previousModule)}
                     className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
                         ? "bg-slate-900 text-white hover:bg-slate-800"
                         : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -1141,7 +1141,7 @@ export default function ModuleListPage() {
 
                   <button
                     disabled={!nextModule}
-                    onClick={() => nextModule && setSelectedModule(nextModule)}
+                    onClick={() => nextModule && handleModuleSelection(nextModule)}
                     className={`px-5 py-3 rounded-xl font-semibold transition ${nextModule
                         ? "bg-orange-500 text-white hover:bg-orange-600"
                         : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -1169,7 +1169,7 @@ export default function ModuleListPage() {
                         <button
                           key={item._id}
                           onClick={() => {
-                            setSelectedModule(item);
+                            handleModuleSelection(item);
                             setExpandedQ(null);
                             setSelectedAnswers({});
                             window.scrollTo({

@@ -121,19 +121,93 @@ const router = useRouter();
   Start Assessment
 </button>
             </div>
-          ) : showResults ? (
-            <div className="text-center py-10">
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${resultData?.is_passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
-                <Award size={40} />
+          ) :  showResults ? (
+                            // --- POST-ASSESSMENT RESULTS VIEW ---
+                           <div className="py-10 animate-fade-in">
+            <div className="max-w-lg mx-auto">
+          
+              {/* Success Icon */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-orange-400 blur-2xl opacity-30"></div>
+          
+                  <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center shadow-xl shadow-orange-300/40">
+                    <Award size={42} className="text-white" />
+                  </div>
+                </div>
               </div>
-              <h3 className="text-3xl font-black text-slate-900">{resultData?.is_passed ? "Passed!" : "Complete"}</h3>
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl"><p className="text-xs text-slate-400 uppercase">Score</p><p className="text-2xl font-bold">{resultData?.score}/{resultData?.max_score}</p></div>
-                <div className="p-4 bg-slate-50 rounded-xl"><p className="text-xs text-slate-400 uppercase">Accuracy</p><p className="text-2xl font-bold">{resultData?.accuracy}%</p></div>
+          
+              {/* Heading */}
+              <div className="text-center mt-6">
+                <h3 className="text-3xl font-black bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">
+                  {resultData?.is_passed
+                    ? "Congratulations!"
+                    : "Assessment Completed"}
+                </h3>
+          
+                <p className="mt-2 text-slate-500">
+                  {resultData?.is_passed
+                    ? "Excellent work! You successfully passed this assessment."
+                    : "Nice effort!Try again and keep improving."}
+                </p>
               </div>
-              <button onClick={() => { setShowResults(false); setIsQuizActive(false); }} className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold">Back to Exercises</button>
+          
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-5 mt-8">
+          
+                <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
+                  <p className="text-xs uppercase tracking-widest font-bold text-orange-500">
+                    Score
+                  </p>
+          
+                  <h2 className="mt-2 text-3xl font-black text-slate-900">
+                    {resultData?.score}
+                    <span className="text-lg text-slate-400">
+                      {" "}
+                      / {resultData?.max_score}
+                    </span>
+                  </h2>
+                </div>
+          
+                <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+                  <p className="text-xs uppercase tracking-widest font-bold text-amber-500">
+                    Accuracy
+                  </p>
+          
+                  <h2 className="mt-2 text-3xl font-black text-slate-900">
+                    {resultData?.accuracy}
+                    <span className="text-lg text-slate-400">%</span>
+                  </h2>
+                </div>
+          
+              </div>
+          
+              {/* Status Badge */}
+              <div className="mt-8 flex justify-center">
+                <div
+                  className={`px-6 py-3 rounded-full text-sm font-bold ${
+                    resultData?.is_passed
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
+                  }`}
+                >
+                  {resultData?.is_passed
+                    ? "🎉 Passed Successfully"
+                    : "📖 Keep Practicing"}
+                </div>
+              </div>
+          
+              {/* Button */}
+            <button
+            onClick={() => router.back()}
+            className="mt-10 w-full rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-300/40 transition-all duration-300 hover:scale-[1.02]"
+          >
+            ← Back to Exercises
+          </button>
+          
             </div>
-          ) : (
+          </div>
+                          ) : (
            <div className="space-y-6">
   <div className="text-sm font-bold text-orange-500 uppercase">
     Question {currentQuestionIndex + 1}
