@@ -1444,7 +1444,7 @@ export default function ModuleListPage() {
                     return (
                       <div
                         key={item._id}
-                        onClick={() => setSelectedModule(item)}
+                        onClick={() => handleModuleSelection(item)}
                         className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-500" />
@@ -1492,7 +1492,7 @@ export default function ModuleListPage() {
                     return (
                       <div
                         key={item._id}
-                        onClick={() => setSelectedModule(item)}
+                        onClick={() => handleModuleSelection(item)}
                         className="group relative bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-amber-300 transition-all duration-300 flex items-center gap-5 cursor-pointer col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4"
                       >
                         {/* Left Icon */}
