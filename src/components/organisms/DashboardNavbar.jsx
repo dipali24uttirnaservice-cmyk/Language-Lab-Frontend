@@ -102,19 +102,20 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   }, []);
 
   // ─── Auto-close sidebar on content pages ─────────────────────────────────
-  useEffect(() => {
-    const autoClose =
-      pathname.startsWith("/dashboard/video") ||
-      pathname.startsWith("/dashboard/audio") ||
-      pathname.startsWith("/dashboard/text") ||
-      pathname.startsWith("/dashboard/exercise") ||
-      pathname.startsWith("/dashboard/vocabulary") ||
-      pathname.startsWith("/dashboard/module/practice-quations");
+useEffect(() => {
+  const autoClose =
+    pathname.startsWith("/dashboard/video") ||
+    pathname.startsWith("/dashboard/audio") ||
+    pathname.startsWith("/dashboard/text") ||
+    pathname.startsWith("/dashboard/exercise") ||
+    pathname.startsWith("/dashboard/vocabulary") ||
+    pathname.startsWith("/dashboard/module/practice-quations") || // Removed the ; here
+    pathname.startsWith("/dashboard/topics"); // Correctly chained with ||
 
-    if (autoClose) {
-      setIsOpen(false);
-    }
-  }, [pathname, setIsOpen]);
+  if (autoClose) {
+    setIsOpen(false);
+  }
+}, [pathname, setIsOpen]);
 
   // ─── Load student data from cookie ───────────────────────────────────────
   useEffect(() => {
