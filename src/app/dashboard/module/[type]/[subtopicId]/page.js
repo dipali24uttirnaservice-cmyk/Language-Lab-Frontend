@@ -18,6 +18,9 @@ import {
   RotateCcw,
   Sparkles,
   ChevronRight,
+  Maximize2,
+  X,
+   Minimize2
 } from "lucide-react";
 import { moduleApi } from "@/services/topic/topicApi";
 
@@ -87,6 +90,45 @@ const TYPE_ACCENT = {
 
 const getAccent = (type) => TYPE_ACCENT[type] || TYPE_ACCENT.video;
 
+function useFullscreen(ref) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleChange);
+    return () => document.removeEventListener("fullscreenchange", handleChange);
+  }, []);
+
+  const enter = () => ref.current?.requestFullscreen?.();
+  const exit = () => document.fullscreenElement && document.exitFullscreen();
+
+  return { isFullscreen, enter, exit };
+}
+
+function FullscreenButton({ isFullscreen, onEnter, onExit }) {
+  if (isFullscreen) {
+    return (
+      <button
+        onClick={onExit}
+        className="fixed top-4 right-4 z-[100] h-10 w-10 rounded-full bg-slate-900/80 text-white flex items-center justify-center hover:bg-slate-900 transition shadow-lg backdrop-blur-sm"
+        title="Exit Fullscreen"
+      >
+        <X size={18} />
+      </button>
+    );
+  }
+  return (
+    <button
+      onClick={onEnter}
+      className="h-9 w-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0"
+      title="View Fullscreen"
+    >
+      <Maximize2 size={16} />
+    </button>
+  );
+}
+
+// Builds the exercise URL safely.
 // Builds the exercise URL safely. (The original inline template string had
 // literal newlines/indentation baked into the query string, producing a
 // broken URL — this fixes that and removes four copies of duplicated logic.)
@@ -121,11 +163,10 @@ function ContentTypeTabs({ tabs, activeTab, onChange }) {
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
-              isActive
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${isActive
                 ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 -translate-y-0.5"
                 : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
-            }`}
+              }`}
           >
             <Icon size={14} />
             {tab.label}
@@ -142,11 +183,10 @@ function PrevNextNav({ previousModule, nextModule, currentIndex, total, onNaviga
       <button
         disabled={!previousModule}
         onClick={() => previousModule && onNavigate(previousModule)}
-        className={`px-5 py-3 rounded-xl font-semibold transition ${
-          previousModule
+        className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
             ? "bg-slate-900 text-white hover:bg-slate-800"
             : "bg-slate-100 text-slate-400 cursor-not-allowed"
-        }`}
+          }`}
       >
         ← Previous
       </button>
@@ -158,9 +198,8 @@ function PrevNextNav({ previousModule, nextModule, currentIndex, total, onNaviga
       <button
         disabled={!nextModule}
         onClick={() => nextModule && onNavigate(nextModule)}
-        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${
-          nextModule ? `${accent.solid} ${accent.solidHover}` : "bg-slate-100 text-slate-400 cursor-not-allowed"
-        }`}
+        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${nextModule ? `${accent.solid} ${accent.solidHover}` : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          }`}
       >
         Next →
       </button>
@@ -244,14 +283,12 @@ function RelatedQueueList({ title, icon: Icon, items, activeId, onSelect, accent
               <button
                 key={item._id}
                 onClick={() => onSelect(item)}
-                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-                  isActive ? `${accent.bg} ${accent.border}` : "hover:bg-slate-50 border-transparent"
-                }`}
+                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isActive ? `${accent.bg} ${accent.border}` : "hover:bg-slate-50 border-transparent"
+                  }`}
               >
                 <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    isActive ? `${accent.solid} text-white` : "bg-slate-100 text-slate-500"
-                  }`}
+                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${isActive ? `${accent.solid} text-white` : "bg-slate-100 text-slate-500"
+                    }`}
                 >
                   <Icon size={18} />
                 </div>
@@ -666,88 +703,119 @@ function AudioDetail({
   searchParams,
 }) {
   const accent = getAccent("audio");
-
+  const containerRef = React.useRef(null);
+  const { isFullscreen, enter, exit } = useFullscreen(containerRef);
   return (
     <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
       <BackToLessonsButton onBack={onBack} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6">
-            <div>
-              <div className="flex flex-wrap gap-2 items-center mb-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm flex items-center gap-1 ${accent.bg} ${accent.text} ${accent.border}`}>
-                  <Headphones size={12} /> {accent.label}
-                </span>
-                {selectedModule.audio?.language && (
-                  <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-                    {selectedModule.audio.language}
-                  </span>
-                )}
-                {selectedModule.audio?.speed && (
-                  <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-                    Speed: {selectedModule.audio.speed}
-                  </span>
-                )}
-              </div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-                {selectedModule.title}
-              </h1>
-              <div
-                className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
-              />
-            </div>
+          <div
+            ref={containerRef}
+            className={`bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6 ${isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
+              }`}
+          >
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-3 gap-3">
+                  {/* Left Side - Badges */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm flex items-center gap-1 ${accent.bg} ${accent.text} ${accent.border}`}
+                    >
+                      <Headphones size={12} />
+                      {accent.label}
+                    </span>
 
-            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
-              <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 text-white rounded-lg flex items-center justify-center shadow-md ${accent.solid}`}>
-                  <Volume2 size={20} />
+                    {selectedModule.audio?.language && (
+                      <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+                        {selectedModule.audio.language}
+                      </span>
+                    )}
+
+                    {selectedModule.audio?.speed && (
+                      <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+                        Speed: {selectedModule.audio.speed}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Right Side - Fullscreen */}
+               <div className="flex-shrink-0">
+  <button
+    onClick={isFullscreen ? exit : enter}
+    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
+    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+  >
+    {isFullscreen ? (
+      <Minimize2 size={18} strokeWidth={2.2} />
+    ) : (
+      <Maximize2 size={18} strokeWidth={2.2} />
+    )}
+  </button>
+</div>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                    <User size={12} className="text-slate-400" />
-                    {selectedModule.audio?.speaker_name || "Audio Resource Narration"}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    Duration:{" "}
-                    {selectedModule.audio?.duration_sec
-                      ? `${Math.floor(selectedModule.audio.duration_sec / 60)}m ${selectedModule.audio.duration_sec % 60}s`
-                      : "Dynamic"}
-                  </p>
-                </div>
-              </div>
-              <audio
-                key={selectedModule._id}
-                src={selectedModule.audio?.url}
-                controls
-                autoPlay
-                className="w-full sm:w-72 md:w-96 focus:outline-none"
-              />
-            </div>
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                  {selectedModule.title}
+                </h1>
 
-            <hr className="border-slate-100" />
-
-            {selectedModule.audio?.transcript && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <FileText size={14} /> Audio Lesson Transcript
-                </h3>
                 <div
-                  className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
-                  dangerouslySetInnerHTML={{ __html: selectedModule.audio.transcript }}
+                  className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
+                  dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
                 />
               </div>
-            )}
 
-            <PrevNextNav
-              previousModule={previousModule}
-              nextModule={nextModule}
-              currentIndex={currentModuleIndex}
-              total={currentModuleList.length}
-              onNavigate={onNavigate}
-              accent={accent}
-            />
+              <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 text-white rounded-lg flex items-center justify-center shadow-md ${accent.solid}`}>
+                    <Volume2 size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                      <User size={12} className="text-slate-400" />
+                      {selectedModule.audio?.speaker_name || "Audio Resource Narration"}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Duration:{" "}
+                      {selectedModule.audio?.duration_sec
+                        ? `${Math.floor(selectedModule.audio.duration_sec / 60)}m ${selectedModule.audio.duration_sec % 60}s`
+                        : "Dynamic"}
+                    </p>
+                  </div>
+                </div>
+                <audio
+                  key={selectedModule._id}
+                  src={selectedModule.audio?.url}
+                  controls
+                  autoPlay
+                  className="w-full sm:w-72 md:w-96 focus:outline-none"
+                />
+              </div>
+
+              <hr className="border-slate-100" />
+
+              {selectedModule.audio?.transcript && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <FileText size={14} /> Audio Lesson Transcript
+                  </h3>
+                  <div
+                    className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
+                    dangerouslySetInnerHTML={{ __html: selectedModule.audio.transcript }}
+                  />
+                </div>
+              )}
+
+              <PrevNextNav
+                previousModule={previousModule}
+                nextModule={nextModule}
+                currentIndex={currentModuleIndex}
+                total={currentModuleList.length}
+                onNavigate={onNavigate}
+                accent={accent}
+              />
+            </div>
           </div>
 
           <RelatedQueueList
@@ -785,66 +853,95 @@ function TextDetail({
   searchParams,
 }) {
   const accent = getAccent("text");
-
+  const containerRef = React.useRef(null);
+  const { isFullscreen, enter, exit } = useFullscreen(containerRef);
   return (
     <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
       <BackToLessonsButton onBack={onBack} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
-            <div>
-              <div className="flex flex-wrap gap-2 items-center mb-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}>
-                  {accent.label}
-                </span>
-                {selectedModule.content?.level && (
-                  <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-                    <GraduationCap size={12} /> Level {selectedModule.content.level}
-                  </span>
-                )}
-                {selectedModule.content?.read_time_min && (
-                  <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-                    <Clock size={12} /> {selectedModule.content.read_time_min} mins read
-                  </span>
-                )}
-              </div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-                {selectedModule.title}
-              </h1>
+          <div
+            ref={containerRef}
+            className={`bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6 ${isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
+              }`}
+          >
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
+             <div className="flex items-start justify-between gap-4 mb-3">
+  {/* Left Side */}
+  <div className="flex flex-wrap gap-2 items-center">
+    <span
+      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
+    >
+      {accent.label}
+    </span>
+
+    {selectedModule.content?.level && (
+      <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+        <GraduationCap size={12} />
+        Level {selectedModule.content.level}
+      </span>
+    )}
+
+    {selectedModule.content?.read_time_min && (
+      <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+        <Clock size={12} />
+        {selectedModule.content.read_time_min} mins read
+      </span>
+    )}
+  </div>
+
+  {/* Right Side */}
+  <button
+    onClick={isFullscreen ? exit : enter}
+    className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
+    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+  >
+    {isFullscreen ? (
+      <Minimize2 size={18} strokeWidth={2.2} />
+    ) : (
+      <Maximize2 size={18} strokeWidth={2.2} />
+    )}
+  </button>
+</div>
+
+<h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+  {selectedModule.title}
+</h1>
+
+<div
+  className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
+  dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+/>
+
+              <hr className="border-slate-100" />
+
               <div
-                className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+                className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
+                dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "" }}
+              />
+
+              <PrevNextNav
+                previousModule={previousModule}
+                nextModule={nextModule}
+                currentIndex={currentModuleIndex}
+                total={currentModuleList.length}
+                onNavigate={onNavigate}
+                accent={accent}
+              />
+
+              <RelatedQueueList
+                title="Related Reading Lessons"
+                icon={BookOpen}
+                items={textModules}
+                activeId={selectedModule._id}
+                onSelect={onNavigate}
+                accent={accent}
+                getSubtitle={(item) =>
+                  item.content?.read_time_min ? `${item.content.read_time_min} min read` : "Reading Lesson"
+                }
               />
             </div>
-
-            <hr className="border-slate-100" />
-
-            <div
-              className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "" }}
-            />
-
-            <PrevNextNav
-              previousModule={previousModule}
-              nextModule={nextModule}
-              currentIndex={currentModuleIndex}
-              total={currentModuleList.length}
-              onNavigate={onNavigate}
-              accent={accent}
-            />
-
-            <RelatedQueueList
-              title="Related Reading Lessons"
-              icon={BookOpen}
-              items={textModules}
-              activeId={selectedModule._id}
-              onSelect={onNavigate}
-              accent={accent}
-              getSubtitle={(item) =>
-                item.content?.read_time_min ? `${item.content.read_time_min} min read` : "Reading Lesson"
-              }
-            />
           </div>
         </div>
 
@@ -873,79 +970,143 @@ function VocabularyDetail({
 }) {
   const accent = getAccent("vocabulary");
   const related = vocabularyModules.filter((item) => item._id !== selectedModule._id);
+  const containerRef = React.useRef(null);
+  const { isFullscreen, enter, exit } = useFullscreen(containerRef);
 
   return (
     <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
       <BackToLessonsButton onBack={onBack} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm mb-3 ${accent.bg} ${accent.text} ${accent.border}`}>
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+  <div className="lg:col-span-8 space-y-6">
+    <div
+      ref={containerRef}
+      className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm ${
+        isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
+      }`}
+    >
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-4">
+          {/* Left */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
+            >
               {accent.label}
             </span>
-            <h2 className="text-2xl font-black text-slate-900 mb-2">{selectedModule.title}</h2>
-            <div
-              className="text-slate-600 mb-6 prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
-            />
-
-            <div className="grid grid-cols-1 gap-4">
-              {selectedModule.words?.map((wordObj, i) => (
-                <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <h4 className="text-lg font-bold text-amber-700">{wordObj.word}</h4>
-                  <p className="text-xs text-slate-500 italic mb-2">
-                    /{wordObj.pronunciation}/ • {wordObj.part_of_speech}
-                  </p>
-                  <p className="text-sm text-slate-700 mb-2">{wordObj.meaning}</p>
-                  <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
-                    <span className="font-bold text-slate-800">Example: </span>
-                    {wordObj.example}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-6 mt-2">
-              <PrevNextNav
-                previousModule={previousModule}
-                nextModule={nextModule}
-                currentIndex={currentModuleIndex}
-                total={currentModuleList.length}
-                onNavigate={onNavigate}
-                accent={accent}
-              />
-            </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="text-orange-500" size={16} /> More Vocabulary Lessons
-              </h3>
-              <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
-                {vocabularyModules.length} Lessons
-              </span>
-            </div>
-            <RelatedQueueList
-              title="Vocabulary Queue"
-              icon={BookOpen}
-              items={related}
-              activeId={selectedModule._id}
-              onSelect={onNavigate}
-              accent={accent}
-              getSubtitle={(item) => `${item.words?.length || 0} Words • ${item.questions?.length || 0} Questions`}
-            />
-          </div>
+          {/* Right */}
+          <button
+            onClick={isFullscreen ? exit : enter}
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          >
+            {isFullscreen ? (
+              <Minimize2 size={18} strokeWidth={2.2} />
+            ) : (
+              <Maximize2 size={18} strokeWidth={2.2} />
+            )}
+          </button>
         </div>
 
-        <div className="lg:col-span-4">
-          <LessonActionsPanel
-            onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-            onExercise={() => router.push(buildExerciseUrl(selectedModule, searchParams))}
+        {/* Title */}
+        <h2 className="text-2xl font-black text-slate-900 mb-2">
+          {selectedModule.title}
+        </h2>
+
+        {/* Description */}
+        <div
+          className="text-slate-600 mb-6 prose prose-slate max-w-none"
+          dangerouslySetInnerHTML={{
+            __html: selectedModule.description || "",
+          }}
+        />
+
+        {/* Vocabulary */}
+        <div className="grid grid-cols-1 gap-4">
+          {selectedModule.words?.map((wordObj, i) => (
+            <div
+              key={i}
+              className="p-4 bg-slate-50 border border-slate-200 rounded-xl"
+            >
+              <h4 className="text-lg font-bold text-amber-700">
+                {wordObj.word}
+              </h4>
+
+              <p className="text-xs text-slate-500 italic mb-2">
+                /{wordObj.pronunciation}/ • {wordObj.part_of_speech}
+              </p>
+
+              <p className="text-sm text-slate-700 mb-2">
+                {wordObj.meaning}
+              </p>
+
+              <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
+                <span className="font-bold text-slate-800">
+                  Example:
+                </span>{" "}
+                {wordObj.example}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Navigation */}
+        <div className="pt-6 mt-2">
+          <PrevNextNav
+            previousModule={previousModule}
+            nextModule={nextModule}
+            currentIndex={currentModuleIndex}
+            total={currentModuleList.length}
+            onNavigate={onNavigate}
+            accent={accent}
           />
         </div>
       </div>
+    </div>
+
+    {/* More Lessons */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <BookOpen className="text-orange-500" size={16} />
+          More Vocabulary Lessons
+        </h3>
+
+        <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
+          {vocabularyModules.length} Lessons
+        </span>
+      </div>
+
+      <RelatedQueueList
+        title="Vocabulary Queue"
+        icon={BookOpen}
+        items={related}
+        activeId={selectedModule._id}
+        onSelect={onNavigate}
+        accent={accent}
+        getSubtitle={(item) =>
+          `${item.words?.length || 0} Words • ${
+            item.questions?.length || 0
+          } Questions`
+        }
+      />
+    </div>
+  </div>
+
+  {/* Right Panel */}
+  <div className="lg:col-span-4">
+    <LessonActionsPanel
+      onPractice={() => router.push(buildPracticeUrl(selectedModule))}
+      onExercise={() =>
+        router.push(buildExerciseUrl(selectedModule, searchParams))
+      }
+    />
+  </div>
+</div>
     </div>
   );
 }
@@ -1019,9 +1180,8 @@ function QuizResults({ resultData, onDone }) {
 
         <div className="mt-8 flex justify-center">
           <div
-            className={`px-6 py-3 rounded-full text-sm font-bold ${
-              resultData?.is_passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-            }`}
+            className={`px-6 py-3 rounded-full text-sm font-bold ${resultData?.is_passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+              }`}
           >
             {resultData?.is_passed ? "🎉 Passed Successfully" : "📖 Keep Practicing"}
           </div>
@@ -1060,9 +1220,8 @@ function ActiveQuiz({ selectedModule, currentQuestionIndex, setCurrentQuestionIn
             <button
               key={i}
               onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                userAnswers[currentQuestionIndex] === opt ? "border-orange-500 bg-orange-50" : "border-slate-200"
-              }`}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${userAnswers[currentQuestionIndex] === opt ? "border-orange-500 bg-orange-50" : "border-slate-200"
+                }`}
             >
               {opt}
             </button>
