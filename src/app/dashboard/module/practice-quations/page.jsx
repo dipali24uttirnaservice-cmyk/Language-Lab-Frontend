@@ -130,7 +130,7 @@ const resetPractice = () => {
             </div>
           )}
         </div>
-        
+
         <div className={`text-sm truncate font-medium ${isActive ? "text-white" : "text-slate-700"}`}>
           {q.question_text}
         </div>
@@ -148,7 +148,7 @@ const resetPractice = () => {
   <ArrowLeft size={20} />
   <span>Back</span>
 </button>
-<div className="max-w-2xl mx-auto relative overflow-hidden rounded-3xl border border-orange-200 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.15)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_25px_70px_rgba(249,115,22,0.25)]">    
+<div className="max-w-2xl mx-auto relative overflow-hidden rounded-3xl border border-orange-200 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.15)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_25px_70px_rgba(249,115,22,0.25)]">
     {/* Question Header */}
     <div className="mb-8">
       <span className="text-orange-500 font-semibold text-sm uppercase tracking-wider">
@@ -182,7 +182,7 @@ const resetPractice = () => {
           type="text"
           disabled={isAnswered}
           value={selectedOptions[current] || ""}
-          onChange={(e) => 
+          onChange={(e) =>
             setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))}
           className="border-2 border-slate-200 rounded-xl p-4 w-full focus:border-orange-500 outline-none transition-colors"
           placeholder="Type your answer here..."

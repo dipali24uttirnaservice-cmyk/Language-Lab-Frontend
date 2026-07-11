@@ -87,14 +87,20 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
     };
   }, []);
 
-  const searchParams = useSearchParams();
-  const courseId = searchParams.get("courseId");
+  // Query params can end up as the literal text "null"/"undefined" when a
+  // caller interpolates a missing value into a URL template string — treat
+  // those the same as an absent param so they never render as a crumb.
+  const cleanParam = (value) =>
+    value && value !== "null" && value !== "undefined" ? value : null;
 
-  const courseName = searchParams.get("courseName");
-  const type = searchParams.get("type");
-  const topicName = searchParams.get("topicName");
-  const subTopicName = searchParams.get("subTopicName");
-  const lessonName = searchParams.get("lessonName");
+  const searchParams = useSearchParams();
+  const courseId = cleanParam(searchParams.get("courseId"));
+
+  const courseName = cleanParam(searchParams.get("courseName"));
+  const type = cleanParam(searchParams.get("type"));
+  const topicName = cleanParam(searchParams.get("topicName"));
+  const subTopicName = cleanParam(searchParams.get("subTopicName"));
+  const lessonName = cleanParam(searchParams.get("lessonName"));
 
   // ─── Mount guard (prevents hydration mismatch) ───────────────────────────
   useEffect(() => {
@@ -109,13 +115,20 @@ useEffect(() => {
     pathname.startsWith("/dashboard/text") ||
     pathname.startsWith("/dashboard/exercise") ||
     pathname.startsWith("/dashboard/vocabulary") ||
-    pathname.startsWith("/dashboard/module/practice-quations") || // Removed the ; here
-    pathname.startsWith("/dashboard/topics"); // Correctly chained with ||
+    pathname.startsWith("/dashboard/module") || // covers /dashboard/module/{type}/{subtopicId} lesson pages
+    pathname.startsWith("/dashboard/topics");
 
   if (autoClose) {
     setIsOpen(false);
   }
 }, [pathname, setIsOpen]);
+
+  // ─── Auto-open sidebar on the course overview page ───────────────────────
+  useEffect(() => {
+    if (pathname.startsWith("/dashboard/course")) {
+      setIsOpen(true);
+    }
+  }, [pathname, setIsOpen]);
 
   // ─── Load student data from cookie ───────────────────────────────────────
   useEffect(() => {
@@ -266,10 +279,13 @@ useEffect(() => {
       }
     }
 
-    // Final guard — remove duplicate labels (safety net)
+    // Final guard — remove true duplicates only (same label AND same link).
+    // Subtopic and lesson titles can legitimately share the same text
+    // (both are independently required fields), so matching on label alone
+    // would wrongly collapse two distinct hierarchy levels into one.
     const uniqueCrumbs = crumbs.filter(
       (crumb, index, self) =>
-        index === self.findIndex((t) => t.label === crumb.label)
+        index === self.findIndex((t) => t.label === crumb.label && t.href === crumb.href)
     );
 
     return uniqueCrumbs;

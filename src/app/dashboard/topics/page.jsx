@@ -195,18 +195,18 @@ return (
     
 {/* Header Section */}
 <div className="flex items-center justify-between mb-8">
-  {/* Left: Back Button */}
-  <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.96 }}
-    onClick={() => router.back()}
-    className="h-14 w-14 rounded-2xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-lg text-orange-600 hover:bg-orange-50 transition-all shrink-0"
-  >
-    <ArrowLeft size={22} />
-  </motion.button>
+  {/* Left: Back Button + Course Name */}
+  <div className="flex items-center gap-4 min-w-0">
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.96 }}
+      onClick={() => router.back()}
+      className="h-14 w-14 rounded-2xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-lg text-orange-600 hover:bg-orange-50 transition-all shrink-0"
+    >
+      <ArrowLeft size={22} />
+    </motion.button>
 
-   <div className="flex-1 min-w-0 px-4">
-    <h1 className="text-lg md:text-xl font-black text-slate-800 truncate text-center">
+    <h1 className="text-lg md:text-xl font-black text-slate-800 truncate">
       {courseName || "Course Details"}
     </h1>
   </div>
@@ -369,9 +369,9 @@ return (
        onClick={() => {
   const params = new URLSearchParams(searchParams.toString());
 
-  params.set("courseId", courseId);
-  params.set("courseName", courseName);
-  params.set("type", type);
+  if (courseId) params.set("courseId", courseId);
+  if (courseName) params.set("courseName", courseName);
+  if (type) params.set("type", type);
   params.set("topicName", topic.title);
 
   router.push(`/dashboard/topics/${topic._id}?${params.toString()}`);

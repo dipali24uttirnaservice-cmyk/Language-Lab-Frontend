@@ -270,8 +270,8 @@ export default function LearningModules({ courseId, courseName }) {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   const params = new URLSearchParams();
-                  params.set("courseId", courseId);
-                  params.set("courseName", courseName);
+                  if (courseId) params.set("courseId", courseId);
+                  if (courseName) params.set("courseName", courseName);
                   params.set("type", module.type);
                   router.push(`/dashboard/topics?${params.toString()}`);
                 }}

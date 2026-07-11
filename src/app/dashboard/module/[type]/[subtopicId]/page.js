@@ -1180,7 +1180,11 @@ export default function ModuleListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const type = params?.type;
+  // The [type] route segment can literally be the text "null" if a caller
+  // upstream interpolated a missing value into the URL — treat that as "no
+  // type selected" instead of querying the API for a "null" module type.
+  const rawType = params?.type;
+  const type = rawType && rawType !== "null" && rawType !== "undefined" ? rawType : null;
   const subtopicId = params?.subtopicId;
 
   const [selectedModule, setSelectedModule] = useState(null);
@@ -1241,6 +1245,11 @@ export default function ModuleListPage() {
 
   useEffect(() => {
     const fetchModules = async () => {
+      if (!type) {
+        setModules([]);
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         const res = await moduleApi.getModulesBySubtopic(type, subtopicId);

@@ -95,6 +95,24 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
     fetchCourses();
   }, []);
 
+  // Auto-expand "Learning Journey" whenever we're anywhere inside it,
+  // so the current course stays visible/highlighted in the accordion.
+  useEffect(() => {
+    const insideLearningJourney =
+      pathname.startsWith("/dashboard/course") ||
+      pathname.startsWith("/dashboard/topics") ||
+      pathname.startsWith("/dashboard/module") ||
+      pathname.startsWith("/dashboard/video") ||
+      pathname.startsWith("/dashboard/audio") ||
+      pathname.startsWith("/dashboard/text") ||
+      pathname.startsWith("/dashboard/exercise") ||
+      pathname.startsWith("/dashboard/vocabulary");
+
+    if (insideLearningJourney) {
+      setOpenLearning(true);
+    }
+  }, [pathname]);
+
   const fetchCourses = async () => {
     try {
       setLoadingCourses(true);

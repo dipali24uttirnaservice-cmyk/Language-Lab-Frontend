@@ -315,16 +315,19 @@ console.log("Type:", type);
   }}
   transition={{ duration: 0.25 }}
 onClick={() => {
+ if (!type) return;
+
  const params = new URLSearchParams(searchParams.toString());
 
 // Remove lesson because we're not on the lesson page yet
 params.delete("lessonName");
+params.delete("lessonId");
 
-params.set("courseId", courseId);
-params.set("courseName", courseName);
+if (courseId) params.set("courseId", courseId);
+if (courseName) params.set("courseName", courseName);
 params.set("type", type);
 params.set("topicId", topicId);
-params.set("topicName", topicName);
+if (topicName) params.set("topicName", topicName);
 
 params.set("subTopicId", subtopic._id);
 params.set("subTopicName", subtopic.title);
