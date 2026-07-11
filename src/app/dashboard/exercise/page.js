@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import {
@@ -13,6 +13,8 @@ import {
   Search,
   Target,
   Zap,
+  ChevronLeft 
+  
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -83,6 +85,89 @@ function QuestionDots({ total, current, answers }) {
           />
         );
       })}
+    </div>
+  );
+}
+
+
+
+function AttemptHistory({ attempts }) {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [attempts]);
+
+  if (!attempts || attempts.length === 0) return null;
+
+  const scroll = (dir) => {
+    scrollRef.current?.scrollBy({ 
+      left: dir === 'left' ? -320 : 320, 
+      behavior: 'smooth' 
+    });
+  };
+
+  return (
+    <div className="mt-8 relative px-2">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+          <Clock size={15} className="text-orange-400" />
+          Previous Attempts
+        </h4>
+      </div>
+
+      <div className="relative group">
+        {/* Navigation Arrows: Only show if there are more than 4 items */}
+        {attempts.length > 4 && (
+          <>
+            <button
+              onClick={() => scroll("left")}
+              className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </>
+        )}
+
+        <div
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
+        >
+          {attempts.map((attempt, i) => (
+            <motion.div
+              key={i}
+              className="flex-shrink-0 w-40 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-orange-200 transition-colors"
+            >
+              <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Attempt {i + 1}</p>
+              <div className="text-xl font-black text-slate-900">{attempt.score}/{attempt.max_score}</div>
+              <div className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                attempt.is_passed ? "text-emerald-700 bg-emerald-50" : "text-orange-700 bg-orange-50"
+              }`}>
+                {attempt.is_passed ? "Passed" : "Failed"}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -184,7 +269,7 @@ function ExerciseSidebar({ exercises, selectedExercise, onSelect, searchTerm, se
    INTRO / PRE-ASSESSMENT PANEL
    ========================================================================= */
 
-function IntroPanel({ selectedExercise, onStart }) {
+function IntroPanel({ selectedExercise, onStart, attempts }) {
   return (
     <motion.div
       key="intro"
@@ -195,6 +280,7 @@ function IntroPanel({ selectedExercise, onStart }) {
       className="space-y-6"
     >
       <div className="flex items-start gap-4">
+        {/* ... existing header content ... */}
         <div className="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-200">
           <Target size={26} />
         </div>
@@ -209,6 +295,7 @@ function IntroPanel({ selectedExercise, onStart }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
+        {/* ... existing stats ... */}
         <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
           <div className="flex items-center gap-2 text-orange-500 mb-1">
             <HelpCircle size={14} />
@@ -228,6 +315,8 @@ function IntroPanel({ selectedExercise, onStart }) {
           </p>
         </div>
       </div>
+
+  
 
       <div className="rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-5">
         <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2 text-sm">
@@ -257,6 +346,9 @@ function IntroPanel({ selectedExercise, onStart }) {
     </motion.div>
   );
 }
+
+
+
 
 /* =========================================================================
    ACTIVE QUIZ PANEL
@@ -460,17 +552,25 @@ export default function ExercisePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [resultData, setResultData] = useState(null);
+  const [attempts, setAttempts] = useState([]);
 
   useEffect(() => {
     fetchExercise();
   }, [subTopicId]);
 
   useEffect(() => {
-    setIsQuizActive(false);
-    setShowResults(false);
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-  }, [selectedExercise]);
+  setIsQuizActive(false);
+  setShowResults(false);
+  setCurrentQuestionIndex(0);
+  setUserAnswers({});
+  
+  // Fetch history whenever the selected exercise changes
+  if (selectedExercise?._id) {
+    moduleApi.getExerciseAttempts(selectedExercise._id)
+      .then(res => setAttempts(res.data?.data || []))
+      .catch(console.error);
+  }
+}, [selectedExercise]);
 
   const fetchExercise = async () => {
     try {
@@ -535,41 +635,53 @@ export default function ExercisePage() {
           </button>
         </div>
 
-        <div className="px-8 pb-16 pt-4">
-          <div className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
-            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
+<div className="px-8 pb-16 pt-4">
+  {/* Main Assessment Container */}
+  <div className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
+    <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
+    <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
 
-            <div className="relative">
-              <AnimatePresence mode="wait">
-                {!isQuizActive && !showResults ? (
-                  <IntroPanel
-                    key="intro-panel"
-                    selectedExercise={selectedExercise}
-                    onStart={() => setIsQuizActive(true)}
-                  />
-                ) : showResults ? (
-                  <ResultsPanel
-                    key="results-panel"
-                    resultData={resultData}
-                    onDone={() => router.back()}
-                  />
-                ) : (
-                  <QuizPanel
-                    key="quiz-panel"
-                    selectedExercise={selectedExercise}
-                    currentQuestionIndex={currentQuestionIndex}
-                    setCurrentQuestionIndex={setCurrentQuestionIndex}
-                    userAnswers={userAnswers}
-                    setUserAnswers={setUserAnswers}
-                    onSubmit={handleSubmit}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative">
+      <AnimatePresence mode="wait">
+        {!isQuizActive && !showResults ? (
+          <IntroPanel
+            key="intro-panel"
+            selectedExercise={selectedExercise}
+            attempts={attempts}
+            onStart={() => setIsQuizActive(true)}
+          />
+        ) : showResults ? (
+          <ResultsPanel
+            key="results-panel"
+            resultData={resultData}
+            onDone={() => router.back()}
+          />
+        ) : (
+          <QuizPanel
+            key="quiz-panel"
+            selectedExercise={selectedExercise}
+            currentQuestionIndex={currentQuestionIndex}
+            setCurrentQuestionIndex={setCurrentQuestionIndex}
+            userAnswers={userAnswers}
+            setUserAnswers={setUserAnswers}
+            onSubmit={handleSubmit}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  </div>
+
+  {/* Attempt History: Placed outside main box, but centered within the same max-width */}
+  {!isQuizActive && !showResults && attempts.length > 0 && (
+    <div className="max-w-2xl mx-auto">
+      <AttemptHistory attempts={attempts} />
+    </div>
+  )}
+</div>
+        
+      </div>
+      
+    </div>
+    
   );
 }
