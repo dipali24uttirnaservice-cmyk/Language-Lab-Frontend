@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { topicApi } from "@/services/topic/topicApi";
+import { progressApi } from "@/services/progress/progressApi";
 import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
@@ -34,21 +35,26 @@ const topicName = searchParams.get("topicName");
   console.log(type);
   const [loading, setLoading] = useState(true);
   const [topics, setTopics] = useState([]);
+  const [topicProgress, setTopicProgress] = useState({});
+  const [courseProgress, setCourseProgress] = useState(0);
 
 
 
 
 
   useEffect(() => {
-  if (!courseId) return;
+  if (!courseId) {
+    setLoading(false);
+    return;
+  }
 
   fetchTopics();
+  fetchCourseProgress();
 }, [courseId]);
 
 const fetchTopics = async () => {
   try {
     const response = await topicApi.getTopics(courseId);
-
     setTopics(response.data.data || []);
   } catch (error) {
     console.error(error);
@@ -57,10 +63,50 @@ const fetchTopics = async () => {
   }
 };
 
+// Each topic's card shows its real completion % (modules completed ÷ total
+// modules in that topic), and the header tile shows the course-wide %  —
+// both come from one call instead of the placeholder "0%" this page used to show.
+const fetchCourseProgress = async () => {
+  try {
+    const res = await progressApi.getCourseProgress(courseId);
+    const data = res?.data?.data;
+    const map = {};
+    (data?.topics || []).forEach((t) => {
+      map[t.topic_id] = t.percentage;
+    });
+    setTopicProgress(map);
+    setCourseProgress(data?.percentage ?? 0);
+  } catch (error) {
+    console.error("Failed to fetch course progress:", error);
+  }
+};
+
   if (loading) {
     return (
       <div className="h-[70vh] flex items-center justify-center">
         <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!courseId) {
+    return (
+      <div className="h-[70vh] flex flex-col items-center justify-center text-center gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+          <BookOpen size={28} />
+        </div>
+        <div>
+          <h2 className="text-lg font-black text-slate-800">No course selected</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Pick a course from your Learning Journey to see its topics.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg hover:scale-105 transition-all"
+        >
+          Go to Dashboard
+        </button>
       </div>
     );
   }
@@ -215,7 +261,11 @@ return (
     {[
       { label: "Topics", value: topics.length, icon: <BookOpen size={16} /> },
       { label: "Subtopics", value: topics.reduce((acc, item) => acc + item.subtopic_count, 0), icon: <Layers3 size={16} /> },
-      { label: "Progress", value: "0%", icon: "📈" }
+      {
+        label: "Progress",
+        value: `${courseProgress}%`,
+        icon: "📈",
+      }
     ].map((stat, i) => (
       <div 
         key={i} 
@@ -351,7 +401,7 @@ return (
 
               <span>Progress</span>
 
-              <span>0%</span>
+              <span>{topicProgress[topic._id] ?? 0}%</span>
 
             </div>
 
@@ -359,7 +409,7 @@ return (
 
               <motion.div
                 initial={{ width: 0 }}
-                whileInView={{ width: "0%" }}
+                whileInView={{ width: `${topicProgress[topic._id] ?? 0}%` }}
                 className={`h-full bg-gradient-to-r ${color}`}
               />
 

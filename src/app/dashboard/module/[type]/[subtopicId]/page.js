@@ -104,7 +104,7 @@ function buildExerciseUrl(selectedModule, searchParams) {
 
 function buildPracticeUrl(selectedModule) {
   return `/dashboard/module/practice-quations?data=${encodeURIComponent(
-    JSON.stringify(selectedModule)
+    JSON.stringify(selectedModule),
   )}`;
 }
 
@@ -137,7 +137,14 @@ function ContentTypeTabs({ tabs, activeTab, onChange }) {
   );
 }
 
-function PrevNextNav({ previousModule, nextModule, currentIndex, total, onNavigate, accent }) {
+function PrevNextNav({
+  previousModule,
+  nextModule,
+  currentIndex,
+  total,
+  onNavigate,
+  accent,
+}) {
   return (
     <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200">
       <button
@@ -160,7 +167,9 @@ function PrevNextNav({ previousModule, nextModule, currentIndex, total, onNaviga
         disabled={!nextModule}
         onClick={() => nextModule && onNavigate(nextModule)}
         className={`px-5 py-3 rounded-xl font-semibold text-white transition ${
-          nextModule ? `${accent.solid} ${accent.solidHover}` : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          nextModule
+            ? `${accent.solid} ${accent.solidHover}`
+            : "bg-slate-100 text-slate-400 cursor-not-allowed"
         }`}
       >
         Next →
@@ -181,10 +190,20 @@ function BackToLessonsButton({ onBack }) {
   );
 }
 
-function ActionCard({ icon: Icon, iconClass, title, description, buttonLabel, buttonClass, onClick }) {
+function ActionCard({
+  icon: Icon,
+  iconClass,
+  title,
+  description,
+  buttonLabel,
+  buttonClass,
+  onClick,
+}) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${iconClass}`}>
+      <div
+        className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${iconClass}`}
+      >
         <Icon size={26} />
       </div>
       <h3 className="text-xl font-bold text-slate-900">{title}</h3>
@@ -225,7 +244,15 @@ function LessonActionsPanel({ onPractice, onExercise }) {
   );
 }
 
-function RelatedQueueList({ title, icon: Icon, items, activeId, onSelect, accent, getSubtitle }) {
+function RelatedQueueList({
+  title,
+  icon: Icon,
+  items,
+  activeId,
+  onSelect,
+  accent,
+  getSubtitle,
+}) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xl">
       <div className="p-4 border-b border-slate-200 bg-white">
@@ -236,7 +263,9 @@ function RelatedQueueList({ title, icon: Icon, items, activeId, onSelect, accent
       </div>
 
       {items.length === 0 ? (
-        <p className="text-xs text-slate-400 px-4 py-6 text-center">No other lessons in this list yet.</p>
+        <p className="text-xs text-slate-400 px-4 py-6 text-center">
+          No other lessons in this list yet.
+        </p>
       ) : (
         <div className="max-h-[280px] overflow-y-auto p-3 space-y-2 custom-scrollbar">
           {items.map((item) => {
@@ -246,21 +275,29 @@ function RelatedQueueList({ title, icon: Icon, items, activeId, onSelect, accent
                 key={item._id}
                 onClick={() => onSelect(item)}
                 className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-                  isActive ? `${accent.bg} ${accent.border}` : "hover:bg-slate-50 border-transparent"
+                  isActive
+                    ? `${accent.bg} ${accent.border}`
+                    : "hover:bg-slate-50 border-transparent"
                 }`}
               >
                 <div
                   className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    isActive ? `${accent.solid} text-white` : "bg-slate-100 text-slate-500"
+                    isActive
+                      ? `${accent.solid} text-white`
+                      : "bg-slate-100 text-slate-500"
                   }`}
                 >
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className={`text-xs font-bold truncate ${isActive ? accent.text : "text-slate-800"}`}>
+                  <h4
+                    className={`text-xs font-bold truncate ${isActive ? accent.text : "text-slate-800"}`}
+                  >
                     {item.title}
                   </h4>
-                  <span className="text-[10px] text-slate-400">{getSubtitle ? getSubtitle(item) : ""}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {getSubtitle ? getSubtitle(item) : ""}
+                  </span>
                 </div>
               </button>
             );
@@ -275,20 +312,33 @@ function RelatedQueueList({ title, icon: Icon, items, activeId, onSelect, accent
    GRID / LIST CARDS  (unfiltered lesson grid view)
    ========================================================================= */
 
-function WideRow({ onClick, iconBg, icon, eyebrow, eyebrowClass, title, middle, right }) {
+function WideRow({
+  onClick,
+  iconBg,
+  icon,
+  eyebrow,
+  eyebrowClass,
+  title,
+  middle,
+  right,
+}) {
   return (
     <div
       onClick={onClick}
       className="group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 cursor-pointer col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4"
     >
-      <div className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md relative overflow-hidden transition-all duration-300 ${iconBg}`}>
+      <div
+        className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md relative overflow-hidden transition-all duration-300 ${iconBg}`}
+      >
         {icon}
       </div>
 
       <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
         <div className="md:col-span-6 space-y-0.5">
           <div className="flex items-center gap-2">
-            <span className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded border ${eyebrowClass}`}>
+            <span
+              className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded border ${eyebrowClass}`}
+            >
               {eyebrow}
             </span>
           </div>
@@ -297,8 +347,12 @@ function WideRow({ onClick, iconBg, icon, eyebrow, eyebrowClass, title, middle, 
           </h3>
         </div>
 
-        {middle && <div className="hidden md:block md:col-span-4">{middle}</div>}
-        <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4">{right}</div>
+        {middle && (
+          <div className="hidden md:block md:col-span-4">{middle}</div>
+        )}
+        <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4">
+          {right}
+        </div>
       </div>
     </div>
   );
@@ -309,23 +363,37 @@ function ExerciseRow({ item, onSelect }) {
     <WideRow
       onClick={() => onSelect(item)}
       iconBg="bg-gradient-to-br from-indigo-950 to-slate-900 group-hover:from-orange-500 group-hover:to-orange-600"
-      icon={<Award className="z-10 group-hover:scale-110 transition-transform text-orange-400 group-hover:text-white" size={22} />}
-      eyebrow={item.exercise_type === "mcq" ? "Quiz Assessment" : "Fill In Blanks"}
+      icon={
+        <Award
+          className="z-10 group-hover:scale-110 transition-transform text-orange-400 group-hover:text-white"
+          size={22}
+        />
+      }
+      eyebrow={
+        item.exercise_type === "mcq" ? "Quiz Assessment" : "Fill In Blanks"
+      }
       eyebrowClass="bg-indigo-50 text-indigo-600 border-indigo-100"
       title={item.title}
       middle={
         <p className="text-xs text-slate-400 font-medium truncate">
-          {item.max_attempts || 5} attempt{(item.max_attempts || 5) === 1 ? "" : "s"} allowed · Difficulty: {item.difficulty || "medium"}
+          {item.max_attempts || 5} attempt
+          {(item.max_attempts || 5) === 1 ? "" : "s"} allowed · Difficulty:{" "}
+          {item.difficulty || "medium"}
         </p>
       }
       right={
         <>
           <div className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
             <HelpCircle size={12} className="text-indigo-500" />
-            <span>{item.total_marks ? `${item.total_marks} Pts` : "Practice"}</span>
+            <span>
+              {item.total_marks ? `${item.total_marks} Pts` : "Practice"}
+            </span>
           </div>
           <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
-            <RotateCcw className="group-hover:rotate-45 transition-transform" size={12} />
+            <RotateCcw
+              className="group-hover:rotate-45 transition-transform"
+              size={12}
+            />
           </div>
         </>
       }
@@ -338,7 +406,12 @@ function AudioRow({ item, onSelect }) {
     <WideRow
       onClick={() => onSelect(item)}
       iconBg="bg-gradient-to-br from-slate-900 to-slate-800 group-hover:from-orange-500 group-hover:to-orange-600"
-      icon={<Headphones className="z-10 group-hover:scale-110 transition-transform text-orange-400 group-hover:text-white" size={22} />}
+      icon={
+        <Headphones
+          className="z-10 group-hover:scale-110 transition-transform text-orange-400 group-hover:text-white"
+          size={22}
+        />
+      }
       eyebrow="Audio Track"
       eyebrowClass="bg-orange-50 text-orange-600 border-orange-100"
       title={item.title}
@@ -350,7 +423,9 @@ function AudioRow({ item, onSelect }) {
         ) : (
           <div
             className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
-            dangerouslySetInnerHTML={{ __html: item.description || "No context description." }}
+            dangerouslySetInnerHTML={{
+              __html: item.description || "No context description.",
+            }}
           />
         )
       }
@@ -358,7 +433,11 @@ function AudioRow({ item, onSelect }) {
         <>
           <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
             <Clock size={12} className="text-slate-400" />
-            <span>{item.audio?.duration_sec ? `${Math.floor(item.audio.duration_sec / 60)}m` : "Listen"}</span>
+            <span>
+              {item.audio?.duration_sec
+                ? `${Math.floor(item.audio.duration_sec / 60)}m`
+                : "Listen"}
+            </span>
           </div>
           <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
             <Play className="fill-current ml-0.5" size={12} />
@@ -400,13 +479,17 @@ function TextCard({ item, onSelect }) {
 
       <div
         className="text-xs text-slate-500 line-clamp-3 leading-relaxed flex-1 mt-1 prose prose-slate"
-        dangerouslySetInnerHTML={{ __html: item.description || "No description available." }}
+        dangerouslySetInnerHTML={{
+          __html: item.description || "No description available.",
+        }}
       />
 
       <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-medium text-slate-400">
         <span className="flex items-center gap-1.5">
           <Clock size={14} />
-          {item.content?.read_time_min ? `${item.content.read_time_min}m read` : "Quick read"}
+          {item.content?.read_time_min
+            ? `${item.content.read_time_min}m read`
+            : "Quick read"}
         </span>
         <span className="text-sky-500 font-bold group-hover:underline flex items-center gap-1">
           Read Document &rarr;
@@ -463,7 +546,8 @@ function VocabularyRow({ item, onSelect }) {
 }
 
 function VideoCard({ item, type, onSelect }) {
-  const thumbnailSource = item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
+  const thumbnailSource =
+    item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
 
   return (
     <div
@@ -493,7 +577,10 @@ function VideoCard({ item, type, onSelect }) {
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30">
           <div className="h-12 w-12 rounded-full bg-white/90 text-slate-900 group-hover:bg-orange-500 group-hover:text-white flex items-center justify-center shadow-md transform transition-all duration-300 group-hover:scale-110">
-            <Play className="fill-current ml-0.5 transition-transform" size={20} />
+            <Play
+              className="fill-current ml-0.5 transition-transform"
+              size={20}
+            />
           </div>
         </div>
 
@@ -515,7 +602,9 @@ function VideoCard({ item, type, onSelect }) {
           </h3>
           <div
             className="text-xs text-slate-500 line-clamp-2 leading-relaxed prose prose-slate"
-            dangerouslySetInnerHTML={{ __html: item.description || "No description available." }}
+            dangerouslySetInnerHTML={{
+              __html: item.description || "No description available.",
+            }}
           />
         </div>
 
@@ -551,7 +640,9 @@ function VideoDetail({
   searchParams,
 }) {
   const accent = getAccent("video");
-  const relatedVideos = videoModules.filter((m) => m._id !== selectedModule._id);
+  const relatedVideos = videoModules.filter(
+    (m) => m._id !== selectedModule._id,
+  );
 
   return (
     <div className="max-w-7xl mx-auto animate-fade-in space-y-8">
@@ -572,10 +663,14 @@ function VideoDetail({
           </div>
 
           <div className="space-y-5">
-            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${accent.bg} ${accent.text} ${accent.border}`}>
+            <span
+              className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${accent.bg} ${accent.text} ${accent.border}`}
+            >
               {accent.label}
             </span>
-            <h1 className="text-2xl font-extrabold text-slate-900">{selectedModule.title}</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900">
+              {selectedModule.title}
+            </h1>
 
             <PrevNextNav
               previousModule={previousModule}
@@ -591,14 +686,18 @@ function VideoDetail({
         <div className="lg:col-span-4">
           <LessonActionsPanel
             onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-            onExercise={() => router.push(buildExerciseUrl(selectedModule, searchParams))}
+            onExercise={() =>
+              router.push(buildExerciseUrl(selectedModule, searchParams))
+            }
           />
         </div>
       </div>
 
       {relatedVideos.length > 0 && (
         <div>
-          <h3 className="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">More Lessons</h3>
+          <h3 className="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">
+            More Lessons
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {relatedVideos.map((item) => (
               <button
@@ -629,7 +728,10 @@ function VideoDetail({
 
                   <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition">
                     <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                      <Play className="fill-current ml-0.5 text-slate-900" size={18} />
+                      <Play
+                        className="fill-current ml-0.5 text-slate-900"
+                        size={18}
+                      />
                     </div>
                   </div>
 
@@ -638,7 +740,9 @@ function VideoDetail({
                   </div>
 
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-0.5 rounded text-[9px]">
-                    {item.video?.duration_sec ? `${Math.floor(item.video.duration_sec / 60)}m` : item.duration || "5m"}
+                    {item.video?.duration_sec
+                      ? `${Math.floor(item.video.duration_sec / 60)}m`
+                      : item.duration || "5m"}
                   </div>
                 </div>
 
@@ -680,7 +784,9 @@ function AudioDetail({
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6">
             <div>
               <div className="flex flex-wrap gap-2 items-center mb-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm flex items-center gap-1 ${accent.bg} ${accent.text} ${accent.border}`}>
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm flex items-center gap-1 ${accent.bg} ${accent.text} ${accent.border}`}
+                >
                   <Headphones size={12} /> {accent.label}
                 </span>
                 {selectedModule.audio?.language && (
@@ -699,19 +805,24 @@ function AudioDetail({
               </h1>
               <div
                 className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+                dangerouslySetInnerHTML={{
+                  __html: selectedModule.description || "",
+                }}
               />
             </div>
 
             <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 text-white rounded-lg flex items-center justify-center shadow-md ${accent.solid}`}>
+                <div
+                  className={`h-10 w-10 text-white rounded-lg flex items-center justify-center shadow-md ${accent.solid}`}
+                >
                   <Volume2 size={20} />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-700 flex items-center gap-1">
                     <User size={12} className="text-slate-400" />
-                    {selectedModule.audio?.speaker_name || "Audio Resource Narration"}
+                    {selectedModule.audio?.speaker_name ||
+                      "Audio Resource Narration"}
                   </p>
                   <p className="text-[10px] text-slate-400 font-medium">
                     Duration:{" "}
@@ -740,7 +851,9 @@ function AudioDetail({
                 </h3>
                 <div
                   className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
-                  dangerouslySetInnerHTML={{ __html: selectedModule.audio.transcript }}
+                  dangerouslySetInnerHTML={{
+                    __html: selectedModule.audio.transcript,
+                  }}
                 />
               </div>
             )}
@@ -762,14 +875,20 @@ function AudioDetail({
             activeId={selectedModule._id}
             onSelect={onNavigate}
             accent={accent}
-            getSubtitle={(item) => (item.audio?.duration_sec ? `${Math.floor(item.audio.duration_sec / 60)}m` : "Audio")}
+            getSubtitle={(item) =>
+              item.audio?.duration_sec
+                ? `${Math.floor(item.audio.duration_sec / 60)}m`
+                : "Audio"
+            }
           />
         </div>
 
         <div className="lg:col-span-4">
           <LessonActionsPanel
             onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-            onExercise={() => router.push(buildExerciseUrl(selectedModule, searchParams))}
+            onExercise={() =>
+              router.push(buildExerciseUrl(selectedModule, searchParams))
+            }
           />
         </div>
       </div>
@@ -800,17 +919,21 @@ function TextDetail({
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
             <div>
               <div className="flex flex-wrap gap-2 items-center mb-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}>
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
+                >
                   {accent.label}
                 </span>
                 {selectedModule.content?.level && (
                   <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-                    <GraduationCap size={12} /> Level {selectedModule.content.level}
+                    <GraduationCap size={12} /> Level{" "}
+                    {selectedModule.content.level}
                   </span>
                 )}
                 {selectedModule.content?.read_time_min && (
                   <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-                    <Clock size={12} /> {selectedModule.content.read_time_min} mins read
+                    <Clock size={12} /> {selectedModule.content.read_time_min}{" "}
+                    mins read
                   </span>
                 )}
               </div>
@@ -819,7 +942,9 @@ function TextDetail({
               </h1>
               <div
                 className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+                dangerouslySetInnerHTML={{
+                  __html: selectedModule.description || "",
+                }}
               />
             </div>
 
@@ -827,7 +952,9 @@ function TextDetail({
 
             <div
               className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "" }}
+              dangerouslySetInnerHTML={{
+                __html: selectedModule.content?.body || "",
+              }}
             />
 
             <PrevNextNav
@@ -847,7 +974,9 @@ function TextDetail({
               onSelect={onNavigate}
               accent={accent}
               getSubtitle={(item) =>
-                item.content?.read_time_min ? `${item.content.read_time_min} min read` : "Reading Lesson"
+                item.content?.read_time_min
+                  ? `${item.content.read_time_min} min read`
+                  : "Reading Lesson"
               }
             />
           </div>
@@ -856,7 +985,9 @@ function TextDetail({
         <div className="lg:col-span-4">
           <LessonActionsPanel
             onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-            onExercise={() => router.push(buildExerciseUrl(selectedModule, searchParams))}
+            onExercise={() =>
+              router.push(buildExerciseUrl(selectedModule, searchParams))
+            }
           />
         </div>
       </div>
@@ -877,7 +1008,9 @@ function VocabularyDetail({
   searchParams,
 }) {
   const accent = getAccent("vocabulary");
-  const related = vocabularyModules.filter((item) => item._id !== selectedModule._id);
+  const related = vocabularyModules.filter(
+    (item) => item._id !== selectedModule._id,
+  );
 
   return (
     <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
@@ -886,23 +1019,36 @@ function VocabularyDetail({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm mb-3 ${accent.bg} ${accent.text} ${accent.border}`}>
+            <span
+              className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm mb-3 ${accent.bg} ${accent.text} ${accent.border}`}
+            >
               {accent.label}
             </span>
-            <h2 className="text-2xl font-black text-slate-900 mb-2">{selectedModule.title}</h2>
+            <h2 className="text-2xl font-black text-slate-900 mb-2">
+              {selectedModule.title}
+            </h2>
             <div
               className="text-slate-600 mb-6 prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+              dangerouslySetInnerHTML={{
+                __html: selectedModule.description || "",
+              }}
             />
 
             <div className="grid grid-cols-1 gap-4">
               {selectedModule.words?.map((wordObj, i) => (
-                <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <h4 className="text-lg font-bold text-amber-700">{wordObj.word}</h4>
+                <div
+                  key={i}
+                  className="p-4 bg-slate-50 border border-slate-200 rounded-xl"
+                >
+                  <h4 className="text-lg font-bold text-amber-700">
+                    {wordObj.word}
+                  </h4>
                   <p className="text-xs text-slate-500 italic mb-2">
                     /{wordObj.pronunciation}/ • {wordObj.part_of_speech}
                   </p>
-                  <p className="text-sm text-slate-700 mb-2">{wordObj.meaning}</p>
+                  <p className="text-sm text-slate-700 mb-2">
+                    {wordObj.meaning}
+                  </p>
                   <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
                     <span className="font-bold text-slate-800">Example: </span>
                     {wordObj.example}
@@ -926,7 +1072,8 @@ function VocabularyDetail({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="text-orange-500" size={16} /> More Vocabulary Lessons
+                <BookOpen className="text-orange-500" size={16} /> More
+                Vocabulary Lessons
               </h3>
               <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
                 {vocabularyModules.length} Lessons
@@ -939,7 +1086,9 @@ function VocabularyDetail({
               activeId={selectedModule._id}
               onSelect={onNavigate}
               accent={accent}
-              getSubtitle={(item) => `${item.words?.length || 0} Words • ${item.questions?.length || 0} Questions`}
+              getSubtitle={(item) =>
+                `${item.words?.length || 0} Words • ${item.questions?.length || 0} Questions`
+              }
             />
           </div>
         </div>
@@ -947,7 +1096,9 @@ function VocabularyDetail({
         <div className="lg:col-span-4">
           <LessonActionsPanel
             onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-            onExercise={() => router.push(buildExerciseUrl(selectedModule, searchParams))}
+            onExercise={() =>
+              router.push(buildExerciseUrl(selectedModule, searchParams))
+            }
           />
         </div>
       </div>
@@ -963,11 +1114,16 @@ function PreAssessment({ selectedModule, onStart }) {
           <Sparkles className="text-orange-500" size={14} /> Evaluation Rules
         </h4>
         <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
-          {selectedModule.shuffle_questions && <li>Questions randomized dynamically.</li>}
-          {selectedModule.show_explanation && <li>Step-by-step resolution provided.</li>}
-          {!selectedModule.shuffle_questions && !selectedModule.show_explanation && (
-            <li>Answer each question, then submit to see your score.</li>
+          {selectedModule.shuffle_questions && (
+            <li>Questions randomized dynamically.</li>
           )}
+          {selectedModule.show_explanation && (
+            <li>Step-by-step resolution provided.</li>
+          )}
+          {!selectedModule.shuffle_questions &&
+            !selectedModule.show_explanation && (
+              <li>Answer each question, then submit to see your score.</li>
+            )}
         </ul>
       </div>
       <button
@@ -995,7 +1151,9 @@ function QuizResults({ resultData, onDone }) {
 
         <div className="text-center mt-6">
           <h3 className="text-3xl font-black bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">
-            {resultData?.is_passed ? "Congratulations!" : "Assessment Completed"}
+            {resultData?.is_passed
+              ? "Congratulations!"
+              : "Assessment Completed"}
           </h3>
           <p className="mt-2 text-slate-500">
             {resultData?.is_passed
@@ -1006,15 +1164,22 @@ function QuizResults({ resultData, onDone }) {
 
         <div className="grid grid-cols-2 gap-5 mt-8">
           <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-widest font-bold text-orange-500">Score</p>
+            <p className="text-xs uppercase tracking-widest font-bold text-orange-500">
+              Score
+            </p>
             <h2 className="mt-2 text-3xl font-black text-slate-900">
               {resultData?.score}
-              <span className="text-lg text-slate-400"> / {resultData?.max_score}</span>
+              <span className="text-lg text-slate-400">
+                {" "}
+                / {resultData?.max_score}
+              </span>
             </h2>
           </div>
 
           <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-widest font-bold text-amber-500">Accuracy</p>
+            <p className="text-xs uppercase tracking-widest font-bold text-amber-500">
+              Accuracy
+            </p>
             <h2 className="mt-2 text-3xl font-black text-slate-900">
               {resultData?.accuracy}
               <span className="text-lg text-slate-400">%</span>
@@ -1025,10 +1190,14 @@ function QuizResults({ resultData, onDone }) {
         <div className="mt-8 flex justify-center">
           <div
             className={`px-6 py-3 rounded-full text-sm font-bold ${
-              resultData?.is_passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+              resultData?.is_passed
+                ? "bg-green-100 text-green-700"
+                : "bg-orange-100 text-orange-700"
             }`}
           >
-            {resultData?.is_passed ? "🎉 Passed Successfully" : "📖 Keep Practicing"}
+            {resultData?.is_passed
+              ? "🎉 Passed Successfully"
+              : "📖 Keep Practicing"}
           </div>
         </div>
 
@@ -1043,13 +1212,25 @@ function QuizResults({ resultData, onDone }) {
   );
 }
 
-function ActiveQuiz({ selectedModule, currentQuestionIndex, setCurrentQuestionIndex, userAnswers, setUserAnswers, onSubmit }) {
+function ActiveQuiz({
+  selectedModule,
+  currentQuestionIndex,
+  setCurrentQuestionIndex,
+  userAnswers,
+  setUserAnswers,
+  onSubmit,
+}) {
   if (!selectedModule.questions || selectedModule.questions.length === 0) {
-    return <p className="text-sm text-slate-500">No questions available for this exercise.</p>;
+    return (
+      <p className="text-sm text-slate-500">
+        No questions available for this exercise.
+      </p>
+    );
   }
 
   const q = selectedModule.questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === selectedModule.questions.length - 1;
+  const isLastQuestion =
+    currentQuestionIndex === selectedModule.questions.length - 1;
 
   return (
     <div className="min-h-[300px] space-y-6">
@@ -1064,9 +1245,13 @@ function ActiveQuiz({ selectedModule, currentQuestionIndex, setCurrentQuestionIn
           q.options.map((opt, i) => (
             <button
               key={i}
-              onClick={() => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })}
+              onClick={() =>
+                setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })
+              }
               className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                userAnswers[currentQuestionIndex] === opt ? "border-orange-500 bg-orange-50" : "border-slate-200"
+                userAnswers[currentQuestionIndex] === opt
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-slate-200"
               }`}
             >
               {opt}
@@ -1077,7 +1262,12 @@ function ActiveQuiz({ selectedModule, currentQuestionIndex, setCurrentQuestionIn
             type="text"
             placeholder="Type your answer..."
             value={userAnswers[currentQuestionIndex] || ""}
-            onChange={(e) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: e.target.value })}
+            onChange={(e) =>
+              setUserAnswers({
+                ...userAnswers,
+                [currentQuestionIndex]: e.target.value,
+              })
+            }
             className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-orange-500 outline-none"
           />
         )}
@@ -1138,7 +1328,9 @@ function ExerciseDetail({
             Challenge Activity
           </span>
 
-          <h2 className="relative text-2xl font-black tracking-tight">{selectedModule.title}</h2>
+          <h2 className="relative text-2xl font-black tracking-tight">
+            {selectedModule.title}
+          </h2>
           <p className="relative mt-1 text-sm text-orange-50">
             Complete the challenge to test your understanding.
           </p>
@@ -1184,7 +1376,8 @@ export default function ModuleListPage() {
   // upstream interpolated a missing value into the URL — treat that as "no
   // type selected" instead of querying the API for a "null" module type.
   const rawType = params?.type;
-  const type = rawType && rawType !== "null" && rawType !== "undefined" ? rawType : null;
+  const type =
+    rawType && rawType !== "null" && rawType !== "undefined" ? rawType : null;
   const subtopicId = params?.subtopicId;
 
   const [selectedModule, setSelectedModule] = useState(null);
@@ -1213,7 +1406,10 @@ export default function ModuleListPage() {
     const lessonId = searchParams.get("lessonId");
     if (!lessonId) {
       setSelectedModule(null);
-    } else if (modules.length > 0 && (!selectedModule || selectedModule._id !== lessonId)) {
+    } else if (
+      modules.length > 0 &&
+      (!selectedModule || selectedModule._id !== lessonId)
+    ) {
       const found = modules.find((m) => m._id === lessonId);
       if (found) setSelectedModule(found);
     }
@@ -1271,9 +1467,13 @@ export default function ModuleListPage() {
     if (
       selectedModule &&
       item?._id !== selectedModule._id &&
-      (selectedModule.module_type === "text" || selectedModule.module_type === "vocabulary")
+      (selectedModule.module_type === "text" ||
+        selectedModule.module_type === "vocabulary")
     ) {
-      logModuleActivity(selectedModule, `${selectedModule.module_type}_complete`);
+      logModuleActivity(
+        selectedModule,
+        `${selectedModule.module_type}_complete`,
+      );
     }
 
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -1306,10 +1506,16 @@ export default function ModuleListPage() {
     const payload = { answers: formattedAnswers, time_spent_sec: timeSpent };
 
     try {
-      const response = await moduleApi.submitExercise(selectedModule._id, payload);
+      const response = await moduleApi.submitExercise(
+        selectedModule._id,
+        payload,
+      );
 
       const attempt =
-        response?.data?.data?.attempt || response?.data?.attempt || response?.attempt || response?.data;
+        response?.data?.data?.attempt ||
+        response?.data?.attempt ||
+        response?.attempt ||
+        response?.data;
 
       if (attempt) {
         setResultData({
@@ -1332,7 +1538,9 @@ export default function ModuleListPage() {
       }
     } catch (error) {
       console.error("Submission failed:", error);
-      toast.error(error?.response?.data?.message || "Failed to submit answers.");
+      toast.error(
+        error?.response?.data?.message || "Failed to submit answers.",
+      );
     }
   };
 
@@ -1342,7 +1550,10 @@ export default function ModuleListPage() {
       .filter((mod) => {
         if (!mod) return false;
         const actualType = mod.module_type || "";
-        const matchesTab = activeTab === "all" || actualType === activeTab || type === actualType;
+        const matchesTab =
+          activeTab === "all" ||
+          actualType === activeTab ||
+          type === actualType;
         const matchesSearch =
           mod.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           mod.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1357,11 +1568,16 @@ export default function ModuleListPage() {
   }, [modules, activeTab, searchQuery, sortBy, type]);
 
   const byType = (t) =>
-    Array.isArray(modules) ? modules.filter((item) => item && (item.module_type || type) === t) : [];
+    Array.isArray(modules)
+      ? modules.filter((item) => item && (item.module_type || type) === t)
+      : [];
   const videoModules = useMemo(() => byType("video"), [modules, type]);
   const audioModules = useMemo(() => byType("audio"), [modules, type]);
   const textModules = useMemo(() => byType("text"), [modules, type]);
-  const vocabularyModules = useMemo(() => byType("vocabulary"), [modules, type]);
+  const vocabularyModules = useMemo(
+    () => byType("vocabulary"),
+    [modules, type],
+  );
 
   if (loading) {
     return (
@@ -1384,8 +1600,11 @@ export default function ModuleListPage() {
             ? vocabularyModules
             : [];
 
-  const currentModuleIndex = currentModuleList.findIndex((item) => item._id === selectedModule?._id);
-  const previousModule = currentModuleIndex > 0 ? currentModuleList[currentModuleIndex - 1] : null;
+  const currentModuleIndex = currentModuleList.findIndex(
+    (item) => item._id === selectedModule?._id,
+  );
+  const previousModule =
+    currentModuleIndex > 0 ? currentModuleList[currentModuleIndex - 1] : null;
   const nextModule =
     currentModuleIndex >= 0 && currentModuleIndex < currentModuleList.length - 1
       ? currentModuleList[currentModuleIndex + 1]
@@ -1414,13 +1633,17 @@ export default function ModuleListPage() {
             <VideoDetail
               {...sharedDetailProps}
               videoModules={videoModules}
-              onComplete={() => logModuleActivity(selectedModule, "video_complete")}
+              onComplete={() =>
+                logModuleActivity(selectedModule, "video_complete")
+              }
             />
           ) : currentModuleType === "audio" ? (
             <AudioDetail
               {...sharedDetailProps}
               audioModules={audioModules}
-              onComplete={() => logModuleActivity(selectedModule, "audio_complete")}
+              onComplete={() =>
+                logModuleActivity(selectedModule, "audio_complete")
+              }
             />
           ) : currentModuleType === "exercise" ? (
             <ExerciseDetail
@@ -1434,24 +1657,39 @@ export default function ModuleListPage() {
               userAnswers={userAnswers}
               setUserAnswers={setUserAnswers}
               onSubmit={handleSubmit}
-              onStart={() => logModuleActivity(selectedModule, "exercise_start")}
+              onStart={() =>
+                logModuleActivity(selectedModule, "exercise_start")
+              }
               onBack={() => handleModuleSelection(null)}
               router={router}
             />
           ) : currentModuleType === "vocabulary" ? (
-            <VocabularyDetail {...sharedDetailProps} vocabularyModules={vocabularyModules} />
+            <VocabularyDetail
+              {...sharedDetailProps}
+              vocabularyModules={vocabularyModules}
+            />
           ) : currentModuleType === "text" ? (
             <TextDetail {...sharedDetailProps} textModules={textModules} />
           ) : (
-            <div className="p-10 text-center text-slate-500">Unsupported module type.</div>
+            <div className="p-10 text-center text-slate-500">
+              Unsupported module type.
+            </div>
           )
         ) : (
           <div className="space-y-6 animate-fade-in">
-            {!type && <ContentTypeTabs tabs={CONTENT_TYPES} activeTab={activeTab} onChange={setActiveTab} />}
+            {!type && (
+              <ContentTypeTabs
+                tabs={CONTENT_TYPES}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+              />
+            )}
 
             {filteredModules.length === 0 ? (
               <div className="text-center py-20 bg-white/40 rounded-2xl border border-dashed border-slate-300">
-                <p className="text-slate-500 text-sm font-medium">No learning modules match your selection.</p>
+                <p className="text-slate-500 text-sm font-medium">
+                  No learning modules match your selection.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -1460,18 +1698,49 @@ export default function ModuleListPage() {
                   const itemType = item.module_type || type;
 
                   if (itemType === "exercise") {
-                    return <ExerciseRow key={item._id} item={item} onSelect={handleModuleSelection} />;
+                    return (
+                      <ExerciseRow
+                        key={item._id}
+                        item={item}
+                        onSelect={handleModuleSelection}
+                      />
+                    );
                   }
                   if (itemType === "audio") {
-                    return <AudioRow key={item._id} item={item} onSelect={handleModuleSelection} />;
+                    return (
+                      <AudioRow
+                        key={item._id}
+                        item={item}
+                        onSelect={handleModuleSelection}
+                      />
+                    );
                   }
                   if (itemType === "text") {
-                    return <TextCard key={item._id} item={item} onSelect={handleModuleSelection} />;
+                    return (
+                      <TextCard
+                        key={item._id}
+                        item={item}
+                        onSelect={handleModuleSelection}
+                      />
+                    );
                   }
                   if (itemType === "vocabulary") {
-                    return <VocabularyRow key={item._id} item={item} onSelect={handleModuleSelection} />;
+                    return (
+                      <VocabularyRow
+                        key={item._id}
+                        item={item}
+                        onSelect={handleModuleSelection}
+                      />
+                    );
                   }
-                  return <VideoCard key={item._id} item={item} type={type} onSelect={handleModuleSelection} />;
+                  return (
+                    <VideoCard
+                      key={item._id}
+                      item={item}
+                      type={type}
+                      onSelect={handleModuleSelection}
+                    />
+                  );
                 })}
               </div>
             )}

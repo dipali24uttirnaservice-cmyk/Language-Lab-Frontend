@@ -74,7 +74,7 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
   const displayIncomplete = incompleteModules.slice(0, 3); // show first 3
 
   // 3. Dynamic navigation link at bottom
-  let learnModuleUrl = "/dashboard/subLesson"; // fallback
+  let learnModuleUrl = "/dashboard/topics"; // fallback
   let btnLabel = "Explore Course Curriculum";
   if (incompleteModules.length > 0) {
     const nextItem = incompleteModules[0];

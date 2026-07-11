@@ -130,9 +130,25 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
     }
   };
 
-  const goToFirstCourseOrTopics = () => {
-    if (courses.length > 0) {
-      const firstCourse = courses[0];
+  const goToFirstCourseOrTopics = async () => {
+    // Courses may not have finished loading yet if this is clicked right
+    // after mount, so don't trust possibly-stale state — fetch fresh data
+    // to decide where to go.
+    let availableCourses = courses;
+    if (loadingCourses || availableCourses.length === 0) {
+      try {
+        const res = await studentApi.getAvailableCourses();
+        if (res.data.success) {
+          availableCourses = res.data.data?.purchased_courses?.courses || [];
+          setCourses(availableCourses);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (availableCourses.length > 0) {
+      const firstCourse = availableCourses[0];
       router.push(
         `/dashboard/course/${firstCourse._id}?courseId=${firstCourse._id}&courseName=${encodeURIComponent(
           firstCourse.course_name

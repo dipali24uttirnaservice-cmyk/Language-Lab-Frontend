@@ -15,6 +15,8 @@ import {
 
 
 import { topicApi } from "@/services/topic/topicApi";
+import { progressApi } from "@/services/progress/progressApi";
+import ProgressBar from "@/components/atoms/ProgressBar";
 export default function TopicDetailsPage() {
     const { topicId } = useParams();
 
@@ -42,9 +44,11 @@ console.log("Type:", type);
   console.log(topicName);
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState(null);
+  const [subtopicProgress, setSubtopicProgress] = useState({});
 
   useEffect(() => {
     fetchTopic();
+    fetchProgress();
   }, [topicId]);
 
   const fetchTopic = async () => {
@@ -56,6 +60,20 @@ console.log("Type:", type);
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProgress = async () => {
+    try {
+      const res = await progressApi.getTopicProgress(topicId);
+      const subtopics = res?.data?.data?.subtopics || [];
+      const map = {};
+      subtopics.forEach((st) => {
+        map[st.subtopic_id] = st.percentage;
+      });
+      setSubtopicProgress(map);
+    } catch (error) {
+      console.error("Failed to fetch topic progress:", error);
     }
   };
 
@@ -422,20 +440,7 @@ params.set("subTopicName", subtopic.title);
     {/* Right */}
     <div className="lg:w-56">
 
-      <div className="mb-2 flex justify-between text-sm font-semibold text-slate-500">
-        <span>Progress</span>
-        <span>0%</span>
-      </div>
-
-      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-
-        <motion.div
-          initial={{ width: 0 }}
-          whileInView={{ width: "0%" }}
-          className={`h-full bg-gradient-to-r ${color}`}
-        />
-
-      </div>
+      <ProgressBar percentage={subtopicProgress[subtopic._id] ?? 0} color={color} />
 
       <button
 
