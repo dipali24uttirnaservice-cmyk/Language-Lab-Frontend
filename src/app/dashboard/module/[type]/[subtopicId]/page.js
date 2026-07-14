@@ -38,6 +38,7 @@ import VideoPlayer from "@/components/VideoPlayer";
    ========================================================================= */
 
 const CONTENT_TYPES = [
+  { id: "all", label: "All Content", icon: BookOpen },
   { id: "video", label: "Videos", icon: Play },
   { id: "audio", label: "Audios", icon: Headphones },
   { id: "exercise", label: "Exercises", icon: Award },
@@ -1918,38 +1919,37 @@ function ActiveQuiz({
 
           <QuestionInput question={q} answer={answer} setAnswer={setAnswer} />
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <button
-              onClick={() =>
-                setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))
-              }
-              disabled={currentQuestionIndex === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-50 transition-all cursor-pointer disabled:cursor-not-allowed"
-            >
-              <ChevronLeft size={16} /> Previous
-            </button>
-
-            {/* Submit Exercise — only shows when ALL questions are properly answered */}
-            {questions.every((qq, i) => hasAnswer(qq, userAnswers[i])) && (
+          {/* Centered Previous / Next navigation */}
+          <div className="pt-4 border-t border-slate-100 space-y-4">
+            <div className="flex items-center justify-center gap-4">
               <button
-                onClick={() => setShowConfirm(true)}
-                className="group relative inline-flex items-center justify-center gap-2 px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.4)] hover:shadow-[0_8px_25px_rgba(34,197,94,0.5)] transition-all duration-300 overflow-hidden cursor-pointer"
+                onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                disabled={currentQuestionIndex === 0}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
-                <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-                <span className="relative z-10 tracking-wide">Submit Exercise</span>
-                <ChevronRight size={16} className="relative z-10 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronLeft size={18} /> Previous
               </button>
-            )}
-
-            {!isLastQuestion ? (
               <button
                 onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold transition-all cursor-pointer"
+                disabled={isLastQuestion}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
-                Next <ChevronRight size={16} />
+                Next <ChevronRight size={18} />
               </button>
-            ) : (
-              <div className="w-[90px]" />
+            </div>
+
+            {/* Submit Exercise — only shown when ALL questions are answered */}
+            {Object.keys(userAnswers).filter(k => hasAnswer(questions[k], userAnswers[k])).length === total && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowConfirm(true)}
+                  className="group relative inline-flex items-center justify-center gap-3 px-12 py-4 bg-green-500 hover:bg-green-600 text-white text-base font-bold rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.55)] transform hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                  <span className="relative z-10 tracking-wide">Submit Exercise</span>
+                  <ChevronRight size={20} className="relative z-10 stroke-[3] group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1967,7 +1967,7 @@ function ActiveQuiz({
                   className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border-2 ${isCurrent
                     ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
                     : answered
-                      ? "bg-green-500 border-green-500 text-white"
+                      ? "bg-green-500 border-green-500 text-white shadow-sm shadow-green-200"
                       : "bg-yellow-400 border-yellow-400 text-white"
                     }`}
                 >
