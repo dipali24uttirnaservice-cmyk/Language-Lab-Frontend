@@ -39,6 +39,7 @@ import VideoPlayer from "@/components/VideoPlayer";
    ========================================================================= */
 
 const CONTENT_TYPES = [
+  { id: "all", label: "All Content", icon: BookOpen },
   { id: "video", label: "Videos", icon: Play },
   { id: "audio", label: "Audios", icon: Headphones },
   { id: "exercise", label: "Exercises", icon: Award },
@@ -698,7 +699,6 @@ function VideoDetail({
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
             <VideoPlayer
-              key={selectedModule._id}
               src={selectedModule.video?.url}
               poster={selectedModule.video?.thumbnail_url || selectedModule.thumbnail}
               onEnded={onComplete}
