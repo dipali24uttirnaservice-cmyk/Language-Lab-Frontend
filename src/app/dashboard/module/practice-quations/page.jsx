@@ -236,11 +236,12 @@ export default function PracticeQuestionsPage() {
   const question = questions[current];
 
   const options =
-    question.question_type === "true_false"
-      ? ["True", "False"]
-      : question.question_type === "mcq"
-        ? question.options.filter(Boolean)
-        : [];
+  question.question_type === "true_false"
+    ? ["True", "False"]
+    : question.question_type === "mcq" ||
+      question.question_type === "fill_blank"
+      ? question.options.filter(Boolean)
+      : [];
 
   const correctAnswer = ["A", "B", "C", "D", "a", "b", "c", "d"].includes(question.correct_answer)
     ? options[["A", "B", "C", "D", "a", "b", "c", "d"].indexOf(question.correct_answer) % 4]
@@ -406,43 +407,47 @@ export default function PracticeQuestionsPage() {
                     </h1>
 
                     <div className="space-y-3">
-                      {(question.question_type === "mcq" || question.question_type === "true_false") &&
-                        options.map((opt, i) => {
-                          const isSelected = selectedOptions[current] === opt;
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => setSelectedOptions((prev) => ({ ...prev, [current]: opt }))}
-                              className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-center gap-4 font-medium tracking-wide ${isSelected
-                                ? "border-orange-500 bg-white"
-                                : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
-                                }`}
-                            >
-                              <div
-                                className={`flex-shrink-0 w-[22px] h-[22px] rounded-full border transition-colors flex items-center justify-center ${isSelected ? "border-orange-500" : "border-slate-300"
-                                  }`}
-                              >
-                                {isSelected && <div className="w-[11px] h-[11px] rounded-full bg-orange-500" />}
-                              </div>
-                              <span className="flex-1 text-slate-800 text-[15px]">{opt}</span>
-                            </button>
-                          );
-                        })}
+                     {(question.question_type === "mcq" ||
+  question.question_type === "true_false" ||
+  question.question_type === "fill_blank") &&
+  options.filter(Boolean).map((opt, i) => {
+    const isSelected = selectedOptions[current] === opt;
 
-                      {(question.question_type === "fill_blank" || question.question_type === "short_answer") && (
-                        <input
-                          type="text"
-                          value={selectedOptions[current] || ""}
-                          onChange={(e) =>
-                            setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))
-                          }
-                          className={`border-2 rounded-xl p-4 w-full outline-none transition-colors font-medium ${selectedOptions[current]
-                            ? "border-orange-500 bg-orange-50 text-orange-700"
-                            : "border-gray-200 focus:border-orange-500"
-                            }`}
-                          placeholder="Type your answer here..."
-                        />
-                      )}
+    return (
+      <motion.button
+        key={i}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() =>
+          setSelectedOptions((prev) => ({
+            ...prev,
+            [current]: opt,
+          }))
+        }
+        className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 font-medium ${
+          isSelected
+            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
+            : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+        }`}
+      >
+        <div
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+            isSelected
+              ? "border-orange-500"
+              : "border-slate-300"
+          }`}
+        >
+          {isSelected && (
+            <div className="w-3 h-3 rounded-full bg-orange-500" />
+          )}
+        </div>
+
+        <span className="text-[15px]">
+          {opt}
+        </span>
+      </motion.button>
+    );
+  })}
                     </div>
 
                     {/* Nav row */}
