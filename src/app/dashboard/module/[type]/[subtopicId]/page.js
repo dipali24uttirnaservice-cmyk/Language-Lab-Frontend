@@ -39,7 +39,6 @@ import VideoPlayer from "@/components/VideoPlayer";
    ========================================================================= */
 
 const CONTENT_TYPES = [
-  { id: "all", label: "All Content", icon: BookOpen },
   { id: "video", label: "Videos", icon: Play },
   { id: "audio", label: "Audios", icon: Headphones },
   { id: "exercise", label: "Exercises", icon: Award },
@@ -2143,7 +2142,7 @@ export default function ModuleListPage() {
   const [selectedModule, setSelectedModule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState([]);
-  const [activeTab, setActiveTab] = useState(type || "all");
+  const [activeTab, setActiveTab] = useState(type || "Video");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
@@ -2470,13 +2469,7 @@ export default function ModuleListPage() {
           )
         ) : (
           <div className="space-y-6 animate-fade-in">
-            {!type && (
-              <ContentTypeTabs
-                tabs={CONTENT_TYPES}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-              />
-            )}
+          
 
             {filteredModules.length === 0 ? (
               <div className="text-center py-20 bg-white/40 rounded-2xl border border-dashed border-slate-300">
