@@ -38,7 +38,6 @@ import VideoPlayer from "@/components/VideoPlayer";
    ========================================================================= */
 
 const CONTENT_TYPES = [
-  { id: "all", label: "All Content", icon: BookOpen },
   { id: "video", label: "Videos", icon: Play },
   { id: "audio", label: "Audios", icon: Headphones },
   { id: "exercise", label: "Exercises", icon: Award },

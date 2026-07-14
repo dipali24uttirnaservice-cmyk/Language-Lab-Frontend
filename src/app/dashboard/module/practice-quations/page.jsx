@@ -322,17 +322,18 @@ export default function PracticeQuestionsPage() {
                   All questions attempted — nice work!
                 </motion.div>
               )}
-
+<div className="relative min-h-[400px]">
               <AnimatePresence mode="wait">
                 {isAnswered ? (
                   <motion.div
                     key={`result-${current}`}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3 }}
-                    className={`rounded-2xl py-12 px-8 text-center text-white relative overflow-hidden shadow-2xl ${answers[current].isCorrect ? "bg-[#16b471]" : "bg-[#df3c43]"
-                      }`}
+                 initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  exit={{ opacity: 0, scale: 0.95 }}
+  transition={{ duration: 0.3 }}
+                   className={`rounded-2xl py-20 px-8 text-center text-white relative overflow-hidden shadow-2xl min-h-[400px] flex flex-col justify-center ${
+    answers[current].isCorrect ? "bg-[#16b471]" : "bg-[#df3c43]"
+  }`}
                   >
                     {/* Authentic Background Shapes */}
                     {answers[current].isCorrect ? (
@@ -357,15 +358,15 @@ export default function PracticeQuestionsPage() {
                       </div>
                     )}
 
-                    <div className="relative z-10 space-y-1">
-                      <h2 className="text-3xl !text-white font-normal tracking-wide drop-shadow-sm mb-4">
-                        {answers[current].isCorrect ? "Correct Answer!" : "Wrong Answer!"}
-                      </h2>
-                      <p className="font-bold !text-white mb-10 text-[15px] drop-shadow-sm pb-2">
-                        {answers[current].isCorrect
-                          ? "Nice work. That one was spot on."
-                          : "Close, but not quite. Give it another shot."}
-                      </p>
+                  <div className="relative z-10 space-y-4"> {/* Increased space-y-1 to space-y-4 */}
+    <h2 className="text-3xl !text-white font-normal tracking-wide drop-shadow-sm">
+      {answers[current].isCorrect ? "Correct Answer!" : "Wrong Answer!"}
+    </h2>
+                     <p className="font-bold !text-white mb-16 text-[15px] drop-shadow-sm">
+      {answers[current].isCorrect
+        ? "Nice work. That one was spot on."
+        : "Close, but not quite. Give it another shot."}
+    </p>
 
                       <div className="flex justify-center mt-4">
                         {answers[current].isCorrect ? (
@@ -479,6 +480,7 @@ export default function PracticeQuestionsPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
