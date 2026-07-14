@@ -36,6 +36,10 @@ export const moduleApi = {
   getModuleById: (type, moduleId) =>
     api.get(`/module/${type}/${moduleId}`),
 
+  // Get Exercises attached to a specific Text/Video/Audio/Vocabulary module
+  getExercisesByContentModule: (contentModuleId) =>
+    api.get(`/module/exercise?content_module_id=${contentModuleId}`),
+
   // --- Exercise Specific Endpoints ---
 
   // Submit Exercise Answers

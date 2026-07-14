@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState,useRef} from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
@@ -15,9 +15,11 @@ import {
   Target,
   Zap,
   ChevronLeft,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
 
 /* =========================================================================
    SMALL SHARED PIECES
@@ -37,7 +39,7 @@ function LoadingScreen() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ scopedToLesson = false }) {
   return (
     <div className="h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center max-w-sm">
@@ -46,7 +48,9 @@ function EmptyState() {
         </div>
         <h3 className="text-lg font-bold text-slate-800">No exercises found</h3>
         <p className="text-sm text-slate-400 mt-1">
-          There are no exercises available for this topic yet.
+          {scopedToLesson
+            ? "There is no exercise created for this lesson yet."
+            : "There are no exercises available for this topic yet."}
         </p>
       </div>
     </div>
@@ -176,7 +180,7 @@ function AttemptHistory({ attempts }) {
    SIDEBAR
    ========================================================================= */
 
-function ExerciseSidebar({ exercises, selectedExercise, onSelect, searchTerm, setSearchTerm }) {
+function ExerciseSidebar({ exercises, selectedExercise, onSelect, searchTerm, setSearchTerm, scopedToLesson }) {
   const filtered = exercises.filter((item) =>
     item.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -189,7 +193,9 @@ function ExerciseSidebar({ exercises, selectedExercise, onSelect, searchTerm, se
             <Award size={18} />
           </div>
           <div>
-            <h2 className="font-black text-lg text-slate-900 leading-tight">Exercises</h2>
+            <h2 className="font-black text-lg text-slate-900 leading-tight">
+              {scopedToLesson ? "Lesson Exercises" : "Exercises"}
+            </h2>
             <p className="text-[11px] font-semibold text-slate-400">
               {exercises.length} total
             </p>
@@ -351,6 +357,199 @@ function IntroPanel({ selectedExercise, onStart, attempts }) {
 
 
 /* =========================================================================
+   PER-TYPE ANSWER INPUTS
+   ========================================================================= */
+
+function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
+  return (
+    <div className={grid ? "grid grid-cols-2 gap-3" : "space-y-3"}>
+      {question.options.map((opt, i) => {
+        const isSelected = answer?.value === opt;
+        return (
+          <motion.button
+            key={i}
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => setAnswer({ value: opt })}
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+              isSelected
+                ? "border-orange-500 bg-orange-50 shadow-sm"
+                : "border-gray-200 hover:border-orange-300 bg-white"
+            }`}
+          >
+            <span className={isSelected ? "text-orange-700 font-semibold" : "text-slate-700"}>
+              {opt}
+            </span>
+            {isSelected && <CheckCircle2 size={18} className="text-orange-500 shrink-0" />}
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TextAnswerInput({ answer, setAnswer, placeholder = "Type your answer..." }) {
+  return (
+    <input
+      type="text"
+      autoFocus
+      value={answer?.value || ""}
+      onChange={(e) => setAnswer({ value: e.target.value })}
+      className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-all text-slate-700"
+      placeholder={placeholder}
+    />
+  );
+}
+
+function ShortAnswerInput({ answer, setAnswer }) {
+  return (
+    <textarea
+      autoFocus
+      rows={4}
+      value={answer?.text || ""}
+      onChange={(e) => setAnswer({ text: e.target.value })}
+      className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-all text-slate-700 resize-none"
+      placeholder="Write your answer..."
+    />
+  );
+}
+
+// Shared builder for "reorder" (arrange items) and "spell_word" (arrange
+// letters) — both work the same way: tap pool items to build a sequence.
+function SequenceBuilder({ question, answer, setAnswer, isSpell }) {
+  const order = answer?.order || [];
+  const pool = question.options
+    .map((value, id) => ({ id, value }))
+    .filter((item) => !order.includes(item.id));
+
+  return (
+    <div className="space-y-3">
+      <div className="min-h-14 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 flex flex-wrap items-center gap-2 p-3">
+        {order.length === 0 && (
+          <span className="text-sm text-slate-400 italic">
+            Tap {isSpell ? "letters" : "items"} below to build your answer…
+          </span>
+        )}
+        {order.map((id, pos) => (
+          <button
+            key={pos}
+            onClick={() => setAnswer({ order: order.filter((_, i) => i !== pos) })}
+            className="px-3.5 py-2 rounded-lg border-2 border-orange-400 bg-orange-100 text-orange-800 font-semibold text-sm transition-all hover:border-orange-500"
+          >
+            {question.options[id]}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {pool.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setAnswer({ order: [...order, item.id] })}
+            className="px-3.5 py-2 rounded-lg border-2 border-gray-200 bg-white text-slate-700 font-semibold text-sm hover:border-orange-300 transition-all"
+          >
+            {item.value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MatchBuilder({ question, answer, setAnswer }) {
+  const pairs = answer?.pairs || {};
+  const activeLeft = answer?.activeLeft || null;
+  const matchPairs = useMemo(() => getMatchPairs(question), [question]);
+  const rightPool = useMemo(
+    () => shuffledPool(matchPairs.map((p) => p.right)),
+    [matchPairs],
+  );
+  const usedRights = new Set(Object.values(pairs));
+
+  const pickLeft = (left) => {
+    if (pairs[left]) return;
+    setAnswer({ pairs, activeLeft: left });
+  };
+  const pickRight = (right) => {
+    if (!activeLeft) return;
+    setAnswer({ pairs: { ...pairs, [activeLeft]: right }, activeLeft: null });
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        {matchPairs.map((p) => {
+          const isPaired = !!pairs[p.left];
+          const isActive = activeLeft === p.left;
+          return (
+            <button
+              key={p.left}
+              onClick={() => pickLeft(p.left)}
+              disabled={isPaired}
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                isActive
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : isPaired
+                  ? "border-orange-300 bg-orange-50/60 text-orange-700"
+                  : "border-gray-200 bg-white text-slate-700 hover:border-orange-300"
+              }`}
+            >
+              {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="space-y-2">
+        {rightPool.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => pickRight(item.value)}
+            disabled={usedRights.has(item.value)}
+            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+              usedRights.has(item.value)
+                ? "border-gray-100 bg-gray-50 text-slate-300 cursor-not-allowed"
+                : "border-gray-200 bg-white text-slate-700 hover:border-orange-300"
+            }`}
+          >
+            {item.value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function QuestionInput({ question, answer, setAnswer }) {
+  switch (question.question_type) {
+    case "mcq":
+      return <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} />;
+    case "true_false": {
+      // Some older records were saved with blank options (["", ""])
+      // instead of ["True", "False"] — fall back rather than render
+      // unlabeled buttons.
+      const hasValidOptions = question.options?.filter(Boolean).length === 2;
+      const tfQuestion = hasValidOptions ? question : { ...question, options: ["True", "False"] };
+      return <ChoiceOptions question={tfQuestion} answer={answer} setAnswer={setAnswer} grid />;
+    }
+    case "fill_blank":
+      return question.options?.length ? (
+        <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} grid />
+      ) : (
+        <TextAnswerInput answer={answer} setAnswer={setAnswer} />
+      );
+    case "short_answer":
+      return <ShortAnswerInput answer={answer} setAnswer={setAnswer} />;
+    case "reorder":
+      return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} isSpell={false} />;
+    case "spell_word":
+      return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} isSpell />;
+    case "match":
+      return <MatchBuilder question={question} answer={answer} setAnswer={setAnswer} />;
+    default:
+      return <TextAnswerInput answer={answer} setAnswer={setAnswer} />;
+  }
+}
+
+/* =========================================================================
    ACTIVE QUIZ PANEL
    ========================================================================= */
 
@@ -362,10 +561,13 @@ function QuizPanel({
   setUserAnswers,
   onSubmit,
 }) {
+  const [hintOpen, setHintOpen] = useState({});
   const question = selectedExercise.questions[currentQuestionIndex];
+  const answer = userAnswers[currentQuestionIndex];
+  const setAnswer = (next) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: next });
   const total = selectedExercise.questions.length;
   const isLast = currentQuestionIndex === total - 1;
-  const progress = ((currentQuestionIndex + (userAnswers[currentQuestionIndex] ? 1 : 0)) / total) * 100;
+  const progress = ((currentQuestionIndex + (answer ? 1 : 0)) / total) * 100;
 
   return (
     <motion.div
@@ -399,44 +601,27 @@ function QuizPanel({
             {question.question_text}
           </p>
 
-          <div className="space-y-3">
-            {question.question_type === "mcq" ? (
-              question.options.map((opt, i) => {
-                const isSelected = userAnswers[currentQuestionIndex] === opt;
-                return (
-                  <motion.button
-                    key={i}
-                    whileHover={{ scale: 1.005 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() =>
-                      setUserAnswers({ ...userAnswers, [currentQuestionIndex]: opt })
-                    }
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                      isSelected
-                        ? "border-orange-500 bg-orange-50 shadow-sm"
-                        : "border-gray-200 hover:border-orange-300 bg-white"
-                    }`}
-                  >
-                    <span className={isSelected ? "text-orange-700 font-semibold" : "text-slate-700"}>
-                      {opt}
-                    </span>
-                    {isSelected && <CheckCircle2 size={18} className="text-orange-500 shrink-0" />}
-                  </motion.button>
-                );
-              })
-            ) : (
-              <input
-                type="text"
-                autoFocus
-                value={userAnswers[currentQuestionIndex] || ""}
-                onChange={(e) =>
-                  setUserAnswers({ ...userAnswers, [currentQuestionIndex]: e.target.value })
+          {question.hint && (
+            <div>
+              <button
+                type="button"
+                onClick={() =>
+                  setHintOpen((h) => ({ ...h, [currentQuestionIndex]: !h[currentQuestionIndex] }))
                 }
-                className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-all text-slate-700"
-                placeholder="Type your answer..."
-              />
-            )}
-          </div>
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 transition"
+              >
+                <Lightbulb size={14} />
+                {hintOpen[currentQuestionIndex] ? "Hide hint" : "Show hint"}
+              </button>
+              {hintOpen[currentQuestionIndex] && (
+                <p className="mt-1.5 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {question.hint}
+                </p>
+              )}
+            </div>
+          )}
+
+          <QuestionInput question={question} answer={answer} setAnswer={setAnswer} />
         </motion.div>
       </AnimatePresence>
 
@@ -444,7 +629,7 @@ function QuizPanel({
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => (isLast ? onSubmit() : setCurrentQuestionIndex(currentQuestionIndex + 1))}
-        disabled={!userAnswers[currentQuestionIndex]}
+        disabled={!hasAnswer(question, answer)}
         className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
       >
         {isLast ? "Submit Assessment" : "Next Question"}
@@ -541,6 +726,7 @@ export default function ExercisePage() {
   const searchParams = useSearchParams();
   const subTopicId = searchParams.get("subTopicId");
   const topicId = searchParams.get("topicId");
+  const contentModuleId = searchParams.get("contentModuleId");
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
@@ -556,7 +742,7 @@ export default function ExercisePage() {
 
   useEffect(() => {
     fetchExercise();
-  }, [subTopicId]);
+  }, [subTopicId, contentModuleId]);
 
   useEffect(() => {
   setIsQuizActive(false);
@@ -575,10 +761,13 @@ export default function ExercisePage() {
   const fetchExercise = async () => {
     try {
       setLoading(true);
-      const res = await moduleApi.getModulesBySubtopic("exercise", subTopicId);
+      const res = contentModuleId
+        ? await moduleApi.getExercisesByContentModule(contentModuleId)
+        : await moduleApi.getModulesBySubtopic("exercise", subTopicId);
       const data = res.data?.data || [];
       setExercises(data);
       if (data.length) setSelectedExercise(data[0]);
+      else setSelectedExercise(null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -589,7 +778,10 @@ export default function ExercisePage() {
   const handleSubmit = async () => {
     const formattedAnswers = Object.keys(userAnswers).map((index) => ({
       question_index: Number(index),
-      given_answer: userAnswers[index],
+      given_answer: answerToString(
+        selectedExercise.questions[Number(index)],
+        userAnswers[index],
+      ),
     }));
 
     try {
@@ -627,7 +819,7 @@ export default function ExercisePage() {
   };
 
   if (loading) return <LoadingScreen />;
-  if (!selectedExercise) return <EmptyState />;
+  if (!selectedExercise) return <EmptyState scopedToLesson={Boolean(contentModuleId)} />;
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -637,6 +829,7 @@ export default function ExercisePage() {
         onSelect={setSelectedExercise}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        scopedToLesson={Boolean(contentModuleId)}
       />
 
       <div className="flex-1 overflow-y-auto">

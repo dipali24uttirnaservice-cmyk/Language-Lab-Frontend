@@ -42,15 +42,14 @@ function QuestionDots({ total, current, answers }) {
         return (
           <div
             key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              isCurrent
-                ? "w-6 bg-orange-500"
-                : isDone
+            className={`h-2 rounded-full transition-all duration-300 ${isCurrent
+              ? "w-6 bg-orange-500"
+              : isDone
                 ? isCorrect
                   ? "w-2 bg-emerald-400"
                   : "w-2 bg-red-400"
                 : "w-2 bg-slate-200"
-            }`}
+              }`}
           />
         );
       })}
@@ -85,7 +84,7 @@ function QuestionSidebar({ questions, current, answers, onSelect, searchTerm, se
     .filter((q) => q.question_text?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="w-80 shrink-0 border-r border-slate-200 bg-white flex flex-col h-screen">
+    <div className="w-80 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full">
       <div className="p-5 border-b border-slate-100 space-y-4">
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-200">
@@ -127,17 +126,15 @@ function QuestionSidebar({ questions, current, answers, onSelect, searchTerm, se
                 onClick={() => onSelect(index)}
                 whileHover={{ x: isActive ? 0 : 3 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${
-                  isActive
-                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
-                    : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
-                }`}
+                className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${isActive
+                  ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
+                  : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
+                  }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span
-                    className={`text-[9px] font-black uppercase tracking-wider ${
-                      isActive ? "text-orange-100" : "text-orange-500"
-                    }`}
+                    className={`text-[9px] font-black uppercase tracking-wider ${isActive ? "text-orange-100" : "text-orange-500"
+                      }`}
                   >
                     Question {String(index + 1).padStart(2, "0")}
                   </span>
@@ -152,9 +149,8 @@ function QuestionSidebar({ questions, current, answers, onSelect, searchTerm, se
                   )}
                 </div>
                 <div
-                  className={`text-sm truncate font-semibold ${
-                    isActive ? "text-white" : "text-slate-700"
-                  }`}
+                  className={`text-sm truncate font-semibold ${isActive ? "text-white" : "text-slate-700"
+                    }`}
                 >
                   {q.question_text}
                 </div>
@@ -243,8 +239,8 @@ export default function PracticeQuestionsPage() {
     question.question_type === "true_false"
       ? ["True", "False"]
       : question.question_type === "mcq"
-      ? question.options.filter(Boolean)
-      : [];
+        ? question.options.filter(Boolean)
+        : [];
 
   const correctAnswer = ["A", "B", "C", "D", "a", "b", "c", "d"].includes(question.correct_answer)
     ? options[["A", "B", "C", "D", "a", "b", "c", "d"].indexOf(question.correct_answer) % 4]
@@ -278,7 +274,7 @@ export default function PracticeQuestionsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-full bg-slate-50 overflow-hidden">
       <QuestionSidebar
         questions={questions}
         current={current}
@@ -328,134 +324,160 @@ export default function PracticeQuestionsPage() {
               )}
 
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={current}
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.25 }}
-                  className="space-y-6"
-                >
-                  <h1 className="text-2xl font-bold text-slate-800 leading-snug">
-                    {question.question_text}
-                  </h1>
+                {isAnswered ? (
+                  <motion.div
+                    key={`result-${current}`}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                    className={`rounded-2xl py-12 px-8 text-center text-white relative overflow-hidden shadow-2xl ${answers[current].isCorrect ? "bg-[#16b471]" : "bg-[#df3c43]"
+                      }`}
+                  >
+                    {/* Authentic Background Shapes */}
+                    {answers[current].isCorrect ? (
+                      <div className="absolute inset-0 pointer-events-none" style={{ overflow: 'hidden' }}>
+                        {/* Diagonal Beams */}
+                        <div className="absolute top-0 left-0 w-full h-full bg-white/5" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }} />
+                        <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[20px] bg-white/10 -rotate-45 origin-center translate-y-[200px]" />
 
-                  <div className="space-y-3">
-                    {(question.question_type === "mcq" || question.question_type === "true_false") &&
-                      options.map((opt, i) => (
-                        <OptionButton
-                          key={i}
-                          opt={opt}
-                          isAnswered={isAnswered}
-                          isSelected={selectedOptions[current] === opt}
-                          isCorrectAnswer={
-                            isAnswered &&
-                            opt.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase()
+                        {/* Dots */}
+                        <div className="absolute top-[20%] left-[25%] w-2.5 h-2.5 rounded-full bg-[#1de9b6]" />
+                        <div className="absolute top-[15%] left-[8%] w-3 h-3 rounded-full bg-[#ffd54f]" />
+                        <div className="absolute top-[20%] right-[22%] w-2.5 h-2.5 rounded-full bg-[#b388ff]" />
+                        <div className="absolute top-[50%] right-[12%] w-3 h-3 rounded-full bg-[#ffd54f]" />
+                        <div className="absolute bottom-[25%] left-[20%] w-3 h-3 rounded-full bg-[#1de9b6]" />
+                        <div className="absolute bottom-[10%] left-[35%] w-2.5 h-2.5 rounded-full bg-[#ffd54f]" />
+                        <div className="absolute bottom-[25%] right-[25%] w-3.5 h-3.5 rounded-full bg-white/30" />
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+                        <div className="absolute w-[200%] h-[120px] bg-white/[0.04] -rotate-45" />
+                        <div className="absolute w-[200%] h-[120px] bg-white/[0.04] rotate-45" />
+                      </div>
+                    )}
+
+                    <div className="relative z-10 space-y-1">
+                      <h2 className="text-3xl !text-white font-normal tracking-wide drop-shadow-sm mb-4">
+                        {answers[current].isCorrect ? "Correct Answer!" : "Wrong Answer!"}
+                      </h2>
+                      <p className="font-bold !text-white mb-10 text-[15px] drop-shadow-sm pb-2">
+                        {answers[current].isCorrect
+                          ? "Nice work. That one was spot on."
+                          : "Close, but not quite. Give it another shot."}
+                      </p>
+
+                      <div className="flex justify-center mt-4">
+                        {answers[current].isCorrect ? (
+                          <button
+                            onClick={() => {
+                              if (current < questions.length - 1) {
+                                setCurrent((p) => p + 1);
+                              }
+                            }}
+                            disabled={current === questions.length - 1}
+                            className="bg-[#2d3748] hover:bg-[#1a202c] text-white font-semibold py-2.5 px-5 rounded transition-colors shadow-lg disabled:opacity-0 text-sm tracking-wide"
+                          >
+                            Next Question &raquo;
+                          </button>
+                        ) : (
+                          <button
+                            onClick={retryQuestion}
+                            className="bg-[#2d3748] hover:bg-[#1a202c] text-white font-semibold py-2.5 px-5 rounded transition-colors shadow-lg text-sm tracking-wide"
+                          >
+                            Try Again
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={`question-${current}`}
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -24 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6"
+                  >
+                    <h1 className="text-2xl font-bold text-slate-800 leading-snug">
+                      {question.question_text}
+                    </h1>
+
+                    <div className="space-y-3">
+                      {(question.question_type === "mcq" || question.question_type === "true_false") &&
+                        options.map((opt, i) => {
+                          const isSelected = selectedOptions[current] === opt;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => setSelectedOptions((prev) => ({ ...prev, [current]: opt }))}
+                              className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-center gap-4 font-medium tracking-wide ${isSelected
+                                ? "border-orange-500 bg-white"
+                                : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+                                }`}
+                            >
+                              <div
+                                className={`flex-shrink-0 w-[22px] h-[22px] rounded-full border transition-colors flex items-center justify-center ${isSelected ? "border-orange-500" : "border-slate-300"
+                                  }`}
+                              >
+                                {isSelected && <div className="w-[11px] h-[11px] rounded-full bg-orange-500" />}
+                              </div>
+                              <span className="flex-1 text-slate-800 text-[15px]">{opt}</span>
+                            </button>
+                          );
+                        })}
+
+                      {(question.question_type === "fill_blank" || question.question_type === "short_answer") && (
+                        <input
+                          type="text"
+                          value={selectedOptions[current] || ""}
+                          onChange={(e) =>
+                            setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))
                           }
-                          onClick={() => setSelectedOptions((prev) => ({ ...prev, [current]: opt }))}
-                        />
-                      ))}
-
-                    {(question.question_type === "fill_blank" || question.question_type === "short_answer") && (
-                      <input
-                        type="text"
-                        disabled={isAnswered}
-                        value={selectedOptions[current] || ""}
-                        onChange={(e) =>
-                          setSelectedOptions((prev) => ({ ...prev, [current]: e.target.value }))
-                        }
-                        className={`border-2 rounded-xl p-4 w-full outline-none transition-colors font-medium ${
-                          isAnswered
-                            ? answers[current].isCorrect
-                              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                              : "border-red-500 bg-red-50 text-red-700"
-                            : selectedOptions[current]
+                          className={`border-2 rounded-xl p-4 w-full outline-none transition-colors font-medium ${selectedOptions[current]
                             ? "border-orange-500 bg-orange-50 text-orange-700"
                             : "border-gray-200 focus:border-orange-500"
-                        }`}
-                        placeholder="Type your answer here..."
-                      />
-                    )}
-                  </div>
-
-                  {/* Feedback */}
-                  <AnimatePresence>
-                    {isAnswered && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className={`p-4 rounded-xl border flex items-center gap-2 ${
-                          answers[current].isCorrect
-                            ? "bg-emerald-50 border-emerald-200"
-                            : "bg-red-50 border-red-200"
-                        }`}
-                      >
-                        {answers[current].isCorrect ? (
-                          <CheckCircle2 size={18} className="text-emerald-600" />
-                        ) : (
-                          <XCircle size={18} className="text-red-600" />
-                        )}
-                        <h3
-                          className={`font-bold text-sm ${
-                            answers[current].isCorrect ? "text-emerald-700" : "text-red-700"
-                          }`}
-                        >
-                          {answers[current].isCorrect
-                            ? "Correct!"
-                            : `Incorrect — correct answer: ${correctAnswer}`}
-                        </h3>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Nav row */}
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-                    <button
-                      onClick={() => setCurrent((p) => p - 1)}
-                      disabled={current === 0}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
-                    >
-                      <ChevronLeft size={20} />
-                      Previous
-                    </button>
-
-                    <div className="flex gap-2">
-                      {isAnswered && !answers[current].isCorrect && (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={retryQuestion}
-                          className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-red-200"
-                        >
-                          <RotateCcw size={16} />
-                          Try Again
-                        </motion.button>
+                            }`}
+                          placeholder="Type your answer here..."
+                        />
                       )}
+                    </div>
 
-                      {!isAnswered && (
+                    {/* Nav row */}
+                    <div className="flex items-center justify-between pt-6 border-t border-slate-200">
+                      <button
+                        onClick={() => setCurrent((p) => p - 1)}
+                        disabled={current === 0}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
+                      >
+                        <ChevronLeft size={20} />
+                        Previous
+                      </button>
+
+                      <div className="flex gap-2">
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={submitAnswer}
                           disabled={!selectedOptions[current]}
-                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-500 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-orange-200"
+                          className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-500 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-emerald-200 flex items-center gap-2"
                         >
-                          Submit
+                          Submit Answer &raquo;
                         </motion.button>
-                      )}
-                    </div>
+                      </div>
 
-                    <button
-                      onClick={() => setCurrent((p) => p + 1)}
-                      disabled={current === questions.length - 1}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
-                    >
-                      Next
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </motion.div>
+                      <button
+                        onClick={() => setCurrent((p) => p + 1)}
+                        disabled={current === questions.length - 1}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium"
+                      >
+                        Next
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           </div>
