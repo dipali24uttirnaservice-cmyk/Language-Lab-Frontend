@@ -174,8 +174,8 @@ function ContentTypeTabs({ tabs, activeTab, onChange }) {
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${isActive
-                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 -translate-y-0.5"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
+              ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 -translate-y-0.5"
+              : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
               }`}
           >
             <Icon size={14} />
@@ -201,8 +201,8 @@ function PrevNextNav({
         disabled={!previousModule}
         onClick={() => previousModule && onNavigate(previousModule)}
         className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
-            ? "bg-slate-900 text-white hover:bg-slate-800"
-            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          ? "bg-slate-900 text-white hover:bg-slate-800"
+          : "bg-slate-100 text-slate-400 cursor-not-allowed"
           }`}
       >
         ← Previous
@@ -215,11 +215,10 @@ function PrevNextNav({
       <button
         disabled={!nextModule}
         onClick={() => nextModule && onNavigate(nextModule)}
-        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${
-          nextModule
-            ? `${accent.solid} ${accent.solidHover}`
-            : "bg-slate-100 text-slate-400 cursor-not-allowed"
-        }`}
+        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${nextModule
+          ? `${accent.solid} ${accent.solidHover}`
+          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          }`}
       >
         Next →
       </button>
@@ -323,18 +322,16 @@ function RelatedQueueList({
               <button
                 key={item._id}
                 onClick={() => onSelect(item)}
-                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-                  isActive
-                    ? `${accent.bg} ${accent.border}`
-                    : "hover:bg-slate-50 border-transparent"
-                }`}
+                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isActive
+                  ? `${accent.bg} ${accent.border}`
+                  : "hover:bg-slate-50 border-transparent"
+                  }`}
               >
                 <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    isActive
-                      ? `${accent.solid} text-white`
-                      : "bg-slate-100 text-slate-500"
-                  }`}
+                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${isActive
+                    ? `${accent.solid} text-white`
+                    : "bg-slate-100 text-slate-500"
+                    }`}
                 >
                   <Icon size={18} />
                 </div>
@@ -859,19 +856,19 @@ function AudioDetail({
                   </div>
 
                   {/* Right Side - Fullscreen */}
-               <div className="flex-shrink-0">
-  <button
-    onClick={isFullscreen ? exit : enter}
-    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
-    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-  >
-    {isFullscreen ? (
-      <Minimize2 size={18} strokeWidth={2.2} />
-    ) : (
-      <Maximize2 size={18} strokeWidth={2.2} />
-    )}
-  </button>
-</div>
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={isFullscreen ? exit : enter}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
+                      title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                      {isFullscreen ? (
+                        <Minimize2 size={18} strokeWidth={2.2} />
+                      ) : (
+                        <Maximize2 size={18} strokeWidth={2.2} />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
                   {selectedModule.title}
@@ -991,52 +988,52 @@ function TextDetail({
               }`}
           >
             <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
-             <div className="flex items-start justify-between gap-4 mb-3">
-  {/* Left Side */}
-  <div className="flex flex-wrap gap-2 items-center">
-    <span
-      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
-    >
-      {accent.label}
-    </span>
+              <div className="flex items-start justify-between gap-4 mb-3">
+                {/* Left Side */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
+                  >
+                    {accent.label}
+                  </span>
 
-    {selectedModule.content?.level && (
-      <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-        <GraduationCap size={12} />
-        Level {selectedModule.content.level}
-      </span>
-    )}
+                  {selectedModule.content?.level && (
+                    <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+                      <GraduationCap size={12} />
+                      Level {selectedModule.content.level}
+                    </span>
+                  )}
 
-    {selectedModule.content?.read_time_min && (
-      <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
-        <Clock size={12} />
-        {selectedModule.content.read_time_min} mins read
-      </span>
-    )}
-  </div>
+                  {selectedModule.content?.read_time_min && (
+                    <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+                      <Clock size={12} />
+                      {selectedModule.content.read_time_min} mins read
+                    </span>
+                  )}
+                </div>
 
-  {/* Right Side */}
-  <button
-    onClick={isFullscreen ? exit : enter}
-    className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
-    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-  >
-    {isFullscreen ? (
-      <Minimize2 size={18} strokeWidth={2.2} />
-    ) : (
-      <Maximize2 size={18} strokeWidth={2.2} />
-    )}
-  </button>
-</div>
+                {/* Right Side */}
+                <button
+                  onClick={isFullscreen ? exit : enter}
+                  className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 size={18} strokeWidth={2.2} />
+                  ) : (
+                    <Maximize2 size={18} strokeWidth={2.2} />
+                  )}
+                </button>
+              </div>
 
-<h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-  {selectedModule.title}
-</h1>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                {selectedModule.title}
+              </h1>
 
-<div
-  className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
-  dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
-/>
+              <div
+                className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
+                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+              />
 
               <hr className="border-slate-100" />
 
@@ -1103,136 +1100,134 @@ function VocabularyDetail({
     <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
       <BackToLessonsButton onBack={onBack} />
 
-     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-  <div className="lg:col-span-8 space-y-6">
-    <div
-      ref={containerRef}
-      className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm ${
-        isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
-      }`}
-    >
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-8 space-y-6">
+          <div
+            ref={containerRef}
+            className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm ${isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
+              }`}
+          >
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          {/* Left */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
-            >
-              {accent.label}
-            </span>
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4 mb-4">
+                {/* Left */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm ${accent.bg} ${accent.text} ${accent.border}`}
+                  >
+                    {accent.label}
+                  </span>
+                </div>
+
+                {/* Right */}
+                <button
+                  onClick={isFullscreen ? exit : enter}
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                >
+                  {isFullscreen ? (
+                    <Minimize2 size={18} strokeWidth={2.2} />
+                  ) : (
+                    <Maximize2 size={18} strokeWidth={2.2} />
+                  )}
+                </button>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl font-black text-slate-900 mb-2">
+                {selectedModule.title}
+              </h2>
+
+              {/* Description */}
+              <div
+                className="text-slate-600 mb-6 prose prose-slate max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: selectedModule.description || "",
+                }}
+              />
+
+              {/* Vocabulary */}
+              <div className="grid grid-cols-1 gap-4">
+                {selectedModule.words?.map((wordObj, i) => (
+                  <div
+                    key={i}
+                    className="p-4 bg-slate-50 border border-slate-200 rounded-xl"
+                  >
+                    <h4 className="text-lg font-bold text-amber-700">
+                      {wordObj.word}
+                    </h4>
+
+                    <p className="text-xs text-slate-500 italic mb-2">
+                      /{wordObj.pronunciation}/ • {wordObj.part_of_speech}
+                    </p>
+
+                    <p className="text-sm text-slate-700 mb-2">
+                      {wordObj.meaning}
+                    </p>
+
+                    <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
+                      <span className="font-bold text-slate-800">
+                        Example:
+                      </span>{" "}
+                      {wordObj.example}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Navigation */}
+              <div className="pt-6 mt-2">
+                <PrevNextNav
+                  previousModule={previousModule}
+                  nextModule={nextModule}
+                  currentIndex={currentModuleIndex}
+                  total={currentModuleList.length}
+                  onNavigate={onNavigate}
+                  accent={accent}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Right */}
-          <button
-            onClick={isFullscreen ? exit : enter}
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-300"
-          >
-            {isFullscreen ? (
-              <Minimize2 size={18} strokeWidth={2.2} />
-            ) : (
-              <Maximize2 size={18} strokeWidth={2.2} />
-            )}
-          </button>
-        </div>
+          {/* More Lessons */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="text-orange-500" size={16} />
+                More Vocabulary Lessons
+              </h3>
 
-        {/* Title */}
-        <h2 className="text-2xl font-black text-slate-900 mb-2">
-          {selectedModule.title}
-        </h2>
-
-        {/* Description */}
-        <div
-          className="text-slate-600 mb-6 prose prose-slate max-w-none"
-          dangerouslySetInnerHTML={{
-            __html: selectedModule.description || "",
-          }}
-        />
-
-        {/* Vocabulary */}
-        <div className="grid grid-cols-1 gap-4">
-          {selectedModule.words?.map((wordObj, i) => (
-            <div
-              key={i}
-              className="p-4 bg-slate-50 border border-slate-200 rounded-xl"
-            >
-              <h4 className="text-lg font-bold text-amber-700">
-                {wordObj.word}
-              </h4>
-
-              <p className="text-xs text-slate-500 italic mb-2">
-                /{wordObj.pronunciation}/ • {wordObj.part_of_speech}
-              </p>
-
-              <p className="text-sm text-slate-700 mb-2">
-                {wordObj.meaning}
-              </p>
-
-              <p className="text-sm italic text-slate-500 bg-white p-2 rounded border border-slate-100">
-                <span className="font-bold text-slate-800">
-                  Example:
-                </span>{" "}
-                {wordObj.example}
-              </p>
+              <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
+                {vocabularyModules.length} Lessons
+              </span>
             </div>
-          ))}
+
+            <RelatedQueueList
+              title="Vocabulary Queue"
+              icon={BookOpen}
+              items={related}
+              activeId={selectedModule._id}
+              onSelect={onNavigate}
+              accent={accent}
+              getSubtitle={(item) =>
+                `${item.words?.length || 0} Words • ${item.questions?.length || 0
+                } Questions`
+              }
+            />
+          </div>
         </div>
 
-        {/* Navigation */}
-        <div className="pt-6 mt-2">
-          <PrevNextNav
-            previousModule={previousModule}
-            nextModule={nextModule}
-            currentIndex={currentModuleIndex}
-            total={currentModuleList.length}
-            onNavigate={onNavigate}
-            accent={accent}
+        {/* Right Panel */}
+        <div className="lg:col-span-4">
+          <LessonActionsPanel
+            onPractice={() => router.push(buildPracticeUrl(selectedModule))}
+            onExercise={() =>
+              router.push(buildExerciseUrl(selectedModule, searchParams))
+            }
           />
         </div>
       </div>
-    </div>
-
-    {/* More Lessons */}
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-          <BookOpen className="text-orange-500" size={16} />
-          More Vocabulary Lessons
-        </h3>
-
-        <span className="text-xs font-semibold bg-orange-50 text-orange-600 px-3 py-1 rounded-full border border-orange-100">
-          {vocabularyModules.length} Lessons
-        </span>
-      </div>
-
-      <RelatedQueueList
-        title="Vocabulary Queue"
-        icon={BookOpen}
-        items={related}
-        activeId={selectedModule._id}
-        onSelect={onNavigate}
-        accent={accent}
-        getSubtitle={(item) =>
-          `${item.words?.length || 0} Words • ${
-            item.questions?.length || 0
-          } Questions`
-        }
-      />
-    </div>
-  </div>
-
-  {/* Right Panel */}
-  <div className="lg:col-span-4">
-    <LessonActionsPanel
-      onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-      onExercise={() =>
-        router.push(buildExerciseUrl(selectedModule, searchParams))
-      }
-    />
-  </div>
-</div>
     </div>
   );
 }
@@ -1266,11 +1261,10 @@ function AttemptStrip({ attempts, onSelect }) {
               <span className="text-xs text-slate-400">/{a.max_score}</span>
             </p>
             <span
-              className={`mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                a.is_passed
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-orange-50 text-orange-700"
-              }`}
+              className={`mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${a.is_passed
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-orange-50 text-orange-700"
+                }`}
             >
               {a.is_passed ? "Passed" : "Failed"}
             </span>
@@ -1344,11 +1338,10 @@ function AttemptResultModal({ attempt, onClose }) {
           </div>
 
           <div
-            className={`text-center px-4 py-3 rounded-full text-sm font-bold ${
-              attempt.is_passed
-                ? "bg-green-100 text-green-700"
-                : "bg-orange-100 text-orange-700"
-            }`}
+            className={`text-center px-4 py-3 rounded-full text-sm font-bold ${attempt.is_passed
+              ? "bg-green-100 text-green-700"
+              : "bg-orange-100 text-orange-700"
+              }`}
           >
             {attempt.is_passed ? "🎉 Passed Successfully" : "📖 Keep Practicing"}
           </div>
@@ -1396,36 +1389,41 @@ function PreAssessment({ selectedModule, onStart, attempts, onSelectAttempt }) {
   }
 
   return (
-    <>
-      <div className="bg-orange-500/[0.02] border border-orange-500/10 rounded-xl p-4 space-y-2">
-        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-          <Sparkles className="text-orange-500" size={14} /> Evaluation Rules
+    <div className="space-y-8 text-base">
+      <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-6 space-y-4 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full bg-orange-400" />
+        <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+          <Sparkles className="text-orange-500" size={18} /> Evaluation Rules
         </h4>
-        <ul className="text-xs text-slate-500 space-y-1 pl-1 list-inside list-disc">
+        <ul className="text-[15px] font-medium text-slate-600 space-y-2.5 pl-2 list-none">
           {selectedModule.shuffle_questions && (
-            <li>Questions randomized dynamically.</li>
+            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> Questions randomized dynamically.</li>
           )}
           {selectedModule.show_explanation && (
-            <li>Step-by-step resolution provided.</li>
+            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> Step-by-step resolution provided.</li>
           )}
           {!selectedModule.shuffle_questions &&
             !selectedModule.show_explanation && (
-              <li>Answer each question, then submit to see your score.</li>
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> Answer each question, then submit to see your score.</li>
             )}
-          <li>
-            {maxAttempts - attemptsUsed} of {maxAttempts} attempt
-            {maxAttempts === 1 ? "" : "s"} remaining.
+          <li className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+            <span className="text-slate-800 font-semibold">{maxAttempts - attemptsUsed} of {maxAttempts} attempt{maxAttempts === 1 ? "" : "s"}</span> remaining.
           </li>
         </ul>
       </div>
-      <button
-        onClick={onStart}
-        className="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all shadow-md"
-      >
-        Start Assessment Activity Now &rarr;
-      </button>
+      <div className="flex justify-center pt-2 pb-4">
+        <button
+          onClick={onStart}
+          className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-green-500 hover:bg-green-600 text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.6)] transform hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+        >
+          <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+          <span className="relative z-10 tracking-wide">Start Assessment Activity Now</span>
+          <ChevronRight size={22} className="relative z-10 stroke-[3] group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
       <AttemptStrip attempts={attempts} onSelect={onSelectAttempt} />
-    </>
+    </div>
   );
 }
 
@@ -1509,11 +1507,10 @@ function QuizResults({ resultData, onDone, onReview, hasReview }) {
 
         <div className="mt-8 flex justify-center">
           <div
-            className={`px-6 py-3 rounded-full text-sm font-bold ${
-              resultData?.is_passed
-                ? "bg-green-100 text-green-700"
-                : "bg-orange-100 text-orange-700"
-            }`}
+            className={`px-6 py-3 rounded-full text-sm font-bold ${resultData?.is_passed
+              ? "bg-green-100 text-green-700"
+              : "bg-orange-100 text-orange-700"
+              }`}
           >
             {resultData?.is_passed
               ? "🎉 Passed Successfully"
@@ -1580,11 +1577,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
           return (
             <div
               key={i}
-              className={`rounded-2xl border p-5 space-y-3 ${
-                r.is_correct
-                  ? "border-emerald-100 bg-emerald-50/40"
-                  : "border-red-100 bg-red-50/40"
-              }`}
+              className={`rounded-2xl border p-5 space-y-3 ${r.is_correct
+                ? "border-emerald-100 bg-emerald-50/40"
+                : "border-red-100 bg-red-50/40"
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-wide">
@@ -1592,11 +1588,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                   {(q.marks || 1) > 1 ? "s" : ""}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                    r.is_correct
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${r.is_correct
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
                 >
                   {r.is_correct ? <Check size={11} /> : <X size={11} />}
                   {r.is_correct ? "Correct" : "Incorrect"}
@@ -1613,9 +1608,8 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                     Your Answer
                   </p>
                   <p
-                    className={`text-sm font-semibold ${
-                      r.is_correct ? "text-emerald-700" : "text-red-700"
-                    }`}
+                    className={`text-sm font-semibold ${r.is_correct ? "text-emerald-700" : "text-red-700"
+                      }`}
                   >
                     {prettifyAnswer(q, r.given_answer)}
                   </p>
@@ -1661,11 +1655,10 @@ function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
         <button
           key={i}
           onClick={() => setAnswer({ value: opt })}
-          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-            answer?.value === opt
-              ? "border-orange-500 bg-orange-50"
-              : "border-slate-200 hover:border-orange-300"
-          }`}
+          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${answer?.value === opt
+            ? "border-orange-500 bg-orange-50"
+            : "border-slate-200 hover:border-orange-300"
+            }`}
         >
           {opt}
         </button>
@@ -1764,13 +1757,12 @@ function MatchBuilder({ question, answer, setAnswer }) {
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                isActive
-                  ? "border-orange-500 bg-orange-50 text-orange-700"
-                  : isPaired
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
+                ? "border-orange-500 bg-orange-50 text-orange-700"
+                : isPaired
                   ? "border-orange-300 bg-orange-50/60 text-orange-700"
                   : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-              }`}
+                }`}
             >
               {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
             </button>
@@ -1783,11 +1775,10 @@ function MatchBuilder({ question, answer, setAnswer }) {
             key={item.id}
             onClick={() => pickRight(item.value)}
             disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-              usedRights.has(item.value)
-                ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-                : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-            }`}
+            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
+              ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+              : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
+              }`}
           >
             {item.value}
           </button>
@@ -1938,6 +1929,19 @@ function ActiveQuiz({
             >
               <ChevronLeft size={16} /> Previous
             </button>
+
+            {/* Submit Exercise — only shows when ALL questions are properly answered */}
+            {questions.every((qq, i) => hasAnswer(qq, userAnswers[i])) && (
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.4)] hover:shadow-[0_8px_25px_rgba(34,197,94,0.5)] transition-all duration-300 overflow-hidden cursor-pointer"
+              >
+                <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                <span className="relative z-10 tracking-wide">Submit Exercise</span>
+                <ChevronRight size={16} className="relative z-10 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
             {!isLastQuestion ? (
               <button
                 onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
@@ -1946,12 +1950,7 @@ function ActiveQuiz({
                 Next <ChevronRight size={16} />
               </button>
             ) : (
-              <button
-                onClick={() => setShowConfirm(true)}
-                className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold transition-all cursor-pointer"
-              >
-                Submit Exercise
-              </button>
+              <div className="w-[90px]" />
             )}
           </div>
         </div>
@@ -1966,13 +1965,12 @@ function ActiveQuiz({
                 <button
                   key={i}
                   onClick={() => setCurrentQuestionIndex(i)}
-                  className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    isCurrent
-                      ? "bg-blue-500 text-white"
-                      : answered
-                        ? "bg-slate-800 text-white"
-                        : "bg-amber-400 text-slate-900"
-                  }`}
+                  className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border-2 ${isCurrent
+                    ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
+                    : answered
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "bg-yellow-400 border-yellow-400 text-white"
+                    }`}
                 >
                   {i + 1}
                 </button>
@@ -1985,22 +1983,15 @@ function ActiveQuiz({
               Legend
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-600">
-              <span className="h-3 w-3 rounded-full bg-slate-800 shrink-0" /> Attempted
+              <span className="h-3 w-3 rounded-full bg-green-500 shrink-0" /> Attempted
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <span className="h-3 w-3 rounded-full bg-blue-500 shrink-0" /> Current Question
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-600">
-              <span className="h-3 w-3 rounded-full bg-amber-400 shrink-0" /> Unattempted
+              <span className="h-3 w-3 rounded-full bg-yellow-400 shrink-0" /> Unattempted
             </div>
           </div>
-
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm transition-all cursor-pointer"
-          >
-            Submit Exercise
-          </button>
         </div>
       </div>
 

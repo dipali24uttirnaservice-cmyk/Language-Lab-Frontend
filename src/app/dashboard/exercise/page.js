@@ -79,16 +79,49 @@ function QuestionDots({ total, current, answers }) {
         return (
           <div
             key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              isCurrent
-                ? "w-6 bg-orange-500"
-                : isDone
-                ? "w-2 bg-emerald-400"
-                : "w-2 bg-slate-200"
-            }`}
+            className={`h-2 rounded-full transition-all duration-300 ${isCurrent
+              ? "w-6 bg-blue-500"
+              : isDone
+                ? "w-2 bg-green-500"
+                : "w-2 bg-yellow-400"
+              }`}
           />
         );
       })}
+    </div>
+  );
+}
+
+function QuestionNumberGrid({ total, current, answers, onSelect }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Questions</p>
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: total }).map((_, i) => {
+          const isDone = answers[i] !== undefined;
+          const isCurrent = i === current;
+          return (
+            <button
+              key={i}
+              onClick={() => onSelect(i)}
+              className={`w-9 h-9 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${isCurrent
+                ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
+                : isDone
+                  ? "bg-green-500 border-green-500 text-white shadow-sm shadow-green-200"
+                  : "bg-yellow-400 border-yellow-400 text-white"
+                }`}
+            >
+              {i + 1}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-4 pt-1">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Legend</p>
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> Attempted</span>
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Current</span>
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Unattempted</span>
+      </div>
     </div>
   );
 }
@@ -117,9 +150,9 @@ function AttemptHistory({ attempts }) {
   if (!attempts || attempts.length === 0) return null;
 
   const scroll = (dir) => {
-    scrollRef.current?.scrollBy({ 
-      left: dir === 'left' ? -320 : 320, 
-      behavior: 'smooth' 
+    scrollRef.current?.scrollBy({
+      left: dir === 'left' ? -320 : 320,
+      behavior: 'smooth'
     });
   };
 
@@ -163,9 +196,8 @@ function AttemptHistory({ attempts }) {
             >
               <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Attempt {i + 1}</p>
               <div className="text-xl font-black text-slate-900">{attempt.score}/{attempt.max_score}</div>
-              <div className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
-                attempt.is_passed ? "text-emerald-700 bg-emerald-50" : "text-orange-700 bg-orange-50"
-              }`}>
+              <div className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${attempt.is_passed ? "text-emerald-700 bg-emerald-50" : "text-orange-700 bg-orange-50"
+                }`}>
                 {attempt.is_passed ? "Passed" : "Failed"}
               </div>
             </motion.div>
@@ -225,26 +257,23 @@ function ExerciseSidebar({ exercises, selectedExercise, onSelect, searchTerm, se
                 onClick={() => onSelect(item)}
                 whileHover={{ x: isActive ? 0 : 3 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full p-4 rounded-2xl text-left transition-all border-2 relative overflow-hidden group ${
-                  isActive
-                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
-                    : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
-                }`}
+                className={`w-full p-4 rounded-2xl text-left transition-all border-2 relative overflow-hidden group ${isActive
+                  ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
+                  : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
+                  }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div
-                      className={`text-[9px] font-black uppercase tracking-wider mb-1 ${
-                        isActive ? "text-orange-100" : "text-orange-500"
-                      }`}
+                      className={`text-[9px] font-black uppercase tracking-wider mb-1 ${isActive ? "text-orange-100" : "text-orange-500"
+                        }`}
                     >
                       Exercise {String(idx + 1).padStart(2, "0")}
                     </div>
                     <div className="font-bold text-sm truncate">{item.title}</div>
                     <div
-                      className={`flex items-center gap-3 mt-2 text-[11px] font-semibold ${
-                        isActive ? "text-orange-50" : "text-slate-400"
-                      }`}
+                      className={`flex items-center gap-3 mt-2 text-[11px] font-semibold ${isActive ? "text-orange-50" : "text-slate-400"
+                        }`}
                     >
                       <span className="flex items-center gap-1">
                         <HelpCircle size={11} />
@@ -322,7 +351,7 @@ function IntroPanel({ selectedExercise, onStart, attempts }) {
         </div>
       </div>
 
-  
+
 
       <div className="rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-5">
         <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2 text-sm">
@@ -371,11 +400,10 @@ function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.99 }}
             onClick={() => setAnswer({ value: opt })}
-            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-              isSelected
-                ? "border-orange-500 bg-orange-50 shadow-sm"
-                : "border-gray-200 hover:border-orange-300 bg-white"
-            }`}
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${isSelected
+              ? "border-orange-500 bg-orange-50 shadow-sm"
+              : "border-gray-200 hover:border-orange-300 bg-white"
+              }`}
           >
             <span className={isSelected ? "text-orange-700 font-semibold" : "text-slate-700"}>
               {opt}
@@ -485,13 +513,12 @@ function MatchBuilder({ question, answer, setAnswer }) {
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                isActive
-                  ? "border-orange-500 bg-orange-50 text-orange-700"
-                  : isPaired
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
+                ? "border-orange-500 bg-orange-50 text-orange-700"
+                : isPaired
                   ? "border-orange-300 bg-orange-50/60 text-orange-700"
                   : "border-gray-200 bg-white text-slate-700 hover:border-orange-300"
-              }`}
+                }`}
             >
               {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
             </button>
@@ -504,11 +531,10 @@ function MatchBuilder({ question, answer, setAnswer }) {
             key={item.id}
             onClick={() => pickRight(item.value)}
             disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-              usedRights.has(item.value)
-                ? "border-gray-100 bg-gray-50 text-slate-300 cursor-not-allowed"
-                : "border-gray-200 bg-white text-slate-700 hover:border-orange-300"
-            }`}
+            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
+              ? "border-gray-100 bg-gray-50 text-slate-300 cursor-not-allowed"
+              : "border-gray-200 bg-white text-slate-700 hover:border-orange-300"
+              }`}
           >
             {item.value}
           </button>
@@ -566,8 +592,11 @@ function QuizPanel({
   const answer = userAnswers[currentQuestionIndex];
   const setAnswer = (next) => setUserAnswers({ ...userAnswers, [currentQuestionIndex]: next });
   const total = selectedExercise.questions.length;
+  const isFirst = currentQuestionIndex === 0;
   const isLast = currentQuestionIndex === total - 1;
-  const progress = ((currentQuestionIndex + (answer ? 1 : 0)) / total) * 100;
+  const answeredCount = selectedExercise.questions.filter((q, i) => hasAnswer(q, userAnswers[i])).length;
+  const allAnswered = answeredCount === total;
+  const progress = (answeredCount / total) * 100;
 
   return (
     <motion.div
@@ -578,16 +607,26 @@ function QuizPanel({
       transition={{ duration: 0.2 }}
       className="space-y-6"
     >
+      {/* Header: Question counter + progress bar */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
             Question {currentQuestionIndex + 1} of {total}
           </span>
-          <QuestionDots total={total} current={currentQuestionIndex} answers={userAnswers} />
+          <span className="text-xs font-semibold text-slate-400">{answeredCount}/{total} answered</span>
         </div>
         <ProgressBar value={progress} />
       </div>
 
+      {/* Question number grid */}
+      <QuestionNumberGrid
+        total={total}
+        current={currentQuestionIndex}
+        answers={userAnswers}
+        onSelect={setCurrentQuestionIndex}
+      />
+
+      {/* Question content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentQuestionIndex}
@@ -625,16 +664,37 @@ function QuizPanel({
         </motion.div>
       </AnimatePresence>
 
-      <motion.button
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => (isLast ? onSubmit() : setCurrentQuestionIndex(currentQuestionIndex + 1))}
-        disabled={!hasAnswer(question, answer)}
-        className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-      >
-        {isLast ? "Submit Assessment" : "Next Question"}
-        <ChevronRight size={18} />
-      </motion.button>
+      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+        <button
+          onClick={() => setCurrentQuestionIndex((i) => Math.max(0, i - 1))}
+          disabled={isFirst}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-50 transition-all cursor-pointer disabled:cursor-not-allowed"
+        >
+          <ChevronLeft size={16} /> Previous
+        </button>
+
+        {/* Submit Exercise — only shown when ALL questions are answered */}
+        {allAnswered && (
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onSubmit}
+            className="group relative inline-flex items-center justify-center gap-2 px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.4)] hover:shadow-[0_8px_25px_rgba(34,197,94,0.5)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <span className="relative z-10 tracking-wide">Submit Exercise</span>
+            <ChevronRight size={16} className="relative z-10 group-hover:translate-x-0.5 transition-transform" />
+          </motion.button>
+        )}
+
+        <button
+          onClick={() => setCurrentQuestionIndex((i) => i + 1)}
+          disabled={isLast}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        >
+          Next <ChevronRight size={16} />
+        </button>
+      </div>
     </motion.div>
   );
 }
@@ -698,9 +758,8 @@ function ResultsPanel({ resultData, onDone }) {
 
       <div className="mt-8 flex justify-center">
         <div
-          className={`px-6 py-3 rounded-full text-sm font-bold ${
-            resultData?.is_passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-          }`}
+          className={`px-6 py-3 rounded-full text-sm font-bold ${resultData?.is_passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+            }`}
         >
           {resultData?.is_passed ? "🎉 Passed Successfully" : "📖 Keep Practicing"}
         </div>
@@ -745,18 +804,18 @@ export default function ExercisePage() {
   }, [subTopicId, contentModuleId]);
 
   useEffect(() => {
-  setIsQuizActive(false);
-  setShowResults(false);
-  setCurrentQuestionIndex(0);
-  setUserAnswers({});
-  
-  // Fetch history whenever the selected exercise changes
-  if (selectedExercise?._id) {
-    moduleApi.getExerciseAttempts(selectedExercise._id)
-      .then(res => setAttempts(res.data?.data || []))
-      .catch(console.error);
-  }
-}, [selectedExercise]);
+    setIsQuizActive(false);
+    setShowResults(false);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+
+    // Fetch history whenever the selected exercise changes
+    if (selectedExercise?._id) {
+      moduleApi.getExerciseAttempts(selectedExercise._id)
+        .then(res => setAttempts(res.data?.data || []))
+        .catch(console.error);
+    }
+  }, [selectedExercise]);
 
   const fetchExercise = async () => {
     try {
@@ -843,66 +902,66 @@ export default function ExercisePage() {
           </button>
         </div>
 
-<div className="px-8 pb-16 pt-4">
-  {/* Main Assessment Container */}
-  <div className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
-    <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
-    <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
+        <div className="px-8 pb-16 pt-4">
+          {/* Main Assessment Container */}
+          <div className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
+            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
 
-    <div className="relative">
-      <AnimatePresence mode="wait">
-        {!isQuizActive && !showResults ? (
-          <IntroPanel
-            key="intro-panel"
-            selectedExercise={selectedExercise}
-            attempts={attempts}
-            onStart={() => {
-              if (topicId && subTopicId) {
-                activityApi
-                  .logActivity({
-                    topic_id: topicId,
-                    sub_topic_id: subTopicId,
-                    module_id: selectedExercise._id,
-                    module_type: "exercise",
-                    activity_type: "exercise_start",
-                  })
-                  .catch((err) => console.error("Failed to log activity:", err));
-              }
-              setIsQuizActive(true);
-            }}
-          />
-        ) : showResults ? (
-          <ResultsPanel
-            key="results-panel"
-            resultData={resultData}
-            onDone={() => router.back()}
-          />
-        ) : (
-          <QuizPanel
-            key="quiz-panel"
-            selectedExercise={selectedExercise}
-            currentQuestionIndex={currentQuestionIndex}
-            setCurrentQuestionIndex={setCurrentQuestionIndex}
-            userAnswers={userAnswers}
-            setUserAnswers={setUserAnswers}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  </div>
+            <div className="relative">
+              <AnimatePresence mode="wait">
+                {!isQuizActive && !showResults ? (
+                  <IntroPanel
+                    key="intro-panel"
+                    selectedExercise={selectedExercise}
+                    attempts={attempts}
+                    onStart={() => {
+                      if (topicId && subTopicId) {
+                        activityApi
+                          .logActivity({
+                            topic_id: topicId,
+                            sub_topic_id: subTopicId,
+                            module_id: selectedExercise._id,
+                            module_type: "exercise",
+                            activity_type: "exercise_start",
+                          })
+                          .catch((err) => console.error("Failed to log activity:", err));
+                      }
+                      setIsQuizActive(true);
+                    }}
+                  />
+                ) : showResults ? (
+                  <ResultsPanel
+                    key="results-panel"
+                    resultData={resultData}
+                    onDone={() => router.back()}
+                  />
+                ) : (
+                  <QuizPanel
+                    key="quiz-panel"
+                    selectedExercise={selectedExercise}
+                    currentQuestionIndex={currentQuestionIndex}
+                    setCurrentQuestionIndex={setCurrentQuestionIndex}
+                    userAnswers={userAnswers}
+                    setUserAnswers={setUserAnswers}
+                    onSubmit={handleSubmit}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
 
-  {/* Attempt History: Placed outside main box, but centered within the same max-width */}
-  {!isQuizActive && !showResults && attempts.length > 0 && (
-    <div className="max-w-2xl mx-auto">
-      <AttemptHistory attempts={attempts} />
-    </div>
-  )}
-</div>
-        
+          {/* Attempt History: Placed outside main box, but centered within the same max-width */}
+          {!isQuizActive && !showResults && attempts.length > 0 && (
+            <div className="max-w-2xl mx-auto">
+              <AttemptHistory attempts={attempts} />
+            </div>
+          )}
+        </div>
+
       </div>
-      
+
     </div>
-    
+
   );
 }
