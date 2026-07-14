@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import Swal from "sweetalert2";
 import {
   Play,
   Headphones,
@@ -1242,26 +1243,26 @@ function formatDuration(totalSeconds) {
 function AttemptStrip({ attempts, onSelect }) {
   if (!attempts || attempts.length === 0) return null;
   return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-        <Clock className="text-orange-400" size={14} /> Previous Attempts
+    <div className="space-y-4 mt-2">
+      <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+        <Clock className="text-orange-400" size={16} /> Previous Attempts
       </h4>
-      <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
         {attempts.map((a, i) => (
           <button
             key={a._id || i}
             onClick={() => onSelect(a)}
-            className="shrink-0 w-36 text-left rounded-2xl border border-slate-100 bg-white hover:border-orange-200 hover:shadow-md transition-all p-3.5 cursor-pointer"
+            className="shrink-0 w-44 text-left rounded-2xl border-2 border-slate-100 bg-white hover:border-orange-200 hover:shadow-lg transition-all p-4 cursor-pointer"
           >
-            <p className="text-[9px] font-black text-slate-400 uppercase mb-1.5">
+            <p className="text-xs font-black text-slate-400 uppercase mb-2">
               Attempt {a.attempt_number}
             </p>
-            <p className="text-lg font-black text-slate-900">
+            <p className="text-2xl font-black text-slate-900">
               {a.score}
-              <span className="text-xs text-slate-400">/{a.max_score}</span>
+              <span className="text-sm font-bold text-slate-400 ml-0.5">/{a.max_score}</span>
             </p>
             <span
-              className={`mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${a.is_passed
+              className={`mt-3 inline-block px-3 py-1 rounded-full text-xs font-bold ${a.is_passed
                 ? "bg-emerald-50 text-emerald-700"
                 : "bg-orange-50 text-orange-700"
                 }`}
@@ -1363,19 +1364,19 @@ function PreAssessment({ selectedModule, onStart, attempts, onSelectAttempt }) {
   if (isExhausted) {
     return (
       <>
-        <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5 text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-            <Award className="text-orange-500" size={22} />
+        <div className="rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white p-8 text-center space-y-3 mb-6">
+          <div className="mx-auto w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+            <Award className="text-orange-500" size={28} />
           </div>
-          <h4 className="font-black text-slate-800">Exercise Completed</h4>
-          <p className="text-sm text-slate-500">
+          <h4 className="text-2xl font-black text-slate-800">Exercise Completed</h4>
+          <p className="text-lg font-medium text-slate-500 max-w-lg mx-auto">
             You&apos;ve used all {maxAttempts} attempt{maxAttempts === 1 ? "" : "s"} for this
             exercise.
             {bestAttempt && (
               <>
                 {" "}
                 Your best score was{" "}
-                <span className="font-bold text-orange-600">
+                <span className="font-black text-orange-600">
                   {bestAttempt.score}/{bestAttempt.max_score}
                 </span>
                 .
@@ -1389,7 +1390,7 @@ function PreAssessment({ selectedModule, onStart, attempts, onSelectAttempt }) {
   }
 
   return (
-    <div className="space-y-8 text-base">
+    <div className="space-y-5 text-base">
       <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-6 space-y-4 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1 h-full bg-orange-400" />
         <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -1412,7 +1413,7 @@ function PreAssessment({ selectedModule, onStart, attempts, onSelectAttempt }) {
           </li>
         </ul>
       </div>
-      <div className="flex justify-center pt-2 pb-4">
+      <div className="flex justify-center mt-2 mb-2">
         <button
           onClick={onStart}
           className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-green-500 hover:bg-green-600 text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.6)] transform hover:-translate-y-1 transition-all duration-300 overflow-hidden"
@@ -1578,19 +1579,19 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
             <div
               key={i}
               className={`rounded-2xl border p-5 space-y-3 ${r.is_correct
-                ? "border-emerald-100 bg-emerald-50/40"
-                : "border-red-100 bg-red-50/40"
+                ? "border-green-500 bg-green-500 !text-white"
+                : "border-red-500 bg-red-500 !text-white"
                 }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-wide">
+                <span className="text-xs font-black !text-white/80 uppercase tracking-wide">
                   Question {(r.question_index ?? i) + 1} · {q.marks || 1} mark
                   {(q.marks || 1) > 1 ? "s" : ""}
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${r.is_correct
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
+                    ? "bg-white/20 !text-white"
+                    : "bg-white/20 !text-white"
                     }`}
                 >
                   {r.is_correct ? <Check size={11} /> : <X size={11} />}
@@ -1598,28 +1599,25 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                 </span>
               </div>
 
-              <p className="font-bold text-slate-800">
+              <p className="font-bold !text-white">
                 {r.question_text || q.question_text}
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                  <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
                     Your Answer
                   </p>
-                  <p
-                    className={`text-sm font-semibold ${r.is_correct ? "text-emerald-700" : "text-red-700"
-                      }`}
-                  >
+                  <p className="text-sm font-semibold !text-white">
                     {prettifyAnswer(q, r.given_answer)}
                   </p>
                 </div>
                 {!r.is_correct && (
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                    <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
                       Correct Answer
                     </p>
-                    <p className="text-sm font-semibold text-emerald-700">
+                    <p className="text-sm font-semibold !text-white">
                       {prettifyAnswer(q, r.correct_answer)}
                     </p>
                   </div>
@@ -1627,10 +1625,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
               </div>
 
               {r.explanation && (
-                <div className="flex items-start gap-2 text-xs text-sky-700 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
+                <div className="flex items-start gap-2 text-xs !text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2">
                   <Lightbulb size={13} className="shrink-0 mt-0.5" />
                   <span
-                    className="prose prose-sm prose-slate [&_p]:m-0"
+                    className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
                     dangerouslySetInnerHTML={{ __html: r.explanation }}
                   />
                 </div>
@@ -1830,30 +1828,26 @@ function ActiveQuiz({
   userAnswers,
   setUserAnswers,
   onSubmit,
+  onTimeUp,
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [timeLeft, setTimeLeft] = useState(selectedModule.time_limit_sec || null);
   const timerRef = useRef(null);
-  const submitRef = useRef(onSubmit);
-
-  useEffect(() => {
-    submitRef.current = onSubmit;
-  }, [onSubmit]);
 
   useEffect(() => {
     if (!selectedModule.time_limit_sec) return;
     timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(timerRef.current);
-          submitRef.current();
-          return 0;
-        }
-        return t - 1;
-      });
+      setTimeLeft((t) => Math.max(0, t - 1));
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, [selectedModule.time_limit_sec]);
+
+  // Separate useEffect to handle time expiration safely outside render phase
+  useEffect(() => {
+    if (timeLeft === 0 && onTimeUp) {
+      onTimeUp();
+    }
+  }, [timeLeft, onTimeUp]);
 
   const questions = selectedModule.questions || [];
   const total = questions.length;
@@ -1919,38 +1913,35 @@ function ActiveQuiz({
 
           <QuestionInput question={q} answer={answer} setAnswer={setAnswer} />
 
-          {/* Centered Previous / Next navigation */}
-          <div className="pt-4 border-t border-slate-100 space-y-4">
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-              >
-                <ChevronLeft size={18} /> Previous
-              </button>
-              <button
-                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-                disabled={isLastQuestion}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-              >
-                Next <ChevronRight size={18} />
-              </button>
-            </div>
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <button
+              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+              disabled={currentQuestionIndex === 0}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-50 transition-all cursor-pointer disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={16} /> Previous
+            </button>
 
-            {/* Submit Exercise — only shown when ALL questions are answered */}
-            {Object.keys(userAnswers).filter(k => hasAnswer(questions[k], userAnswers[k])).length === total && (
-              <div className="flex justify-center">
+            <div className="flex items-center gap-3">
+              {!isLastQuestion && (
+                <button
+                  onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold transition-all cursor-pointer"
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              )}
+              {questions.every((qq, i) => hasAnswer(qq, userAnswers[i])) && (
                 <button
                   onClick={() => setShowConfirm(true)}
-                  className="group relative inline-flex items-center justify-center gap-3 px-12 py-4 bg-green-500 hover:bg-green-600 text-white text-base font-bold rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.55)] transform hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                  className="group relative inline-flex items-center justify-center gap-2 px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.4)] hover:shadow-[0_8px_25px_rgba(34,197,94,0.5)] transition-all duration-300 overflow-hidden cursor-pointer"
                 >
                   <div className="absolute inset-0 w-full h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                   <span className="relative z-10 tracking-wide">Submit Exercise</span>
-                  <ChevronRight size={20} className="relative z-10 stroke-[3] group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={16} className="relative z-10 group-hover:translate-x-0.5 transition-transform" />
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -2113,6 +2104,18 @@ function ExerciseDetail({
               userAnswers={userAnswers}
               setUserAnswers={setUserAnswers}
               onSubmit={onSubmit}
+              onTimeUp={() => {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Time's Up!",
+                  text: "You ran out of time for this exercise. Try again!",
+                  confirmButtonColor: "#f97316",
+                  confirmButtonText: "Okay",
+                });
+                setIsQuizActive(false);
+                setUserAnswers({});
+                setCurrentQuestionIndex(0);
+              }}
             />
           )}
         </div>
