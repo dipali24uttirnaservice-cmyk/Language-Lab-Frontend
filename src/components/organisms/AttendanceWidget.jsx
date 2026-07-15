@@ -34,14 +34,14 @@ export default function AttendanceWidget({ attendance = {} }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
         <div>
-          <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <FaUserCheck className="text-emerald-500 text-base" /> Attendance Record
+          <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <FaUserCheck className="text-emerald-500 text-lg" /> Attendance Record
           </h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-sm text-slate-400 font-medium mt-0.5">
             Attendance Summary
           </p>
         </div>
-        {/* <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+        {/* <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
           Officially Tracked
         </span> */}
       </div>
@@ -71,11 +71,11 @@ export default function AttendanceWidget({ attendance = {} }) {
 
           {/* Centered Percentage */}
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-2xl font-black text-slate-800 leading-none">
+            <span className="text-3xl font-black text-slate-800 leading-none">
               {isEmpty ? "—" : `${percent}%`}
             </span>
             {!isEmpty && (
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                 Rate
               </span>
             )}
@@ -85,27 +85,27 @@ export default function AttendanceWidget({ attendance = {} }) {
         {/* Text Legend and Mini Stats */}
         <div className="flex-1 space-y-3.5 w-full">
           <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
               <FaCalendarAlt className="text-slate-400" />
               Total Days
             </div>
-            <span className="text-sm font-black text-slate-800">{total_days}</span>
+            <span className="text-base font-black text-slate-800">{total_days}</span>
           </div>
 
           <div className="flex items-center justify-between bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
+            <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Present Days
             </div>
-            <span className="text-sm font-black text-emerald-700">{present}</span>
+            <span className="text-base font-black text-emerald-700">{present}</span>
           </div>
 
           <div className="flex items-center justify-between bg-rose-50/50 p-2.5 rounded-xl border border-rose-100/50">
-            <div className="flex items-center gap-2 text-xs font-bold text-rose-500">
+            <div className="flex items-center gap-2 text-sm font-bold text-rose-500">
               <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
               Absent Days
             </div>
-            <span className="text-sm font-black text-rose-700">{absent}</span>
+            <span className="text-base font-black text-rose-700">{absent}</span>
           </div>
         </div>
       </div>
@@ -113,8 +113,8 @@ export default function AttendanceWidget({ attendance = {} }) {
       {/* Attendance Warnings */}
       {percent < 75 && !isEmpty && (
         <div className="mt-4 p-3 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-2.5">
-          <FaExclamationCircle className="text-amber-500 text-sm mt-0.5 shrink-0" />
-          <p className="text-[10px] font-bold text-amber-700 leading-snug">
+          <FaExclamationCircle className="text-amber-500 text-base mt-0.5 shrink-0" />
+          <p className="text-sm font-bold text-amber-700 leading-snug">
             Warning: Attendance is below 75%. Please log in daily and complete your lessons to maintain eligibility.
           </p>
         </div>

@@ -70,9 +70,9 @@ export default function SkillRadarChart({ progress = [] }) {
       return (
 
         <div className="rounded-2xl border border-slate-100 bg-white/90 p-3 shadow-xl backdrop-blur-md">
-          <p className="text-xs font-bold text-slate-800">{payload[0].name}</p>
-          <p className="text-lg font-black text-indigo-600 mt-1">
-            {payload[0].value}% <span className="text-xs text-slate-400 font-medium">Avg Score</span>
+          <p className="text-sm font-bold text-slate-800">{payload[0].name}</p>
+          <p className="text-xl font-black text-indigo-600 mt-1">
+            {payload[0].value}% <span className="text-sm text-slate-400 font-medium">Avg Score</span>
           </p>
         </div>
       );
@@ -92,14 +92,14 @@ export default function SkillRadarChart({ progress = [] }) {
       <div className
         ="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
         <div>
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">
             Skill Competency Map
           </h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-sm text-slate-400 font-medium mt-0.5">
             Real-time cognitive proficiency breakdown
           </p>
         </div>
-        {/* <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+        {/* <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
           AI Evaluated
         </span> */}
       </div>
@@ -136,18 +136,18 @@ export default function SkillRadarChart({ progress = [] }) {
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
-            <div className="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center text-2xl shadow-inner">
+            <div className="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center text-3xl shadow-inner">
               📊
             </div>
-            <h4 className="text-sm font-bold text-slate-700">No Learning History Yet</h4>
-            <p className="text-xs text-slate-400 max-w-[200px]">
+            <h4 className="text-base font-bold text-slate-700">No Learning History Yet</h4>
+            <p className="text-sm text-slate-400 max-w-[200px]">
               Complete lessons in Speaking, Reading, or Quizzes to build your competency map.
             </p>
           </div>
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] font-bold text-slate-500">
+      <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-5 gap-2 text-sm font-bold text-slate-500">
         {Object.entries(MODULE_TYPE_LABELS).map(([type, label]) => {
           const count = progress.filter((p) => p.module_type === type).length;
           return (

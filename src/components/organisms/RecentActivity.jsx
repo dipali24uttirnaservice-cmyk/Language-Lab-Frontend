@@ -49,20 +49,20 @@ export default function RecentActivity({ activitiesData = [] }) {
       {/* Widget Header Mapping */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
         <div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight">
+          <h3 className="text-2xl font-black text-slate-900 tracking-tight">
             Recent Activity Log
           </h3>
-          <p className="text-xs font-medium text-slate-400 mt-0.5">Automated learning ledger</p>
+          <p className="text-sm font-medium text-slate-400 mt-0.5">Automated learning ledger</p>
         </div>
         {hasActivity && (
-          <span className="text-[10px] font-extrabold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
+          <span className="text-sm font-extrabold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
             Live Syncing
           </span>
         )}
       </div>
 
       {!hasActivity ? (
-        <p className="text-xs font-medium text-slate-400 text-center py-8">
+        <p className="text-sm font-medium text-slate-400 text-center py-8">
           No activity yet. Start a lesson to see it show up here.
         </p>
       ) : (
@@ -78,16 +78,16 @@ export default function RecentActivity({ activitiesData = [] }) {
             className="group relative flex items-start gap-4 transition-all duration-200"
           >
             {/* Timeline Icon Node Pin */}
-            <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-100 shadow-2xs group-hover:border-slate-300 transition-colors mt-0.5 text-xs">
+            <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-100 shadow-2xs group-hover:border-slate-300 transition-colors mt-0.5 text-sm">
               {item.icon}
             </div>
 
             {/* Timeline Row Content Body Container */}
             <div className="flex-1 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 p-4 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
+              <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
                 {item.text}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+              <span className="text-sm font-bold text-slate-400 uppercase tracking-wider shrink-0">
                 {item.time}
               </span>
             </div>

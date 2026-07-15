@@ -45,7 +45,7 @@ export default function instituteDashboardStats() {
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
                   {stat.title}
                 </p>
                 <p className="text-3xl font-black text-slate-900 mt-2">
@@ -56,7 +56,7 @@ export default function instituteDashboardStats() {
                 <Icon size={20} />
               </div>
             </div>
-            <p className="text-[10px] font-bold text-slate-400 mt-6 uppercase tracking-wide">
+            <p className="text-xs font-bold text-slate-400 mt-6 uppercase tracking-wide">
               {stat.sub}
             </p>
           </motion.div>

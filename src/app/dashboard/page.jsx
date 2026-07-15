@@ -286,7 +286,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-slate-50 p-6 md:p-10 flex flex-col items-center justify-center space-y-4">
         <div className="h-10 w-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-sm font-bold text-slate-500 animate-pulse">
+        <p className="text-base font-bold text-slate-500 animate-pulse">
           {isDemoMode ? "Generating Demo Records..." : "Syncing Learning Records..."}
         </p>
       </div>
@@ -333,18 +333,18 @@ export default function DashboardPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-md">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 shadow-sm mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-sm font-bold uppercase tracking-widest text-slate-400 shadow-sm mb-2">
               ✦ English Learning Dashboard
             </span>
 
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight sm:text-4xl">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight sm:text-5xl">
               Welcome Back,
               <span className="bg-gradient-to-r from-amber-600 via-orange-500 to-emerald-600 bg-clip-text text-transparent">
                 {" "}Language Learner 👋
               </span>
             </h1>
 
-            <p className="mt-1 text-sm font-medium text-slate-500">
+            <p className="mt-1 text-base font-medium text-slate-500">
               Check your visual stats and take smart study actions below.
             </p>
           </div>
@@ -353,9 +353,9 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3 self-start sm:self-auto">
             <button
               onClick={toggleDemoMode}
-              className={`rounded-2xl px-4 py-2 text-xs font-black transition-all duration-200 shadow-sm border cursor-pointer ${isDemoMode
-                  ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
-                  : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
+              className={`rounded-2xl px-4 py-2 text-sm font-black transition-all duration-200 shadow-sm border cursor-pointer ${isDemoMode
+                ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
+                : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
                 }`}
             >
               {isDemoMode ? "⚡ Restore Live Data" : "📊 Fill Demo Data"}
@@ -363,7 +363,7 @@ export default function DashboardPage() {
             {/* 
             <div className="flex items-center gap-2 rounded-2xl border border-white bg-white/80 p-2.5 shadow-sm backdrop-blur-md">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">
+              <span className="text-sm font-black text-slate-600 uppercase tracking-wide">
                 AI Coach Connected
               </span>
             </div> */}

@@ -205,7 +205,7 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           {isOpen && (
             <div>
               <h2 className="text-xl font-black text-slate-800">Language Lab</h2>
-              <p className="text-[10px] uppercase font-bold text-slate-400">AI Learning Platform</p>
+              <p className="text-xs uppercase font-bold text-slate-400">AI Learning Platform</p>
             </div>
           )}
         </div>
@@ -462,7 +462,7 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
         {isOpen && (
           <div>
             <p className="text-sm font-black text-slate-800">Student Name</p>
-            <p className="text-[10px] text-amber-600 uppercase">Premium Member</p>
+            <p className="text-xs text-amber-600 uppercase">Premium Member</p>
           </div>
         )}
       </div>

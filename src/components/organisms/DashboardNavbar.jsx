@@ -327,7 +327,7 @@ useEffect(() => {
               style={{ cursor: "grab" }}
             >
               <div
-                className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold text-slate-400 min-w-max"
+                className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold text-slate-400 min-w-max"
                 onClick={(e) => { if (isDraggingRef.current) { e.preventDefault(); e.stopPropagation(); } }}
               >
                 {breadcrumbs.map((crumb, index) => {
@@ -340,7 +340,7 @@ useEffect(() => {
                     >
                       {/* Separator arrow */}
                       {index > 0 && (
-                        <FaChevronRight className="text-slate-300 text-[9px] mx-0.5" />
+                        <FaChevronRight className="text-slate-300 text-[10px] mx-0.5" />
                       )}
 
                       {/* Crumb item */}
@@ -434,7 +434,7 @@ useEffect(() => {
               <p className="text-sm font-bold text-slate-800 leading-tight">
                 {studentName}
               </p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 {instituteName}
               </p>
             </div>
