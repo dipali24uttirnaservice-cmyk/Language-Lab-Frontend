@@ -12,10 +12,10 @@ import StatusModal from "@/components/molecules/StatusModal";
 import { studentLogin } from "@/services/auth/loginApi";
 import { ArrowLeft } from "lucide-react";
 import { studentLoginSchema } from "@/app/schemas/student.schema";
-
+import { useAuth } from "@/context/AuthContext";
 export default function StudentLogin() {
   const router = useRouter();
-
+const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -88,24 +88,18 @@ export default function StudentLogin() {
           "Token not found in response"
         );
       }
+Cookies.set("role", "student", {
+  expires: 7,
+});
 
-      Cookies.set("role", "student", {
-        expires: 7,
-      });
+Cookies.set("token", token, {
+  expires: 7,
+});
 
-      Cookies.set("token", token, {
-        expires: 7,
-      });
+// Store in AuthContext instead of cookie
+login(apiResponse.data.student);
 
-      // Store student data
-      Cookies.set(
-        "studentData",
-        JSON.stringify(apiResponse.data.student),
-        {
-          expires: 7,
-        }
-      );
-      router.push("/dashboard");
+router.push("/dashboard");
 
     } catch (error) {
       console.error(error);

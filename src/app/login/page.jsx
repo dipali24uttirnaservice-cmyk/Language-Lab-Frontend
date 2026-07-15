@@ -7,13 +7,14 @@ import { ArrowLeft } from "lucide-react";
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/AnimatedBackground";
 import StatusModal from "@/components/molecules/StatusModal";
+import { useAuth } from "@/context/AuthContext";
 
 import { instituteLogin } from "@/services/auth/loginApi";
 import { instituteLoginSchema } from "@/app/schemas/institute.schema";
 
 export default function LoginPage() {
 const router = useRouter();
-
+const { login } = useAuth();
   const [loading, setLoading] =
     useState(false);
 
@@ -25,22 +26,7 @@ const router = useRouter();
       password: "Institute@123",
     });
 
-    useEffect(() => {
-  const role =
-    Cookies.get("role");
 
-  if (role === "institute") {
-    router.replace(
-      "/institute-dashboard"
-    );
-  }
-
-  if (role === "student") {
-    router.replace(
-      "/dashboard"
-    );
-  }
-}, []);
 
   const handleChange = async (
     field,
@@ -119,27 +105,20 @@ const handleLogin = async (e) => {
       throw new Error("Token not found in response");
     }
 
-    Cookies.set("role", "institute", {
-      expires: 7,
-    });
+  Cookies.set("role", "institute", {
+  expires: 7,
+});
 
-    Cookies.set("token", token, {
-      expires: 7,
-    });
+Cookies.set("token", token, {
+  expires: 7,
+});
 
-    Cookies.set(
-      "userData",
-      JSON.stringify(apiResponse.data),
-      {
-        expires: 7,
-      }
-    );
+const institute = apiResponse?.data?.institute;
 
-    const institute = apiResponse?.data?.institute;
+login(institute);
 
-   router.replace(
-      "/institute-dashboard"
-    );
+router.replace("/institute-dashboard");
+
   } catch (error) {
     console.error("Login Error:", error);
 
