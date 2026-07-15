@@ -66,18 +66,18 @@ export default function DashboardStats({ statsData = {} }) {
           {/* Card Top Row Header */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.title}</p>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-1">{item.value}</h3>
+              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{item.title}</p>
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight mt-1">{item.value}</h3>
             </div>
 
             {/* Beautiful Floating Colored Icon Hub */}
-            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white text-lg shadow-sm`}>
+            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white text-xl shadow-sm`}>
               {item.icon}
             </div>
           </div>
 
           {/* Card Meta Indicator Base Line */}
-          <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+          <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-base font-bold text-slate-500">
             <span>{item.label}</span>
             <span className="text-slate-300 font-mono">✦</span>
           </div>

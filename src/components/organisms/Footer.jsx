@@ -102,7 +102,7 @@ export default function Footer() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="rounded-3xl border-2 border-white bg-white/90 backdrop-blur-xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(245,158,11,0.05)] transition-shadow duration-300"
           >
-            <h3 className="font-black text-slate-900 tracking-wider text-[11px] uppercase mb-5 flex items-center gap-2">
+            <h3 className="font-black text-slate-900 tracking-wider text-sm uppercase mb-5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" /> Product
             </h3>
             <div className="space-y-3.5">
@@ -124,7 +124,7 @@ export default function Footer() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="rounded-3xl border-2 border-white bg-white/90 backdrop-blur-xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(249,115,22,0.05)] transition-shadow duration-300"
           >
-            <h3 className="font-black text-slate-900 tracking-wider text-[11px] uppercase mb-5 flex items-center gap-2">
+            <h3 className="font-black text-slate-900 tracking-wider text-sm uppercase mb-5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]" /> Company
             </h3>
             <div className="space-y-3.5">
@@ -146,7 +146,7 @@ export default function Footer() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="rounded-3xl border-2 border-white bg-white/90 backdrop-blur-xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(16,185,129,0.05)] transition-shadow duration-300"
           >
-            <h3 className="font-black text-slate-900 tracking-wider text-[11px] uppercase mb-5 flex items-center gap-2">
+            <h3 className="font-black text-slate-900 tracking-wider text-sm uppercase mb-5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" /> Network Hub
             </h3>
             <div className="flex flex-wrap gap-3">
@@ -171,7 +171,7 @@ export default function Footer() {
         </div>
 
         {/* Metadata System Floor Bar */}
-        <div className="border-t border-slate-200/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+        <div className="border-t border-slate-200/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-400 tracking-widest uppercase">
           <div>
             © 2026 LanguageLab. All rights reserved.
           </div>

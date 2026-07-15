@@ -103,7 +103,7 @@ export default function LearningJourney() {
         
         {/* Section Typography Header Block */}
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-24">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 shadow-3xs mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-400 shadow-3xs mb-3">
             ✦ Simple Architecture
           </span>
           <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl leading-tight">

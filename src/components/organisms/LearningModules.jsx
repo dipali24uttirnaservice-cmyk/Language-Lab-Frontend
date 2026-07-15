@@ -289,7 +289,7 @@ export default function LearningModules({ courseId, courseName }) {
                       <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
                     ) : moduleCounts[module.type] !== undefined ? (
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-gradient-to-br ${module.color} text-white shadow-sm`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-bold bg-gradient-to-br ${module.color} text-white shadow-sm`}
                       >
                         {moduleCounts[module.type]}
                       </span>

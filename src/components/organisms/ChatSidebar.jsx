@@ -21,7 +21,7 @@ export default function ChatSidebar() {
 
       {/* History Header */}
       <div className="flex items-center justify-between px-2 mb-4">
-        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
           <FaHistory /> Recent History
         </h3>
       </div>
@@ -45,7 +45,7 @@ export default function ChatSidebar() {
       {/* Footer Info */}
       <div className="mt-auto pt-6 border-t border-slate-200/50">
         <div className="bg-amber-100/50 rounded-2xl p-4 border border-amber-200/50">
-          <p className="text-[10px] font-bold text-amber-800 leading-relaxed">
+          <p className="text-xs font-bold text-amber-800 leading-relaxed">
             PRO TIP: Switch between your language sessions anytime. Your progress is saved automatically.
           </p>
         </div>

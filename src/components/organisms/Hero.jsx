@@ -155,7 +155,7 @@ export default function Hero() {
               />
             ))}
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
-            <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-white/90 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm">
+            <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-white/90 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
               <Sparkles size={12} />
               Featured Institute
             </div>

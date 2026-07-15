@@ -91,14 +91,14 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
     if (active && payload && payload.length) {
       return (
         <div className="rounded-2xl border border-slate-100 bg-white/95 p-4 shadow-xl backdrop-blur-md">
-          <p className="text-xs font-bold text-slate-400">{payload[0].payload.fullDate}</p>
+          <p className="text-sm font-bold text-slate-400">{payload[0].payload.fullDate}</p>
           <div className="mt-2 space-y-1">
-            <p className="text-sm font-black text-amber-600 flex items-center gap-1.5">
-              <FaClock className="text-xs" /> {payload[0].value} Mins Studied
+            <p className="text-base font-black text-amber-600 flex items-center gap-1.5">
+              <FaClock className="text-sm" /> {payload[0].value} Mins Studied
             </p>
             {payload[1] && (
-              <p className="text-sm font-black text-indigo-600 flex items-center gap-1.5">
-                <FaCalendarCheck className="text-xs" /> {payload[1].value} Lessons Completed
+              <p className="text-base font-black text-indigo-600 flex items-center gap-1.5">
+                <FaCalendarCheck className="text-sm" /> {payload[1].value} Lessons Completed
               </p>
             )}
           </div>
@@ -120,10 +120,10 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-6 mb-6">
         <div>
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">
             Weekly Study Consistency
           </h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-sm text-slate-400 font-medium mt-0.5">
             Compare study time and lesson completion daily
           </p>
         </div>
@@ -131,12 +131,12 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
         {/* Streak Fire Widget */}
         {streak > 0 && (
           <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-md shadow-orange-500/20">
-            <FaFire className="text-xl animate-bounce" />
+            <FaFire className="text-2xl animate-bounce" />
             <div>
-              <p className="text-[9px] font-bold text-orange-100 uppercase tracking-widest leading-none">
+              <p className="text-[11px] font-bold text-orange-100 uppercase tracking-widest leading-none">
                 Daily Streak
               </p>
-              <p className="text-sm font-black tracking-tight">{streak} Days Active</p>
+              <p className="text-base font-black tracking-tight">{streak} Days Active</p>
             </div>
           </div>
         )}
@@ -145,16 +145,16 @@ export default function WeeklyConsistency({ activities = [], attendance = {} }) 
       {/* Mini Stats Summary */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="p-3 bg-slate-50 rounded-2xl">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Weekly Time</p>
-          <p className="text-base font-black text-slate-800 mt-0.5">{totalMinutes}m</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Weekly Time</p>
+          <p className="text-lg font-black text-slate-800 mt-0.5">{totalMinutes}m</p>
         </div>
         <div className="p-3 bg-slate-50 rounded-2xl">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Avg</p>
-          <p className="text-base font-black text-slate-800 mt-0.5">{avgMinutes}m</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Daily Avg</p>
+          <p className="text-lg font-black text-slate-800 mt-0.5">{avgMinutes}m</p>
         </div>
         <div className="p-3 bg-slate-50 rounded-2xl">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed</p>
-          <p className="text-base font-black text-slate-800 mt-0.5">{totalCompleted} Lessons</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Completed</p>
+          <p className="text-lg font-black text-slate-800 mt-0.5">{totalCompleted} Lessons</p>
         </div>
       </div>
 

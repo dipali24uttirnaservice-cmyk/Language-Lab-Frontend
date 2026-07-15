@@ -204,7 +204,7 @@ if (!mounted) {
       {instituteName}
     </h2>
 
-    <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400 font-bold">
+    <p className="text-xs uppercase tracking-[0.25em] text-slate-400 font-bold">
       Institute Portal
     </p>
   </div>
@@ -336,7 +336,7 @@ if (!mounted) {
   {instituteName}
 </p>
 
-          <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+          <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
             System Active
           </p>
         </div>

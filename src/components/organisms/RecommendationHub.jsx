@@ -87,11 +87,11 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
       const data = payload[0].payload;
       return (
         <div className="rounded-2xl border border-slate-100 bg-white/95 p-3 shadow-xl backdrop-blur-md">
-          <p className="text-xs font-black text-slate-800">{data.name}</p>
-          <p className="text-sm font-black text-indigo-600 mt-1">
+          <p className="text-sm font-black text-slate-800">{data.name}</p>
+          <p className="text-base font-black text-indigo-600 mt-1">
             {data.value} Lessons Completed
           </p>
-          <p className="text-[11px] font-bold text-slate-400">
+          <p className="text-base font-bold text-slate-400">
             Completion Rate: {data.percent}%
           </p>
         </div>
@@ -112,14 +112,14 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">
             Syllabus Completion & Progress
           </h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-sm text-slate-400 font-medium mt-0.5">
             Module breakdown and pending learning targets
           </p>
         </div>
-        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+        <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
           {overallPercentage}% Overall Complete
         </span>
       </div>
@@ -152,10 +152,10 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
             {/* Inner Ring stats */}
             {totalCompleted > 0 && (
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-lg font-black text-slate-800 leading-none">
+                <span className="text-xl font-black text-slate-800 leading-none">
                   {totalCompleted}
                 </span>
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                   Done
                 </span>
               </div>
@@ -169,13 +169,13 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
               const item = metrics[type];
               const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
               return (
-                <div key={type} className="flex items-center justify-between text-xs font-bold">
+                <div key={type} className="flex items-center justify-between text-sm font-bold">
                   <div className="flex items-center gap-2 text-slate-500">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.color }} />
                     <span className="truncate">{info.label}</span>
                   </div>
                   <span className="text-slate-700 font-mono">
-                    {pct}% <span className="text-[10px] text-slate-400">({item.completed}/{item.total})</span>
+                    {pct}% <span className="text-sm text-slate-400">({item.completed}/{item.total})</span>
                   </span>
                 </div>
               );
@@ -186,7 +186,7 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
         {/* Right Side: Incomplete Modules Panel */}
         <div className="flex flex-col h-full justify-between gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
           <div className="space-y-3">
-            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+            <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
               Pending Tasks ({incompleteModules.length})
             </h4>
 
@@ -199,14 +199,14 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
                       key={item._id || index}
                       className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/50 transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-white shadow-2xs flex items-center justify-center text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-white shadow-2xs flex items-center justify-center text-sm shrink-0">
                         {info.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-slate-800 truncate leading-snug">
+                        <p className="text-sm font-black text-slate-800 truncate leading-snug">
                           {item.subtopic?.title || "Pending Lesson"}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-400 leading-none">
+                        <p className="text-sm font-bold text-slate-400 leading-none">
                           {info.label} • {item.progress_percentage}% Done
                         </p>
                       </div>
@@ -215,9 +215,9 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
                 })
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-center text-slate-400">
-                  <FaCheckCircle className="text-emerald-500 text-2xl mb-2" />
-                  <p className="text-xs font-bold text-slate-700">Course Fully Completed!</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">You have checked off all standard curriculum requirements.</p>
+                  <FaCheckCircle className="text-emerald-500 text-3xl mb-2" />
+                  <p className="text-sm font-bold text-slate-700">Course Fully Completed!</p>
+                  <p className="text-sm text-slate-400 mt-0.5">You have checked off all standard curriculum requirements.</p>
                 </div>
               )}
             </div>
@@ -230,10 +230,10 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
       <div className="border-t border-slate-100 pt-4">
         <Link
           href={learnModuleUrl}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs transition-all duration-200 shadow-md shadow-indigo-600/10"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm transition-all duration-200 shadow-md shadow-indigo-600/10"
         >
           {btnLabel}
-          <FaChevronRight className="text-[9px]" />
+          <FaChevronRight className="text-[11px]" />
         </Link>
       </div>
 

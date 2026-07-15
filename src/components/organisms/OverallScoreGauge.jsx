@@ -108,14 +108,14 @@ export default function OverallScoreGauge({ progress = [] }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <FaStar className="text-amber-400 text-base" /> Overall Learning Score
+          <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <FaStar className="text-amber-400 text-lg" /> Overall Learning Score
           </h3>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-sm text-slate-400 font-medium mt-0.5">
             Average score on all module challenges
           </p>
         </div>
-        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+        <span className="text-sm font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
           Performance
         </span>
       </div>
@@ -153,7 +153,7 @@ export default function OverallScoreGauge({ progress = [] }) {
                   x={pos.x}
                   y={pos.y + 4} // small alignment adjust
                   textAnchor="middle"
-                  className="fill-slate-400 font-sans font-bold text-[9px]"
+                  className="fill-slate-400 font-sans font-bold text-[11px]"
                 >
                   {val}
                 </text>
@@ -184,10 +184,10 @@ export default function OverallScoreGauge({ progress = [] }) {
 
           {/* Centered overall score text placed below the needle cap */}
           <div className="absolute bottom-2 flex flex-col items-center justify-center text-center">
-            <span className="text-2xl font-black text-slate-800 tracking-tighter leading-none">
+            <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">
               {overallScore}%
             </span>
-            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
               Average Score
             </span>
           </div>
@@ -196,7 +196,7 @@ export default function OverallScoreGauge({ progress = [] }) {
 
       {/* Category Averages list */}
       <div className="border-t border-slate-100 pt-4 space-y-2.5">
-        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+        <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">
           Skill-by-Skill Scores
         </h4>
 
@@ -204,7 +204,7 @@ export default function OverallScoreGauge({ progress = [] }) {
           const metric = scoreMetrics[cat.key];
           const avg = metric.count > 0 ? Math.round(metric.total / metric.count) : 0;
           return (
-            <div key={cat.key} className="flex items-center justify-between text-xs font-bold">
+            <div key={cat.key} className="flex items-center justify-between text-sm font-bold">
               <span className="text-slate-500">{cat.label}</span>
               <div className="flex items-center gap-2">
                 <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
