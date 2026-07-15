@@ -18,6 +18,8 @@ import {
   Lightbulb,
   X,
   Check,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1236,6 +1238,36 @@ export default function ExercisePage() {
   const [questionResults, setQuestionResults] = useState(null);
   const [showReview, setShowReview] = useState(false);
 
+  const containerRef = useRef(null);
+const [isFullscreen, setIsFullscreen] = useState(false);
+
+useEffect(() => {
+  const handleFullscreenChange = () => {
+    setIsFullscreen(!!document.fullscreenElement);
+  };
+
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+  return () => {
+    document.removeEventListener(
+      "fullscreenchange",
+      handleFullscreenChange
+    );
+  };
+}, []);
+
+const enterFullscreen = async () => {
+  if (containerRef.current?.requestFullscreen) {
+    await containerRef.current.requestFullscreen();
+  }
+};
+
+const exitFullscreen = async () => {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  }
+};
+
   useEffect(() => {
     fetchExercise();
   }, [subTopicId, contentModuleId]);
@@ -1319,8 +1351,12 @@ export default function ExercisePage() {
   if (!selectedExercise) return <EmptyState scopedToLesson={Boolean(contentModuleId)} />;
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <ExerciseSidebar
+ <div
+    ref={containerRef}
+    className={`flex bg-slate-50 overflow-hidden ${
+      isFullscreen ? "h-screen w-screen" : "h-screen"
+    }`}
+  >      <ExerciseSidebar
         exercises={exercises}
         selectedExercise={selectedExercise}
         onSelect={setSelectedExercise}
@@ -1331,6 +1367,19 @@ export default function ExercisePage() {
 
       
       <div className="flex-1 overflow-y-auto w-full relative p-6 md:p-8">
+      <div className="sticky top-0 z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm">
+  <button
+    onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
+    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+  >
+    {isFullscreen ? (
+      <Minimize2 size={18} />
+    ) : (
+      <Maximize2 size={18} />
+    )}
+  </button>
+</div>
         <ExerciseDetail
           selectedModule={selectedExercise}
           isQuizActive={isQuizActive}

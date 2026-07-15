@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import {
+import { useMemo, useState, useRef, useEffect } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";import {
   BookOpen,
   CheckCircle2,
   XCircle,
@@ -207,6 +207,36 @@ function OptionButton({ opt, isAnswered, isSelected, isCorrectAnswer, onClick })
 export default function PracticeQuestionsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
+  const containerRef = useRef(null);
+const [isFullscreen, setIsFullscreen] = useState(false);
+
+useEffect(() => {
+  const handleFullscreenChange = () => {
+    setIsFullscreen(!!document.fullscreenElement);
+  };
+
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+  return () => {
+    document.removeEventListener(
+      "fullscreenchange",
+      handleFullscreenChange
+    );
+  };
+}, []);
+
+const enterFullscreen = async () => {
+  if (containerRef.current?.requestFullscreen) {
+    await containerRef.current.requestFullscreen();
+  }
+};
+
+const exitFullscreen = async () => {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  }
+};
 
   const moduleData = useMemo(() => {
     const data = searchParams.get("data");
@@ -275,8 +305,12 @@ export default function PracticeQuestionsPage() {
   };
 
   return (
-    <div className="flex h-full bg-slate-50 overflow-hidden">
-      <QuestionSidebar
+ <div
+    ref={containerRef}
+    className={`flex bg-slate-50 overflow-hidden ${
+      isFullscreen ? "h-screen w-screen" : "h-full"
+    }`}
+  >      <QuestionSidebar
         questions={questions}
         current={current}
         answers={answers}
@@ -286,15 +320,27 @@ export default function PracticeQuestionsPage() {
       />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm transition"
-          >
-            <ArrowLeft size={18} />
-            <span>Back</span>
-          </button>
-        </div>
+      <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-between">
+  <button
+    onClick={() => router.back()}
+    className="flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm"
+  >
+    <ArrowLeft size={18} />
+    Back
+  </button>
+
+  <button
+    onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+  >
+    {isFullscreen ? (
+      <Minimize2 size={18} />
+    ) : (
+      <Maximize2 size={18} />
+    )}
+  </button>
+</div>
 
         <div className="px-8 pb-16 pt-4">
           <div className="max-w-2xl mx-auto relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
