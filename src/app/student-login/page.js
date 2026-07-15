@@ -197,7 +197,7 @@ router.push("/dashboard");
         >
           <Input
             label="Enrollment Number"
-            placeholder="EN2024002"
+            placeholder="EN2024001"
             value={enrollmentNo}
             onChange={(e) =>
               handleEnrollmentNoChange(
