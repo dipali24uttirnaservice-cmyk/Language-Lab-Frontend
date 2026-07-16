@@ -126,6 +126,7 @@ export default function VideoPlayer({
     ? ((isSeeking ? seekValue : currentTime) / duration) * 100
     : 0;
   const bufferedPct = duration ? (buffered / duration) * 100 : 0;
+if (!src?.trim()) {
 
   return (
     <div
@@ -135,9 +136,9 @@ export default function VideoPlayer({
       onMouseLeave={() => playing && setShowControls(false)}
     >
       <ReactPlayer
-        ref={playerRef}
-        src={src}
-        poster={poster}
+     ref={playerRef}
+  src={src?.trim() ? src : undefined}
+  poster={poster?.trim() ? poster : undefined}
         playing={playing}
         muted={muted}
         volume={volume}
@@ -312,4 +313,5 @@ export default function VideoPlayer({
       </div>
     </div>
   );
+}
 }

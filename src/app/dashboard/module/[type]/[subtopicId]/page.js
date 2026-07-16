@@ -39,11 +39,11 @@ import VideoPlayer from "@/components/VideoPlayer";
    ========================================================================= */
 
 const CONTENT_TYPES = [
-  { id: "video", label: "Videos", icon: Play },
-  { id: "audio", label: "Audios", icon: Headphones },
-  { id: "exercise", label: "Exercises", icon: Award },
-  { id: "text", label: "Readings", icon: FileText },
-  { id: "vocabulary", label: "Vocab", icon: BookOpen },
+    { id: "video", label: "Videos", icon: Play },
+    { id: "audio", label: "Audios", icon: Headphones },
+    { id: "exercise", label: "Exercises", icon: Award },
+    { id: "text", label: "Readings", icon: FileText },
+    { id: "vocabulary", label: "Vocab", icon: BookOpen },
 ];
 
 const TYPE_ACCENT = {
@@ -697,11 +697,15 @@ function VideoDetail({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
-                        <VideoPlayer
-                            src={selectedModule.video?.url}
-                            poster={selectedModule.video?.thumbnail_url || selectedModule.thumbnail}
-                            onEnded={onComplete}
-                        />
+                     <VideoPlayer
+  src={selectedModule.video?.url?.trim() || undefined}
+  poster={
+    selectedModule.video?.thumbnail_url?.trim() ||
+    selectedModule.thumbnail?.trim() ||
+    undefined
+  }
+  onEnded={onComplete}
+/>
                     </div>
 
                     <div className="space-y-5">
@@ -2138,12 +2142,12 @@ export default function ModuleListPage() {
         rawType && rawType !== "null" && rawType !== "undefined" ? rawType : null;
     const subtopicId = params?.subtopicId;
 
-  const [selectedModule, setSelectedModule] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [modules, setModules] = useState([]);
+    const [selectedModule, setSelectedModule] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [modules, setModules] = useState([]);
   const [activeTab, setActiveTab] = useState(type || "Video");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("default");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("default");
 
     // Quiz / exercise flow state
     const [resultData, setResultData] = useState(null);
@@ -2370,80 +2374,167 @@ export default function ModuleListPage() {
             <div className="h-[70vh] flex items-center justify-center bg-slate-50">
                 <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
             </div>
-          )
-        ) : (
-          <div className="space-y-6 animate-fade-in">
-          
+        );
+    }
 
-            {filteredModules.length === 0 ? (
-              <div className="text-center py-20 bg-white/40 rounded-2xl border border-dashed border-slate-300">
-                <p className="text-slate-500 text-sm font-medium">
-                  No learning modules match your selection.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredModules.map((item) => {
-                  if (!item) return null;
-                  const itemType = item.module_type || type;
+    const currentModuleType = selectedModule?.module_type || type;
 
-                  if (itemType === "exercise") {
-                    return (
-                      <ExerciseRow
-                        key={item._id}
-                        item={item}
-                        onSelect={handleModuleSelection}
-                      />
-                    );
-                  }
-                  if (itemType === "audio") {
-                    return (
-                      <AudioRow
-                        key={item._id}
-                        item={item}
-                        onSelect={handleModuleSelection}
-                      />
-                    );
-                  }
-                  if (itemType === "text") {
-                    return (
-                      <TextCard
-                        key={item._id}
-                        item={item}
-                        onSelect={handleModuleSelection}
-                      />
-                    );
-                  }
-                  if (itemType === "vocabulary") {
-                    return (
-                      <VocabularyRow
-                        key={item._id}
-                        item={item}
-                        onSelect={handleModuleSelection}
-                      />
-                    );
-                  }
-                  return (
-                    <VideoCard
-                      key={item._id}
-                      item={item}
-                      type={type}
-                      onSelect={handleModuleSelection}
-                    />
-                  );
-                })}
-              </div>
+    const currentModuleList =
+        currentModuleType === "video"
+            ? videoModules
+            : currentModuleType === "audio"
+                ? audioModules
+                : currentModuleType === "text"
+                    ? textModules
+                    : currentModuleType === "vocabulary"
+                        ? vocabularyModules
+                        : [];
+
+    const currentModuleIndex = currentModuleList.findIndex(
+        (item) => item._id === selectedModule?._id,
+    );
+    const previousModule =
+        currentModuleIndex > 0 ? currentModuleList[currentModuleIndex - 1] : null;
+    const nextModule =
+        currentModuleIndex >= 0 && currentModuleIndex < currentModuleList.length - 1
+            ? currentModuleList[currentModuleIndex + 1]
+            : null;
+
+    const sharedDetailProps = {
+        selectedModule,
+        previousModule,
+        nextModule,
+        currentModuleIndex,
+        currentModuleList,
+        onNavigate: handleModuleSelection,
+        onBack: () => handleModuleSelection(null),
+        router,
+        searchParams,
+    };
+
+    return (
+        <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-orange-400/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/10 blur-[150px] pointer-events-none" />
+
+            <div className="max-w-[1700px] mx-auto space-y-8 relative z-10">
+                {selectedModule ? (
+                    currentModuleType === "video" ? (
+                        <VideoDetail
+                            {...sharedDetailProps}
+                            videoModules={videoModules}
+                            onComplete={() =>
+                                logModuleActivity(selectedModule, "video_complete")
+                            }
+                        />
+                    ) : currentModuleType === "audio" ? (
+                        <AudioDetail
+                            {...sharedDetailProps}
+                            audioModules={audioModules}
+                            onComplete={() =>
+                                logModuleActivity(selectedModule, "audio_complete")
+                            }
+                        />
+                    ) : currentModuleType === "exercise" ? (
+                        <ExerciseDetail
+                            selectedModule={selectedModule}
+                            isQuizActive={isQuizActive}
+                            setIsQuizActive={setIsQuizActive}
+                            showResults={showResults}
+                            resultData={resultData}
+                            currentQuestionIndex={currentQuestionIndex}
+                            setCurrentQuestionIndex={setCurrentQuestionIndex}
+                            userAnswers={userAnswers}
+                            setUserAnswers={setUserAnswers}
+                            onSubmit={handleSubmit}
+                            onStart={() =>
+                                logModuleActivity(selectedModule, "exercise_start")
+                            }
+                            onBack={() => handleModuleSelection(null)}
+                            router={router}
+                            attempts={attempts}
+                            onSelectAttempt={setSelectedAttempt}
+                            questionResults={questionResults}
+                            showReview={showReview}
+                            setShowReview={setShowReview}
+                        />
+                    ) : currentModuleType === "vocabulary" ? (
+                        <VocabularyDetail
+                            {...sharedDetailProps}
+                            vocabularyModules={vocabularyModules}
+                        />
+                    ) : currentModuleType === "text" ? (
+                        <TextDetail {...sharedDetailProps} textModules={textModules} />
+                    ) : (
+                        <div className="p-10 text-center text-slate-500">
+                            Unsupported module type.
+                        </div>
+                    )
+                ) : (
+                    <div className="space-y-6 animate-fade-in">
+                        {filteredModules.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {filteredModules.map((item) => {
+                                    if (!item) return null;
+                                    const itemType = item.module_type || type;
+
+                                    if (itemType === "exercise") {
+                                        return (
+                                            <ExerciseRow
+                                                key={item._id}
+                                                item={item}
+                                                onSelect={handleModuleSelection}
+                                            />
+                                        );
+                                    }
+                                    if (itemType === "audio") {
+                                        return (
+                                            <AudioRow
+                                                key={item._id}
+                                                item={item}
+                                                onSelect={handleModuleSelection}
+                                            />
+                                        );
+                                    }
+                                    if (itemType === "text") {
+                                        return (
+                                            <TextCard
+                                                key={item._id}
+                                                item={item}
+                                                onSelect={handleModuleSelection}
+                                            />
+                                        );
+                                    }
+                                    if (itemType === "vocabulary") {
+                                        return (
+                                            <VocabularyRow
+                                                key={item._id}
+                                                item={item}
+                                                onSelect={handleModuleSelection}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <VideoCard
+                                            key={item._id}
+                                            item={item}
+                                            type={type}
+                                            onSelect={handleModuleSelection}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {selectedAttempt && (
+                <AttemptResultModal
+                    attempt={selectedAttempt}
+                    onClose={() => setSelectedAttempt(null)}
+                />
             )}
-          </div>
-        )}
-      </div>
-
-      {selectedAttempt && (
-        <AttemptResultModal
-          attempt={selectedAttempt}
-          onClose={() => setSelectedAttempt(null)}
-        />
-      )}
-    </div>
-  );
+        </div>
+    );
 }
