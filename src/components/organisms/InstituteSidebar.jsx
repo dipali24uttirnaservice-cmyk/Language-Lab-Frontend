@@ -4,13 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import Cookies from "js-cookie";
+import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   GraduationCap,
-  BarChart3,
   Building2,
-  Settings,
   BadgeCheck,
   LogOut,
 } from "lucide-react";
@@ -56,43 +54,23 @@ const menuItems = [
  
 ];
 
-export default function InstituteSidebar({  isOpen,
-  setShowLogoutModal, }) {
+export default function InstituteSidebar({ 
+  isOpen,
+  setShowLogoutModal,
+}) {
+
   const pathname = usePathname();
 
- const [institute, setInstitute] = useState({});
-const [mounted, setMounted] = useState(false);
+  const { user: institute } = useAuth();
 
-const router = useRouter();
-
-
-
-  
-
-
-useEffect(() => {
-  setMounted(true);
-
-  try {
-    const userCookie = Cookies.get("userData");
-    const parsedData = userCookie ? JSON.parse(userCookie) : {};
-    setInstitute(parsedData?.institute || {});
-  } catch (error) {
-    console.error(error);
-  }
-}, []);
-
-if (!mounted) {
-  return null;
-}
 
   const instituteName =
     institute?.institute_name || "Institute";
 
+
   const instituteLogo =
     institute?.logo || "/default-logo.png";
 
- ;
   return (
     <aside
       className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300 ease-in-out

@@ -71,21 +71,27 @@ export default function TableToolbar({
 
         {/* Segment Selector */}
         <div className="relative">
-          <select
-            value={segment}
-            onChange={(e) => setSegment(e.target.value)}
-            className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
-              segment
-                ? "border-orange-500 ring-4 ring-orange-500/10"
-                : "border-slate-200 hover:border-slate-300"
-            } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
-          >
-            {segmentOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+       <select
+  value={segment}
+  onChange={(e) => setSegment(e.target.value)}
+  className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
+    segment
+      ? "border-orange-500 ring-4 ring-orange-500/10"
+      : "border-slate-200 hover:border-slate-300"
+  } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
+>
+  <option value="" disabled>
+    Select Department
+  </option>
+
+  {segmentOptions
+    .filter((item) => item !== "")
+    .map((item) => (
+      <option key={item} value={item}>
+        {item}
+      </option>
+    ))}
+</select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
             ▼
           </div>
@@ -94,21 +100,27 @@ export default function TableToolbar({
         {/* Year Selector + Reset Actions */}
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
-                year
-                  ? "border-orange-500 ring-4 ring-orange-500/10"
-                  : "border-slate-200 hover:border-slate-300"
-              } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
-            >
-              {yearOptions.map((item) => (
-                <option key={item} value={item}>
-                  Year {item}
-                </option>
-              ))}
-            </select>
+       <select
+  value={year}
+  onChange={(e) => setYear(e.target.value)}
+  className={`w-full h-12 rounded-xl border bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none appearance-none transition duration-150 cursor-pointer ${
+    year
+      ? "border-orange-500 ring-4 ring-orange-500/10"
+      : "border-slate-200 hover:border-slate-300"
+  } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
+>
+  <option value="" disabled>
+    Select Year
+  </option>
+
+  {yearOptions
+    .filter((item) => item !== "")
+    .map((item) => (
+      <option key={item} value={item}>
+        Year {item}
+      </option>
+    ))}
+</select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
               ▼
             </div>

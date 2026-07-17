@@ -494,54 +494,50 @@ function AudioRow({ item, onSelect }) {
     );
 }
 
-function TextCard({ item, onSelect }) {
+function TextRow({ item, onSelect }) {
     return (
-        <div
+        <WideRow
             onClick={() => onSelect(item)}
-            className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
-        >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-400 to-blue-500" />
-
-            <div className="flex items-start gap-4 mb-3">
-                <div className="h-12 w-12 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0 text-sky-500 group-hover:bg-sky-500 group-hover:text-white transition-colors duration-300">
-                    <FileText size={24} />
-                </div>
-                <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                        <span className="text-[9px] font-bold tracking-wider uppercase text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                            Text Lesson
+            // Orange theme transition
+            iconBg="bg-orange-50 group-hover:bg-orange-500 transition-colors duration-200"
+            icon={
+                <FileText
+                    className="text-orange-500 group-hover:text-white transition-all duration-200 group-hover:scale-105"
+                    size={18}
+                />
+            }
+            eyebrow="Text Lesson"
+            eyebrowClass="bg-orange-50 text-orange-600 border-orange-100"
+            title={item.title}
+           
+                 middle={
+                item.description?.speaker_name ? (
+                    <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+                        <User size={10} /> {item.audio.speaker_name}
+                    </span>
+                ) : (
+                    <div
+                        className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
+                        dangerouslySetInnerHTML={{
+                            __html: item.description || "No context description.",
+                        }}
+                    />
+                )
+            }
+            right={
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                        <Clock size={11} />
+                        <span>
+                            {item.content?.read_time_min ? `${item.content.read_time_min}m` : "Quick"}
                         </span>
-                        {item.content?.level && (
-                            <span className="text-[9px] font-bold tracking-wider uppercase text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                                Level {item.content.level}
-                            </span>
-                        )}
                     </div>
-                    <h3 className="font-extrabold text-base text-slate-900 line-clamp-2 leading-snug group-hover:text-sky-600 transition-colors">
-                        {item.title}
-                    </h3>
+                    <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
+                        <ChevronRight size={12} />
+                    </div>
                 </div>
-            </div>
-
-            <div
-                className="text-xs text-slate-500 line-clamp-3 leading-relaxed flex-1 mt-1 prose prose-slate"
-                dangerouslySetInnerHTML={{
-                    __html: item.description || "No description available.",
-                }}
-            />
-
-            <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                    <Clock size={14} />
-                    {item.content?.read_time_min
-                        ? `${item.content.read_time_min}m read`
-                        : "Quick read"}
-                </span>
-                <span className="inline-flex items-center justify-center gap-1 px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl shadow-md group-hover:shadow-sky-500/30 group-hover:scale-105 transition-all duration-300">
-                    Read Document <ChevronRight size={14} />
-                </span>
-            </div>
-        </div>
+            }
+        />
     );
 }
 
@@ -2515,7 +2511,7 @@ export default function ModuleListPage() {
                                     }
                                     if (itemType === "text") {
                                         return (
-                                            <TextCard
+                                            <TextRow
                                                 key={item._id}
                                                 item={item}
                                                 onSelect={handleModuleSelection}
