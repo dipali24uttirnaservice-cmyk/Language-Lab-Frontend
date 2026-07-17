@@ -69,7 +69,10 @@ export default function AIAvatarCoach({
               video.pause();
               setIsVideoPlaying(false);
             } else {
-              video.play();
+              // play() returns a promise that rejects (AbortError) if the
+              // video is swapped/removed before it resolves — catch it so
+              // it doesn't surface as an unhandled rejection.
+              video.play().catch(() => {});
               setIsVideoPlaying(true);
             }
           }}

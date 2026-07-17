@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 import {
   User,
   Mail,
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   const [profile, setProfile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -79,12 +81,26 @@ export default function ProfilePage() {
 
       await updateStudentProfile(payload);
 
-      fetchProfile();
+      setPhotoPreview(null);
+      await fetchProfile();
+      toast.success("Profile updated successfully.");
     } catch (error) {
       console.error(error);
+      toast.error(
+        error?.response?.data?.message || "Failed to update profile. Please try again."
+      );
     } finally {
       setSaving(false);
     }
+  };
+
+  const handlePhotoSelect = (file) => {
+    if (!file) return;
+    setFormData((prev) => ({ ...prev, studentPhoto: file }));
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   };
 
   if (loading) {
@@ -167,29 +183,35 @@ export default function ProfilePage() {
   <div className="relative px-8 pb-8">
 
     {/* Profile Image */}
-    <div className="-mt-16 relative w-fit mx-auto">
-      <img
-        src={
-          profile?.studentPhoto ||
-          `https://ui-avatars.com/api/?name=${profile?.full_name}`
-        }
-        alt=""
-        className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-2xl"
-      />
+    <div className="-mt-16 relative w-fit mx-auto group/avatar">
+      <div className="h-32 w-32 rounded-full p-1 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-400 shadow-2xl">
+        <img
+          src={
+            photoPreview ||
+            profile?.profilePhoto ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              profile?.full_name || ""
+            )}&background=f97316&color=fff&bold=true`
+          }
+          alt={profile?.full_name || "Profile photo"}
+          className="h-full w-full rounded-full border-4 border-white object-cover transition-transform duration-300 group-hover/avatar:scale-105"
+        />
+      </div>
 
-      <label className="absolute bottom-2 right-2 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-full cursor-pointer shadow-xl transition-all">
+      {photoPreview && (
+        <span className="absolute -top-1 -left-1 inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 shadow-lg">
+          New photo
+        </span>
+      )}
+
+      <label className="absolute bottom-2 right-2 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-full cursor-pointer shadow-xl transition-all hover:scale-110 active:scale-95 ring-4 ring-white">
         <Camera size={16} />
 
         <input
           hidden
           type="file"
           accept="image/*"
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              studentPhoto: e.target.files[0],
-            })
-          }
+          onChange={(e) => handlePhotoSelect(e.target.files[0])}
         />
       </label>
     </div>

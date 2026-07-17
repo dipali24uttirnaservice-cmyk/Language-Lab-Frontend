@@ -263,7 +263,16 @@ console.log("Type:", type);
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.96 }}
-      onClick={() => router.back()}
+      onClick={() => {
+        // router.back() no-ops when this page was opened without a prior
+        // client-side history entry (e.g. a fresh tab/reload), so navigate to
+        // a deterministic destination instead of relying on browser history.
+        const params = new URLSearchParams();
+        if (courseId) params.set("courseId", courseId);
+        if (courseName) params.set("courseName", courseName);
+        if (type) params.set("type", type);
+        router.push(`/dashboard/topics?${params.toString()}`);
+      }}
       className="h-10 w-10 rounded-xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-md text-orange-600 shrink-0"
     >
       <ArrowLeft size={18} />

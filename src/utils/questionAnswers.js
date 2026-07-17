@@ -18,11 +18,17 @@ export function hasAnswer(question, answer) {
     case "mcq":
     case "true_false":
     case "fill_blank":
+    // Authored "spell_word" content gives whole candidate spellings as
+    // options, not individual letters, so it's a plain choice like mcq.
+    case "spell_word":
       return !!answer.value;
     case "short_answer":
       return !!(answer.text && answer.text.trim().length);
+    // "recorder" content is authored as an arrange-the-words task (options
+    // are discrete words/phrases, correct_answer is them joined in order),
+    // not an audio recording — same shape as reorder.
     case "reorder":
-    case "spell_word":
+    case "recorder":
       return (
         (answer.order || []).length === (question.options || []).length &&
         (question.options || []).length > 0
@@ -42,13 +48,13 @@ export function answerToString(question, answer) {
     case "mcq":
     case "true_false":
     case "fill_blank":
+    case "spell_word":
       return answer.value || "";
     case "short_answer":
       return answer.text || "";
     case "reorder":
+    case "recorder":
       return (answer.order || []).map((id) => question.options[id]).join(",");
-    case "spell_word":
-      return (answer.order || []).map((id) => question.options[id]).join("");
     case "match": {
       const pairs = answer.pairs || {};
       return getMatchPairs(question)
@@ -65,7 +71,10 @@ export function answerToString(question, answer) {
 // to the backend submit endpoint.
 export function checkAnswerLocally(question, answer) {
   if (!answer) return false;
-  const normalize = (s) => String(s ?? "").trim().toLowerCase();
+  // Strip everything but letters/digits rather than just trimming — authored
+  // correct_answer strings for "reorder"/"recorder" mix separators ("a, b, c"
+  // vs "a b c"), so a punctuation/whitespace-insensitive compare is needed.
+  const normalize = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
   return normalize(answerToString(question, answer)) === normalize(question.correct_answer);
 }
 

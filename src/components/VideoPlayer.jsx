@@ -38,7 +38,11 @@ export default function VideoPlayer({
   const hideTimerRef = useRef(null);
 
   const [playing, setPlaying] = useState(autoPlay);
-  const [muted, setMuted] = useState(false);
+  // Browsers block unmuted autoplay until the user has interacted with the
+  // page (NotAllowedError) — starting muted when autoplaying is the only
+  // way to have playback actually begin; the user can unmute via the
+  // volume button, which counts as the interaction browsers require.
+  const [muted, setMuted] = useState(autoPlay);
   const [volume, setVolume] = useState(1);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -50,6 +54,7 @@ export default function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
+  const [loadError, setLoadError] = useState(false);
 
   // Reset transient state whenever the source changes (e.g. next lesson)
   useEffect(() => {
@@ -58,6 +63,7 @@ export default function VideoPlayer({
     setDuration(0);
     setBuffered(0);
     setIsLoading(true);
+    setLoadError(false);
   }, [src, autoPlay]);
 
   const scheduleHide = useCallback(() => {
@@ -137,6 +143,18 @@ if (!src?.trim()) {
     </div>
   );
 }
+
+if (loadError) {
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full bg-black flex items-center justify-center ${className}`}
+    >
+      <p className="text-white/70">This video failed to load.</p>
+    </div>
+  );
+}
+
   return (
     <div
       ref={containerRef}
@@ -172,6 +190,13 @@ if (!src?.trim()) {
         }}
         onEnded={onEnded}
         onClick={togglePlay}
+        onError={(err) => {
+          // AbortError just means playback was interrupted by a src swap or
+          // unmount — expected during lesson navigation, not a real failure.
+          if (err?.name === "AbortError") return;
+          setIsLoading(false);
+          setLoadError(true);
+        }}
       />
 
       {isLoading && (

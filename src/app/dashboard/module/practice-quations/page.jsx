@@ -14,6 +14,12 @@ import { Maximize2, Minimize2 } from "lucide-react";import {
   Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  getMatchPairs,
+  hasAnswer,
+  checkAnswerLocally,
+  shuffledPool,
+} from "@/utils/questionAnswers";
 
 /* =========================================================================
    SMALL SHARED PIECES
@@ -201,6 +207,134 @@ function OptionButton({ opt, isAnswered, isSelected, isCorrectAnswer, onClick })
 }
 
 /* =========================================================================
+   PER-TYPE ANSWER INPUTS
+   Answer shapes: see src/utils/questionAnswers.js
+   ========================================================================= */
+
+function FillBlankText({ answer, setAnswer }) {
+  return (
+    <input
+      type="text"
+      autoFocus
+      value={answer?.value || ""}
+      onChange={(e) => setAnswer({ value: e.target.value })}
+      placeholder="Type the missing word..."
+      className="w-full p-4 rounded-xl border-2 border-slate-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-orange-500 transition"
+    />
+  );
+}
+
+function ShortAnswerBox({ answer, setAnswer }) {
+  return (
+    <textarea
+      rows={4}
+      value={answer?.text || ""}
+      onChange={(e) => setAnswer({ text: e.target.value })}
+      placeholder="Write your answer..."
+      className="w-full p-4 rounded-xl border-2 border-slate-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-orange-500 transition resize-none"
+    />
+  );
+}
+
+function SequenceBuilder({ question, answer, setAnswer }) {
+  const order = answer?.order || [];
+  const options = question.options || [];
+  const pool = options
+    .map((value, id) => ({ id, value }))
+    .filter((item) => !order.includes(item.id));
+
+  return (
+    <div className="space-y-4">
+      <div className="min-h-16 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 flex flex-wrap items-center gap-2 p-3">
+        {order.length === 0 && (
+          <span className="text-sm text-slate-400 italic">
+            Tap the words below in the right order…
+          </span>
+        )}
+        {order.map((id, pos) => (
+          <button
+            key={pos}
+            onClick={() => setAnswer({ order: order.filter((_, i) => i !== pos) })}
+            className="px-3.5 py-2 rounded-lg border-2 border-orange-400 bg-orange-100 text-orange-800 font-semibold text-sm hover:border-orange-500 transition"
+          >
+            {options[id]}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {pool.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setAnswer({ order: [...order, item.id] })}
+            className="px-3.5 py-2 rounded-lg border-2 border-slate-300 bg-white text-slate-700 font-semibold text-sm hover:border-orange-300 transition"
+          >
+            {item.value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MatchPanel({ question, answer, setAnswer }) {
+  const pairs = answer?.pairs || {};
+  const activeLeft = answer?.activeLeft || null;
+  const matchPairs = useMemo(() => getMatchPairs(question), [question]);
+  const rightPool = useMemo(() => shuffledPool(matchPairs.map((p) => p.right)), [matchPairs]);
+  const usedRights = new Set(Object.values(pairs));
+
+  const pickLeft = (left) => {
+    if (pairs[left]) return;
+    setAnswer({ pairs, activeLeft: left });
+  };
+  const pickRight = (right) => {
+    if (!activeLeft) return;
+    setAnswer({ pairs: { ...pairs, [activeLeft]: right }, activeLeft: null });
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        {matchPairs.map((p) => {
+          const isPaired = !!pairs[p.left];
+          const isActive = activeLeft === p.left;
+          return (
+            <button
+              key={p.left}
+              onClick={() => pickLeft(p.left)}
+              disabled={isPaired}
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
+                ? "border-orange-500 bg-orange-50 text-orange-700"
+                : isPaired
+                  ? "border-orange-300 bg-orange-50/60 text-orange-700"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+                }`}
+            >
+              {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="space-y-2">
+        {rightPool.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => pickRight(item.value)}
+            disabled={usedRights.has(item.value)}
+            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
+              ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+              : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+              }`}
+          >
+            {item.value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
    MAIN PAGE
    ========================================================================= */
 
@@ -251,7 +385,7 @@ const exitFullscreen = async () => {
   const questions = moduleData?.questions || [];
 
   const [current, setCurrent] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState({});
+  const [drafts, setDrafts] = useState({});
   const [answers, setAnswers] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -264,18 +398,33 @@ const exitFullscreen = async () => {
   }
 
   const question = questions[current];
+  const draft = drafts[current];
+  const setDraft = (next) => setDrafts((prev) => ({ ...prev, [current]: next }));
+
+  const rawOptions = Array.isArray(question.options) ? question.options.filter(Boolean) : [];
 
   const options =
-  question.question_type === "true_false"
-    ? ["True", "False"]
-    : question.question_type === "mcq" ||
-      question.question_type === "fill_blank"
-      ? question.options.filter(Boolean)
-      : [];
+    question.question_type === "true_false"
+      ? (rawOptions.length === 2 ? rawOptions : ["True", "False"])
+      : rawOptions;
 
-  const correctAnswer = ["A", "B", "C", "D", "a", "b", "c", "d"].includes(question.correct_answer)
-    ? options[["A", "B", "C", "D", "a", "b", "c", "d"].indexOf(question.correct_answer) % 4]
-    : question.correct_answer;
+  // mcq / true_false / fill_blank(with options) are graded as single-choice
+  // selections; authored "spell_word" content also turns out to be a choice
+  // among whole-word spellings (not a letter-by-letter builder), so it's
+  // graded the same way. Everything else is graded via checkAnswerLocally.
+  const isChoiceType =
+    question.question_type === "mcq" ||
+    question.question_type === "true_false" ||
+    question.question_type === "spell_word" ||
+    (question.question_type === "fill_blank" && options.length > 0);
+
+  const letterMap = ["A", "B", "C", "D", "a", "b", "c", "d"];
+  const correctAnswer =
+    isChoiceType && letterMap.includes(question.correct_answer)
+      ? options[letterMap.indexOf(question.correct_answer) % 4]
+      : question.correct_answer;
+
+  const answered = hasAnswer(question, draft);
 
   const isAnswered = !!answers[current];
   const answeredCount = Object.keys(answers).length;
@@ -284,14 +433,19 @@ const exitFullscreen = async () => {
 
   const submitAnswer = () => {
     if (answers[current]) return;
-    const value = selectedOptions[current];
-    if (!value) return;
+    if (!answered) return;
+
+    let isCorrect;
+    if (isChoiceType) {
+      const given = (draft?.value || "").toString().trim().toLowerCase();
+      isCorrect = given === (correctAnswer || "").toString().trim().toLowerCase();
+    } else {
+      isCorrect = checkAnswerLocally(question, draft);
+    }
 
     setAnswers((prev) => ({
       ...prev,
-      [current]: {
-        isCorrect: value.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase(),
-      },
+      [current]: { isCorrect },
     }));
   };
 
@@ -301,7 +455,7 @@ const exitFullscreen = async () => {
       delete next[current];
       return next;
     });
-    setSelectedOptions((prev) => ({ ...prev, [current]: "" }));
+    setDrafts((prev) => ({ ...prev, [current]: undefined }));
   };
 
   return (
@@ -453,47 +607,46 @@ const exitFullscreen = async () => {
                     </h1>
 
                     <div className="space-y-3">
-                     {(question.question_type === "mcq" ||
-  question.question_type === "true_false" ||
-  question.question_type === "fill_blank") &&
-  options.filter(Boolean).map((opt, i) => {
-    const isSelected = selectedOptions[current] === opt;
+                      {question.question_type === "short_answer" ? (
+                        <ShortAnswerBox answer={draft} setAnswer={setDraft} />
+                      ) : question.question_type === "match" ? (
+                        <MatchPanel question={question} answer={draft} setAnswer={setDraft} />
+                      ) : question.question_type === "recorder" ? (
+                        <SequenceBuilder question={question} answer={draft} setAnswer={setDraft} />
+                      ) : isChoiceType ? (
+                        options.filter(Boolean).map((opt, i) => {
+                          const isSelected = draft?.value === opt;
 
-    return (
-      <motion.button
-        key={i}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() =>
-          setSelectedOptions((prev) => ({
-            ...prev,
-            [current]: opt,
-          }))
-        }
-        className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 font-medium ${
-          isSelected
-            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
-            : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
-        }`}
-      >
-        <div
-          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-            isSelected
-              ? "border-orange-500"
-              : "border-slate-300"
-          }`}
-        >
-          {isSelected && (
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
-          )}
-        </div>
+                          return (
+                            <motion.button
+                              key={i}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setDraft({ value: opt })}
+                              className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 font-medium ${
+                                isSelected
+                                  ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
+                                  : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+                              }`}
+                            >
+                              <div
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                  isSelected ? "border-orange-500" : "border-slate-300"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                                )}
+                              </div>
 
-        <span className="text-[15px]">
-          {opt}
-        </span>
-      </motion.button>
-    );
-  })}
+                              <span className="text-[15px]">{opt}</span>
+                            </motion.button>
+                          );
+                        })
+                      ) : (
+                        // fill_blank without predefined options -> free text
+                        <FillBlankText answer={draft} setAnswer={setDraft} />
+                      )}
                     </div>
 
                     {/* Nav row */}
@@ -512,7 +665,7 @@ const exitFullscreen = async () => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={submitAnswer}
-                          disabled={!selectedOptions[current]}
+                          disabled={!answered}
                           className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-500 text-white px-8 py-3 rounded-xl transition-all font-bold shadow-md hover:shadow-emerald-200 flex items-center gap-2"
                         >
                           Submit Answer &raquo;

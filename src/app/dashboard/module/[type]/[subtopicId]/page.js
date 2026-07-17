@@ -901,13 +901,22 @@ function AudioDetail({
                                         </p>
                                     </div>
                                 </div>
-                                <audio
-                                    key={selectedModule._id}
-                                    src={selectedModule.audio?.url}
-                                    controls
-                                    className="w-full sm:w-72 md:w-96 focus:outline-none"
-                                    onEnded={onComplete}
-                                />
+                                {selectedModule.audio?.url ? (
+                                    <audio
+                                        key={selectedModule._id}
+                                        src={selectedModule.audio.url}
+                                        controls
+                                        className="w-full sm:w-72 md:w-96 focus:outline-none"
+                                        onEnded={onComplete}
+                                        onError={() =>
+                                            toast.error("This audio failed to load.")
+                                        }
+                                    />
+                                ) : (
+                                    <p className="text-sm text-slate-400 italic">
+                                        Audio not available.
+                                    </p>
+                                )}
                             </div>
 
                             <hr className="border-slate-100" />
@@ -1690,7 +1699,7 @@ function ShortAnswerInput({ answer, setAnswer }) {
     );
 }
 
-function SequenceBuilder({ question, answer, setAnswer, isSpell }) {
+function SequenceBuilder({ question, answer, setAnswer }) {
     const order = answer?.order || [];
     const pool = question.options
         .map((value, id) => ({ id, value }))
@@ -1701,7 +1710,7 @@ function SequenceBuilder({ question, answer, setAnswer, isSpell }) {
             <div className="min-h-14 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 flex flex-wrap items-center gap-2 p-3">
                 {order.length === 0 && (
                     <span className="text-sm text-slate-400 italic">
-                        Tap {isSpell ? "letters" : "items"} below to build your answer…
+                        Tap items below to build your answer…
                     </span>
                 )}
                 {order.map((id, pos) => (
@@ -1805,9 +1814,17 @@ function QuestionInput({ question, answer, setAnswer }) {
         case "short_answer":
             return <ShortAnswerInput answer={answer} setAnswer={setAnswer} />;
         case "reorder":
-            return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} isSpell={false} />;
+        // Authored "recorder" content is an arrange-the-words task (options
+        // are discrete words/phrases, correct_answer is them joined in
+        // order) — not an audio recording — so it reuses the sequence
+        // builder used for "reorder".
+        case "recorder":
+            return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} />;
         case "spell_word":
-            return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} isSpell />;
+            // Authored "spell_word" content gives whole candidate spellings
+            // as options (e.g. "Recommend" / "Recomend" / "Reommend"), not
+            // individual letters, so it's a plain choice among them.
+            return <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} />;
         case "match":
             return <MatchBuilder question={question} answer={answer} setAnswer={setAnswer} />;
         default:

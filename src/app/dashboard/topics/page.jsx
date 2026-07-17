@@ -246,7 +246,19 @@ return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.96 }}
-      onClick={() => router.back()}
+      onClick={() => {
+        // router.back() no-ops when this page was opened without a prior
+        // client-side history entry (e.g. a fresh tab/reload), so navigate to
+        // a deterministic destination instead of relying on browser history.
+        if (courseId) {
+          const params = new URLSearchParams();
+          params.set("courseId", courseId);
+          if (courseName) params.set("courseName", courseName);
+          router.push(`/dashboard/course/${courseId}?${params.toString()}`);
+        } else {
+          router.push("/dashboard/learning-journey");
+        }
+      }}
       className="h-14 w-14 rounded-2xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-lg text-orange-600 hover:bg-orange-50 transition-all shrink-0"
     >
       <ArrowLeft size={22} />

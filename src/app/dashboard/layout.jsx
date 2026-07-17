@@ -20,6 +20,25 @@ useEffect(() => {
   setRole(Cookies.get("role"));
 }, []);
 
+// react-player (used by the video lesson player) calls the underlying
+// <video>/<audio> element's play() without catching its promise, so
+// swapping/removing the source mid-playback (switching lessons, navigating
+// away) throws an unhandled "AbortError: play() request was interrupted" —
+// a normal, benign browser quirk, not an app bug. Silence only that one
+// well-known case so real unhandled rejections still surface.
+useEffect(() => {
+  const handleRejection = (event) => {
+    if (
+      event.reason?.name === "AbortError" &&
+      /play\(\)/.test(event.reason?.message || "")
+    ) {
+      event.preventDefault();
+    }
+  };
+  window.addEventListener("unhandledrejection", handleRejection);
+  return () => window.removeEventListener("unhandledrejection", handleRejection);
+}, []);
+
 const handleLogout = async () => {
   try {
     await logoutStudent();

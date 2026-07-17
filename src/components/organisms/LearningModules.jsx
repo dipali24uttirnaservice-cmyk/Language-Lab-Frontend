@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { courseApi } from "@/services/course/courseApi";
 import {
-  ArrowLeft,
   Video,
   Headphones,
   FileText,
@@ -216,12 +215,6 @@ export default function LearningModules({ courseId, courseName }) {
           className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-100/50"
         >
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="h-11 w-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-orange-500 hover:border-orange-200 hover:shadow-md hover:shadow-orange-500/5 transition-all group"
-            >
-              <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-            </button>
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
                 <Sparkles size={12} className="animate-pulse" />
