@@ -117,8 +117,7 @@ export default function InstituteDashboard() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col justify-center">
-      {/* Background Floating Ambient Orbs */}
+<div className="relative h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col"> {/* Background Floating Ambient Orbs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:40px_40px] opacity-40" />
         <motion.div
@@ -133,10 +132,8 @@ export default function InstituteDashboard() {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto w-full space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
-          <div>
+<div className="relative z-10 max-w-7xl mx-auto w-full space-y-3 ">        {/* Header Section */}
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-3">          <div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 shadow-sm mb-2">
               ✦ Institute Management Portal
             </span>
@@ -165,8 +162,8 @@ export default function InstituteDashboard() {
         </div>
 
         {/* KPI Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <StatCard
+<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5"> 
+         <StatCard
             title="Enrolled Students"
             value={enrolledStudents.total}
             icon={Users}
@@ -194,123 +191,140 @@ export default function InstituteDashboard() {
             color="from-rose-500 to-pink-600"
             sub="Across all module progress"
           />
+           <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1 }}
+    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex items-center justify-between"
+  >
+    <div className="space-y-3">
+      <div>
+        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Breakdown</p>
+        <h2 className="text-lg font-extrabold text-slate-900 leading-tight">Student Status</h2>
+      </div>
+      <div className="space-y-1.5">
+        {statusData.map((data) => (
+          <div key={data.name} className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+            <span className="text-[11px] font-semibold text-slate-600">{data.name}: {data.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    
+    <div className="relative h-[100px] w-[100px] shrink-0">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={statusData} innerRadius={30} outerRadius={45} paddingAngle={5} dataKey="value">
+            {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="text-sm font-black text-slate-900">{statusBreakdown.total}</span>
+      </div>
+    </div>
+  </motion.div>
         </div>
 
         {/* Charts & Analytics Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Chart Area */}
-          <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition duration-300 h-full flex flex-col justify-between"
-            >
-              <div className="mb-4">
-                <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Performance Metric</p>
-                <h2 className="text-xl font-extrabold text-slate-900 mt-0.5">Student Growth</h2>
-              </div>
-              <div className="h-[240px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={studentGrowth} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="studentGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} className="text-xs font-semibold fill-slate-400" dy={8} />
-                    <YAxis tickLine={false} axisLine={false} className="text-xs font-semibold fill-slate-400" dx={-4} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }} />
-                    <Area type="monotone" dataKey="students" stroke="#4F46E5" strokeWidth={3} fill="url(#studentGradient)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          </div>
-
+        <div className="lg:col-span-2">
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    // Reduced padding from p-6 to p-5
+    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300"
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div>
+        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Performance</p>
+        <h2 className="text-lg font-extrabold text-slate-900 leading-tight">Student Growth</h2>
+      </div>
+      {/* Optional: Add a simple time filter here to make it look professional */}
+      <div className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+         <span className="text-[10px] font-bold text-slate-500">6 Months</span>
+      </div>
+    </div>
+    
+    {/* Reduced height from 240px to 180px */}
+    <div className="h-[180px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={studentGrowth} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="studentGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1} />
+              <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+          <XAxis 
+            dataKey="month" 
+            tickLine={false} 
+            axisLine={false} 
+            className="text-[10px] font-medium fill-slate-400" 
+            dy={5} 
+          />
+          <YAxis 
+            tickLine={false} 
+            axisLine={false} 
+            className="text-[10px] font-medium fill-slate-400" 
+            dx={-5} 
+          />
+          <Tooltip 
+            cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
+            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} 
+          />
+          <Area 
+            type="monotone" 
+            dataKey="students" 
+            stroke="#4F46E5" 
+            strokeWidth={2} 
+            fill="url(#studentGradient)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  </motion.div>
+  
+</div>
           {/* Sidebar Components Column */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-            {/* Student Distribution Pie Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex items-center justify-between gap-4"
-            >
-              <div className="space-y-3 max-w-[50%]">
-                <div>
-                  <p className="text-xs font-bold text-rose-500 uppercase tracking-wider">Breakdown</p>
-                  <h2 className="text-lg font-extrabold text-slate-900 leading-tight">Student Status</h2>
-                </div>
-                <div className="space-y-1.5">
-                  {statusData.map((data) => (
-                    <div key={data.name} className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: data.color }} />
-                      <span className="text-sm font-semibold text-slate-600 truncate">{data.name}: {data.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="relative h-[120px] w-[120px] shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={42}
-                      outerRadius={58}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {statusData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} className="cursor-pointer transition-opacity hover:opacity-80" />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <h3 className="text-xl font-extrabold text-slate-900 leading-none">{statusBreakdown.total}</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+         {/* Sidebar Components Column - Fixed for balance */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+  
+ 
 
-            {/* Timeline Recent Activity Container */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
-            >
-              <div className="mb-4">
-                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Live Updates</p>
-                <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
-              </div>
-              <div className="flex flex-col space-y-3.5">
-                {recentActivity.length === 0 ? (
-                  <p className="text-xs font-semibold text-slate-400">No recent activity yet.</p>
-                ) : (
-                  recentActivity.map((item, index) => {
-                    const meta = ACTIVITY_META[item.type] || DEFAULT_ACTIVITY_META;
-                    return (
-                      <ActivityRow
-                        key={index}
-                        icon={meta.icon}
-                        text={meta.title}
-                        sub={item.message}
-                        time={timeAgo(item.timestamp)}
-                        colorClass={meta.colorClass}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          </div>
+  {/* 2. Recent Activity Card (Fixed Height to match) */}
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2 }}
+    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex flex-col h-[280px]"
+  >
+    <div className="mb-4">
+      <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live Updates</p>
+      <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
+    </div>
+    
+    <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+      <div className="space-y-1">
+        {recentActivity.map((item, index) => (
+          <ActivityRow
+            key={index}
+            icon={ACTIVITY_META[item.type]?.icon}
+            text={ACTIVITY_META[item.type]?.title}
+            sub={item.message}
+            time={timeAgo(item.timestamp)}
+            colorClass={ACTIVITY_META[item.type]?.colorClass}
+          />
+        ))}
+      </div>
+    </div>
+  </motion.div>
+
+ 
+</div>
         </div>
 
       </div>
@@ -323,22 +337,33 @@ export default function InstituteDashboard() {
 function StatCard({ title, value, icon: Icon, color, sub }) {
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/60 rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:border-slate-300 transition duration-150 group cursor-pointer"
+      whileHover={{ y: -5 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-xl hover:border-indigo-100"
     >
-      <div className="flex justify-between items-start relative z-10">
-        <div className="space-y-1.5">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-indigo-600 transition duration-150">{title}</p>
+      {/* Subtle hover background highlight */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      
+      <div className="relative z-10 flex justify-between items-start">
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">
+            {title}
+          </p>
           <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
         </div>
-        <div className={`p-3 rounded-xl text-white bg-gradient-to-br ${color} shadow-md shadow-slate-900/5 border border-white/10 transition-transform duration-300 group-hover:scale-110`}>
-          <Icon size={18} />
+        
+        {/* Elevated icon with glow */}
+        <div className={`p-3 rounded-2xl text-white bg-gradient-to-br ${color} shadow-lg shadow-indigo-500/20 transition-transform duration-300 group-hover:scale-110`}>
+          <Icon size={20} strokeWidth={2.5} />
         </div>
       </div>
-      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between relative z-10">
+
+      <div className="relative z-10 mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
         <p className="text-xs font-medium text-slate-500">{sub}</p>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 tracking-normal group-hover:bg-indigo-50 group-hover:text-indigo-600 transition duration-150">Live</span>
+        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          LIVE
+        </span>
       </div>
     </motion.div>
   );
@@ -347,18 +372,22 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
 function ActivityRow({ icon: Icon, text, sub, time, colorClass }) {
   return (
     <motion.div
-      whileHover={{ x: 3 }}
-      className="flex items-center gap-3.5 group cursor-pointer"
+      whileHover={{ x: 4 }}
+      className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
     >
-      <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm bg-gradient-to-br ${colorClass} transition-transform group-hover:scale-105`}>
+      <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm ${colorClass}`}>
         <Icon size={14} />
       </div>
+      
       <div className="flex-1 min-w-0 flex justify-between items-center gap-2">
         <div className="truncate">
-          <p className="text-sm font-bold text-slate-800 truncate leading-snug group-hover:text-indigo-600 transition duration-150">{text}</p>
-          <p className="text-xs text-slate-500 truncate mt-0.5">{sub}</p>
+          <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+            {text}
+          </p>
         </div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{time}</p>
+        <span className="text-[10px] font-bold text-slate-400 shrink-0">
+          {time}
+        </span>
       </div>
     </motion.div>
   );
