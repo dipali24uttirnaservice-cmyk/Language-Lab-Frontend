@@ -126,8 +126,17 @@ export default function VideoPlayer({
     ? ((isSeeking ? seekValue : currentTime) / duration) * 100
     : 0;
   const bufferedPct = duration ? (buffered / duration) * 100 : 0;
+  
 if (!src?.trim()) {
-
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full bg-black flex items-center justify-center ${className}`}
+    >
+      <p className="text-white/70">Video not available.</p>
+    </div>
+  );
+}
   return (
     <div
       ref={containerRef}
@@ -313,5 +322,5 @@ if (!src?.trim()) {
       </div>
     </div>
   );
-}
+
 }
