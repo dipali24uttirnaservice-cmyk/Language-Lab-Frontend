@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   FaBell,
   FaGraduationCap,
@@ -22,38 +23,24 @@ export default function InstituteNavbar({
   showLogoutModal,
   setShowLogoutModal,
 }) {
-  const router = useRouter();
-const pathname = usePathname();
+const router = useRouter();
+  const pathname = usePathname();
 
-    const [institute, setInstitute] = useState(null);
+  const { user: institute } = useAuth();
 
-useEffect(() => {
-  try {
-    const userCookie = Cookies.get("userData");
 
-    const parsedData = userCookie
-      ? JSON.parse(userCookie)
-      : {};
+  const instituteLogo =
+    institute?.logo || "/default-logo.png";
 
-    setInstitute(parsedData?.institute || {});
-  } catch (error) {
-    console.error(error);
-    setInstitute({});
-  }
-}, []);
 
-const instituteLogo =
-  institute?.logo || "/default-logo.png";
+  const instituteName =
+    institute?.institute_name || "Institute";
 
-const instituteName =
-  institute?.institute_name ||
-  "Institute";
 
   const avatarLetter =
     instituteName
       ?.charAt(0)
       ?.toUpperCase() || "I";
-
 
 
   const breadcrumbs = pathname
