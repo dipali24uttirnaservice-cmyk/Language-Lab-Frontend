@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
+import Swal from "sweetalert2";
 import {
   ChevronRight,
   Award,
@@ -1202,6 +1203,7 @@ function ExerciseDetail({
                   text: "You ran out of time for this exercise. Try again!",
                   confirmButtonColor: "#f97316",
                   confirmButtonText: "Okay",
+                  target: document.fullscreenElement || document.body,
                 });
                 setIsQuizActive(false);
                 setUserAnswers({});

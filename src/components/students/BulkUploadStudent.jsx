@@ -104,6 +104,17 @@ setTimeout(() => {
     }
   };
 
+const downloadSampleExcel = () => {
+  const link = document.createElement("a");
+
+  link.href = "/student_bulk_upload_sample.xlsx";
+  link.download = "student_bulk_upload_sample.xlsx";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
  return (
   <div className="max-w-7xl mx-auto px-6 py-8">
 
@@ -121,6 +132,21 @@ setTimeout(() => {
             Upload an Excel file to add multiple students at once.
           </p>
         </div>
+
+        <button
+  onClick={downloadSampleExcel}
+  className="
+    bg-white text-orange-600
+    px-4 py-2
+    rounded-xl
+    font-semibold
+    hover:bg-orange-50
+    transition
+    shadow-sm
+  "
+>
+  ⬇ Download Sample Excel
+</button>
 
         <button
           onClick={() =>
