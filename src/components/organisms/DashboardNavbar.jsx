@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
 import { studentApi } from "@/services/student/studentApi";
+import { getStudentProfile } from "@/services/student/studentProfileApi";
 import Link from "next/link";
 
 export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
@@ -141,6 +142,20 @@ useEffect(() => {
     }
   }, []);
 
+  // ─── Refresh from API (cookie is set at login and won't reflect a photo
+  // uploaded later on the profile page) ─────────────────────────────────────
+  useEffect(() => {
+    getStudentProfile()
+      .then((res) => {
+        if (res.data.success) {
+          setStudent((prev) => ({ ...prev, ...res.data.data }));
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching student profile:", error);
+      });
+  }, []);
+
   // ─── Load purchased courses (for future navbar context use) ──────────────
   useEffect(() => {
     const fetchCourses = async () => {
@@ -181,7 +196,7 @@ useEffect(() => {
   const studentName = student?.full_name || "Student";
   const instituteName = student?.institute_name || "Institute";
   const avatarLetter = studentName.charAt(0).toUpperCase();
-  const profileImage = student?.profile_image || "/default-avatar.png";
+  const profileImage = student?.profilePhoto || "";
 
   // =====================================================
   // BREADCRUMB GENERATOR
@@ -414,7 +429,7 @@ useEffect(() => {
             onClick={() => setShowLogoutModal(true)}
             className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all"
           >
-            {student?.profile_image ? (
+            {profileImage ? (
               <div className="relative">
                 <img
                   src={profileImage}

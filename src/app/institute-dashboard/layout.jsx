@@ -9,11 +9,14 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { logoutUser } from "@/services/auth/logoutApi";
+import { useAuth } from "@/context/AuthContext";
+import { profileApi } from "@/services/institute/profileApi";
 export default function InstituteDashboardLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
    const router = useRouter();
+   const { user, setUser } = useAuth();
 
   useEffect(() => {
     const role =
@@ -25,8 +28,25 @@ export default function InstituteDashboardLayout({ children }) {
       router.replace(
         "/student-login"
       );
+      return;
     }
-  }, []);
+
+    // AuthContext lives only in memory, so a refresh (or opening a new
+    // tab) loses the logged-in institute's name/logo even though the
+    // token cookie is still valid. Rehydrate it from the API instead.
+    if (!user) {
+      profileApi
+        .getProfile()
+        .then((res) => {
+          if (res.data.success) {
+            setUser(res.data.data);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [user]);
   
  const handleLogout = async () => {
   try {

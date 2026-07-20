@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { studentApi } from "@/services/student/studentApi";
+import { getStudentProfile } from "@/services/student/studentProfileApi";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
@@ -90,10 +91,25 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
   const [openLearning, setOpenLearning] = useState(false);
   // tracks which collapsed icon is currently hovered, so we can show a flyout
   const [hoveredMenu, setHoveredMenu] = useState(null);
+  const [student, setStudent] = useState(null);
 
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    getStudentProfile()
+      .then((res) => {
+        if (res.data.success) {
+          setStudent(res.data.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching student profile:", error);
+      });
+  }, []);
+
+  const studentName = student?.full_name || "Student";
 
   // Auto-expand "Learning Journey" whenever we're anywhere inside it,
   // so the current course stays visible/highlighted in the accordion.
@@ -454,14 +470,22 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md" />
-          <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-white shadow-sm">
-            <FaUserCircle className="text-slate-500 text-lg" />
-          </div>
+          {student?.profilePhoto ? (
+            <img
+              src={student.profilePhoto}
+              alt={studentName}
+              className="relative h-10 w-10 rounded-full object-cover border border-white shadow-sm"
+            />
+          ) : (
+            <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-white shadow-sm">
+              <FaUserCircle className="text-slate-500 text-lg" />
+            </div>
+          )}
         </div>
 
         {isOpen && (
-          <div>
-            <p className="text-sm font-black text-slate-800">Student Name</p>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-800 truncate">{studentName}</p>
             <p className="text-xs text-amber-600 uppercase">Premium Member</p>
           </div>
         )}

@@ -30,7 +30,7 @@ const router = useRouter();
 
 
   const instituteLogo =
-    institute?.logo || "/default-logo.png";
+    institute?.logo || "/collage-logo.png";
 
 
   const instituteName =
