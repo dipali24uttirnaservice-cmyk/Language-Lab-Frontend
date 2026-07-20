@@ -9,8 +9,6 @@ export const saveAuthData = ({
   Cookies.set("token", token, {
     expires: 7,
   });
-I
- 
 
   // Institute Data
   if (userData) {

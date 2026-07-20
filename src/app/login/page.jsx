@@ -115,6 +115,10 @@ Cookies.set("token", token, {
 
 const institute = apiResponse?.data?.institute;
 
+Cookies.set("userData", JSON.stringify({ institute }), {
+  expires: 7,
+});
+
 login(institute);
 
 router.replace("/institute-dashboard");
