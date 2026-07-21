@@ -12,37 +12,63 @@ export default function Pagination({
   totalPages,
   setPage,
 }) {
+
+  const pagesPerGroup = 5;
+
+  const currentGroup = Math.ceil(
+    page / pagesPerGroup
+  );
+
+  const startPage =
+    (currentGroup - 1) * pagesPerGroup + 1;
+
+  const endPage = Math.min(
+    startPage + pagesPerGroup - 1,
+    totalPages
+  );
+
+
+  const pages = Array.from(
+    {
+      length: endPage - startPage + 1,
+    },
+    (_, index) => startPage + index
+  );
+
+
   return (
     <div className="flex items-center gap-2">
 
+      {/* Previous Group */}
       <PaginationButton
-        disabled={page === 1}
+        disabled={startPage === 1}
         onClick={() =>
-          setPage(page - 1)
+          setPage(startPage - 1)
         }
       >
         <ChevronLeft size={16} />
       </PaginationButton>
 
-      {Array.from(
-        { length: totalPages },
-        (_, i) => (
-          <PaginationButton
-            key={i}
-            active={page === i + 1}
-            onClick={() =>
-              setPage(i + 1)
-            }
-          >
-            {i + 1}
-          </PaginationButton>
-        )
-      )}
 
+      {/* Pages */}
+      {pages.map((item) => (
+        <PaginationButton
+          key={item}
+          active={page === item}
+          onClick={() =>
+            setPage(item)
+          }
+        >
+          {item}
+        </PaginationButton>
+      ))}
+
+
+      {/* Next Group */}
       <PaginationButton
-        disabled={page === totalPages}
+        disabled={endPage === totalPages}
         onClick={() =>
-          setPage(page + 1)
+          setPage(endPage + 1)
         }
       >
         <ChevronRight size={16} />
