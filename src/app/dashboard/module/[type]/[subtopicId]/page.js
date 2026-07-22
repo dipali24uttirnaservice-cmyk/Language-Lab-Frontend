@@ -2490,6 +2490,9 @@ export default function ModuleListPage() {
                     )
                 ) : (
                     <div className="space-y-6 animate-fade-in">
+ <BackToLessonsButton 
+        onBack={() => router.back()} 
+    />
                         {filteredModules.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredModules.map((item) => {
