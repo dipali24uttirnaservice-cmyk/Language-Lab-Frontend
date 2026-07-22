@@ -937,10 +937,8 @@ function AudioDetail({
                                 onNavigate={onNavigate}
                                 accent={accent}
                             />
-                        </div>
-                    </div>
 
-                    <RelatedQueueList
+                             <RelatedQueueList
                         title="Related Audios Queue"
                         icon={Headphones}
                         items={audioModules}
@@ -953,6 +951,11 @@ function AudioDetail({
                                 : "Audio"
                         }
                     />
+                        </div>
+                        
+                    </div>
+
+                   
                 </div>
 
                 <div className="lg:col-span-4">
@@ -1193,12 +1196,9 @@ function VocabularyDetail({
                                     onNavigate={onNavigate}
                                     accent={accent}
                                 />
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* More Lessons */}
-                    <div className="space-y-4">
+                                  {/* More Lessons */}
+                    <div className="space-y-4 mt-2">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                 <BookOpen className="text-orange-500" size={16} />
@@ -1223,6 +1223,11 @@ function VocabularyDetail({
                             }
                         />
                     </div>
+                            </div>
+                        </div>
+                    </div>
+
+                  
                 </div>
 
                 {/* Right Panel */}
