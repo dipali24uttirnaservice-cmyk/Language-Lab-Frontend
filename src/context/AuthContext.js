@@ -1,34 +1,33 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = Cookies.get("token");
-    const role = Cookies.get("role");
+  const login = (userData, userRole) => {
+    setUser(userData);
+    setRole(userRole);
+  };
 
-    if (token) {
-      setRole(role);
-
-      // Call your profile API here
-      // getCurrentUser().then((res) => setUser(res.data));
-    }
-
-    setLoading(false);
-  }, []);
-
-  if (loading) return null;
+  const logout = () => {
+    setUser(null);
+    setRole(null);
+  };
 
   return (
     <AuthContext.Provider
-      value={{ user, role, setUser, setRole }}
+      value={{
+        user,
+        role,
+        login,
+        logout,
+        setUser,
+        setRole,
+      }}
     >
       {children}
     </AuthContext.Provider>
