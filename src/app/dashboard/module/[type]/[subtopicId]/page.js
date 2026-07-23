@@ -2490,9 +2490,26 @@ export default function ModuleListPage() {
                     )
                 ) : (
                     <div className="space-y-6 animate-fade-in">
- <BackToLessonsButton 
-        onBack={() => router.back()} 
-    />
+ <BackToLessonsButton
+    onBack={() => {
+        const params = new URLSearchParams();
+
+        const topicId = searchParams.get("topicId");
+        const courseId = searchParams.get("courseId");
+        const courseName = searchParams.get("courseName");
+        const type = searchParams.get("type");
+        const topicName = searchParams.get("topicName");
+
+        if (courseId) params.set("courseId", courseId);
+        if (courseName) params.set("courseName", courseName);
+        if (type) params.set("type", type);
+        if (topicName) params.set("topicName", topicName);
+
+        router.push(
+            `/dashboard/topics/${topicId}?${params.toString()}`
+        );
+    }}
+/>
                         {filteredModules.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredModules.map((item) => {
