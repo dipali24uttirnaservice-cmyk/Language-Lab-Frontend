@@ -11,7 +11,8 @@ import StatusModal from "@/components/molecules/StatusModal";
 
 export default function IndividualStudentForm({
    studentId,
-
+   segmentOptions = [],
+   yearOptions = [],
 }) {
 
    const router = useRouter();
@@ -362,43 +363,59 @@ await studentApi.createStudent(data);
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Segment</label>
-                  <input
-                    type="text"
-                    placeholder="Enter Segment Name"
-                    value={formData.segment}
-                    onChange={(e) =>
-                      handleChange(
-                        "segment",
-                        e.target.value
-                      )
-                    }
-                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
-                      errors.segment
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                  />
+               <select
+  value={formData.segment}
+  onChange={(e) =>
+    handleChange("segment", e.target.value)
+  }
+  className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
+    errors.segment
+      ? "border-red-500"
+      : ""
+  }`}
+>
+  <option value="">
+    Select Segment
+  </option>
+
+  {segmentOptions.map((segment) => (
+    <option
+      key={segment}
+      value={segment}
+    >
+      {segment}
+    </option>
+  ))}
+</select>
                   {errors.segment && <div className="text-red-500 text-sm mt-1">{errors.segment}</div>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">College Year</label>
-                  <input
-                    type="number"
-                    placeholder="College Year (1-6)"
-                    value={formData.year}
-                    onChange={(e) =>
-                      handleChange(
-                        "year",
-                        e.target.value
-                      )
-                    }
-                    className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
-                      errors.year
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                  />
+                 <select
+  value={formData.year}
+  onChange={(e) =>
+    handleChange("year", e.target.value)
+  }
+  className={`border rounded-xl p-3 sm:p-3.5 w-full text-sm sm:text-base ${
+    errors.year
+      ? "border-red-500"
+      : ""
+  }`}
+>
+  <option value="">
+    Select College Year
+  </option>
+
+  {yearOptions.map((year) => (
+    <option
+      key={year}
+      value={year}
+    >
+      Year {year}
+    </option>
+  ))}
+</select>
                   {errors.year && <div className="text-red-500 text-sm mt-1">{errors.year}</div>}
                 </div>
 
