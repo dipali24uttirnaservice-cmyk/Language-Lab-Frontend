@@ -100,7 +100,7 @@ export default function InstituteDashboard() {
   }
 
   const enrolledStudents = dashboard?.enrolled_students ?? { total: 0, new_this_week: 0 };
-  const coursesLicensed = dashboard?.courses_licensed ?? { total: 0 };
+  const coursesLicensed = dashboard?.courses_licensed ?? { total: 0, licensed_total: 0 };
   const licenseUsage = dashboard?.license_usage ?? { total_seats: 0, used_seats: 0, active_licenses: 0 };
   const completionRate = dashboard?.completion_rate ?? 0;
   const studentGrowth = dashboard?.student_growth ?? [];
@@ -162,7 +162,7 @@ export default function InstituteDashboard() {
         </div>
 
         {/* KPI Stats Grid */}
-<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5"> 
+<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
          <StatCard
             title="Enrolled Students"
             value={enrolledStudents.total}
@@ -175,7 +175,7 @@ export default function InstituteDashboard() {
             value={coursesLicensed.total}
             icon={BookOpen}
             color="from-amber-400 to-orange-500"
-            sub={`${licenseUsage.active_licenses} active license${licenseUsage.active_licenses === 1 ? "" : "s"}`}
+            sub={`Downloaded, of ${coursesLicensed.licensed_total} licensed`}
           />
           <StatCard
             title="Seat Usage"
@@ -211,7 +211,7 @@ export default function InstituteDashboard() {
         ))}
       </div>
     </div>
-    
+
     <div className="relative h-[100px] w-[100px] shrink-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -247,7 +247,7 @@ export default function InstituteDashboard() {
          <span className="text-[10px] font-bold text-slate-500">6 Months</span>
       </div>
     </div>
-    
+
     {/* Reduced height from 240px to 180px */}
     <div className="h-[180px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -259,41 +259,41 @@ export default function InstituteDashboard() {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
-          <XAxis 
-            dataKey="month" 
-            tickLine={false} 
-            axisLine={false} 
-            className="text-[10px] font-medium fill-slate-400" 
-            dy={5} 
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            className="text-[10px] font-medium fill-slate-400"
+            dy={5}
           />
-          <YAxis 
-            tickLine={false} 
-            axisLine={false} 
-            className="text-[10px] font-medium fill-slate-400" 
-            dx={-5} 
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            className="text-[10px] font-medium fill-slate-400"
+            dx={-5}
           />
-          <Tooltip 
+          <Tooltip
             cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
-            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} 
+            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="students" 
-            stroke="#4F46E5" 
-            strokeWidth={2} 
-            fill="url(#studentGradient)" 
+          <Area
+            type="monotone"
+            dataKey="students"
+            stroke="#4F46E5"
+            strokeWidth={2}
+            fill="url(#studentGradient)"
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   </motion.div>
-  
+
 </div>
           {/* Sidebar Components Column */}
          {/* Sidebar Components Column - Fixed for balance */}
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-  
- 
+
+
 
   {/* 2. Recent Activity Card (Fixed Height to match) */}
   <motion.div
@@ -306,7 +306,7 @@ export default function InstituteDashboard() {
       <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live Updates</p>
       <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
     </div>
-    
+
     <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
       <div className="space-y-1">
         {recentActivity.map((item, index) => (
@@ -323,7 +323,7 @@ export default function InstituteDashboard() {
     </div>
   </motion.div>
 
- 
+
 </div>
         </div>
 
@@ -343,7 +343,7 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
     >
       {/* Subtle hover background highlight */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-      
+
       <div className="relative z-10 flex justify-between items-start">
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">
@@ -351,7 +351,7 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
           </p>
           <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
         </div>
-        
+
         {/* Elevated icon with glow */}
         <div className={`p-3 rounded-2xl text-white bg-gradient-to-br ${color} shadow-lg shadow-indigo-500/20 transition-transform duration-300 group-hover:scale-110`}>
           <Icon size={20} strokeWidth={2.5} />
@@ -378,7 +378,7 @@ function ActivityRow({ icon: Icon, text, sub, time, colorClass }) {
       <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm ${colorClass}`}>
         <Icon size={14} />
       </div>
-      
+
       <div className="flex-1 min-w-0 flex justify-between items-center gap-2">
         <div className="truncate">
           <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">

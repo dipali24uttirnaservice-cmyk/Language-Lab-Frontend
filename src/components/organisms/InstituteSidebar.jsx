@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Building2,
   BadgeCheck,
+  Settings,
   LogOut,
 } from "lucide-react";
 
@@ -49,6 +50,15 @@ const menuItems = [
     border: "border-sky-500",
     bg: "from-sky-50 to-blue-50",
     text: "text-sky-700",
+  },
+  {
+    title: "Settings",
+    href: "/institute-dashboard/settings",
+    icon: Settings,
+    color: "from-slate-500 to-slate-700",
+    border: "border-slate-500",
+    bg: "from-slate-50 to-slate-100",
+    text: "text-slate-700",
   },
   {
     title: "Logout",

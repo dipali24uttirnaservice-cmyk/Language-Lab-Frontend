@@ -4,8 +4,14 @@ export const courseApi = {
   getCourses: () => api.get("/institute/me/courses"),
 
   bulkAssignCourses: (data) =>
-    api.post("/student/bulk-assign-courses", data),
+    api.put("/student/bulk-assign-courses", data),
 
   getModuleCount: (courseId) =>
     api.get(`/module/course/${courseId}/count`),
+
+  downloadCourse: (courseId) =>
+    api.get(`/institute/me/courses/${courseId}/download`),
+
+  getCourseLastUpdated: (courseId) =>
+    api.get(`/institute/me/courses/${courseId}/last-updated`),
 };

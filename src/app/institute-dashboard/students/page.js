@@ -45,6 +45,7 @@ const showSelection = Boolean(segment && year);
 
 const [showAssignModal, setShowAssignModal] = useState(false);
 const [selectedCourses, setSelectedCourses] = useState([]);const [courses, setCourses] = useState([]);
+const [originalCourseIds, setOriginalCourseIds] = useState([]);
 const [coursesModalOpen, setCoursesModalOpen] = useState(false);
 const [selectedStudent, setSelectedStudent] = useState(null);
 
@@ -87,7 +88,7 @@ const filteredData = useMemo(() => {
       student.roll_no,
       student.enrollment_no,
       student.segment,
-      ...(student.purchased_courses || []),
+      ...(student.purchased_courses || []).map((c) => c.course_name),
     ]
       .filter(Boolean)
       .join(" ")
@@ -123,7 +124,7 @@ const handleSelectStudent = (id) => {
     }
 
     if (updated.length > 0 && prev.length === 0) {
-      openAssignModal();
+      openAssignModal(updated);
     }
 
     if (updated.length === 0) {
@@ -151,7 +152,7 @@ const handleSelectAll = (studentsOnPage) => {
       const updated = [...new Set([...prev, ...ids])];
 
       if (prev.length === 0) {
-        openAssignModal();
+        openAssignModal(updated);
       }
 
       return updated;
@@ -159,11 +160,29 @@ const handleSelectAll = (studentsOnPage) => {
   }
 };
 
-const openAssignModal = async () => {
+const openAssignModal = async (studentIds) => {
   try {
     const response = await courseApi.getCourses();
+    const allCourses = response.data.data.courses || [];
 
-    setCourses(response.data.data.courses || []);
+    // Only downloaded courses can be assigned to students.
+    const downloadedCourses = allCourses.filter((course) => course.is_downloaded);
+    setCourses(downloadedCourses);
+
+    // Pre-check courses already assigned to every selected student, so
+    // unchecking one reflects as an unassign instead of a no-op.
+    const selectedStudentDocs = students.filter((s) => studentIds.includes(s._id));
+    const baseline = downloadedCourses
+      .filter((course) =>
+        selectedStudentDocs.length > 0 &&
+        selectedStudentDocs.every((s) =>
+          (s.purchased_courses || []).some((c) => c._id === course._id),
+        ),
+      )
+      .map((c) => c._id);
+
+    setSelectedCourses(baseline);
+    setOriginalCourseIds(baseline);
     setShowAssignModal(true);
   } catch (error) {
     console.log(error);
@@ -419,21 +438,36 @@ const handleView = (student) => {
 
 const assignCourse = async () => {
   try {
-    await courseApi.bulkAssignCourses({
-      student_ids: selectedStudents,
-      course_ids: selectedCourses,
-    });
+    const toAssign = selectedCourses.filter((id) => !originalCourseIds.includes(id));
+    const toUnassign = originalCourseIds.filter((id) => !selectedCourses.includes(id));
+
+    if (toAssign.length > 0) {
+      await courseApi.bulkAssignCourses({
+        student_ids: selectedStudents,
+        course_ids: toAssign,
+        action: "assign",
+      });
+    }
+
+    if (toUnassign.length > 0) {
+      await courseApi.bulkAssignCourses({
+        student_ids: selectedStudents,
+        course_ids: toUnassign,
+        action: "unassign",
+      });
+    }
 
     setStatusData({
       open: true,
       type: "success",
       title: "Success",
-      message: "Courses assigned successfully.",
+      message: "Courses updated successfully.",
     });
 
     setShowAssignModal(false);
     setSelectedStudents([]);
     setSelectedCourses([]);
+    setOriginalCourseIds([]);
 
     loadStudents();
   } catch (err) {
@@ -604,6 +638,11 @@ showSelection={showSelection}
 
       {/* Selectable Course Items List */}
       <div className="max-h-[400px] overflow-y-auto p-6 space-y-3.5 bg-slate-50/30">
+        {courses.length === 0 && (
+          <p className="text-center text-sm font-semibold text-slate-400 py-6">
+            No courses downloaded yet. Go to Settings and download a course before assigning it.
+          </p>
+        )}
         {courses.map((course) => {
           const isSelected = selectedCourses.includes(course._id);
           return (
@@ -664,6 +703,7 @@ showSelection={showSelection}
             setShowAssignModal(false);
             setSelectedStudents([]);
             setSelectedCourses([]);
+            setOriginalCourseIds([]);
           }}
           className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition duration-150"
         >
@@ -671,7 +711,10 @@ showSelection={showSelection}
         </button>
 
         <button
-          disabled={selectedCourses.length === 0}
+          disabled={
+            selectedCourses.length === originalCourseIds.length &&
+            selectedCourses.every((id) => originalCourseIds.includes(id))
+          }
           onClick={assignCourse}
           className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed transition duration-150"
         >
@@ -706,7 +749,7 @@ showSelection={showSelection}
   <ul className="space-y-3">
     {selectedStudent.purchased_courses.map((course, index) => (
       <div
-        key={index}
+        key={course._id || index}
         className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition duration-150 group"
       >
         <div className="flex items-center gap-3.5 min-w-0">
@@ -716,7 +759,7 @@ showSelection={showSelection}
           </div>
 
           <span className="text-sm font-bold text-slate-800 truncate group-hover:text-orange-600 transition duration-150">
-            {course}
+            {course.course_name}
           </span>
         </div>
 
