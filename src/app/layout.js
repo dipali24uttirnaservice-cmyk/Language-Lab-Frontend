@@ -1,15 +1,15 @@
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-export default function RootLayout({
-  children,
-}) {
+import GlobalPopup from "@/components/organisms/GlobalPopup";
+export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-  <AuthProvider>
+        <AuthProvider>
           {children}
-        </AuthProvider> 
-             </body>
+          <GlobalPopup /> {/* <-- Place it here so it renders globally */}
+        </AuthProvider>      
+      </body>
     </html>
   );
 }
