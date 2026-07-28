@@ -10,30 +10,22 @@ import AnimatedBackground from "@/components/organisms/RegisterBackground";
 import StatusModal from "@/components/molecules/StatusModal";
 
 import { studentLogin } from "@/services/auth/loginApi";
+import { publicInstituteApi } from "@/services/institute/publicInstituteApi";
 import { ArrowLeft } from "lucide-react";
 import { studentLoginSchema } from "@/app/schemas/student.schema";
 import { useAuth } from "@/context/AuthContext";
+
 export default function StudentLogin() {
   const router = useRouter();
-const { login } = useAuth();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const [enrollmentNo, setEnrollmentNo] =
-    useState("");
-
-  const handleEnrollmentNoChange = async (value) => {
-    setEnrollmentNo(value);
-
-    if (errors.enrollmentNo) {
-      try {
-        await studentLoginSchema.validateAt("enrollmentNo", { enrollmentNo: value });
-        setErrors((prev) => ({ ...prev, enrollmentNo: "" }));
-      } catch (err) {
-        setErrors((prev) => ({ ...prev, enrollmentNo: err.message }));
-      }
-    }
-  };
+  const [institutes, setInstitutes] = useState([]);
+  const [institutesLoading, setInstitutesLoading] = useState(true);
+  const [instituteId, setInstituteId] = useState("");
+  const [enrollmentNo, setEnrollmentNo] = useState("");
+  const [password, setPassword] = useState("");
 
   const [modal, setModal] = useState({
     open: false,
@@ -53,11 +45,58 @@ const { login } = useAuth();
     }
   }, [router]);
 
+  // Populates the institute dropdown — only institutes with an active
+  // license are returned, so every option here is one a student could
+  // actually log into.
+  useEffect(() => {
+    publicInstituteApi
+      .getPublicList()
+      .then((res) => {
+        const list = res?.data?.data ?? [];
+        setInstitutes(Array.isArray(list) ? list : []);
+      })
+      .catch(() => setInstitutes([]))
+      .finally(() => setInstitutesLoading(false));
+  }, []);
+
+  const validateField = async (field, value) => {
+    if (!errors[field]) return;
+    try {
+      await studentLoginSchema.validateAt(field, {
+        instituteId,
+        enrollmentNo,
+        password,
+        [field]: value,
+      });
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, [field]: err.message }));
+    }
+  };
+
+  const handleInstituteChange = (value) => {
+    setInstituteId(value);
+    validateField("instituteId", value);
+  };
+
+  const handleEnrollmentNoChange = (value) => {
+    setEnrollmentNo(value);
+    validateField("enrollmentNo", value);
+  };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+    validateField("password", value);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      await studentLoginSchema.validate({ enrollmentNo }, { abortEarly: false });
+      await studentLoginSchema.validate(
+        { instituteId, enrollmentNo, password },
+        { abortEarly: false },
+      );
       setErrors({});
     } catch (err) {
       if (err.inner) {
@@ -73,34 +112,32 @@ const { login } = useAuth();
     try {
       setLoading(true);
 
-      const response =
-        await studentLogin({
-          enrollment_no: enrollmentNo,
-        });
+      const response = await studentLogin({
+        institute_id: instituteId,
+        enrollment_no: enrollmentNo,
+        password,
+      });
 
       const apiResponse = response.data;
 
-      const token =
-        apiResponse?.data?.token;
+      const token = apiResponse?.data?.token;
 
       if (!token) {
-        throw new Error(
-          "Token not found in response"
-        );
+        throw new Error("Token not found in response");
       }
-Cookies.set("role", "student", {
-  expires: 7,
-});
 
-Cookies.set("token", token, {
-  expires: 7,
-});
+      Cookies.set("role", "student", {
+        expires: 7,
+      });
 
-// Store in AuthContext instead of cookie
-login(apiResponse.data.student);
+      Cookies.set("token", token, {
+        expires: 7,
+      });
 
-router.push("/dashboard");
+      // Store in AuthContext instead of cookie
+      login(apiResponse.data.student);
 
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
 
@@ -109,9 +146,8 @@ router.push("/dashboard");
         type: "error",
         title: "Login Failed",
         message:
-          error?.response?.data
-            ?.message ||
-          "Invalid Enrollment Number",
+          error?.response?.data?.message ||
+          "Invalid institute, enrollment number, or password",
       });
     } finally {
       setLoading(false);
@@ -128,6 +164,8 @@ router.push("/dashboard");
       router.push("/dashboard");
     }
   };
+
+  const fieldsDisabled = !instituteId;
 
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
@@ -181,30 +219,84 @@ router.push("/dashboard");
           </div>
         </div>
 
-
-        <h1 className="text-3xl font-black text-slate-900">
-          Student Login
-        </h1>
+        <h1 className="text-3xl font-black text-slate-900">Student Login</h1>
 
         <p className="mt-2 text-slate-500">
-          Enter your enrollment number
-          to continue.
+          Select your license code, then sign in with your enrollment number and
+          password.
         </p>
 
-        <form
-          onSubmit={handleLogin}
-          className="mt-8 space-y-5"
-        >
+        <form onSubmit={handleLogin} className="mt-8 space-y-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              License Code
+            </label>
+            <select
+              value={instituteId}
+              onChange={(e) => handleInstituteChange(e.target.value)}
+              disabled={institutesLoading}
+              className={`
+                w-full rounded-xl border bg-white px-4 py-3 text-slate-900
+                outline-none transition-all focus:ring-4 disabled:opacity-60
+                ${
+                  errors.instituteId
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-100"
+                    : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
+                }
+              `}
+            >
+              <option value="" disabled>
+                {institutesLoading
+                  ? "Loading institutes..."
+                  : "Select your license code"}
+              </option>
+              {institutes.flatMap((inst) => {
+                const codes = inst.license_codes || [];
+
+                // One option per license code — every code under an institute
+                // resolves to the same institute_id on submit (the backend
+                // auto-assigns whichever specific seat is actually free), so
+                // this is purely about letting the student see and pick a
+                // recognizable code, not routing to a different institute.
+                if (codes.length === 0) {
+                  return [
+                    <option key={inst._id} value={inst._id}>
+                      {inst.institute_name}
+                    </option>,
+                  ];
+                }
+
+                return codes.map((code) => (
+                  <option key={`${inst._id}-${code}`} value={inst._id}>
+                    {code}
+                  </option>
+                ));
+              })}
+            </select>
+            {errors.instituteId && (
+              <div className="mt-1 text-sm text-red-500 font-medium">
+                {errors.instituteId}
+              </div>
+            )}
+          </div>
+
           <Input
             label="Enrollment Number"
             placeholder="EN2024001"
             value={enrollmentNo}
-            onChange={(e) =>
-              handleEnrollmentNoChange(
-                e.target.value
-              )
-            }
+            disabled={fieldsDisabled}
+            onChange={(e) => handleEnrollmentNoChange(e.target.value)}
             error={errors.enrollmentNo}
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            disabled={fieldsDisabled}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            error={errors.password}
           />
 
           <button
@@ -223,9 +315,7 @@ router.push("/dashboard");
               disabled:opacity-50
             "
           >
-            {loading
-              ? "Signing In..."
-              : "Sign In"}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
       </motion.div>

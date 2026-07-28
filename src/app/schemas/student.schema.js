@@ -1,9 +1,11 @@
 import * as Yup from "yup";
 
 export const studentLoginSchema = Yup.object({
+  instituteId: Yup.string().required("Please select your institute"),
   enrollmentNo: Yup.string()
     .trim()
     .required("Enrollment Number is required"),
+  password: Yup.string().required("Password is required"),
 });
 
 export const studentFormSchemaAdd = Yup.object({

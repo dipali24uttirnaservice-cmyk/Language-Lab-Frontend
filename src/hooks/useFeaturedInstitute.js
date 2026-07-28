@@ -4,8 +4,19 @@ import { useEffect, useState } from "react";
 import { publicInstituteApi } from "@/services/institute/publicInstituteApi";
 import { getDomain } from "@/utils/getDomain";
 
-// Fallback ID when running without a subdomain (e.g., localhost:3000 or main landing page)
-const FALLBACK_INSTITUTE_ID = "6a38e1d3bb9f88682d4363d7";
+// Falls back to the first licensed institute from the public list — not a
+// hardcoded id, since that id has no guarantee of existing in any given
+// database and silently 404s (which is why the Hero used to always show the
+// static placeholder instead of real data).
+function loadFirstPublicInstitute(setInstitute) {
+  publicInstituteApi
+    .getPublicList()
+    .then((res) => {
+      const list = res?.data?.data ?? [];
+      setInstitute(list[0] ?? null);
+    })
+    .catch(() => setInstitute(null));
+}
 
 export function useFeaturedInstitute() {
   const [institute, setInstitute] = useState(null);
@@ -21,19 +32,10 @@ export function useFeaturedInstitute() {
       publicInstituteApi
         .getBySubdomain(subdomain)
         .then((res) => setInstitute(res?.data?.data ?? null))
-        .catch(() => {
-          // Fallback if subdomain fetch fails
-          publicInstituteApi
-            .getById(FALLBACK_INSTITUTE_ID)
-            .then((res) => setInstitute(res?.data?.data ?? null))
-            .catch(() => setInstitute(null));
-        });
+        .catch(() => loadFirstPublicInstitute(setInstitute));
     } else {
       // Fallback for localhost / default base domain
-      publicInstituteApi
-        .getById(FALLBACK_INSTITUTE_ID)
-        .then((res) => setInstitute(res?.data?.data ?? null))
-        .catch(() => setInstitute(null));
+      loadFirstPublicInstitute(setInstitute);
     }
   }, []);
 
