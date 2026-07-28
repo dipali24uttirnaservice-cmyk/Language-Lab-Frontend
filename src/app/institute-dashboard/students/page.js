@@ -262,6 +262,10 @@ const columns = [
         <p className="text-xs text-slate-500">
           {row.enrollment_no}
         </p>
+
+         <p className="text-xs text-slate-500">
+          {row.password}
+        </p>
       </div>
     ),
   },

@@ -8,7 +8,7 @@ import { studentApi } from "@/services/student/studentApi";
 import { studentFormSchemaAdd, studentFormSchemaEdit } from "@/app/schemas/student.schema";
 import { useRouter } from "next/navigation";
 import StatusModal from "@/components/molecules/StatusModal";
-
+import { Eye, EyeOff } from "lucide-react";
 export default function IndividualStudentForm({
    studentId,
    segmentOptions = [],
@@ -22,10 +22,11 @@ export default function IndividualStudentForm({
   const [studentPhoto, setStudentPhoto] = useState(null);
   const [errors, setErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState("");
-
+const [showPassword, setShowPassword] = useState(false);
 const initialState = {
   full_name: "",
   email: "",
+  password: "",
   phone: "",
   roll_no: "",
   enrollment_no: "",
@@ -56,9 +57,10 @@ const initialState = {
       const student = response.data.data;
 console.log("Student Object:", student);
 console.log("Roll No:", student.roll_no);
-   setFormData({
+  setFormData({
   full_name: student.full_name || "",
   email: student.email || "",
+  password: student.password || "",
   phone: student.phone || "",
   roll_no: student.roll_no || "",
   enrollment_no: student.enrollment_no || "",
@@ -98,6 +100,7 @@ setPhotoPreview(student.profilePhoto || "");
  const dataToValidate = {
   full_name: formData.full_name,
   email: formData.email,
+  password: formData.password,
   phone: formData.phone,
   roll_no: formData.roll_no,
   enrollment_no: formData.enrollment_no,
@@ -148,6 +151,7 @@ const data = new FormData();
 
 data.append("full_name", formData.full_name);
 data.append("email", formData.email);
+data.append("password", formData.password);
 data.append("roll_no", formData.roll_no);
 data.append("enrollment_no", formData.enrollment_no);
 data.append("segment", formData.segment);
@@ -181,6 +185,7 @@ await studentApi.createStudent(data);
 
   data.append("full_name", formData.full_name);
   data.append("email", formData.email);
+  data.append("password",formData.password);
   data.append("phone", formData.phone);
   data.append("roll_no", formData.roll_no);
   data.append("enrollment_no", formData.enrollment_no);
@@ -194,6 +199,9 @@ await studentApi.createStudent(data);
   if (studentPhoto) {
     data.append("studentPhoto", studentPhoto);
   }
+  if (formData.password.trim()) {
+  data.append("password", formData.password);
+}
 
   await studentApi.updateStudent(studentId, data);
 
@@ -338,6 +346,43 @@ await studentApi.createStudent(data);
                   />
                   {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
                 </div>
+
+             <div>
+  <label className="block text-sm font-medium text-slate-700 mb-2">
+    Password
+  </label>
+<div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Enter Password"
+    value={formData.password}
+    onChange={(e) =>
+      handleChange("password", e.target.value)
+    }
+    className={`border rounded-xl p-3 sm:p-3.5 w-full pr-12 text-sm sm:text-base ${
+      errors.password ? "border-red-500" : ""
+    }`}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-orange-500"
+  >
+    {showPassword ? (
+      <EyeOff size={20} />
+    ) : (
+      <Eye size={20} />
+    )}
+  </button>
+</div>
+
+  {errors.password && (
+    <p className="text-red-500 text-sm mt-1">
+      {errors.password}
+    </p>
+  )}
+</div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
