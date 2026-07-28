@@ -18,7 +18,6 @@ import { useAuth } from "@/context/AuthContext";
 export default function StudentLogin() {
   const router = useRouter();
   const { login } = useAuth();
-  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -122,10 +121,8 @@ export default function StudentLogin() {
       const apiResponse = response.data;
 
       const token = apiResponse?.data?.token;
-      const token = apiResponse?.data?.token;
 
       if (!token) {
-        throw new Error("Token not found in response");
         throw new Error("Token not found in response");
       }
 
@@ -136,12 +133,7 @@ export default function StudentLogin() {
       Cookies.set("token", token, {
         expires: 7,
       });
-      Cookies.set("token", token, {
-        expires: 7,
-      });
 
-      // Store in AuthContext instead of cookie
-      login(apiResponse.data.student);
       // Store in AuthContext instead of cookie
       login(apiResponse.data.student);
 
