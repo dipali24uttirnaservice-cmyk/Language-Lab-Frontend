@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import TableToolbar from "../molecules/TableToolbar";
 import Pagination from "../molecules/Pagination";
 
@@ -31,25 +30,44 @@ export default function DataTable({
   const [page, setPage] =
     useState(1);
 
+
+    useEffect(() => {
+  setPage(1);
+}, [data, search, segment, year]);
+
   const pageSize =5;
 
- const filteredData = data;
+ const filteredData = useMemo(() => {
+  return data || [];
+}, [data]);
 
-  const totalPages = Math.ceil(
-    filteredData.length /
-      pageSize
+
+const totalPages = Math.max(
+  1,
+  Math.ceil(filteredData.length / pageSize)
+);
+
+
+const currentPage = Math.min(
+  page,
+  totalPages
+);
+
+
+const paginatedData = useMemo(() => {
+  const startIndex =
+    (currentPage - 1) * pageSize;
+
+  return filteredData.slice(
+    startIndex,
+    startIndex + pageSize
   );
+}, [filteredData, currentPage]);
 
-  const paginatedData =
-    filteredData.slice(
-      (page - 1) * pageSize,
-      page * pageSize
-    );
-
-   const allCurrentPageSelected =
+  const allCurrentPageSelected =
   paginatedData.length > 0 &&
   paginatedData.every((student) =>
-    selectedStudents.includes(student._id)
+    selectedStudents?.includes(student._id)
   );
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
@@ -104,8 +122,8 @@ export default function DataTable({
           <tbody>
 
            {paginatedData.map((row, index) => {
-  const serialNo = (page - 1) * pageSize + index + 1;
-
+const serialNo =
+  (currentPage - 1) * pageSize + index + 1;
   return (
                 <tr
                    key={row.id || row._id || index}
@@ -118,8 +136,7 @@ export default function DataTable({
     <td className="p-4">
       <input
         type="checkbox"
-        checked={selectedStudents.includes(row._id)}
-        
+checked={selectedStudents?.includes(row._id)}        
         onChange={() => onSelectStudent(row._id)}
       />
     </td>
@@ -166,13 +183,11 @@ export default function DataTable({
           } records
         </span>
 
-        <Pagination
-          page={page}
-          totalPages={
-            totalPages
-          }
-          setPage={setPage}
-        />
+      <Pagination
+  page={currentPage}
+  totalPages={totalPages}
+  setPage={setPage}
+/>
 
       </div>
 

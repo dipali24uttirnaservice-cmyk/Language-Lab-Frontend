@@ -267,7 +267,7 @@ function ActionCard({
     );
 }
 
-function LessonActionsPanel({ onPractice, onExercise }) {
+function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
     return (
         <div className="space-y-6">
             <ActionCard
@@ -287,6 +287,15 @@ function LessonActionsPanel({ onPractice, onExercise }) {
                 buttonLabel="Start Exercise"
                 buttonClass="bg-emerald-500 hover:bg-emerald-600"
                 onClick={onExercise}
+            />
+            <ActionCard
+                icon={FileText}
+                iconClass="bg-amber-50 text-amber-600"
+                title="Practical Manual"
+                description="View and follow the step-by-step practical manual instructions."
+                buttonLabel="Open Manual"
+                buttonClass="bg-amber-500 hover:bg-amber-600"
+                onClick={onPracticalManual}
             />
         </div>
     );
@@ -937,10 +946,8 @@ function AudioDetail({
                                 onNavigate={onNavigate}
                                 accent={accent}
                             />
-                        </div>
-                    </div>
 
-                    <RelatedQueueList
+                             <RelatedQueueList
                         title="Related Audios Queue"
                         icon={Headphones}
                         items={audioModules}
@@ -953,6 +960,11 @@ function AudioDetail({
                                 : "Audio"
                         }
                     />
+                        </div>
+                        
+                    </div>
+
+                   
                 </div>
 
                 <div className="lg:col-span-4">
@@ -1193,12 +1205,9 @@ function VocabularyDetail({
                                     onNavigate={onNavigate}
                                     accent={accent}
                                 />
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* More Lessons */}
-                    <div className="space-y-4">
+                                  {/* More Lessons */}
+                    <div className="space-y-4 mt-2">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                 <BookOpen className="text-orange-500" size={16} />
@@ -1223,6 +1232,11 @@ function VocabularyDetail({
                             }
                         />
                     </div>
+                            </div>
+                        </div>
+                    </div>
+
+                  
                 </div>
 
                 {/* Right Panel */}
@@ -2485,6 +2499,26 @@ export default function ModuleListPage() {
                     )
                 ) : (
                     <div className="space-y-6 animate-fade-in">
+ <BackToLessonsButton
+    onBack={() => {
+        const params = new URLSearchParams();
+
+        const topicId = searchParams.get("topicId");
+        const courseId = searchParams.get("courseId");
+        const courseName = searchParams.get("courseName");
+        const type = searchParams.get("type");
+        const topicName = searchParams.get("topicName");
+
+        if (courseId) params.set("courseId", courseId);
+        if (courseName) params.set("courseName", courseName);
+        if (type) params.set("type", type);
+        if (topicName) params.set("topicName", topicName);
+
+        router.push(
+            `/dashboard/topics/${topicId}?${params.toString()}`
+        );
+    }}
+/>
                         {filteredModules.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredModules.map((item) => {

@@ -8,10 +8,13 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   GraduationCap,
+  BarChart3,
   Building2,
   BadgeCheck,
   Settings,
   LogOut,
+  BookOpenCheck,
+  ClipboardList,
 } from "lucide-react";
 
 const menuItems = [
@@ -32,6 +35,33 @@ const menuItems = [
     border: "border-orange-500",
     bg: "from-orange-50 via-amber-50 to-yellow-50",
     text: "text-orange-700",
+  },
+  {
+    title: "Practical Manual",
+    href: "/institute-dashboard/practical-manual",
+    icon: BookOpenCheck,
+    color: "from-amber-500 to-orange-600",
+    border: "border-orange-600",
+    bg: "from-amber-50 to-orange-50",
+    text: "text-orange-800",
+  },
+  {
+    title: "Student Task",
+    href: "/institute-dashboard/student-task",
+    icon: ClipboardList,
+    color: "from-teal-500 to-emerald-600",
+    border: "border-teal-500",
+    bg: "from-teal-50 to-emerald-50",
+    text: "text-teal-700",
+  },
+  {
+    title: "Student Statistics",
+    href: "/institute-dashboard/student-statistics",
+    icon: BarChart3,
+    color: "from-purple-500 to-indigo-600",
+    border: "border-purple-500",
+    bg: "from-purple-50 to-indigo-50",
+    text: "text-purple-700",
   },
   {
     title: "License & Subscription",
@@ -71,7 +101,6 @@ const menuItems = [
 export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
   const pathname = usePathname();
   const { user: institute } = useAuth();
-  // tracks which collapsed icon is currently hovered, so we can show a flyout
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
   const instituteName = institute?.institute_name || "Institute";
@@ -82,9 +111,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
       className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300
       ${isOpen ? "w-72 p-6" : "w-24 p-3"}`}
     >
-      {/* ==========================================
-          PREMIUM ADMIN BACKGROUND
-      ========================================== */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-amber-100 via-orange-50 to-amber-200" />
 
@@ -100,35 +126,11 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
           className="absolute bottom-0 -left-20 h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/15 to-blue-500/10 blur-3xl"
         />
 
-        <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute top-36 -right-28 h-80 w-80 rounded-full border border-indigo-200/40"
-        />
-
-        <motion.div
-          animate={{ rotate: [360, 0] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute top-48 -right-16 h-48 w-48 rounded-full border border-sky-200/30"
-        />
-
-        <div
-          className="
-            absolute inset-0 opacity-[0.03]
-            bg-[linear-gradient(to_right,#6366f1_1px,transparent_1px),linear-gradient(to_bottom,#6366f1_1px,transparent_1px)]
-            bg-[size:24px_24px]
-          "
-        />
-
         <div className="absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-white/50 via-white/10 to-transparent blur-md" />
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-indigo-400/40 to-transparent" />
       </div>
 
-      {/* ==========================================
-          CONTENT
-      ========================================== */}
       <div className="relative z-10">
-        {/* Brand */}
         <div className={`flex items-center ${isOpen ? "gap-3 px-2" : "justify-center"} mb-10`}>
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
@@ -155,14 +157,11 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
           )}
         </div>
 
-        {/* Menu */}
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
 
-            // Icon box: ALWAYS colored (gradient bg + white icon).
-            // Active state just adds a ring + slightly stronger shadow for emphasis.
             const iconBox = (
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-md bg-gradient-to-br ${item.color}
@@ -173,9 +172,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               </div>
             );
 
-            // =========================
-            // LOGOUT
-            // =========================
             if (item.action === "logout") {
               return (
                 <motion.div
@@ -200,9 +196,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               );
             }
 
-            // =========================
-            // NORMAL MENU
-            // =========================
             return (
               <motion.div
                 key={item.title}
@@ -238,7 +231,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                   )}
                 </Link>
 
-                {/* Simple tooltip flyout for collapsed state */}
                 <AnimatePresence>
                   {!isOpen && hoveredMenu === item.title && (
                     <motion.div
@@ -258,9 +250,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
         </div>
       </div>
 
-      {/* ==========================================
-          FOOTER
-      ========================================== */}
       <div
         className={`relative z-10 pt-5 border-t border-slate-100 ${
           isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"

@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function StudentLogin() {
   const router = useRouter();
   const { login } = useAuth();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -121,8 +122,10 @@ export default function StudentLogin() {
       const apiResponse = response.data;
 
       const token = apiResponse?.data?.token;
+      const token = apiResponse?.data?.token;
 
       if (!token) {
+        throw new Error("Token not found in response");
         throw new Error("Token not found in response");
       }
 
@@ -133,7 +136,12 @@ export default function StudentLogin() {
       Cookies.set("token", token, {
         expires: 7,
       });
+      Cookies.set("token", token, {
+        expires: 7,
+      });
 
+      // Store in AuthContext instead of cookie
+      login(apiResponse.data.student);
       // Store in AuthContext instead of cookie
       login(apiResponse.data.student);
 
@@ -198,18 +206,18 @@ export default function StudentLogin() {
             type="button"
             onClick={() => router.push("/")}
             className="
-      h-10 w-10
-      flex items-center justify-center
-      rounded-xl
-      border border-orange-200
-      bg-white
-      text-orange-500
-      shadow-sm
-      hover:bg-orange-50
-      hover:border-orange-300
-      hover:shadow-md
-      transition-all duration-300
-    "
+              h-10 w-10
+              flex items-center justify-center
+              rounded-xl
+              border border-orange-200
+              bg-white
+              text-orange-500
+              shadow-sm
+              hover:bg-orange-50
+              hover:border-orange-300
+              hover:shadow-md
+              transition-all duration-300
+            "
           >
             <ArrowLeft size={18} />
           </button>

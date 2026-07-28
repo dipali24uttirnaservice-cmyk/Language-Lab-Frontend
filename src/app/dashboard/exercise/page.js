@@ -44,19 +44,29 @@ function LoadingScreen() {
   );
 }
 
-function EmptyState({ scopedToLesson = false }) {
+function EmptyState({ scopedToLesson = false,  onBack
+ }) {
   return (
     <div className="h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center max-w-sm">
+
+            <BackToLessonsButton onBack={onBack} />
+
+
         <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center">
           <Award className="text-orange-400" size={28} />
         </div>
-        <h3 className="text-lg font-bold text-slate-800">No exercises found</h3>
+
+        <h3 className="text-lg font-bold text-slate-800">
+          No exercises found
+        </h3>
+
         <p className="text-sm text-slate-400 mt-1">
           {scopedToLesson
             ? "There is no exercise created for this lesson yet."
             : "There are no exercises available for this topic yet."}
         </p>
+
       </div>
     </div>
   );
@@ -1357,8 +1367,14 @@ const exitFullscreen = async () => {
   };
 
   if (loading) return <LoadingScreen />;
-  if (!selectedExercise) return <EmptyState scopedToLesson={Boolean(contentModuleId)} />;
-
+if (!selectedExercise) {
+  return (
+    <EmptyState
+      scopedToLesson={Boolean(contentModuleId)}
+      onBack={() => router.back()}
+    />
+  );
+}
   return (
  <div
     ref={containerRef}
