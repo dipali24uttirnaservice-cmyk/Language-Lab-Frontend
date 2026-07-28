@@ -267,7 +267,7 @@ function ActionCard({
     );
 }
 
-function LessonActionsPanel({ onPractice, onExercise }) {
+function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
     return (
         <div className="space-y-6">
             <ActionCard
@@ -287,6 +287,15 @@ function LessonActionsPanel({ onPractice, onExercise }) {
                 buttonLabel="Start Exercise"
                 buttonClass="bg-emerald-500 hover:bg-emerald-600"
                 onClick={onExercise}
+            />
+            <ActionCard
+                icon={FileText}
+                iconClass="bg-amber-50 text-amber-600"
+                title="Practical Manual"
+                description="View and follow the step-by-step practical manual instructions."
+                buttonLabel="Open Manual"
+                buttonClass="bg-amber-500 hover:bg-amber-600"
+                onClick={onPracticalManual}
             />
         </div>
     );

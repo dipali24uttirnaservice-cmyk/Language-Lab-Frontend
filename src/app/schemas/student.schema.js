@@ -4,6 +4,11 @@ export const studentLoginSchema = Yup.object({
   enrollmentNo: Yup.string()
     .trim()
     .required("Enrollment Number is required"),
+
+  password: Yup.string()
+    .required("Password is required")
+    .min(6, "Password must be 6 characters")
+    .max(6, "Password must be 6 characters"),
 });
 
 export const studentFormSchemaAdd = Yup.object({
@@ -16,15 +21,10 @@ export const studentFormSchemaAdd = Yup.object({
     .email("Please enter a valid email address")
     .required("Email is required"),
 
- password: Yup.string()
-  .trim()
-  .min(6, "Password must be at least 6 characters")
-  .notRequired(),
-
-  phone: Yup.string()
-    .trim()
-    .matches(/^\+?\d{10,15}$/, "Please enter a valid phone number")
-    .required("Phone Number is required"),
+password: Yup.string()
+  .required("Password is required")
+  .min(6, "Password must be 6 characters")
+  .max(6, "Password must be 6 characters"),
 
   roll_no: Yup.string()
     .trim()
@@ -53,10 +53,18 @@ export const studentFormSchemaEdit = Yup.object({
     .email("Please enter a valid email address")
     .required("Email is required"),
 
-  phone: Yup.string()
-    .trim()
-    .matches(/^\+?\d{10,15}$/, "Please enter a valid phone number")
-    .required("Phone Number is required"),
+ password: Yup.string()
+  .notRequired()
+  .test(
+    "password-length",
+    "Password must be 6 characters",
+    (value) => !value || value.length === 6
+  ),
+
+phone: Yup.string()
+  .trim()
+  .matches(/^\d{10}$/, "Phone Number must be exactly 10 digits")
+  .required("Phone Number is required"),
 
   roll_no: Yup.string()
     .trim()

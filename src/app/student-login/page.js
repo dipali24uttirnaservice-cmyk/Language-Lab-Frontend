@@ -13,14 +13,22 @@ import { studentLogin } from "@/services/auth/loginApi";
 import { ArrowLeft } from "lucide-react";
 import { studentLoginSchema } from "@/app/schemas/student.schema";
 import { useAuth } from "@/context/AuthContext";
+
 export default function StudentLogin() {
   const router = useRouter();
-const { login } = useAuth();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [password, setPassword] = useState("");
+  const [enrollmentNo, setEnrollmentNo] = useState("");
+  const [licenseType, setLicenseType] = useState("standard");
 
-  const [enrollmentNo, setEnrollmentNo] =
-    useState("");
+  // Static license types dropdown options (ready to be replaced with backend API fetch later)
+  const licenseOptions = [
+    { label: "Standard License", value: "standard" },
+    { label: "Premium Enterprise", value: "enterprise" },
+    { label: "Trial / Academic", value: "academic" },
+  ];
 
   const handleEnrollmentNoChange = async (value) => {
     setEnrollmentNo(value);
@@ -31,6 +39,28 @@ const { login } = useAuth();
         setErrors((prev) => ({ ...prev, enrollmentNo: "" }));
       } catch (err) {
         setErrors((prev) => ({ ...prev, enrollmentNo: err.message }));
+      }
+    }
+  };
+
+  const handlePasswordChange = async (value) => {
+    setPassword(value);
+
+    if (errors.password) {
+      try {
+        await studentLoginSchema.validateAt("password", {
+          password: value,
+        });
+
+        setErrors((prev) => ({
+          ...prev,
+          password: "",
+        }));
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          password: err.message,
+        }));
       }
     }
   };
@@ -57,7 +87,15 @@ const { login } = useAuth();
     e.preventDefault();
 
     try {
-      await studentLoginSchema.validate({ enrollmentNo }, { abortEarly: false });
+      await studentLoginSchema.validate(
+        {
+          enrollmentNo,
+          password,
+        },
+        {
+          abortEarly: false,
+        }
+      );
       setErrors({});
     } catch (err) {
       if (err.inner) {
@@ -73,33 +111,31 @@ const { login } = useAuth();
     try {
       setLoading(true);
 
-      const response =
-        await studentLogin({
-          enrollment_no: enrollmentNo,
-        });
+      const response = await studentLogin({
+        enrollment_no: enrollmentNo,
+        password,
+        license_type: licenseType, // Included in payload for backend alignment
+      });
 
       const apiResponse = response.data;
 
-      const token =
-        apiResponse?.data?.token;
+      const token = apiResponse?.data?.token;
 
       if (!token) {
-        throw new Error(
-          "Token not found in response"
-        );
+        throw new Error("Token not found in response");
       }
-Cookies.set("role", "student", {
-  expires: 7,
-});
+      Cookies.set("role", "student", {
+        expires: 7,
+      });
 
-Cookies.set("token", token, {
-  expires: 7,
-});
+      Cookies.set("token", token, {
+        expires: 7,
+      });
 
-// Store in AuthContext instead of cookie
-login(apiResponse.data.student);
+      // Store in AuthContext instead of cookie
+      login(apiResponse.data.student);
 
-router.push("/dashboard");
+      router.push("/dashboard");
 
     } catch (error) {
       console.error(error);
@@ -109,8 +145,7 @@ router.push("/dashboard");
         type: "error",
         title: "Login Failed",
         message:
-          error?.response?.data
-            ?.message ||
+          error?.response?.data?.message ||
           "Invalid Enrollment Number",
       });
     } finally {
@@ -160,18 +195,18 @@ router.push("/dashboard");
             type="button"
             onClick={() => router.push("/")}
             className="
-      h-10 w-10
-      flex items-center justify-center
-      rounded-xl
-      border border-orange-200
-      bg-white
-      text-orange-500
-      shadow-sm
-      hover:bg-orange-50
-      hover:border-orange-300
-      hover:shadow-md
-      transition-all duration-300
-    "
+              h-10 w-10
+              flex items-center justify-center
+              rounded-xl
+              border border-orange-200
+              bg-white
+              text-orange-500
+              shadow-sm
+              hover:bg-orange-50
+              hover:border-orange-300
+              hover:shadow-md
+              transition-all duration-300
+            "
           >
             <ArrowLeft size={18} />
           </button>
@@ -181,20 +216,36 @@ router.push("/dashboard");
           </div>
         </div>
 
-
         <h1 className="text-3xl font-black text-slate-900">
           Student Login
         </h1>
 
         <p className="mt-2 text-slate-500">
-          Enter your enrollment number
-          to continue.
+          Enter your enrollment number to continue.
         </p>
 
         <form
           onSubmit={handleLogin}
           className="mt-8 space-y-5"
         >
+          {/* License Type Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              License Type
+            </label>
+            <select
+              value={licenseType}
+              onChange={(e) => setLicenseType(e.target.value)}
+              className="w-full px-4 py-4 bg-white/80 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
+            >
+              {licenseOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <Input
             label="Enrollment Number"
             placeholder="EN2024001"
@@ -205,6 +256,15 @@ router.push("/dashboard");
               )
             }
             error={errors.enrollmentNo}
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            error={errors.password}
           />
 
           <button
