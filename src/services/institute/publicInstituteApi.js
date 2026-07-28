@@ -9,5 +9,10 @@ export const publicInstituteApi = {
 
   // GET Institute by domain (public, no auth)
   getByDomain: (domain) => api.get(`/institute/public`, { domain }),
+
+  // GET list of active institutes (public, no auth) — feeds the
+  // "Select Institute" dropdown on the student login page.
+  getPublicList: (search) =>
+    api.get(`/institute/public`, { params: search ? { search } : {} }),
 };
 

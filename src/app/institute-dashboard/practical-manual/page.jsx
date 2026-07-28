@@ -191,7 +191,7 @@ export default function PracticalManualPage() {
               </span>
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              Practical Manual & Student Task Center
+              Practical Manual 
             </h1>
           </div>
         </div>
@@ -402,8 +402,7 @@ export default function PracticalManualPage() {
             className="bg-white/90 backdrop-blur-md p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl mx-auto space-y-6"
           >
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-xl font-black text-slate-900">Create Practical Manual Record</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Fill in the required backend model fields including course_id, topic_id, and question components.</p>
+              <h2 className="text-xl font-black text-slate-900">Create Practical Manual</h2>
             </div>
 
             <form onSubmit={handleCreateManual} className="space-y-6">
@@ -483,17 +482,7 @@ export default function PracticalManualPage() {
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Created By</label>
-                  <input 
-                    type="text"
-                    required
-                    placeholder="Institute ObjectId"
-                    value={newCreatedBy}
-                    onChange={(e) => setNewCreatedBy(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                  />
-                </div>
+                
               </div>
 
               <div className="space-y-1.5">
@@ -510,7 +499,7 @@ export default function PracticalManualPage() {
               {/* Dynamic Questions Builder */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-slate-800 uppercase tracking-wider">Practical Questions Builder</label>
+                  <label className="text-xs font-black text-slate-800 uppercase tracking-wider">Practical Manual Questions </label>
                   <button 
                     type="button"
                     onClick={addQuestionField}

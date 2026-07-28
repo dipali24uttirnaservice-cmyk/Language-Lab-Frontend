@@ -159,6 +159,11 @@ function buildPracticeUrl(selectedModule) {
     )}`;
 }
 
+function buildonPracticalManualUrl(selectedModule) {
+    return `/dashboard/module/practical-manual?data=${encodeURIComponent(
+        JSON.stringify(selectedModule),
+    )}`;
+}
 /* =========================================================================
    SMALL SHARED COMPONENTS
    ========================================================================= */
@@ -739,7 +744,10 @@ function VideoDetail({
                         onPractice={() => router.push(buildPracticeUrl(selectedModule))}
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
+                            
                         }
+                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
+
                     />
                 </div>
             </div>
@@ -973,6 +981,8 @@ function AudioDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
+                                                onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
+
                     />
                 </div>
             </div>
@@ -1089,8 +1099,8 @@ function TextDetail({
                     <LessonActionsPanel
                         onPractice={() => router.push(buildPracticeUrl(selectedModule))}
                         onExercise={() =>
-                            router.push(buildExerciseUrl(selectedModule, searchParams))
-                        }
+                            router.push(buildExerciseUrl(selectedModule, searchParams))}
+                        onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
                     />
                 </div>
             </div>
@@ -1246,6 +1256,8 @@ function VocabularyDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
+                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
+
                     />
                 </div>
             </div>
