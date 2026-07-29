@@ -8,6 +8,7 @@ import DashboardSidebar from "@/components/organisms/DashboardSidebar";
 import DashboardNavbar from "@/components/organisms/DashboardNavbar";
 import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
+import { activityApi } from "@/services/activity/activityApi";
 import { Toaster } from "react-hot-toast";
 
 export default function DashboardLayout({ children }) {
@@ -18,6 +19,16 @@ const [showLogoutModal, setShowLogoutModal] = useState(false);
 
 useEffect(() => {
   setRole(Cookies.get("role"));
+}, []);
+
+// Institute's "Active Now" tile reads students whose heartbeat landed in
+// the last 5 minutes — ping while this tab is open, ~every 60s.
+useEffect(() => {
+  activityApi.heartbeat().catch(() => {});
+  const interval = setInterval(() => {
+    activityApi.heartbeat().catch(() => {});
+  }, 60000);
+  return () => clearInterval(interval);
 }, []);
 
 // react-player (used by the video lesson player) calls the underlying

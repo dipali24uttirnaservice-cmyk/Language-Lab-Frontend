@@ -1,64 +1,144 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpenCheck, 
-  Dumbbell, 
-  FileText, 
-  CheckSquare, 
+import {
+  BookOpenCheck,
+  Dumbbell,
+  FileText,
+  CheckSquare,
   Search,
   CheckCircle2,
+  XCircle,
+  Clock,
   Calendar,
   ArrowLeft,
   Sparkles,
   Layers,
-  Award
+  Loader2,
+  User,
 } from "lucide-react";
 
-export default function StudentStatisticsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("overview"); 
+import { reportApi } from "@/services/institute/reportApi";
+import { studentApi } from "@/services/student/studentApi";
+import { courseApi } from "@/services/course/courseApi";
 
-  const reportData = {
-    topics: [
-      { id: 1, name: "Rahul Sharma", email: "rahul@example.com", item: "React Hooks & State", course: "Frontend Dev", unit: "Unit 3", status: "Completed", date: "Today, 2:00 PM" },
-      { id: 2, name: "Priya Patel", email: "priya@example.com", item: "Database Indexing", course: "Backend Engineering", unit: "Unit 2", status: "In Progress", date: "Yesterday" },
-      { id: 3, name: "Amit Kumar", email: "amit@example.com", item: "REST API Design", course: "Backend Engineering", unit: "Unit 1", status: "Completed", date: "3 days ago" },
-    ],
-    exercises: [
-      { id: 1, name: "Rahul Sharma", email: "rahul@example.com", item: "Build a Todo App", score: "95/100", status: "Submitted", date: "Today" },
-      { id: 2, name: "Priya Patel", email: "priya@example.com", item: "SQL Joins Query Practice", score: "88/100", status: "Evaluated", date: "Yesterday" },
-      { id: 3, name: "Neha Singh", email: "neha@example.com", item: "Authentication Flow", score: "98/100", status: "Evaluated", date: "2 days ago" },
-    ],
-    practical: [
-      { id: 1, name: "Rahul Sharma", email: "rahul@example.com", item: "Lab Manual 1: Setup Environment", file: "rahul_lab1.pdf", status: "Approved", date: "2 days ago" },
-      { id: 2, name: "Vikram Verma", email: "vikram@example.com", item: "Lab Manual 2: Networking", file: "vikram_net.pdf", status: "Pending Review", date: "Today" },
-    ],
-    tasks: [
-      { id: 1, name: "Rahul Sharma", email: "rahul@example.com", item: "Course -> React -> Unit 2 -> Component Lifecycle", progress: "100%", status: "Done", date: "Today" },
-      { id: 2, name: "Amit Kumar", email: "amit@example.com", item: "Course -> Node -> Unit 1 -> Streams", progress: "60%", status: "In Progress", date: "Yesterday" },
-    ]
-  };
+const CARD_META = {
+  topics: {
+    label: "Topic Details",
+    icon: BookOpenCheck,
+    color: "from-blue-500 to-indigo-600",
+    ring: "border-blue-500 ring-blue-500/20 from-blue-50/50 to-indigo-50/50",
+    hover: "hover:border-blue-300",
+  },
+  exercises: {
+    label: "Exercise Report",
+    icon: Dumbbell,
+    color: "from-purple-500 to-pink-600",
+    ring: "border-purple-500 ring-purple-500/20 from-purple-50/50 to-indigo-50/50",
+    hover: "hover:border-purple-300",
+  },
+  practical: {
+    label: "Practical Manuals",
+    icon: FileText,
+    color: "from-amber-500 to-orange-500",
+    ring: "border-amber-500 ring-amber-500/20 from-amber-50/50 to-orange-50/50",
+    hover: "hover:border-amber-300",
+  },
+  tasks: {
+    label: "Student Task Report",
+    icon: CheckSquare,
+    color: "from-emerald-500 to-teal-600",
+    ring: "border-emerald-500 ring-emerald-500/20 from-emerald-50/50 to-teal-50/50",
+    hover: "hover:border-emerald-300",
+  },
+};
+
+export default function StudentStatisticsPage() {
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  const [studentQuery, setStudentQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [courseId, setCourseId] = useState("");
+
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [progress, setProgress] = useState(null);
+  const [reportData, setReportData] = useState({
+    topics: [],
+    exercises: [],
+    practical: [],
+    tasks: [],
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    studentApi
+      .getStudents()
+      .then((res) => setStudents(res.data?.data?.students || []))
+      .catch((error) => console.error("Get Students Error:", error));
+
+    courseApi
+      .getCourses()
+      .then((res) => setCourses(res.data?.data?.courses || []))
+      .catch((error) => console.error("Get Courses Error:", error));
+  }, []);
+
+  const loadReports = useCallback(async () => {
+    if (!selectedStudent) return;
+    try {
+      setLoading(true);
+      const [topicsRes, exercisesRes, practicalRes, tasksRes, progressRes] = await Promise.all([
+        reportApi.getTopicDetails(selectedStudent._id, courseId),
+        reportApi.getExerciseReport(selectedStudent._id, courseId),
+        reportApi.getPracticalReport(selectedStudent._id, courseId),
+        reportApi.getTaskReport(selectedStudent._id, courseId),
+        reportApi.getProgressReport(selectedStudent._id, courseId),
+      ]);
+      setReportData({
+        topics: topicsRes.data?.data?.topics || [],
+        exercises: exercisesRes.data?.data?.exercises || [],
+        practical: practicalRes.data?.data?.practicals || [],
+        tasks: tasksRes.data?.data?.tasks || [],
+      });
+      setProgress(progressRes.data?.data || null);
+    } catch (error) {
+      console.error("Get Student Reports Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedStudent, courseId]);
+
+  useEffect(() => {
+    setActiveTab("overview");
+    loadReports();
+  }, [loadReports]);
+
+  const matchingStudents = useMemo(() => {
+    if (!studentQuery) return [];
+    const q = studentQuery.toLowerCase();
+    return students
+      .filter(
+        (s) =>
+          s.full_name?.toLowerCase().includes(q) ||
+          s.enrollment_no?.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [studentQuery, students]);
 
   const getActiveDataset = () => {
-    let data = [];
-    if (activeTab === "topics") data = reportData.topics;
-    else if (activeTab === "exercises") data = reportData.exercises;
-    else if (activeTab === "practical") data = reportData.practical;
-    else if (activeTab === "tasks") data = reportData.tasks;
-
+    const data = reportData[activeTab] || [];
     if (!searchQuery) return data;
-    return data.filter(row => 
-      row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.item.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = searchQuery.toLowerCase();
+    return data.filter((row) =>
+      Object.values(row).some((v) => String(v ?? "").toLowerCase().includes(q)),
     );
   };
 
   return (
     <div className="relative min-h-screen p-8 space-y-8 overflow-hidden font-sans">
-      
-      {/* Background Theme Glow Elements (Matching your dashboard theme) */}
+      {/* Background Theme Glow Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-amber-100/60 via-orange-50/40 to-amber-200/50" />
         <div className="absolute top-10 right-10 h-96 w-96 rounded-full bg-gradient-to-br from-amber-400/10 to-orange-500/10 blur-3xl" />
@@ -70,7 +150,7 @@ export default function StudentStatisticsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
         <div className="flex items-center gap-4">
           {activeTab !== "overview" && (
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveTab("overview")}
@@ -92,7 +172,7 @@ export default function StudentStatisticsPage() {
               {activeTab === "topics" && "Topic Details Report"}
               {activeTab === "exercises" && "Exercise Submission Report"}
               {activeTab === "practical" && "Practical Manual Submissions"}
-              {activeTab === "tasks" && "Student Task & Hierarchy Report"}
+              {activeTab === "tasks" && "Student Task Report"}
             </h1>
           </div>
         </div>
@@ -103,234 +183,252 @@ export default function StudentStatisticsPage() {
         </div>
       </div>
 
-      {/* Interactive Metric Cards (Click to switch view instantly) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* Card 1: Topic Details */}
-        <motion.div 
-          whileHover={{ y: -4, scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("topics")}
-          className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
-            activeTab === "topics" 
-              ? "border-blue-500 ring-4 ring-blue-500/20 bg-gradient-to-br from-blue-50/50 to-indigo-50/50" 
-              : "border-slate-200 hover:border-blue-300"
-          }`}
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Topic Details</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">1,450</h3>
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 mt-3 bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-100">
-                <Sparkles className="w-3 h-3" /> Inspect logs →
-              </span>
+      {/* Student Picker */}
+      <div className="bg-white/90 backdrop-blur-md p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="relative flex-1 w-full sm:max-w-sm">
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search student by name or enrollment no..."
+            value={selectedStudent ? `${selectedStudent.full_name} (${selectedStudent.enrollment_no})` : studentQuery}
+            onChange={(e) => {
+              setSelectedStudent(null);
+              setStudentQuery(e.target.value);
+            }}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+          />
+          {!selectedStudent && matchingStudents.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+              {matchingStudents.map((s) => (
+                <button
+                  key={s._id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStudent(s);
+                    setStudentQuery("");
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-orange-50 transition-colors flex items-center justify-between"
+                >
+                  <span className="font-bold text-slate-800">{s.full_name}</span>
+                  <span className="text-xs text-slate-400">{s.enrollment_no}</span>
+                </button>
+              ))}
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-              <BookOpenCheck className="w-7 h-7" />
-            </div>
-          </div>
-        </motion.div>
+          )}
+        </div>
 
-        {/* Card 2: Exercise Report */}
-        <motion.div 
-          whileHover={{ y: -4, scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("exercises")}
-          className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
-            activeTab === "exercises" 
-              ? "border-purple-500 ring-4 ring-purple-500/20 bg-gradient-to-br from-purple-50/50 to-indigo-50/50" 
-              : "border-slate-200 hover:border-purple-300"
-          }`}
+        <select
+          value={courseId}
+          onChange={(e) => setCourseId(e.target.value)}
+          className="w-full sm:w-64 px-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-purple-600 transition-colors">Exercise Report</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">3,820</h3>
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 mt-3 bg-purple-50 px-2.5 py-1 rounded-xl border border-purple-100">
-                <Sparkles className="w-3 h-3" /> View submissions →
-              </span>
-            </div>
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
-              <Dumbbell className="w-7 h-7" />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Card 3: Practical Manual Submissions */}
-        <motion.div 
-          whileHover={{ y: -4, scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("practical")}
-          className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
-            activeTab === "practical" 
-              ? "border-amber-500 ring-4 ring-amber-500/20 bg-gradient-to-br from-amber-50/50 to-orange-50/50" 
-              : "border-slate-200 hover:border-amber-300"
-          }`}
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-amber-600 transition-colors">Practical Manuals</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">412</h3>
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 mt-3 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
-                <Sparkles className="w-3 h-3" /> Inspect files →
-              </span>
-            </div>
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
-              <FileText className="w-7 h-7" />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Card 4: Student Task Report */}
-        <motion.div 
-          whileHover={{ y: -4, scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("tasks")}
-          className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
-            activeTab === "tasks" 
-              ? "border-emerald-500 ring-4 ring-emerald-500/20 bg-gradient-to-br from-emerald-50/50 to-teal-50/50" 
-              : "border-slate-200 hover:border-emerald-300"
-          }`}
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">Student Task Report</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">89%</h3>
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 mt-3 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
-                <Sparkles className="w-3 h-3" /> Course tree →
-              </span>
-            </div>
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
-              <CheckSquare className="w-7 h-7" />
-            </div>
-          </div>
-        </motion.div>
-
+          <option value="">All courses</option>
+          {courses.map((c) => (
+            <option key={c._id} value={c._id}>{c.course_name}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Conditional Workspace Area */}
-      <AnimatePresence mode="wait">
-        {activeTab === "overview" ? (
-          <motion.div 
-            key="overview"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8"
-          >
-            <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="space-y-3 relative z-10 max-w-xl">
-              <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-400 text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl border border-amber-500/30">
-                <Layers className="w-4 h-4" /> Interactive Statistics Hub
-              </div>
-              <h2 className="text-3xl font-black tracking-tight">Select any report category above</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Seamlessly inspect student progress by clicking on <strong>Topic Details</strong>, <strong>Exercise Report</strong>, <strong>Practical Manuals</strong>, or <strong>Student Task Report</strong> to load granular course hierarchies and records instantly.
-              </p>
-            </div>
+      {!selectedStudent ? (
+        <div className="py-20 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
+          <p className="text-slate-400 text-sm font-semibold">Search and select a student above to load their reports.</p>
+        </div>
+      ) : loading ? (
+        <div className="py-20 flex items-center justify-center text-slate-400">
+          <Loader2 className="w-6 h-6 animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Interactive Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Object.entries(CARD_META).map(([key, meta]) => {
+              const Icon = meta.icon;
+              const count = reportData[key]?.length || 0;
+              return (
+                <motion.div
+                  key={key}
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab(key)}
+                  className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
+                    activeTab === key
+                      ? `ring-4 bg-gradient-to-br ${meta.ring}`
+                      : `border-slate-200 ${meta.hover}`
+                  }`}
+                >
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{meta.label}</p>
+                      <h3 className="text-3xl font-black text-slate-900 mt-1">{count}</h3>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 mt-3 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-100">
+                        <Sparkles className="w-3 h-3" /> Inspect records →
+                      </span>
+                    </div>
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.color} text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-7 h-7" />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
 
-            <motion.button 
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setActiveTab("topics")}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black transition-all shadow-lg shadow-orange-500/25 shrink-0 relative z-10"
-            >
-              Explore Topic Details Now
-            </motion.button>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="table"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
-          >
-            {/* Table Header & Search */}
-            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 capitalize">{activeTab} Granular Analysis</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Showing live filtered student submissions and records</p>
-              </div>
+          {/* Conditional Workspace Area */}
+          <AnimatePresence mode="wait">
+            {activeTab === "overview" ? (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.2 }}
+                className="bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8"
+              >
+                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-80">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="text"
-                    placeholder="Search student or record..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Table Data */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                    <th className="py-4 px-6">Student Information</th>
-                    <th className="py-4 px-6">
-                      {activeTab === "topics" && "Topic / Course Unit"}
-                      {activeTab === "exercises" && "Exercise Title"}
-                      {activeTab === "practical" && "Manual File Name"}
-                      {activeTab === "tasks" && "Course -> Unit => Topic Structure"}
-                    </th>
-                    <th className="py-4 px-6">
-                      {activeTab === "topics" && "Status"}
-                      {activeTab === "exercises" && "Score / Status"}
-                      {activeTab === "practical" && "Submission Status"}
-                      {activeTab === "tasks" && "Progress Status"}
-                    </th>
-                    <th className="py-4 px-6">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm font-medium">
-                  {getActiveDataset().length > 0 ? (
-                    getActiveDataset().map((row) => (
-                      <tr key={row.id} className="hover:bg-orange-50/40 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="font-bold text-slate-900">{row.name}</div>
-                          <div className="text-xs text-slate-500 font-normal">{row.email}</div>
-                        </td>
-                        <td className="py-4 px-6 text-slate-800">
-                          {row.item || row.file || row.progress}
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 text-xs shadow-sm">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {row.status || row.score}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-slate-500 text-xs font-semibold">
-                          {row.date}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="4" className="py-12 text-center text-slate-400 text-sm font-semibold">
-                        No matching records found for your search query.
-                      </td>
-                    </tr>
+                <div className="space-y-3 relative z-10 max-w-xl">
+                  <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-400 text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl border border-amber-500/30">
+                    <Layers className="w-4 h-4" /> {selectedStudent.full_name}
+                  </div>
+                  <h2 className="text-3xl font-black tracking-tight">
+                    Overall completion: {progress?.overall_completion_percentage ?? 0}%
+                  </h2>
+                  {progress?.breakdown && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                      {Object.entries(progress.breakdown).map(([key, b]) => (
+                        <div key={key} className="bg-white/5 rounded-2xl px-3 py-2.5 border border-white/10">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">{key}</p>
+                          <p className="text-lg font-black">{b.completion_percentage}%</p>
+                          <p className="text-[10px] text-slate-400">{b.completed}/{b.total} completed</p>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
+                </div>
 
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setActiveTab("topics")}
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black transition-all shadow-lg shadow-orange-500/25 shrink-0 relative z-10"
+                >
+                  Explore Topic Details Now
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="table"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+              >
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 capitalize">{CARD_META[activeTab]?.label}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Showing records for {selectedStudent.full_name}</p>
+                  </div>
 
+                  <div className="relative flex-1 sm:w-80">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Filter this table..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <ReportTable tab={activeTab} rows={getActiveDataset()} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status }) {
+  const isGood = ["completed", "approved", "reviewed", "done", "passed"].includes(
+    String(status).toLowerCase(),
+  );
+  const isBad = ["overdue", "rejected"].includes(String(status).toLowerCase());
+  const Icon = isBad ? XCircle : isGood ? CheckCircle2 : Clock;
+  const color = isBad
+    ? "text-rose-700 bg-rose-50 border-rose-200"
+    : isGood
+    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    : "text-amber-700 bg-amber-50 border-amber-200";
+  return (
+    <span className={`inline-flex items-center gap-1.5 font-bold px-3 py-1 rounded-xl border text-xs shadow-sm ${color}`}>
+      <Icon className="w-3.5 h-3.5" /> {status ?? "—"}
+    </span>
+  );
+}
+
+function ReportTable({ tab, rows }) {
+  const columns = {
+    topics: [
+      { key: "topic_title", label: "Topic" },
+      { key: "completion_percentage", label: "Completion", render: (r) => `${r.completion_percentage}%` },
+      { key: "time_spent_sec", label: "Time Spent", render: (r) => `${Math.round((r.time_spent_sec || 0) / 60)} min` },
+      { key: "last_accessed", label: "Last Accessed", render: (r) => r.last_accessed ? new Date(r.last_accessed).toLocaleString() : "—" },
+    ],
+    exercises: [
+      { key: "exercise_title", label: "Exercise" },
+      { key: "attempts", label: "Attempts" },
+      { key: "score_percentage", label: "Score", render: (r) => `${r.best_score ?? 0}/${r.max_score ?? 0} (${r.score_percentage}%)` },
+      { key: "is_passed", label: "Status", render: (r) => <StatusPill status={r.is_passed ? "Passed" : "Not Passed"} /> },
+    ],
+    practical: [
+      { key: "title", label: "Practical" },
+      { key: "status", label: "Status", render: (r) => <StatusPill status={r.status} /> },
+      { key: "marks", label: "Marks", render: (r) => r.marks ?? "—" },
+      { key: "submitted_at", label: "Submitted", render: (r) => r.submitted_at ? new Date(r.submitted_at).toLocaleString() : "—" },
+    ],
+    tasks: [
+      { key: "title", label: "Task" },
+      { key: "type", label: "Type" },
+      { key: "status", label: "Status", render: (r) => <StatusPill status={r.overdue ? "overdue" : r.status} /> },
+      { key: "due_date", label: "Due", render: (r) => r.due_date ? new Date(r.due_date).toLocaleDateString() : "—" },
+      { key: "grade", label: "Grade", render: (r) => r.grade ?? "—" },
+    ],
+  }[tab];
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-slate-50/80 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+            {columns.map((col) => (
+              <th key={col.key} className="py-4 px-6">{col.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 text-sm font-medium">
+          {rows.length > 0 ? (
+            rows.map((row, i) => (
+              <tr key={row._id || row.topic_id || row.module_id || row.practical_id || row.task_id || i} className="hover:bg-orange-50/40 transition-colors">
+                {columns.map((col) => (
+                  <td key={col.key} className="py-4 px-6 text-slate-800">
+                    {col.render ? col.render(row) : row[col.key] ?? "—"}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length} className="py-12 text-center text-slate-400 text-sm font-semibold">
+                No matching records found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

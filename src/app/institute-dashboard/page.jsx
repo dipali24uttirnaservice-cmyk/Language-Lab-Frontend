@@ -10,6 +10,7 @@ import {
   UserPlus,
   ShieldCheck,
   Award,
+  Radio,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -24,6 +25,7 @@ import {
   Cell,
 } from "recharts";
 import { dashboardApi } from "@/services/institute/dashboardApi";
+import { activityLogApi } from "@/services/institute/activityLogApi";
 
 const STATUS_COLORS = {
   active: "#4F46E5",
@@ -72,6 +74,7 @@ function timeAgo(timestamp) {
 export default function InstituteDashboard() {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
+  const [activeCount, setActiveCount] = useState(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -88,6 +91,18 @@ export default function InstituteDashboard() {
     };
 
     fetchDashboard();
+  }, []);
+
+  useEffect(() => {
+    const fetchActiveCount = () => {
+      activityLogApi
+        .getActiveCount()
+        .then((res) => setActiveCount(res.data?.data?.active_count ?? 0))
+        .catch(() => {});
+    };
+    fetchActiveCount();
+    const interval = setInterval(fetchActiveCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -162,7 +177,7 @@ export default function InstituteDashboard() {
         </div>
 
         {/* KPI Stats Grid */}
-<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5">
          <StatCard
             title="Enrolled Students"
             value={enrolledStudents.total}
@@ -191,6 +206,7 @@ export default function InstituteDashboard() {
             color="from-rose-500 to-pink-600"
             sub="Across all module progress"
           />
+          <ActiveNowCard count={activeCount} />
            <motion.div
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
@@ -360,6 +376,41 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
 
       <div className="relative z-10 mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
         <p className="text-xs font-medium text-slate-500">{sub}</p>
+        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          LIVE
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+function ActiveNowCard({ count }) {
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-xl hover:border-emerald-100"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+      <div className="relative z-10 flex justify-between items-start">
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-emerald-500 transition-colors">
+            Active Now
+          </p>
+          <p className="text-3xl font-black text-slate-900 tracking-tight">
+            {count === null ? "—" : count}
+          </p>
+        </div>
+
+        <div className="p-3 rounded-2xl text-white bg-gradient-to-br from-emerald-400 to-teal-600 shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-110">
+          <Radio size={20} strokeWidth={2.5} />
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+        <p className="text-xs font-medium text-slate-500">Students online in the last 5 min</p>
         <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           LIVE

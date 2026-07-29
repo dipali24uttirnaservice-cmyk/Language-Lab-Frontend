@@ -15,6 +15,7 @@ import {
   LogOut,
   BookOpenCheck,
   ClipboardList,
+  Activity,
 } from "lucide-react";
 
 const menuItems = [
@@ -62,6 +63,15 @@ const menuItems = [
     border: "border-purple-500",
     bg: "from-purple-50 to-indigo-50",
     text: "text-purple-700",
+  },
+  {
+    title: "Activity Log",
+    href: "/institute-dashboard/activity-log",
+    icon: Activity,
+    color: "from-sky-500 to-indigo-600",
+    border: "border-sky-500",
+    bg: "from-sky-50 to-indigo-50",
+    text: "text-sky-700",
   },
   {
     title: "License & Subscription",
