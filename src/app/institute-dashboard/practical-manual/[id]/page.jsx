@@ -18,6 +18,7 @@ import {
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
+import StatusModal from "@/components/molecules/StatusModal";
 
 export default function PracticalManualFormPage() {
   const router = useRouter();
@@ -45,6 +46,13 @@ export default function PracticalManualFormPage() {
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+
+  const [statusData, setStatusData] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: "",
+});
 
   const [questionList, setQuestionList] = useState([
     { question_text: "", answer_key_html: "", answer_lines: 5 }
@@ -123,69 +131,100 @@ export default function PracticalManualFormPage() {
     }
   }, [editingManualId]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setFormErrors({});
+  setFormErrors({});
 
-    const payload = {
-      title: formTitle,
-      course_id: formCourseId,
-      topic_id: formTopicId || undefined,
-      questions: questionList,
-      ...(editingManualId && removeAttachment && { remove_attachment: true }),
-    };
+  const payload = {
+  title: formTitle,
+  course_id: formCourseId,
+  topic_id: formTopicId,
+  attachment: practicalAttachment,
+  questions: questionList,
+};
 
-    try {
-      const schema = editingManualId
-        ? updatePracticalManualSchema
-        : createPracticalManualSchema;
+  try {
+    const schema = editingManualId
+      ? updatePracticalManualSchema
+      : createPracticalManualSchema;
 
-      await schema.validate(payload, { abortEarly: false });
+    await schema.validate(payload, {
+      abortEarly: false,
+    });
 
-      setSubmitting(true);
+    setSubmitting(true);
 
-      const formData = new FormData();
+    const formData = new FormData();
 
-      formData.append("title", formTitle);
-      formData.append("course_id", formCourseId);
+    formData.append("title", formTitle);
+    formData.append("course_id", formCourseId);
 
-      if (formTopicId) {
-        formData.append("topic_id", formTopicId);
-      }
-
-      formData.append("questions", JSON.stringify(questionList));
-
-      if (practicalAttachment) {
-        formData.append("practicalAttachment", practicalAttachment);
-      }
-      if (editingManualId && removeAttachment) {
-        formData.append("remove_attachment", "true");
-      }
-
-      if (editingManualId) {
-        await updatePracticalManual(editingManualId, formData);
-      } else {
-        await practicalManual(formData);
-      }
-
-      router.push("/institute-dashboard/practical-manual");
-    } catch (error) {
-      console.error("Practical manual submit error", error);
-
-      if (error.inner) {
-        const errors = {};
-
-        error.inner.forEach((err) => {
-          errors[err.path] = err.message;
-        });
-
-        setFormErrors(errors);
-      }
-    } finally {
-      setSubmitting(false);
+    if (formTopicId) {
+      formData.append("topic_id", formTopicId);
     }
-  };
+
+    formData.append("questions", JSON.stringify(questionList));
+
+    if (practicalAttachment) {
+      formData.append("practicalAttachment", practicalAttachment);
+    }
+
+    if (editingManualId && removeAttachment) {
+      formData.append("remove_attachment", "true");
+    }
+
+    if (editingManualId) {
+      await updatePracticalManual(editingManualId, formData);
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Success",
+        message: "Practical manual updated successfully.",
+      });
+    } else {
+      await practicalManual(formData);
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Success",
+        message: "Practical manual created successfully.",
+      });
+    }
+  } catch (error) {
+    // Handle Yup Validation Errors
+    if (error.name === "ValidationError") {
+      const validationErrors = {};
+
+     error.inner.forEach((err) => {
+  if (err.path) {
+    validationErrors[err.path] = err.message;
+  }
+});
+
+setFormErrors(validationErrors);
+
+      setFormErrors(validationErrors);
+      return;
+    }
+
+    // Handle API Errors
+    console.error(error);
+
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Error",
+      message:
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again.",
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -227,12 +266,14 @@ export default function PracticalManualFormPage() {
                 className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm"
                 placeholder="Practical manual title"
               />
-              {formErrors.title && (
-                <p className="text-rose-500 text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {formErrors.title}
-                </p>
-              )}
+           {formErrors.title && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors.title}
+    </span>
+  </p>
+)}
             </div>
 
             <div>
@@ -249,17 +290,19 @@ export default function PracticalManualFormPage() {
                   <option key={c._id} value={c._id}>{c.course_name}</option>
                 ))}
               </select>
-              {formErrors.course_id && (
-                <p className="text-rose-500 text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {formErrors.course_id}
-                </p>
-              )}
+             {formErrors.course_id && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors.course_id}
+    </span>
+  </p>
+)}
             </div>
 
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Topic (Optional)
+                Topic 
               </label>
               <select
                 value={formTopicId}
@@ -278,6 +321,14 @@ export default function PracticalManualFormPage() {
                   <option key={t._id} value={t._id}>{t.title}</option>
                 ))}
               </select>
+              {formErrors.topic_id && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors.topic_id}
+    </span>
+  </p>
+)}
             </div>
 
             <div>
@@ -303,7 +354,16 @@ export default function PracticalManualFormPage() {
                   Remove existing attachment
                 </label>
               )}
+          {formErrors.attachment && (
+  <p className="text-xs mt-2 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-4 h-4 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors.attachment}
+    </span>
+  </p>
+)}
             </div>
+          
           </div>
 
           <div className="border-t border-slate-100 pt-6 space-y-4">
@@ -343,50 +403,81 @@ export default function PracticalManualFormPage() {
                     )}
                   </div>
 
-                  <input
-                    value={q.question_text}
-                    onChange={(e) => {
-                      const arr = [...questionList];
-                      arr[index].question_text = e.target.value;
-                      setQuestionList(arr);
-                    }}
-                    placeholder="Type question text..."
-                    className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                  />
+                <div>
+  <input
+    value={q.question_text}
+    onChange={(e) => {
+      const arr = [...questionList];
+      arr[index].question_text = e.target.value;
+      setQuestionList(arr);
+    }}
+    placeholder="Type question text..."
+    className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+  />
 
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                      Answer Key
-                    </label>
-                    <RichTextEditor
-                      value={q.answer_key_html}
-                      onChange={(html) => {
-                        const arr = [...questionList];
-                        arr[index].answer_key_html = html;
-                        setQuestionList(arr);
-                      }}
-                      placeholder="Model answer for this question…"
-                      minHeight={120}
-                    />
-                  </div>
+ {formErrors[`questions[${index}].question_text`] && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors[`questions[${index}].question_text`]}
+    </span>
+  </p>
+)}
+</div>
 
-                  <div className="max-w-40">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                      Answer Lines
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={q.answer_lines}
-                      onChange={(e) => {
-                        const arr = [...questionList];
-                        arr[index].answer_lines = Number(e.target.value);
-                        setQuestionList(arr);
-                      }}
-                      className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                    />
-                  </div>
+                <div>
+  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+    Answer Key
+  </label>
+
+  <RichTextEditor
+    value={q.answer_key_html}
+    onChange={(html) => {
+      const arr = [...questionList];
+      arr[index].answer_key_html = html;
+      setQuestionList(arr);
+    }}
+    placeholder="Model answer for this question…"
+    minHeight={120}
+  />
+
+{formErrors[`questions[${index}].answer_key_html`] && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors[`questions[${index}].answer_key_html`]}
+    </span>
+  </p>
+)}
+</div>
+
+                <div className="max-w-40">
+  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+    Answer Lines
+  </label>
+
+  <input
+    type="number"
+    min={1}
+    max={50}
+    value={q.answer_lines}
+    onChange={(e) => {
+      const arr = [...questionList];
+      arr[index].answer_lines = Number(e.target.value);
+      setQuestionList(arr);
+    }}
+    className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+  />
+
+ {formErrors[`questions[${index}].answer_lines`] && (
+  <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+    <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+    <span className="!text-red-600">
+      {formErrors[`questions[${index}].answer_lines`]}
+    </span>
+  </p>
+)}
+</div>
                 </div>
               ))}
             </div>
@@ -414,6 +505,25 @@ export default function PracticalManualFormPage() {
           </div>
         </form>
       </div>
+
+      <StatusModal
+  open={statusData.open}
+  type={statusData.type}
+  title={statusData.title}
+  message={statusData.message}
+  onClose={() => {
+    const isSuccess = statusData.type === "success";
+
+    setStatusData((prev) => ({
+      ...prev,
+      open: false,
+    }));
+
+    if (isSuccess) {
+      router.push("/institute-dashboard/practical-manual");
+    }
+  }}
+/>
     </div>
   );
 }
