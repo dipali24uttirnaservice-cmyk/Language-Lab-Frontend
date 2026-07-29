@@ -608,8 +608,18 @@ const exitFullscreen = async () => {
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
                     Question {current + 1} of {questions.length}
                   </span>
+                    <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+            {question.question_type === "mcq"
+              ? "Multiple Choice"
+              : question.question_type === "true_false"
+              ? "True / False"
+              : question.question_type === "fill_blank"
+              ? "Fill in the Blank"
+              : question.question_type}
+          </div>
                   <QuestionDots total={questions.length} current={current} answers={answers} />
                 </div>
+              
                 <ProgressBar value={progressPct} />
               </div>
 

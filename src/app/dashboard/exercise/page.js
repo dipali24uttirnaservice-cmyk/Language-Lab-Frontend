@@ -1112,21 +1112,41 @@ function ActiveQuiz({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
-                {currentQuestionIndex + 1}
-              </span>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
-                Question {currentQuestionIndex + 1} of {total}
-              </p>
-            </div>
-            <span className="text-xs font-bold text-slate-500 shrink-0">
-              • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
-            </span>
+         <div className="flex items-center justify-between gap-4">
+  <div className="flex items-center gap-3 flex-wrap">
+    <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
+      {currentQuestionIndex + 1}
+    </span>
+    <div>
+      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
+        Question {currentQuestionIndex + 1} of {total}
+      </p>
+    </div>
+
+   {/* ADDED: Question Type Badge */}
+       
+  </div>
+   <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+            {q.question_type === "mcq"
+              ? "Multiple Choice"
+              : q.question_type === "true_false"
+              ? "True / False"
+              : q.question_type === "fill_blank"
+              ? "Fill in the Blank"
+              : q.question_type === "reorder"
+              ? "Reorder Sequence"
+              : q.question_type === "match"
+              ? "Match the Pairs"
+              : q.question_type === "short_answer"
+              ? "Short Answer"
+              : q.question_type}
           </div>
+  <span className="text-xs font-bold text-slate-500 shrink-0">
+    • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
+  </span>
+</div>
 
           <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
 
@@ -1203,7 +1223,6 @@ function ActiveQuiz({
           </div>
         </div>
       </div>
-
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
