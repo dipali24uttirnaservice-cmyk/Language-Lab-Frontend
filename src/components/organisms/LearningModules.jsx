@@ -10,6 +10,7 @@ import {
   FileText,
   ClipboardCheck,
   BookOpen,
+  FileSpreadsheet,
   ChevronRight,
   Sparkles,
 } from "lucide-react";
@@ -50,7 +51,7 @@ export default function LearningModules({ courseId, courseName }) {
 
     const particles = [];
     const particleCount = 45;
-    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899"];
+    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899","#06b6d4"];
 
     let mouse = { x: -1000, y: -1000 };
 
@@ -195,6 +196,14 @@ export default function LearningModules({ courseId, courseName }) {
       shadowColor: "rgba(236, 72, 153, 0.25)",
       description: "Learn new words",
     },
+    {
+    title: "Practical Manual",
+    type: "practical_manual", // Match this key with your backend API response
+    icon: FileSpreadsheet,
+    color: "from-cyan-500 to-teal-600",
+    shadowColor: "rgba(6, 182, 212, 0.25)",
+    description: "Access hands-on lab guides",
+  },
   ];
 
   return (
@@ -243,7 +252,7 @@ export default function LearningModules({ courseId, courseName }) {
               transition: { staggerChildren: 0.08 }
             }
           }}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+         className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6"
         >
           {modules.map((module) => {
             const Icon = module.icon;

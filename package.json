@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-   "dev": "next dev -p 5002",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint"
+    "dev": "next dev -p 5002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.70",
     "@ai-sdk/react": "^3.0.204",
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.2.0",
     "@hookform/resolvers": "^5.4.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
