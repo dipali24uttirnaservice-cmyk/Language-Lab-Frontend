@@ -13,15 +13,104 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  X,
+  HelpCircle,
+  ListChecks,
+  PenLine,
+  ToggleLeft,
+  MessageSquare,
+  Shuffle,
+  Mic,
+  Sparkles,
+  Clock,
+  Award,
+  FileText,
+  Link2,
+  Video,
+  Music,
+  File,
+  Info,
+  Layers,
+  UserCog,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
 import { courseApi } from "@/services/course/courseApi";
 import { studentApi } from "@/services/student/studentApi";
+import { topicApi } from "@/services/topic/topicApi";
 import StatusModal from "@/components/molecules/StatusModal";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
+import RichTextEditor from "@/components/molecules/RichTextEditor";
 
 const MEDIA_TYPES = ["audio", "video", "document"];
+const CHECKPOINT_TYPES = ["audio", "video"];
+
+// Icon + gradient per task type — mirrors the Admin Panel's module-row
+// treatment (colored icon badge) used across its Text/Video/Audio lists.
+const TASK_TYPE_META = {
+  text: { label: "Text", Icon: FileText, gradient: "from-blue-500 to-blue-600" },
+  link: { label: "Link", Icon: Link2, gradient: "from-slate-500 to-slate-600" },
+  audio: { label: "Audio", Icon: Music, gradient: "from-teal-500 to-teal-600" },
+  video: { label: "Video", Icon: Video, gradient: "from-purple-500 to-purple-600" },
+  document: { label: "Document", Icon: File, gradient: "from-amber-500 to-amber-600" },
+};
+
+const STATUS_META = {
+  published: { label: "Published", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  draft: { label: "Draft", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" },
+  closed: { label: "Closed", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+};
+
+// Groups the Create Task form into labeled sections (Basic Info / Content /
+// Assignment) so a long form reads as a sequence of clear steps.
+function SectionDivider({ icon: Icon, title }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+      <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+        {title}
+      </span>
+      <div className="flex-1 h-px bg-slate-200" />
+    </div>
+  );
+}
+
+// Same question_type enum as the Task model's questionSchema.
+const QUESTION_TYPES = [
+  "mcq",
+  "fill_blank",
+  "true_false",
+  "short_answer",
+  "match",
+  "recorder",
+  "spell_word",
+];
+// These types answer via a list of options; "match" uses match_pairs instead,
+// "short_answer" takes free text in Correct Answer only.
+const OPTION_BASED_TYPES = ["mcq", "fill_blank", "true_false", "recorder", "spell_word"];
+
+// Icon + accent per question_type — same palette family as the rest of the
+// institute-dashboard (each module gets its own hue), scoped down to badges.
+const QUESTION_TYPE_META = {
+  mcq: { label: "Multiple Choice", Icon: ListChecks, color: "text-teal-700", bg: "bg-teal-50", border: "border-teal-200" },
+  fill_blank: { label: "Fill in the Blank", Icon: PenLine, color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200" },
+  true_false: { label: "True / False", Icon: ToggleLeft, color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200" },
+  short_answer: { label: "Short Answer", Icon: MessageSquare, color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
+  match: { label: "Match the Pairs", Icon: Shuffle, color: "text-pink-700", bg: "bg-pink-50", border: "border-pink-200" },
+  recorder: { label: "Recorder", Icon: Mic, color: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200" },
+  spell_word: { label: "Spell the Word", Icon: Sparkles, color: "text-indigo-700", bg: "bg-indigo-50", border: "border-indigo-200" },
+};
+
+const blankQuestion = () => ({
+  question_text: "",
+  question_type: QUESTION_TYPES[0],
+  options: ["", ""],
+  match_pairs: [],
+  correct_answer: "",
+  explanation: "",
+  marks: 1,
+  timestamp_sec: "",
+});
 
 export default function StudentTaskPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +122,8 @@ export default function StudentTaskPage() {
 
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
+  const [topics, setTopics] = useState([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
 
   const [expandedTaskId, setExpandedTaskId] = useState(null);
   const [submissionsByTask, setSubmissionsByTask] = useState({});
@@ -43,6 +134,7 @@ export default function StudentTaskPage() {
 
   // Form state
   const [courseId, setCourseId] = useState("");
+  const [topicId, setTopicId] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskInstructions, setTaskInstructions] = useState("");
@@ -54,6 +146,7 @@ export default function StudentTaskPage() {
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [taskDueDate, setTaskDueDate] = useState("");
   const [taskStatus, setTaskStatus] = useState("published");
+  const [questions, setQuestions] = useState([]);
 
   const loadTasks = useCallback(async () => {
     try {
@@ -83,8 +176,28 @@ export default function StudentTaskPage() {
       .catch((error) => console.error("Get Students Error:", error));
   }, []);
 
+  // Topic dropdown depends on the chosen course — refetch whenever it changes.
+  useEffect(() => {
+    if (!courseId) {
+      setTopics([]);
+      setTopicId("");
+      return;
+    }
+    setTopicsLoading(true);
+    topicApi
+      .getTopics(courseId)
+      .then((res) => setTopics(res.data?.data?.topics || res.data?.data || []))
+      .catch((error) => {
+        console.error("Get Topics Error:", error);
+        setTopics([]);
+      })
+      .finally(() => setTopicsLoading(false));
+    setTopicId("");
+  }, [courseId]);
+
   const resetForm = () => {
     setCourseId("");
+    setTopicId("");
     setTaskTitle("");
     setTaskDescription("");
     setTaskInstructions("");
@@ -96,7 +209,66 @@ export default function StudentTaskPage() {
     setSelectedStudentIds([]);
     setTaskDueDate("");
     setTaskStatus("published");
+    setQuestions([]);
   };
+
+  /* ── question builder helpers ── */
+  const addQuestion = () => setQuestions((prev) => [...prev, blankQuestion()]);
+  const removeQuestion = (qi) => setQuestions((prev) => prev.filter((_, idx) => idx !== qi));
+  const updateQuestion = (qi, key, value) =>
+    setQuestions((prev) => prev.map((q, idx) => (idx === qi ? { ...q, [key]: value } : q)));
+
+  const addOption = (qi) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) => (idx === qi ? { ...q, options: [...q.options, ""] } : q)),
+    );
+  const removeOption = (qi, oi) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) =>
+        idx === qi ? { ...q, options: q.options.filter((_, odx) => odx !== oi) } : q,
+      ),
+    );
+  const updateOption = (qi, oi, value) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) =>
+        idx === qi
+          ? { ...q, options: q.options.map((o, odx) => (odx === oi ? value : o)) }
+          : q,
+      ),
+    );
+
+  const addPair = (qi) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) =>
+        idx === qi ? { ...q, match_pairs: [...q.match_pairs, { left: "", right: "" }] } : q,
+      ),
+    );
+  const removePair = (qi, pi) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qi) return q;
+        const pairs = q.match_pairs.filter((_, pdx) => pdx !== pi);
+        return {
+          ...q,
+          match_pairs: pairs,
+          correct_answer: pairs.map((p) => `${p.left}:${p.right}`).join("|"),
+        };
+      }),
+    );
+  const updatePair = (qi, pi, side, value) =>
+    setQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qi) return q;
+        const pairs = (q.match_pairs.length ? q.match_pairs : [{ left: "", right: "" }]).map(
+          (p, pdx) => (pdx === pi ? { ...p, [side]: value } : p),
+        );
+        return {
+          ...q,
+          match_pairs: pairs,
+          correct_answer: pairs.map((p) => `${p.left}:${p.right}`).join("|"),
+        };
+      }),
+    );
 
   const toggleStudentSelection = (id) => {
     setSelectedStudentIds((prev) =>
@@ -116,6 +288,15 @@ export default function StudentTaskPage() {
       });
       return;
     }
+    if (taskType === "text" && !taskTextContent.trim()) {
+      setModal({
+        open: true,
+        type: "error",
+        title: "Text content required",
+        message: "Write the lesson text students will read before saving.",
+      });
+      return;
+    }
     if (taskTarget === "selected" && selectedStudentIds.length === 0) {
       setModal({
         open: true,
@@ -125,9 +306,34 @@ export default function StudentTaskPage() {
       });
       return;
     }
+    const incompleteAt = questions.findIndex(
+      (q) => !q.question_text.trim() || !q.correct_answer.trim(),
+    );
+    if (incompleteAt !== -1) {
+      setModal({
+        open: true,
+        type: "error",
+        title: "Incomplete question",
+        message: `Question ${incompleteAt + 1} needs question text and a correct answer — or remove it.`,
+      });
+      return;
+    }
 
     const formData = new FormData();
     formData.append("course_id", courseId);
+    if (topicId) formData.append("topic_id", topicId);
+    if (questions.length > 0) {
+      formData.append(
+        "questions",
+        JSON.stringify(
+          questions.map((q) => ({
+            ...q,
+            marks: Number(q.marks) || 1,
+            timestamp_sec: q.timestamp_sec === "" ? undefined : Number(q.timestamp_sec),
+          })),
+        ),
+      );
+    }
     formData.append("title", taskTitle);
     if (taskDescription) formData.append("description", taskDescription);
     if (taskInstructions) formData.append("instructions", taskInstructions);
@@ -313,120 +519,155 @@ export default function StudentTaskPage() {
               <div className="py-20 flex items-center justify-center text-slate-400">
                 <Loader2 className="w-6 h-6 animate-spin" />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredTasks.length > 0 ? (
-                  filteredTasks.map((task) => (
-                    <motion.div
-                      key={task._id}
-                      whileHover={{ y: -3 }}
-                      className="bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all space-y-4 flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1 rounded-xl border border-teal-200">
-                            {task.course_id?.course_name || "Course"}
-                          </span>
-                          <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />{" "}
-                            {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
-                          </span>
-                        </div>
-
-                        <h3 className="text-lg font-black text-slate-900">{task.title}</h3>
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          <Users className="w-3.5 h-3.5 text-teal-600" /> Target: {task.target}
-                        </div>
-
-                        <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2">
-                          <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                            {task.description || "No description provided."}
-                          </p>
-                          <div className="text-[11px] text-teal-900 bg-teal-50/60 p-2 rounded-xl border border-teal-100 flex flex-col gap-1">
-                            <span><strong>Type:</strong> {task.type}</span>
-                            {task.type === "text" && <span><strong>Content:</strong> {task.text_content}</span>}
-                            {task.type === "link" && (
-                              <span className="truncate"><strong>Link:</strong> {task.link_url}</span>
-                            )}
-                            {MEDIA_TYPES.includes(task.type) && (
-                              <span className="truncate"><strong>Media:</strong> {task.media_url}</span>
-                            )}
-                            <span><strong>Status:</strong> {task.status}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-xl">
-                          <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-                          {task.assigned_count ?? 0} Assigned · {task.submitted_count ?? 0} Submitted
-                        </span>
-
-                        <div className="flex items-center gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => toggleSubmissions(task._id)}
-                            className="px-3 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
-                          >
-                            <Send className="w-3.5 h-3.5" /> Submissions
-                            {expandedTaskId === task._id ? (
-                              <ChevronUp className="w-3.5 h-3.5" />
-                            ) : (
-                              <ChevronDown className="w-3.5 h-3.5" />
-                            )}
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setDeleteModal({ open: true, id: task._id })}
-                            className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors"
-                            title="Delete task"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </motion.button>
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {expandedTaskId === task._id && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="pt-3 border-t border-slate-100 space-y-2">
-                              {submissionsLoading && !submissionsByTask[task._id] ? (
-                                <div className="py-6 flex justify-center text-slate-400">
-                                  <Loader2 className="w-5 h-5 animate-spin" />
+            ) : filteredTasks.length > 0 ? (
+              <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50/70 border-b border-slate-200">
+                        <th className="text-left px-6 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Task
+                        </th>
+                        <th className="text-left px-4 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Course
+                        </th>
+                        <th className="text-left px-4 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="text-left px-4 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Due
+                        </th>
+                        <th className="text-left px-4 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Progress
+                        </th>
+                        <th className="text-right px-6 py-3 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTasks.map((task) => {
+                        const typeMeta = TASK_TYPE_META[task.type] || TASK_TYPE_META.text;
+                        const statusMeta = STATUS_META[task.status] || STATUS_META.published;
+                        const TypeIcon = typeMeta.Icon;
+                        const isExpanded = expandedTaskId === task._id;
+                        return (
+                          <React.Fragment key={task._id}>
+                            <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${typeMeta.gradient} flex items-center justify-center text-white shrink-0 shadow-sm`}
+                                  >
+                                    <TypeIcon className="w-4.5 h-4.5" />
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-slate-900 truncate max-w-[220px]">
+                                      {task.title}
+                                    </p>
+                                    <p className="text-xs text-slate-400 truncate max-w-[220px] flex items-center gap-1">
+                                      <Users className="w-3 h-3" /> {typeMeta.label} · {task.target}
+                                    </p>
+                                  </div>
                                 </div>
-                              ) : (submissionsByTask[task._id] || []).length === 0 ? (
-                                <p className="text-xs text-slate-400 py-3 text-center">
-                                  No submissions yet.
-                                </p>
-                              ) : (
-                                (submissionsByTask[task._id] || []).map((sub) => (
-                                  <SubmissionRow
-                                    key={sub._id}
-                                    submission={sub}
-                                    onGrade={(grade, feedback) =>
-                                      handleGrade(task._id, sub._id, grade, feedback)
-                                    }
-                                  />
-                                ))
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className="bg-teal-50 text-teal-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-teal-200 whitespace-nowrap">
+                                  {task.course_id?.course_name || "Course"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span
+                                  className={`text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
+                                >
+                                  {statusMeta.label}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 whitespace-nowrap">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg whitespace-nowrap">
+                                  <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
+                                  {task.assigned_count ?? 0} / {task.submitted_count ?? 0}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => toggleSubmissions(task._id)}
+                                    className="px-3 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                                  >
+                                    <Send className="w-3.5 h-3.5" /> Submissions
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    ) : (
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    )}
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setDeleteModal({ open: true, id: task._id })}
+                                    className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors"
+                                    title="Delete task"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </motion.button>
+                                </div>
+                              </td>
+                            </tr>
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <tr>
+                                  <td colSpan={6} className="p-0 border-b border-slate-100">
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="px-6 py-4 bg-slate-50/50 space-y-2">
+                                        {submissionsLoading && !submissionsByTask[task._id] ? (
+                                          <div className="py-6 flex justify-center text-slate-400">
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                          </div>
+                                        ) : (submissionsByTask[task._id] || []).length === 0 ? (
+                                          <p className="text-xs text-slate-400 py-3 text-center">
+                                            No submissions yet.
+                                          </p>
+                                        ) : (
+                                          (submissionsByTask[task._id] || []).map((sub) => (
+                                            <SubmissionRow
+                                              key={sub._id}
+                                              submission={sub}
+                                              onGrade={(grade, feedback) =>
+                                                handleGrade(task._id, sub._id, grade, feedback)
+                                              }
+                                            />
+                                          ))
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  </td>
+                                </tr>
                               )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-span-2 py-16 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
-                    <p className="text-slate-400 text-sm font-semibold">No tasks found matching query parameters.</p>
-                  </div>
-                )}
+                            </AnimatePresence>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="py-16 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
+                <p className="text-slate-400 text-sm font-semibold">No tasks found matching query parameters.</p>
               </div>
             )}
           </motion.div>
@@ -445,6 +686,7 @@ export default function StudentTaskPage() {
             </div>
 
             <form onSubmit={handleCreateTask} className="space-y-4">
+              <SectionDivider icon={Info} title="Basic Info" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Course</label>
@@ -457,6 +699,27 @@ export default function StudentTaskPage() {
                     <option value="" disabled>Select course</option>
                     {courses.map((c) => (
                       <option key={c._id} value={c._id}>{c.course_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Topic (optional)</label>
+                  <select
+                    value={topicId}
+                    onChange={(e) => setTopicId(e.target.value)}
+                    disabled={!courseId || topicsLoading}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60"
+                  >
+                    <option value="">
+                      {!courseId
+                        ? "Select a course first"
+                        : topicsLoading
+                        ? "Loading topics..."
+                        : "No specific topic"}
+                    </option>
+                    {topics.map((t) => (
+                      <option key={t._id} value={t._id}>{t.title}</option>
                     ))}
                   </select>
                 </div>
@@ -506,6 +769,9 @@ export default function StudentTaskPage() {
                 />
               </div>
 
+              <div className="pt-2">
+                <SectionDivider icon={Layers} title="Content" />
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Type</label>
@@ -538,14 +804,14 @@ export default function StudentTaskPage() {
 
               {taskType === "text" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Text Content</label>
-                  <textarea
-                    rows={2}
-                    required
-                    placeholder="Enter text content..."
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Text Content <span className="text-teal-600">*</span>
+                  </label>
+                  <RichTextEditor
                     value={taskTextContent}
-                    onChange={(e) => setTaskTextContent(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    onChange={setTaskTextContent}
+                    placeholder="Write the lesson text students will read…"
+                    minHeight={220}
                   />
                 </div>
               )}
@@ -580,6 +846,9 @@ export default function StudentTaskPage() {
                 </div>
               )}
 
+              <div className="pt-2">
+                <SectionDivider icon={UserCog} title="Assignment" />
+              </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Target</label>
                 <select
@@ -623,6 +892,74 @@ export default function StudentTaskPage() {
                 </div>
               )}
 
+              <div className="space-y-4 pt-5 mt-2 border-t-2 border-dashed border-teal-100">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-md shadow-teal-500/20 shrink-0">
+                      <HelpCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        Questions
+                        <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                          Optional
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Quiz-style checkpoints attached to this task
+                        {CHECKPOINT_TYPES.includes(taskType)
+                          ? " — set a timestamp to have one pop up at a point in the audio/video."
+                          : "."}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={addQuestion}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs font-black shadow-md shadow-teal-500/20 hover:shadow-lg transition-all shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Question
+                  </motion.button>
+                </div>
+
+                {questions.length === 0 && (
+                  <div className="py-8 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-xs font-semibold text-slate-400">
+                      No questions yet — students see just the task itself.
+                    </p>
+                  </div>
+                )}
+
+                <AnimatePresence initial={false}>
+                  {questions.map((q, qi) => (
+                    <motion.div
+                      key={qi}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <QuestionCard
+                        index={qi}
+                        question={q}
+                        showTimestamp={CHECKPOINT_TYPES.includes(taskType)}
+                        onRemove={() => removeQuestion(qi)}
+                        onChange={(key, value) => updateQuestion(qi, key, value)}
+                        onAddOption={() => addOption(qi)}
+                        onRemoveOption={(oi) => removeOption(qi, oi)}
+                        onUpdateOption={(oi, value) => updateOption(qi, oi, value)}
+                        onAddPair={() => addPair(qi)}
+                        onRemovePair={(pi) => removePair(qi, pi)}
+                        onUpdatePair={(pi, side, value) => updatePair(qi, pi, side, value)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
@@ -662,6 +999,226 @@ export default function StudentTaskPage() {
         onClose={() => setDeleteModal({ open: false, id: null })}
         onConfirm={handleDeleteTask}
       />
+    </div>
+  );
+}
+
+function QuestionCard({
+  index,
+  question,
+  showTimestamp,
+  onRemove,
+  onChange,
+  onAddOption,
+  onRemoveOption,
+  onUpdateOption,
+  onAddPair,
+  onRemovePair,
+  onUpdatePair,
+}) {
+  const inputCls =
+    "w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors";
+  const meta = QUESTION_TYPE_META[question.question_type] || QUESTION_TYPE_META.mcq;
+  const { Icon: TypeIcon } = meta;
+
+  return (
+    <div
+      className={`bg-white border rounded-2xl p-4 space-y-4 shadow-sm transition-colors ${meta.border}`}
+    >
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <span className="w-7 h-7 rounded-lg bg-slate-900 text-white text-xs font-black flex items-center justify-center shrink-0">
+            {index + 1}
+          </span>
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${meta.bg} ${meta.color} ${meta.border}`}
+          >
+            <TypeIcon className="w-3.5 h-3.5" />
+            {meta.label}
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+            <Award className="w-3.5 h-3.5" /> {question.marks || 0} mk
+          </span>
+          {showTimestamp && question.timestamp_sec !== "" && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+              <Clock className="w-3.5 h-3.5" /> {question.timestamp_sec}s
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+          Question Text <span className="text-teal-600">*</span>
+        </label>
+        <textarea
+          rows={2}
+          className={`${inputCls} resize-none`}
+          placeholder="Enter the question…"
+          value={question.question_text}
+          onChange={(e) => onChange("question_text", e.target.value)}
+        />
+      </div>
+
+      <div className={`grid grid-cols-2 ${showTimestamp ? "sm:grid-cols-3" : ""} gap-3`}>
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Type</label>
+          <select
+            className={`${inputCls} cursor-pointer`}
+            value={question.question_type}
+            onChange={(e) => onChange("question_type", e.target.value)}
+          >
+            {QUESTION_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {QUESTION_TYPE_META[t].label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+            <Award className="w-3 h-3 text-slate-400" /> Marks
+          </label>
+          <input
+            type="number"
+            min={0}
+            className={inputCls}
+            value={question.marks}
+            onChange={(e) => onChange("marks", e.target.value)}
+          />
+        </div>
+        {showTimestamp && (
+          <div>
+            <label className="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-slate-400" /> Appears at (sec)
+            </label>
+            <input
+              type="number"
+              min={0}
+              placeholder="e.g. 12"
+              className={inputCls}
+              value={question.timestamp_sec}
+              onChange={(e) => onChange("timestamp_sec", e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+
+      {OPTION_BASED_TYPES.includes(question.question_type) && (
+        <div className="bg-slate-50/70 rounded-xl p-3 border border-slate-100">
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Options</label>
+          <div className="space-y-2">
+            {question.options.map((opt, oi) => (
+              <div key={oi} className="flex items-center gap-2">
+                <span className="text-xs font-black text-slate-400 w-5 shrink-0">
+                  {String.fromCharCode(65 + oi)}.
+                </span>
+                <input
+                  className={inputCls}
+                  placeholder={`Option ${oi + 1}`}
+                  value={opt}
+                  onChange={(e) => onUpdateOption(oi, e.target.value)}
+                />
+                {question.options.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveOption(oi)}
+                    className="text-red-400 hover:text-red-600 shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onAddOption}
+            className="mt-2 text-xs text-teal-700 font-bold hover:underline"
+          >
+            + Add Option
+          </button>
+        </div>
+      )}
+
+      {question.question_type === "match" && (
+        <div className="bg-slate-50/70 rounded-xl p-3 border border-slate-100">
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Match Pairs</label>
+          <div className="space-y-2">
+            {(question.match_pairs.length ? question.match_pairs : [{ left: "", right: "" }]).map(
+              (p, pi) => (
+                <div key={pi} className="flex items-center gap-2">
+                  <input
+                    className={inputCls}
+                    placeholder="Left (e.g. India)"
+                    value={p.left}
+                    onChange={(e) => onUpdatePair(pi, "left", e.target.value)}
+                  />
+                  <span className="text-teal-600 font-black shrink-0">→</span>
+                  <input
+                    className={inputCls}
+                    placeholder="Right (e.g. Delhi)"
+                    value={p.right}
+                    onChange={(e) => onUpdatePair(pi, "right", e.target.value)}
+                  />
+                  {question.match_pairs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => onRemovePair(pi)}
+                      className="text-red-400 hover:text-red-600 shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onAddPair}
+            className="mt-2 text-xs text-teal-700 font-bold hover:underline"
+          >
+            + Add Pair
+          </button>
+        </div>
+      )}
+
+      <div className="bg-emerald-50/50 rounded-xl p-3 border border-emerald-100">
+        <label className="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Correct Answer{" "}
+          <span className="text-teal-600">*</span>
+        </label>
+        <input
+          className={`${inputCls} ${question.question_type === "match" ? "bg-slate-50 text-slate-500" : ""}`}
+          placeholder="Correct answer"
+          value={question.correct_answer}
+          readOnly={question.question_type === "match"}
+          onChange={(e) => onChange("correct_answer", e.target.value)}
+        />
+        {question.question_type === "match" && (
+          <p className="mt-1 text-xs text-slate-400">Auto-generated from Match Pairs above.</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+          Explanation (optional)
+        </label>
+        <RichTextEditor
+          value={question.explanation}
+          onChange={(val) => onChange("explanation", val)}
+          placeholder="Explain the answer…"
+          minHeight={120}
+        />
+      </div>
     </div>
   );
 }
