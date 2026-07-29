@@ -694,7 +694,7 @@ export default function StudentTaskPage() {
                     required
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                   >
                     <option value="" disabled>Select course</option>
                     {courses.map((c) => (
@@ -709,7 +709,7 @@ export default function StudentTaskPage() {
                     value={topicId}
                     onChange={(e) => setTopicId(e.target.value)}
                     disabled={!courseId || topicsLoading}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500 disabled:opacity-60"
                   >
                     <option value="">
                       {!courseId
@@ -730,7 +730,7 @@ export default function StudentTaskPage() {
                     type="date"
                     value={taskDueDate}
                     onChange={(e) => setTaskDueDate(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                   />
                 </div>
               </div>
@@ -743,7 +743,7 @@ export default function StudentTaskPage() {
                   placeholder="e.g., Record a 2-minute self-introduction"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                 />
               </div>
 
@@ -754,7 +754,7 @@ export default function StudentTaskPage() {
                   placeholder="Optional description shown to students."
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                  className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                 />
               </div>
 
@@ -765,7 +765,7 @@ export default function StudentTaskPage() {
                   placeholder="Optional step-by-step instructions."
                   value={taskInstructions}
                   onChange={(e) => setTaskInstructions(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                  className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                 />
               </div>
 
@@ -778,7 +778,7 @@ export default function StudentTaskPage() {
                   <select
                     value={taskType}
                     onChange={(e) => setTaskType(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                   >
                     <option value="text">Text</option>
                     <option value="link">Link</option>
@@ -793,7 +793,7 @@ export default function StudentTaskPage() {
                   <select
                     value={taskStatus}
                     onChange={(e) => setTaskStatus(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                   >
                     <option value="published">Published</option>
                     <option value="draft">Draft</option>
@@ -825,7 +825,7 @@ export default function StudentTaskPage() {
                     placeholder="https://..."
                     value={taskLinkUrl}
                     onChange={(e) => setTaskLinkUrl(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                   />
                 </div>
               )}
@@ -841,7 +841,7 @@ export default function StudentTaskPage() {
                       taskType === "audio" ? "audio/*" : taskType === "video" ? "video/*" : undefined
                     }
                     onChange={(e) => setTaskMediaFile(e.target.files?.[0] || null)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 file:mr-3 file:px-3 file:py-1.5 file:rounded-xl file:border-0 file:bg-teal-600 file:text-white file:text-xs file:font-bold"
+                    className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500 file:mr-3 file:px-3 file:py-1.5 file:rounded-xl file:border-0 file:bg-teal-600 file:text-white file:text-xs file:font-bold"
                   />
                 </div>
               )}
@@ -854,7 +854,7 @@ export default function StudentTaskPage() {
                 <select
                   value={taskTarget}
                   onChange={(e) => setTaskTarget(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-4 py-3 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                 >
                   <option value="all">All students enrolled in this course</option>
                   <option value="selected">Selected students</option>
@@ -918,7 +918,7 @@ export default function StudentTaskPage() {
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={addQuestion}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs font-black shadow-md shadow-teal-500/20 hover:shadow-lg transition-all shrink-0"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs font-black shadow-md shadow-teal-500/20 border-b-2 border-teal-700 hover:shadow-lg active:scale-95 transition-all shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Question
                   </motion.button>
@@ -964,7 +964,7 @@ export default function StudentTaskPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("tasks")}
-                  className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-teal-300 text-teal-700 bg-white font-bold text-sm hover:bg-teal-50 active:scale-95 transition-all"
                 >
                   Cancel
                 </button>
@@ -973,7 +973,7 @@ export default function StudentTaskPage() {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black text-sm shadow-lg shadow-teal-500/25 disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black text-sm shadow-lg shadow-teal-500/25 border-b-2 border-teal-700 disabled:opacity-60 disabled:pointer-events-none active:scale-95 flex items-center gap-2 transition-all"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {saving ? "Publishing..." : "Save Task"}
@@ -1017,7 +1017,7 @@ function QuestionCard({
   onUpdatePair,
 }) {
   const inputCls =
-    "w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors";
+    "w-full px-3.5 py-2 bg-white border border-teal-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-teal-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-500";
   const meta = QUESTION_TYPE_META[question.question_type] || QUESTION_TYPE_META.mcq;
   const { Icon: TypeIcon } = meta;
 

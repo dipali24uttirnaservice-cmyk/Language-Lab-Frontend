@@ -19,6 +19,8 @@ import {
   practicalManualDetail,
   deletePracticalManual
 } from "@/services/practical-Manual/page.jsx";
+import { courseApi } from "@/services/course/courseApi";
+import { topicApi } from "@/services/topic/topicApi";
 
 export default function PracticalManualPage() {
   const router = useRouter();
@@ -34,6 +36,9 @@ export default function PracticalManualPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourseId, setFilterCourseId] = useState("");
   const [filterTopicId, setFilterTopicId] = useState("");
+  const [filterCourses, setFilterCourses] = useState([]);
+  const [filterTopics, setFilterTopics] = useState([]);
+  const [filterTopicsLoading, setFilterTopicsLoading] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -81,6 +86,35 @@ export default function PracticalManualPage() {
   useEffect(() => {
     fetchManuals();
   }, [page, limit]);
+
+  // Course/Topic filter dropdowns — same source as the create/edit form.
+  useEffect(() => {
+    courseApi
+      .getCourses()
+      .then((res) => setFilterCourses(res.data?.data?.courses || []))
+      .catch((error) => console.error("Get Courses Error:", error));
+  }, []);
+
+  useEffect(() => {
+    if (!filterCourseId) {
+      setFilterTopics([]);
+      return;
+    }
+    setFilterTopicsLoading(true);
+    topicApi
+      .getTopics(filterCourseId)
+      .then((res) => setFilterTopics(res.data?.data?.topics || res.data?.data || []))
+      .catch((error) => {
+        console.error("Get Topics Error:", error);
+        setFilterTopics([]);
+      })
+      .finally(() => setFilterTopicsLoading(false));
+  }, [filterCourseId]);
+
+  const handleFilterCourseChange = (id) => {
+    setFilterCourseId(id);
+    setFilterTopicId("");
+  };
 
   const openViewModal = async (id) => {
     try {
@@ -130,7 +164,7 @@ export default function PracticalManualPage() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => router.push("/institute-dashboard/practical-manual/create")}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-orange-500/25 flex items-center gap-2 justify-center transition-all"
+          className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-orange-500/10 border-b-2 border-orange-700 active:scale-95 flex items-center gap-2 justify-center transition-all"
         >
           <Plus className="w-5 h-5" />
           Add Manual
@@ -145,27 +179,38 @@ export default function PracticalManualPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search manual by title..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all text-sm"
+            className="w-full pl-12 pr-4 py-3 rounded-xl border border-orange-300 bg-white text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm"
           />
         </div>
 
-        <input
-          placeholder="Course ID"
+        <select
           value={filterCourseId}
-          onChange={(e) => setFilterCourseId(e.target.value)}
-          className="px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-sm min-w-[150px]"
-        />
+          onChange={(e) => handleFilterCourseChange(e.target.value)}
+          className="px-4 py-3 rounded-xl border border-orange-300 bg-white text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm min-w-42.5 cursor-pointer"
+        >
+          <option value="">All Courses</option>
+          {filterCourses.map((c) => (
+            <option key={c._id} value={c._id}>{c.course_name}</option>
+          ))}
+        </select>
 
-        <input
-          placeholder="Topic ID"
+        <select
           value={filterTopicId}
           onChange={(e) => setFilterTopicId(e.target.value)}
-          className="px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-sm min-w-[150px]"
-        />
+          disabled={!filterCourseId || filterTopicsLoading}
+          className="px-4 py-3 rounded-xl border border-orange-300 bg-white text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm min-w-42.5 cursor-pointer disabled:opacity-60"
+        >
+          <option value="">
+            {!filterCourseId ? "All Topics" : filterTopicsLoading ? "Loading..." : "All Topics"}
+          </option>
+          {filterTopics.map((t) => (
+            <option key={t._id} value={t._id}>{t.title}</option>
+          ))}
+        </select>
 
         <button
           onClick={fetchManuals}
-          className="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all shadow-md shadow-slate-900/10 flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all active:scale-95 shadow-md shadow-slate-900/10 flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Apply
@@ -253,7 +298,7 @@ export default function PracticalManualPage() {
                           </button>
 
                           <button
-                            onClick={() => router.push(`/institute-dashboard/practical-manual/edit/${manual._id}`)}
+                            onClick={() => router.push(`/institute-dashboard/practical-manual/${manual._id}`)}
                             className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
                             title="Edit Manual"
                           >
