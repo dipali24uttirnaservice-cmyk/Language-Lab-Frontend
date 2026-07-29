@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import dynamic from "next/dynamic";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import {
@@ -14,7 +13,7 @@ import {
   Maximize2,
   Minimize2,
   Send,
-  Save,
+  Loader2,
   Sparkles,
   Play,
   Clock,
@@ -22,11 +21,8 @@ import {
   FileText,
 } from "lucide-react";
 
-/* Dynamic import for CKEditor to handle SSR in Next.js */
-const CKEditor = dynamic(
-  () => import("@ckeditor/ckeditor5-react").then((mod) => mod.CKEditor),
-  { ssr: false }
-);
+import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
+import RichTextEditor from "@/components/molecules/RichTextEditor";
 
 /* ==========================================================
    PROGRESS BAR
@@ -74,20 +70,13 @@ function QuestionDots({ total, current, answers }) {
 /* ==========================================================
    SIDEBAR WORKSPACE
 ========================================================== */
-function Sidebar({
-  manuals,
-  current,
-  answers,
-  setCurrent,
-  search,
-  setSearch,
-}) {
+function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
   const completed = Object.values(answers).filter((val) => val?.trim()).length;
   const progress = manuals.length ? (completed / manuals.length) * 100 : 0;
 
   const filtered = manuals
     .map((item, originalIndex) => ({ ...item, originalIndex }))
-    .filter((q) => q.title.toLowerCase().includes(search.toLowerCase()));
+    .filter((q) => q.question_text.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="w-80 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full">
@@ -127,9 +116,7 @@ function Sidebar({
       {/* QUESTIONS LIST */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-sidebar-scroll">
         {filtered.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-8">
-            No matches found.
-          </p>
+          <p className="text-xs text-slate-400 text-center py-8">No matches found.</p>
         ) : (
           filtered.map((item) => {
             const index = item.originalIndex;
@@ -138,7 +125,7 @@ function Sidebar({
 
             return (
               <motion.button
-                key={item.id}
+                key={item._id}
                 onClick={() => setCurrent(index)}
                 whileHover={{ x: isActive ? 0 : 3 }}
                 whileTap={{ scale: 0.98 }}
@@ -174,7 +161,7 @@ function Sidebar({
                     isActive ? "text-white" : "text-slate-700"
                   }`}
                 >
-                  {item.title}
+                  {item.question_text}
                 </div>
               </motion.button>
             );
@@ -194,100 +181,14 @@ export default function StudentPracticalManualPage() {
   const routeParams = useParams();
   const containerRef = useRef(null);
 
-  // Extract params from URL
   const topicId = routeParams?.topicId || searchParams.get("topicId");
-  const topicName = searchParams.get("topicName");
+  const courseId = searchParams.get("courseId");
   const courseName = searchParams.get("courseName");
 
-  // Practical manuals list
-  const manualsList = useMemo(
-    () => [
-      {
-        id: "6a509b7175de4d60103689d3",
-        manualTitle: topicName || "English Vocabulary Skills Practical",
-        duration: "40 Mins",
-        totalMarks: 50,
-        questions: [
-          {
-            id: 1,
-            title: "Contextual Vocabulary Application",
-            marks: 10,
-            description:
-              "Construct five original sentences demonstrating the usage of advanced academic vocabulary in context.",
-          },
-          {
-            id: 2,
-            title: "Synonym & Antonym Analysis",
-            marks: 15,
-            description:
-              "Analyze nuances between subtle synonyms and provide precise contextual replacements.",
-          },
-          {
-            id: 3,
-            title: "Idiomatic Expressions & Phrasal Verbs",
-            marks: 25,
-            description:
-              "Write a short paragraph incorporating at least three phrasal verbs and two idiomatic expressions correctly.",
-          },
-        ],
-      },
-      {
-        id: "manual-1",
-        manualTitle: "React & Next.js Advanced Architecture",
-        duration: "45 Mins",
-        totalMarks: 55,
-        questions: [
-          {
-            id: 1,
-            title: "Implement React Context API",
-            marks: 10,
-            description: "Create a Context Provider and explain how useContext works.",
-          },
-          {
-            id: 2,
-            title: "Create Custom useLocalStorage Hook",
-            marks: 15,
-            description: "Write reusable hook using localStorage.",
-          },
-          {
-            id: 3,
-            title: "JWT Authentication Flow",
-            marks: 20,
-            description: "Explain JWT Authentication with NodeJS.",
-          },
-          {
-            id: 4,
-            title: "Redux Toolkit Counter",
-            marks: 10,
-            description: "Build Counter using Redux Toolkit.",
-          },
-        ],
-      },
-      {
-        id: "manual-2",
-        manualTitle: "Node.js REST API & Express Fundamentals",
-        duration: "30 Mins",
-        totalMarks: 40,
-        questions: [
-          {
-            id: 1,
-            title: "Express Middleware Chain",
-            marks: 15,
-            description: "Build custom logging and auth middleware in Express.",
-          },
-          {
-            id: 2,
-            title: "MongoDB Schema Validation",
-            marks: 25,
-            description: "Define Mongoose schema with strict field validation.",
-          },
-        ],
-      },
-    ],
-    [topicName]
-  );
+  const [manualsList, setManualsList] = useState([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  // Selected state initialized dynamically based on URL params
   const [selectedManual, setSelectedManual] = useState(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -295,66 +196,57 @@ export default function StudentPracticalManualPage() {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [ClassicEditor, setClassicEditor] = useState(null);
-
-  // Auto-select topic if passed via URL parameters
-  useEffect(() => {
-    if (topicId || topicName) {
-      const match = manualsList.find(
-        (m) =>
-          m.id === topicId ||
-          (topicName && m.manualTitle.toLowerCase() === topicName.toLowerCase())
-      );
-
-      if (match) {
-        setSelectedManual(match);
-      } else {
-        // Fallback: Create dynamic manual based on query params
-        setSelectedManual({
-          id: topicId || "custom-topic",
-          manualTitle: topicName ? decodeURIComponent(topicName) : "Practical Assignment",
-          duration: "45 Mins",
-          totalMarks: 50,
-          questions: [
-            {
-              id: 1,
-              title: `${topicName || "Topic"} Core Exercise 1`,
-              marks: 25,
-              description: `Complete the practical exercises for ${topicName || "this topic"}. Write full explanations and step-by-step solutions below.`,
-            },
-            {
-              id: 2,
-              title: `${topicName || "Topic"} Application Exercise 2`,
-              marks: 25,
-              description: "Demonstrate practical application and real-world examples in your response.",
-            },
-          ],
-        });
-      }
-    }
-  }, [topicId, topicName, manualsList]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
-    import("@ckeditor/ckeditor5-build-classic").then((mod) => {
-      setClassicEditor(() => mod.default);
-    });
+    const params = {};
+    if (topicId) params.topicId = topicId;
+    if (courseId) params.courseId = courseId;
 
+    studentPracticalApi
+      .getMine(params)
+      .then((res) => setManualsList(res.data?.data?.practicals || []))
+      .catch((error) => console.error("Get Practicals Error:", error))
+      .finally(() => setListLoading(false));
+  }, [topicId, courseId]);
+
+  useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  const handleStartManual = (manual) => {
-    setSelectedManual(manual);
-    setCurrent(0);
-    setAnswers({});
-    setSubmitted(false);
-  };
+  const handleStartManual = useCallback(async (manual) => {
+    setDetailLoading(true);
+    try {
+      const res = await studentPracticalApi.getOneMine(manual._id);
+      const detail = res.data?.data;
+      const mySubmission = detail?.my_submission;
+
+      // Pre-fill previously saved answers, matched by question_id.
+      const answerByQuestionId = {};
+      (mySubmission?.answers || []).forEach((a) => {
+        answerByQuestionId[a.question_id] = a.answer_html;
+      });
+      const prefilled = {};
+      (detail?.questions || []).forEach((q, idx) => {
+        if (answerByQuestionId[q._id]) prefilled[idx] = answerByQuestionId[q._id];
+      });
+
+      setSelectedManual(detail);
+      setCurrent(0);
+      setAnswers(prefilled);
+      setSubmitted(mySubmission?.status === "submitted" || mySubmission?.status === "reviewed");
+      setSubmitError("");
+    } catch (error) {
+      console.error("Get Practical Detail Error:", error);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   const enterFullscreen = async () => {
     if (containerRef.current?.requestFullscreen) {
@@ -369,14 +261,30 @@ export default function StudentPracticalManualPage() {
   };
 
   const saveAnswer = (data) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [current]: data,
-    }));
+    setAnswers((prev) => ({ ...prev, [current]: data }));
   };
 
-  const submitManual = () => {
-    setSubmitted(true);
+  const submitManual = async () => {
+    if (!selectedManual) return;
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      const payload = selectedManual.questions.map((q, idx) => ({
+        question_id: q._id,
+        answer_html: answers[idx] || "",
+      }));
+      const formData = new FormData();
+      formData.append("answers", JSON.stringify(payload));
+      await studentPracticalApi.submit(selectedManual._id, formData);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Submit Practical Error:", error);
+      setSubmitError(
+        error?.response?.data?.message || "Failed to submit. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /* ==========================================================
@@ -407,65 +315,96 @@ export default function StudentPracticalManualPage() {
               <span className="text-xs font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
                 {courseName ? `${courseName} Practical Exercises` : "Laboratory Practical Exercises"}
               </span>
-              <h1 className="text-3xl font-black leading-tight">
-                Practical Manuals
-              </h1>
+              <h1 className="text-3xl font-black leading-tight">Practical Manuals</h1>
               <p className="text-orange-100 text-sm leading-relaxed">
                 Select a practical manual from the list below to review the instructions, write your solutions, and submit your work.
               </p>
             </div>
           </div>
 
-          {/* Manual Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {manualsList.map((manual) => (
-              <motion.div
-                key={manual.id}
-                whileHover={{ y: -4 }}
-                className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="h-10 w-10 rounded-2xl bg-orange-50 text-orange-600 font-black flex items-center justify-center border border-orange-100">
-                      <FileText size={20} />
-                    </span>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                      <Clock size={14} className="text-orange-500" />
-                      {manual.duration}
-                    </div>
-                  </div>
+          {listLoading ? (
+            <div className="py-20 flex items-center justify-center text-slate-400">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          ) : manualsList.length === 0 ? (
+            <div className="py-16 text-center bg-white/60 rounded-3xl border border-dashed border-orange-200">
+              <p className="text-slate-400 text-sm font-semibold">
+                No practical manuals have been assigned for this course yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {manualsList.map((manual) => {
+                const totalMarks = (manual.questions || []).reduce(
+                  (sum, q) => sum + (q.marks || 0),
+                  0,
+                );
+                const status = manual.my_submission?.status;
+                return (
+                  <motion.div
+                    key={manual._id}
+                    whileHover={{ y: -4 }}
+                    className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="h-10 w-10 rounded-2xl bg-orange-50 text-orange-600 font-black flex items-center justify-center border border-orange-100">
+                          <FileText size={20} />
+                        </span>
+                        {status && (
+                          <div
+                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                              status === "reviewed"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-sky-50 text-sky-700 border-sky-200"
+                            }`}
+                          >
+                            <CheckCircle2 size={14} />
+                            {status === "reviewed" ? "Reviewed" : "Submitted"}
+                          </div>
+                        )}
+                      </div>
 
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">
-                      {manual.manualTitle}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Contains {manual.questions.length} experiment exercises requiring detailed code & theory solutions.
-                    </p>
-                  </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">
+                          {manual.title}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Contains {manual.questions.length} experiment exercises requiring detailed solutions.
+                        </p>
+                      </div>
 
-                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 pt-2">
-                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                      <Award size={14} className="text-amber-500" />
-                      {manual.totalMarks} Total Marks
+                      <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 pt-2">
+                        {totalMarks > 0 && (
+                          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                            <Award size={14} className="text-amber-500" />
+                            {totalMarks} Total Marks
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                          <BookOpen size={14} className="text-orange-500" />
+                          {manual.questions.length} Questions
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                      <BookOpen size={14} className="text-orange-500" />
-                      {manual.questions.length} Questions
-                    </div>
-                  </div>
-                </div>
 
-                <button
-                  onClick={() => handleStartManual(manual)}
-                  className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md hover:shadow-orange-200 transition flex items-center justify-center gap-2"
-                >
-                  <Play size={16} fill="white" />
-                  Start Practical
-                </button>
-              </motion.div>
-            ))}
-          </div>
+                    <button
+                      onClick={() => handleStartManual(manual)}
+                      disabled={detailLoading}
+                      className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md hover:shadow-orange-200 transition flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {detailLoading ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Play size={16} fill="white" />
+                      )}
+                      {status ? "Review Practical" : "Start Practical"}
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -492,14 +431,15 @@ export default function StudentPracticalManualPage() {
           <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
             <CheckCircle2 size={44} />
           </div>
-          <h1 className="mt-6 text-2xl font-black text-slate-800">
-            Practical Submitted!
-          </h1>
+          <h1 className="mt-6 text-2xl font-black text-slate-800">Practical Submitted!</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
             Your instructor will review your submitted practical manual answers.
           </p>
           <button
-            onClick={() => setSelectedManual(null)}
+            onClick={() => {
+              setSelectedManual(null);
+              setSubmitted(false);
+            }}
             className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition"
           >
             Back to Manuals List
@@ -513,26 +453,8 @@ export default function StudentPracticalManualPage() {
      VIEW 2: WORKSPACE EDITOR VIEW
   ========================================================== */
   return (
-    <div
-      ref={containerRef}
-      className="flex bg-slate-50 h-screen w-full overflow-hidden"
-    >
+    <div ref={containerRef} className="flex bg-slate-50 h-screen w-full overflow-hidden">
       <style jsx global>{`
-        .ck-editor__editable_inline {
-          min-height: 250px;
-          border-bottom-left-radius: 0.75rem !important;
-          border-bottom-right-radius: 0.75rem !important;
-        }
-        .ck-toolbar {
-          border-top-left-radius: 0.75rem !important;
-          border-top-right-radius: 0.75rem !important;
-          background: #f8fafc !important;
-        }
-        .ck.ck-editor__main > .ck-editor__editable:focus {
-          border-color: #f97316 !important;
-          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
-        }
-
         .custom-sidebar-scroll::-webkit-scrollbar,
         .custom-main-scroll::-webkit-scrollbar {
           width: 5px;
@@ -595,11 +517,7 @@ export default function StudentPracticalManualPage() {
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
                     Question {current + 1} of {manuals.length}
                   </span>
-                  <QuestionDots
-                    total={manuals.length}
-                    current={current}
-                    answers={answers}
-                  />
+                  <QuestionDots total={manuals.length} current={current} answers={answers} />
                 </div>
                 <ProgressBar value={progressPct} />
               </div>
@@ -615,6 +533,12 @@ export default function StudentPracticalManualPage() {
                 </motion.div>
               )}
 
+              {submitError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 text-sm font-semibold">
+                  {submitError}
+                </div>
+              )}
+
               {/* CARD MAIN BODY */}
               <AnimatePresence mode="wait">
                 <motion.div
@@ -627,47 +551,36 @@ export default function StudentPracticalManualPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <h1 className="text-2xl font-bold text-slate-800 leading-snug">
-                      {currentQuestion.title}
+                      {currentQuestion.question_text}
                     </h1>
-                    <div className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-xl px-4 py-2 text-xs font-bold shrink-0">
-                      {currentQuestion.marks} Marks
-                    </div>
+                    {currentQuestion.marks > 0 && (
+                      <div className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-xl px-4 py-2 text-xs font-bold shrink-0">
+                        {currentQuestion.marks} Marks
+                      </div>
+                    )}
                   </div>
 
                   {/* Instruction Box */}
                   <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Practical Instruction
+                      Suggested Length
                     </h3>
                     <p className="text-slate-700 font-medium text-sm leading-relaxed">
-                      {currentQuestion.description}
+                      Write approximately {currentQuestion.answer_lines} lines for this answer.
                     </p>
                   </div>
 
-                  {/* CKEDITOR ANSWER FIELD */}
+                  {/* RICH TEXT ANSWER FIELD */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Your Answer
                     </label>
-                    <div className="rounded-xl overflow-hidden">
-                      {ClassicEditor ? (
-                        <CKEditor
-                          editor={ClassicEditor}
-                          data={answers[current] || ""}
-                          config={{
-                            placeholder: "Type your detailed solution here...",
-                          }}
-                          onChange={(event, editor) => {
-                            const data = editor.getData();
-                            saveAnswer(data);
-                          }}
-                        />
-                      ) : (
-                        <div className="h-60 border-2 border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 text-sm font-medium">
-                          Loading Editor...
-                        </div>
-                      )}
-                    </div>
+                    <RichTextEditor
+                      value={answers[current] || ""}
+                      onChange={saveAnswer}
+                      placeholder="Type your detailed solution here..."
+                      minHeight={250}
+                    />
                   </div>
 
                   {/* BOTTOM ACTION NAVIGATION */}
@@ -682,23 +595,20 @@ export default function StudentPracticalManualPage() {
                     </button>
 
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => alert("Draft saved!")}
-                        className="px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/50 text-slate-700 font-semibold text-sm transition flex items-center gap-2"
-                      >
-                        <Save size={16} />
-                        Save Draft
-                      </button>
-
                       {current === manuals.length - 1 ? (
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={submitManual}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl transition-all font-bold text-sm shadow-md hover:shadow-emerald-200 flex items-center gap-2"
+                          disabled={submitting}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl transition-all font-bold text-sm shadow-md hover:shadow-emerald-200 flex items-center gap-2 disabled:opacity-60"
                         >
-                          <Send size={16} />
-                          Submit Practical
+                          {submitting ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Send size={16} />
+                          )}
+                          {submitting ? "Submitting..." : "Submit Practical"}
                         </motion.button>
                       ) : (
                         <motion.button

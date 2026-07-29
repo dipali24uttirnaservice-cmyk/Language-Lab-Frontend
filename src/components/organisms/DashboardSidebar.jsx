@@ -41,6 +41,15 @@ const menus = [
     dot: "bg-orange-500",
   },
   {
+    name: "My Tasks",
+    href: "/dashboard/tasks",
+    icon: FaCheckDouble,
+    color: "from-emerald-500 to-teal-600",
+    border: "border-emerald-500",
+    bg: "from-emerald-50 to-teal-50",
+    text: "text-emerald-700",
+  },
+  {
     name: "Student Profile",
     href: "/dashboard/student-profile",
     icon: FaUserCircle,
