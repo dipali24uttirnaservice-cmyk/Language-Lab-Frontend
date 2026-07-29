@@ -826,57 +826,174 @@ function SequenceBuilder({ question, answer, setAnswer }) {
 function MatchBuilder({ question, answer, setAnswer }) {
   const pairs = answer?.pairs || {};
   const activeLeft = answer?.activeLeft || null;
+
   const matchPairs = useMemo(() => getMatchPairs(question), [question]);
-  const rightPool = useMemo(() => shuffledPool(matchPairs.map((p) => p.right)), [matchPairs]);
+
+  const rightPool = useMemo(
+    () => shuffledPool(matchPairs.map((p) => p.right)),
+    [matchPairs]
+  );
+
   const usedRights = new Set(Object.values(pairs));
+
+
+  // Different color for every match
+  const pairColors = [
+    {
+      border: "border-blue-400",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+    },
+    {
+      border: "border-green-400",
+      bg: "bg-green-50",
+      text: "text-green-700",
+    },
+    {
+      border: "border-purple-400",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+    },
+    {
+      border: "border-pink-400",
+      bg: "bg-pink-50",
+      text: "text-pink-700",
+    },
+    {
+      border: "border-yellow-400",
+      bg: "bg-yellow-50",
+      text: "text-yellow-700",
+    },
+  ];
+
+
+  const getPairColor = (left) => {
+    const index = matchPairs.findIndex(
+      (item) => item.left === left
+    );
+
+    return pairColors[index % pairColors.length];
+  };
+
+
+  const getMatchedLeft = (right) => {
+    return Object.keys(pairs).find(
+      (left) => pairs[left] === right
+    );
+  };
+
 
   const pickLeft = (left) => {
     if (pairs[left]) return;
-    setAnswer({ pairs, activeLeft: left });
+
+    setAnswer({
+      pairs,
+      activeLeft: left,
+    });
   };
+
+
   const pickRight = (right) => {
     if (!activeLeft) return;
-    setAnswer({ pairs: { ...pairs, [activeLeft]: right }, activeLeft: null });
+
+    setAnswer({
+      pairs: {
+        ...pairs,
+        [activeLeft]: right,
+      },
+      activeLeft: null,
+    });
   };
+
 
   return (
     <div className="grid grid-cols-2 gap-4">
+
+      {/* LEFT OPTIONS */}
       <div className="space-y-2">
+
         {matchPairs.map((p) => {
+
           const isPaired = !!pairs[p.left];
           const isActive = activeLeft === p.left;
+
+          const color = getPairColor(p.left);
+
+
           return (
             <button
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
-                ? "border-orange-500 bg-orange-50 text-orange-700"
-                : isPaired
-                  ? "border-orange-300 bg-orange-50/60 text-orange-700"
+
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+
+              ${
+                isActive
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+
+                  : isPaired
+                  ? `${color.border} ${color.bg} ${color.text}`
+
                   : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-                }`}
+              }`}
             >
-              {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
+
+              {p.left}
+
+              {isPaired && (
+                <span className="ml-2">
+                  → {pairs[p.left]}
+                </span>
+              )}
+
             </button>
           );
         })}
+
       </div>
+
+
+      {/* RIGHT OPTIONS */}
       <div className="space-y-2">
-        {rightPool.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => pickRight(item.value)}
-            disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
-              ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-              : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
+
+        {rightPool.map((item) => {
+
+          const matchedLeft = getMatchedLeft(item.value);
+
+          const color = matchedLeft
+            ? getPairColor(matchedLeft)
+            : null;
+
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => pickRight(item.value)}
+              disabled={usedRights.has(item.value)}
+
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+
+              ${
+                usedRights.has(item.value)
+
+                ? `${color?.border || "border-slate-100"}
+                   ${color?.bg || "bg-slate-50"}
+                   ${color?.text || "text-slate-300"}`
+
+                : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
               }`}
-          >
-            {item.value}
-          </button>
-        ))}
+            >
+
+              {item.value}
+
+            </button>
+          );
+
+        })}
+
       </div>
+
     </div>
   );
 }

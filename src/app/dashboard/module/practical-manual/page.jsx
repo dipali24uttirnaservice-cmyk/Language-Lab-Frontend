@@ -1,346 +1,724 @@
 "use client";
-import React, { useState } from "react";
+
+import { useState, useRef, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, 
-  Search, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  Send, 
-  ExternalLink,
-  ChevronRight,
+import { useRouter, useSearchParams, useParams } from "next/navigation";
+import {
   ArrowLeft,
-  PenTool,
-  Hash
+  BookOpen,
+  Search,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Send,
+  Save,
+  Sparkles,
+  Play,
+  Clock,
+  Award,
+  FileText,
 } from "lucide-react";
 
-export default function StudentPracticalManualPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedManual, setSelectedManual] = useState(null);
-  const [studentAnswers, setStudentAnswers] = useState({});
-  const [submittedStatus, setSubmittedStatus] = useState({});
+/* Dynamic import for CKEditor to handle SSR in Next.js */
+const CKEditor = dynamic(
+  () => import("@ckeditor/ckeditor5-react").then((mod) => mod.CKEditor),
+  { ssr: false }
+);
 
-  // Mock student practical manuals assigned to the student
-  const [assignedManuals, setAssignedManuals] = useState([
-    {
-      id: 1,
-      title: "Lab Manual 1: Advanced React Hooks & Context",
-      institute_id: "INST_99281",
-      course_id: "64a2f129c8e4b1001c892101",
-      topic_id: "64a2f13bc8e4b1001c892105",
-      answer_lines: 5,
-      attachment_url: "https://example.com/docs/lab1.pdf",
-      attachment_type: "pdf",
-      created_by: "INST_99281",
-      createdAt: "July 20, 2026",
-      status: "Pending",
-      questions: [
-        { 
-          id: 101, 
-          title: "Implement custom useLocalStorage hook", 
-          answer_html: "<p>Write clean functional code handling JSON serialization/deserialization safely with SSR checks.</p>",
-          answer_lines: 6,
-          marks: 10 
-        },
-        { 
-          id: 102, 
-          title: "Build global theme context provider", 
-          answer_html: "<p>Setup Context, Provider wrapper component, and custom useContext consumer hook.</p>",
-          answer_lines: 8,
-          marks: 15 
-        }
-      ]
-    },
-    {
-      id: 2,
-      title: "Lab Manual 2: REST API Authentication Middleware",
-      institute_id: "INST_99281",
-      course_id: "64a2f129c8e4b1001c892102",
-      topic_id: "64a2f13bc8e4b1001c892106",
-      answer_lines: 5,
-      attachment_url: "https://example.com/docs/lab2.pdf",
-      attachment_type: "pdf",
-      created_by: "INST_99281",
-      createdAt: "July 22, 2026",
-      status: "Pending",
-      questions: [
-        { 
-          id: 201, 
-          title: "Generate and verify JSON Web Tokens (JWT)", 
-          answer_html: "<p>Implement token signing using a secret key and standard expiration timestamps.</p>",
-          answer_lines: 5,
-          marks: 20 
-        }
-      ]
-    }
-  ]);
-
-  // Handle input change for specific question answer fields
-  const handleAnswerChange = (questionId, text) => {
-    setStudentAnswers(prev => ({
-      ...prev,
-      [questionId]: text
-    }));
-  };
-
-  // Submit practical manual response
-  const handleSubmitManual = (e) => {
-    e.preventDefault();
-    if (!selectedManual) return;
-
-    setSubmittedStatus(prev => ({
-      ...prev,
-      [selectedManual.id]: "Submitted"
-    }));
-
-    // Update manual status in state list
-    setAssignedManuals(prev => prev.map(m => 
-      m.id === selectedManual.id ? { ...m, status: "Submitted" } : m
-    ));
-
-    alert("Practical manual answers successfully submitted to instructor!");
-    setSelectedManual(null);
-  };
-
-  const filteredManuals = assignedManuals.filter(m => 
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.course_id.toLowerCase().includes(searchQuery.toLowerCase())
+/* ==========================================================
+   PROGRESS BAR
+========================================================== */
+function ProgressBar({ value }) {
+  return (
+    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${value}%` }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500"
+      />
+    </div>
   );
+}
+
+/* ==========================================================
+   QUESTION DOTS
+========================================================== */
+function QuestionDots({ total, current, answers }) {
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {Array.from({ length: total }).map((_, i) => {
+        const hasAnswered = !!answers[i]?.trim();
+        const isCurrent = i === current;
+
+        return (
+          <div
+            key={i}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              isCurrent
+                ? "w-6 bg-orange-500"
+                : hasAnswered
+                ? "w-2 bg-emerald-400"
+                : "w-2 bg-slate-200"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/* ==========================================================
+   SIDEBAR WORKSPACE
+========================================================== */
+function Sidebar({
+  manuals,
+  current,
+  answers,
+  setCurrent,
+  search,
+  setSearch,
+}) {
+  const completed = Object.values(answers).filter((val) => val?.trim()).length;
+  const progress = manuals.length ? (completed / manuals.length) * 100 : 0;
+
+  const filtered = manuals
+    .map((item, originalIndex) => ({ ...item, originalIndex }))
+    .filter((q) => q.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="relative min-h-screen p-8 space-y-8 overflow-hidden font-sans">
-      
-      {/* Background Theme Glow Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-100/60 via-slate-50/40 to-blue-200/50" />
-        <div className="absolute top-10 right-10 h-96 w-96 rounded-full bg-gradient-to-br from-indigo-400/10 to-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-10 left-10 h-96 w-96 rounded-full bg-gradient-to-br from-blue-400/10 to-indigo-500/10 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#4f46e5_1px,transparent_1px),linear-gradient(to_bottom,#4f46e5_1px,transparent_1px)] bg-[size:32px_32px]" />
-      </div>
-
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div className="flex items-center gap-4">
+    <div className="w-80 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full">
+      {/* HEADER */}
+      <div className="p-5 border-b border-slate-100 space-y-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-200">
+            <BookOpen size={18} />
+          </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
-                Student Portal • Practical Submissions
-              </span>
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              My Practical Manuals
-            </h1>
+            <h2 className="font-black text-lg text-slate-900 leading-tight">
+              Practical Manual
+            </h2>
+            <p className="text-[11px] font-semibold text-slate-400">
+              {completed}/{manuals.length} completed
+            </p>
           </div>
         </div>
 
-        {selectedManual && (
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedManual(null)}
-            className="px-4 py-2.5 rounded-2xl text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm flex items-center gap-2 self-start md:self-auto"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to All Manuals
-          </motion.button>
-        )}
+        <ProgressBar value={progress} />
+
+        {/* SEARCH */}
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"
+            size={15}
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search questions..."
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 transition"
+          />
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <AnimatePresence mode="wait">
-        {!selectedManual ? (
-          <motion.div 
-            key="list-view"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
-            {/* Search Bar */}
-            <div className="bg-white/90 backdrop-blur-md p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text"
-                  placeholder="Search manuals by title or course reference..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                />
-              </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
-                Active Queue: {assignedManuals.length} Manuals
-              </span>
-            </div>
+      {/* QUESTIONS LIST */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-sidebar-scroll">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-8">
+            No matches found.
+          </p>
+        ) : (
+          filtered.map((item) => {
+            const index = item.originalIndex;
+            const hasAnswered = !!answers[index]?.trim();
+            const isActive = current === index;
 
-            {/* Manual Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredManuals.length > 0 ? (
-                filteredManuals.map((manual) => (
-                  <motion.div 
-                    key={manual.id}
-                    whileHover={{ y: -3 }}
-                    className="bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all space-y-4 flex flex-col justify-between"
+            return (
+              <motion.button
+                key={item.id}
+                onClick={() => setCurrent(index)}
+                whileHover={{ x: isActive ? 0 : 3 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${
+                  isActive
+                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
+                    : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
+                }`}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span
+                    className={`text-[9px] font-black uppercase tracking-wider ${
+                      isActive ? "text-orange-100" : "text-orange-500"
+                    }`}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-xl border border-indigo-200 font-mono">
-                          Course ID: {manual.course_id}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" /> {manual.createdAt}
-                        </span>
-                      </div>
+                    Question {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {hasAnswered && (
+                    <div
+                      className={`p-1 rounded-full ${
+                        isActive ? "bg-white/20" : "bg-slate-100"
+                      }`}
+                    >
+                      <CheckCircle2
+                        size={13}
+                        className={isActive ? "text-white" : "text-emerald-500"}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={`text-sm truncate font-semibold ${
+                    isActive ? "text-white" : "text-slate-700"
+                  }`}
+                >
+                  {item.title}
+                </div>
+              </motion.button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
 
-                      <h3 className="text-lg font-black text-slate-900">{manual.title}</h3>
+/* ==========================================================
+   MAIN COMPONENT
+========================================================== */
+export default function StudentPracticalManualPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeParams = useParams();
+  const containerRef = useRef(null);
 
-                      <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 text-slate-600">
-                        <div><strong className="text-slate-800">Institute ID:</strong> {manual.institute_id}</div>
-                        <div><strong className="text-slate-800">Questions:</strong> {manual.questions.length} Assigned</div>
-                      </div>
+  // Extract params from URL
+  const topicId = routeParams?.topicId || searchParams.get("topicId");
+  const topicName = searchParams.get("topicName");
+  const courseName = searchParams.get("courseName");
 
-                      {manual.attachment_url && (
-                        <div className="flex items-center gap-2 text-xs text-indigo-600 font-bold bg-indigo-50/50 p-2 rounded-xl border border-indigo-100">
-                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                          <a href={manual.attachment_url} target="_blank" rel="noreferrer" className="truncate hover:underline">
-                            Reference Document ({manual.attachment_type.toUpperCase()})
-                          </a>
+  // Practical manuals list
+  const manualsList = useMemo(
+    () => [
+      {
+        id: "6a509b7175de4d60103689d3",
+        manualTitle: topicName || "English Vocabulary Skills Practical",
+        duration: "40 Mins",
+        totalMarks: 50,
+        questions: [
+          {
+            id: 1,
+            title: "Contextual Vocabulary Application",
+            marks: 10,
+            description:
+              "Construct five original sentences demonstrating the usage of advanced academic vocabulary in context.",
+          },
+          {
+            id: 2,
+            title: "Synonym & Antonym Analysis",
+            marks: 15,
+            description:
+              "Analyze nuances between subtle synonyms and provide precise contextual replacements.",
+          },
+          {
+            id: 3,
+            title: "Idiomatic Expressions & Phrasal Verbs",
+            marks: 25,
+            description:
+              "Write a short paragraph incorporating at least three phrasal verbs and two idiomatic expressions correctly.",
+          },
+        ],
+      },
+      {
+        id: "manual-1",
+        manualTitle: "React & Next.js Advanced Architecture",
+        duration: "45 Mins",
+        totalMarks: 55,
+        questions: [
+          {
+            id: 1,
+            title: "Implement React Context API",
+            marks: 10,
+            description: "Create a Context Provider and explain how useContext works.",
+          },
+          {
+            id: 2,
+            title: "Create Custom useLocalStorage Hook",
+            marks: 15,
+            description: "Write reusable hook using localStorage.",
+          },
+          {
+            id: 3,
+            title: "JWT Authentication Flow",
+            marks: 20,
+            description: "Explain JWT Authentication with NodeJS.",
+          },
+          {
+            id: 4,
+            title: "Redux Toolkit Counter",
+            marks: 10,
+            description: "Build Counter using Redux Toolkit.",
+          },
+        ],
+      },
+      {
+        id: "manual-2",
+        manualTitle: "Node.js REST API & Express Fundamentals",
+        duration: "30 Mins",
+        totalMarks: 40,
+        questions: [
+          {
+            id: 1,
+            title: "Express Middleware Chain",
+            marks: 15,
+            description: "Build custom logging and auth middleware in Express.",
+          },
+          {
+            id: 2,
+            title: "MongoDB Schema Validation",
+            marks: 25,
+            description: "Define Mongoose schema with strict field validation.",
+          },
+        ],
+      },
+    ],
+    [topicName]
+  );
+
+  // Selected state initialized dynamically based on URL params
+  const [selectedManual, setSelectedManual] = useState(null);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [ClassicEditor, setClassicEditor] = useState(null);
+
+  // Auto-select topic if passed via URL parameters
+  useEffect(() => {
+    if (topicId || topicName) {
+      const match = manualsList.find(
+        (m) =>
+          m.id === topicId ||
+          (topicName && m.manualTitle.toLowerCase() === topicName.toLowerCase())
+      );
+
+      if (match) {
+        setSelectedManual(match);
+      } else {
+        // Fallback: Create dynamic manual based on query params
+        setSelectedManual({
+          id: topicId || "custom-topic",
+          manualTitle: topicName ? decodeURIComponent(topicName) : "Practical Assignment",
+          duration: "45 Mins",
+          totalMarks: 50,
+          questions: [
+            {
+              id: 1,
+              title: `${topicName || "Topic"} Core Exercise 1`,
+              marks: 25,
+              description: `Complete the practical exercises for ${topicName || "this topic"}. Write full explanations and step-by-step solutions below.`,
+            },
+            {
+              id: 2,
+              title: `${topicName || "Topic"} Application Exercise 2`,
+              marks: 25,
+              description: "Demonstrate practical application and real-world examples in your response.",
+            },
+          ],
+        });
+      }
+    }
+  }, [topicId, topicName, manualsList]);
+
+  useEffect(() => {
+    import("@ckeditor/ckeditor5-build-classic").then((mod) => {
+      setClassicEditor(() => mod.default);
+    });
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  const handleStartManual = (manual) => {
+    setSelectedManual(manual);
+    setCurrent(0);
+    setAnswers({});
+    setSubmitted(false);
+  };
+
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      await containerRef.current.requestFullscreen();
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  };
+
+  const saveAnswer = (data) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [current]: data,
+    }));
+  };
+
+  const submitManual = () => {
+    setSubmitted(true);
+  };
+
+  /* ==========================================================
+     VIEW 1: LIST OF PRACTICAL MANUALS
+  ========================================================== */
+  if (!selectedManual) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-amber-50/20 p-6 md:p-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
+            >
+              <ArrowLeft size={18} />
+              Back
+            </button>
+            <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
+              <BookOpen size={16} />
+              {manualsList.length} Practical Manuals
+            </div>
+          </div>
+
+          {/* Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 p-8 text-white shadow-xl shadow-orange-200">
+            <div className="relative z-10 max-w-xl space-y-3">
+              <span className="text-xs font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
+                {courseName ? `${courseName} Practical Exercises` : "Laboratory Practical Exercises"}
+              </span>
+              <h1 className="text-3xl font-black leading-tight">
+                Practical Manuals
+              </h1>
+              <p className="text-orange-100 text-sm leading-relaxed">
+                Select a practical manual from the list below to review the instructions, write your solutions, and submit your work.
+              </p>
+            </div>
+          </div>
+
+          {/* Manual Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {manualsList.map((manual) => (
+              <motion.div
+                key={manual.id}
+                whileHover={{ y: -4 }}
+                className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="h-10 w-10 rounded-2xl bg-orange-50 text-orange-600 font-black flex items-center justify-center border border-orange-100">
+                      <FileText size={20} />
+                    </span>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                      <Clock size={14} className="text-orange-500" />
+                      {manual.duration}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">
+                      {manual.manualTitle}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Contains {manual.questions.length} experiment exercises requiring detailed code & theory solutions.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 pt-2">
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                      <Award size={14} className="text-amber-500" />
+                      {manual.totalMarks} Total Marks
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                      <BookOpen size={14} className="text-orange-500" />
+                      {manual.questions.length} Questions
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleStartManual(manual)}
+                  className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md hover:shadow-orange-200 transition flex items-center justify-center gap-2"
+                >
+                  <Play size={16} fill="white" />
+                  Start Practical
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const manuals = selectedManual.questions;
+  const currentQuestion = manuals[current];
+  const completedCount = Object.values(answers).filter((val) => val?.trim()).length;
+  const progressPct = (completedCount / manuals.length) * 100;
+  const allAttempted = completedCount === manuals.length;
+
+  /* ==========================================================
+     SUBMITTED SUCCESS STATE
+  ========================================================== */
+  if (submitted) {
+    return (
+      <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white rounded-3xl p-10 text-center max-w-md w-full border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.15)] relative overflow-hidden"
+        >
+          <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
+          <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+            <CheckCircle2 size={44} />
+          </div>
+          <h1 className="mt-6 text-2xl font-black text-slate-800">
+            Practical Submitted!
+          </h1>
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Your instructor will review your submitted practical manual answers.
+          </p>
+          <button
+            onClick={() => setSelectedManual(null)}
+            className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition"
+          >
+            Back to Manuals List
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  /* ==========================================================
+     VIEW 2: WORKSPACE EDITOR VIEW
+  ========================================================== */
+  return (
+    <div
+      ref={containerRef}
+      className="flex bg-slate-50 h-screen w-full overflow-hidden"
+    >
+      <style jsx global>{`
+        .ck-editor__editable_inline {
+          min-height: 250px;
+          border-bottom-left-radius: 0.75rem !important;
+          border-bottom-right-radius: 0.75rem !important;
+        }
+        .ck-toolbar {
+          border-top-left-radius: 0.75rem !important;
+          border-top-right-radius: 0.75rem !important;
+          background: #f8fafc !important;
+        }
+        .ck.ck-editor__main > .ck-editor__editable:focus {
+          border-color: #f97316 !important;
+          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
+        }
+
+        .custom-sidebar-scroll::-webkit-scrollbar,
+        .custom-main-scroll::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-track,
+        .custom-main-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb,
+        .custom-main-scroll::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover,
+        .custom-main-scroll::-webkit-scrollbar-thumb:hover {
+          background: #f97316;
+        }
+      `}</style>
+
+      <Sidebar
+        manuals={manuals}
+        current={current}
+        answers={answers}
+        setCurrent={setCurrent}
+        search={search}
+        setSearch={setSearch}
+      />
+
+      {/* Main Content Workspace */}
+      <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
+        {/* TOP BAR */}
+        <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-between shrink-0">
+          <button
+            onClick={() => setSelectedManual(null)}
+            className="flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm transition"
+          >
+            <ArrowLeft size={18} />
+            Back to Manuals List
+          </button>
+
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        </div>
+
+        {/* CONTENT CARD CONTAINER */}
+        <div className="px-8 pb-10 pt-4 w-full flex-1">
+          <div className="w-full relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
+            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
+
+            <div className="relative space-y-6">
+              {/* HEADER INFO & PROGRESS */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
+                    Question {current + 1} of {manuals.length}
+                  </span>
+                  <QuestionDots
+                    total={manuals.length}
+                    current={current}
+                    answers={answers}
+                  />
+                </div>
+                <ProgressBar value={progressPct} />
+              </div>
+
+              {allAttempted && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 text-sm font-semibold"
+                >
+                  <Sparkles size={16} />
+                  All practical questions completed — great job!
+                </motion.div>
+              )}
+
+              {/* CARD MAIN BODY */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={current}
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -24 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <h1 className="text-2xl font-bold text-slate-800 leading-snug">
+                      {currentQuestion.title}
+                    </h1>
+                    <div className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-xl px-4 py-2 text-xs font-bold shrink-0">
+                      {currentQuestion.marks} Marks
+                    </div>
+                  </div>
+
+                  {/* Instruction Box */}
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Practical Instruction
+                    </h3>
+                    <p className="text-slate-700 font-medium text-sm leading-relaxed">
+                      {currentQuestion.description}
+                    </p>
+                  </div>
+
+                  {/* CKEDITOR ANSWER FIELD */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Your Answer
+                    </label>
+                    <div className="rounded-xl overflow-hidden">
+                      {ClassicEditor ? (
+                        <CKEditor
+                          editor={ClassicEditor}
+                          data={answers[current] || ""}
+                          config={{
+                            placeholder: "Type your detailed solution here...",
+                          }}
+                          onChange={(event, editor) => {
+                            const data = editor.getData();
+                            saveAnswer(data);
+                          }}
+                        />
+                      ) : (
+                        <div className="h-60 border-2 border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 text-sm font-medium">
+                          Loading Editor...
                         </div>
                       )}
                     </div>
+                  </div>
 
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-xl border ${
-                        manual.status === "Submitted" 
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}>
-                        {manual.status === "Submitted" ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                        {manual.status}
-                      </span>
+                  {/* BOTTOM ACTION NAVIGATION */}
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
+                    <button
+                      onClick={() => setCurrent((p) => p - 1)}
+                      disabled={current === 0}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-slate-500 hover:text-orange-600 disabled:opacity-30 transition-all font-medium text-sm"
+                    >
+                      <ChevronLeft size={18} />
+                      Previous
+                    </button>
 
-                      <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedManual(manual)}
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-1.5"
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => alert("Draft saved!")}
+                        className="px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/50 text-slate-700 font-semibold text-sm transition flex items-center gap-2"
                       >
-                        {manual.status === "Submitted" ? "View Submission" : "Start Practical"} <ChevronRight className="w-3.5 h-3.5" />
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-2 py-16 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
-                  <p className="text-slate-400 text-sm font-semibold">No practical manuals found matching your filter.</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="detail-view"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white/90 backdrop-blur-md p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl mx-auto space-y-6"
-          >
-            <div className="border-b border-slate-100 pb-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-xl border border-indigo-200 font-mono">
-                  Course ID: {selectedManual.course_id}
-                </span>
-                <span className="text-xs font-semibold text-slate-400">Created: {selectedManual.createdAt}</span>
-              </div>
-              <h2 className="text-xl font-black text-slate-900">{selectedManual.title}</h2>
-              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium pt-1">
-                <span><strong>Institute ID:</strong> {selectedManual.institute_id}</span>
-                <span>•</span>
-                <span><strong>Topic ID:</strong> {selectedManual.topic_id || "N/A"}</span>
-              </div>
-            </div>
+                        <Save size={16} />
+                        Save Draft
+                      </button>
 
-            {selectedManual.attachment_url && (
-              <div className="flex items-center justify-between bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 text-xs font-bold text-indigo-700">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  <span>Reference Lab Guide Attached</span>
-                </div>
-                <a href={selectedManual.attachment_url} target="_blank" rel="noreferrer" className="underline hover:text-indigo-900 flex items-center gap-1">
-                  Open Document <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitManual} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Practical Questions & Response Worksheet</h3>
-                
-                {selectedManual.questions.map((q, index) => (
-                  <div key={q.id} className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-800">
-                        Q{index + 1}. {q.title}
-                      </span>
-                      <span className="shrink-0 bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-lg text-[10px] font-bold">
-                        {q.marks} Marks
-                      </span>
-                    </div>
-
-                    <div className="text-slate-600 text-xs bg-white p-3 rounded-xl border border-slate-200/60" dangerouslySetInnerHTML={{ __html: q.answer_html }} />
-
-                    <div className="space-y-1.5 pt-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                        <span className="flex items-center gap-1 text-indigo-600">
-                          <PenTool className="w-3.5 h-3.5" /> Your Code / Answer Workspace
-                        </span>
-                        <span className="flex items-center gap-1 text-slate-400 font-mono">
-                          <Hash className="w-3 h-3" /> Allocated Lines: {q.answer_lines}
-                        </span>
-                      </div>
-                      
-                      <textarea 
-                        rows={q.answer_lines || 5}
-                        required
-                        disabled={selectedManual.status === "Submitted"}
-                        placeholder="Write your functional solution or code snippet here..."
-                        value={studentAnswers[q.id] || ""}
-                        onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-500"
-                      />
+                      {current === manuals.length - 1 ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={submitManual}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl transition-all font-bold text-sm shadow-md hover:shadow-emerald-200 flex items-center gap-2"
+                        >
+                          <Send size={16} />
+                          Submit Practical
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setCurrent((p) => p + 1)}
+                          className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-2.5 rounded-xl transition-all font-bold text-sm shadow-md hover:shadow-orange-200 flex items-center gap-1.5"
+                        >
+                          Next
+                          <ChevronRight size={18} />
+                        </motion.button>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
-                <button 
-                  type="button"
-                  onClick={() => setSelectedManual(null)}
-                  className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
-                >
-                  Close
-                </button>
-
-                {selectedManual.status !== "Submitted" && (
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-black text-sm shadow-lg shadow-indigo-500/25 flex items-center gap-2"
-                  >
-                    <Send className="w-4 h-4" /> Submit Practical Manual
-                  </motion.button>
-                )}
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
