@@ -826,57 +826,174 @@ function SequenceBuilder({ question, answer, setAnswer }) {
 function MatchBuilder({ question, answer, setAnswer }) {
   const pairs = answer?.pairs || {};
   const activeLeft = answer?.activeLeft || null;
+
   const matchPairs = useMemo(() => getMatchPairs(question), [question]);
-  const rightPool = useMemo(() => shuffledPool(matchPairs.map((p) => p.right)), [matchPairs]);
+
+  const rightPool = useMemo(
+    () => shuffledPool(matchPairs.map((p) => p.right)),
+    [matchPairs]
+  );
+
   const usedRights = new Set(Object.values(pairs));
+
+
+  // Different color for every match
+  const pairColors = [
+    {
+      border: "border-blue-400",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+    },
+    {
+      border: "border-green-400",
+      bg: "bg-green-50",
+      text: "text-green-700",
+    },
+    {
+      border: "border-purple-400",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+    },
+    {
+      border: "border-pink-400",
+      bg: "bg-pink-50",
+      text: "text-pink-700",
+    },
+    {
+      border: "border-yellow-400",
+      bg: "bg-yellow-50",
+      text: "text-yellow-700",
+    },
+  ];
+
+
+  const getPairColor = (left) => {
+    const index = matchPairs.findIndex(
+      (item) => item.left === left
+    );
+
+    return pairColors[index % pairColors.length];
+  };
+
+
+  const getMatchedLeft = (right) => {
+    return Object.keys(pairs).find(
+      (left) => pairs[left] === right
+    );
+  };
+
 
   const pickLeft = (left) => {
     if (pairs[left]) return;
-    setAnswer({ pairs, activeLeft: left });
+
+    setAnswer({
+      pairs,
+      activeLeft: left,
+    });
   };
+
+
   const pickRight = (right) => {
     if (!activeLeft) return;
-    setAnswer({ pairs: { ...pairs, [activeLeft]: right }, activeLeft: null });
+
+    setAnswer({
+      pairs: {
+        ...pairs,
+        [activeLeft]: right,
+      },
+      activeLeft: null,
+    });
   };
+
 
   return (
     <div className="grid grid-cols-2 gap-4">
+
+      {/* LEFT OPTIONS */}
       <div className="space-y-2">
+
         {matchPairs.map((p) => {
+
           const isPaired = !!pairs[p.left];
           const isActive = activeLeft === p.left;
+
+          const color = getPairColor(p.left);
+
+
           return (
             <button
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
-                ? "border-orange-500 bg-orange-50 text-orange-700"
-                : isPaired
-                  ? "border-orange-300 bg-orange-50/60 text-orange-700"
+
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+
+              ${
+                isActive
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+
+                  : isPaired
+                  ? `${color.border} ${color.bg} ${color.text}`
+
                   : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-                }`}
+              }`}
             >
-              {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
+
+              {p.left}
+
+              {isPaired && (
+                <span className="ml-2">
+                  → {pairs[p.left]}
+                </span>
+              )}
+
             </button>
           );
         })}
+
       </div>
+
+
+      {/* RIGHT OPTIONS */}
       <div className="space-y-2">
-        {rightPool.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => pickRight(item.value)}
-            disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
-              ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-              : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
+
+        {rightPool.map((item) => {
+
+          const matchedLeft = getMatchedLeft(item.value);
+
+          const color = matchedLeft
+            ? getPairColor(matchedLeft)
+            : null;
+
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => pickRight(item.value)}
+              disabled={usedRights.has(item.value)}
+
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+
+              ${
+                usedRights.has(item.value)
+
+                ? `${color?.border || "border-slate-100"}
+                   ${color?.bg || "bg-slate-50"}
+                   ${color?.text || "text-slate-300"}`
+
+                : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
               }`}
-          >
-            {item.value}
-          </button>
-        ))}
+            >
+
+              {item.value}
+
+            </button>
+          );
+
+        })}
+
       </div>
+
     </div>
   );
 }
@@ -995,20 +1112,23 @@ function ActiveQuiz({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
-                {currentQuestionIndex + 1}
-              </span>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
-                Question {currentQuestionIndex + 1} of {total}
-              </p>
-            </div>
+         <div className="flex items-center justify-between gap-4">
+  <div className="flex items-center gap-3 flex-wrap">
+    <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
+      {currentQuestionIndex + 1}
+    </span>
+    <div>
+      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
+        Question {currentQuestionIndex + 1} of {total}
+      </p>
+    </div>
 
-            {/* ADDED: Question Type Badge */}
-          <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+   {/* ADDED: Question Type Badge */}
+       
+  </div>
+   <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
             {q.question_type === "mcq"
               ? "Multiple Choice"
               : q.question_type === "true_false"
@@ -1023,10 +1143,10 @@ function ActiveQuiz({
               ? "Short Answer"
               : q.question_type}
           </div>
-            <span className="text-xs font-bold text-slate-500 shrink-0">
-              • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
-            </span>
-          </div>
+  <span className="text-xs font-bold text-slate-500 shrink-0">
+    • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
+  </span>
+</div>
 
           <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
 
@@ -1103,7 +1223,6 @@ function ActiveQuiz({
           </div>
         </div>
       </div>
-
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"

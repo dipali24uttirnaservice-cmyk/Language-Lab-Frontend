@@ -279,57 +279,157 @@ function SequenceBuilder({ question, answer, setAnswer }) {
 function MatchPanel({ question, answer, setAnswer }) {
   const pairs = answer?.pairs || {};
   const activeLeft = answer?.activeLeft || null;
+
   const matchPairs = useMemo(() => getMatchPairs(question), [question]);
-  const rightPool = useMemo(() => shuffledPool(matchPairs.map((p) => p.right)), [matchPairs]);
+  const rightPool = useMemo(
+    () => shuffledPool(matchPairs.map((p) => p.right)),
+    [matchPairs]
+  );
+
   const usedRights = new Set(Object.values(pairs));
+
+  // Different colors for each match pair
+  const pairColors = [
+    {
+      border: "border-blue-400",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+    },
+    {
+      border: "border-green-400",
+      bg: "bg-green-50",
+      text: "text-green-700",
+    },
+    {
+      border: "border-purple-400",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+    },
+    {
+      border: "border-pink-400",
+      bg: "bg-pink-50",
+      text: "text-pink-700",
+    },
+    {
+      border: "border-yellow-400",
+      bg: "bg-yellow-50",
+      text: "text-yellow-700",
+    },
+  ];
+
+  const getPairColor = (left) => {
+    const index = matchPairs.findIndex(
+      (item) => item.left === left
+    );
+
+    return pairColors[index % pairColors.length];
+  };
+
 
   const pickLeft = (left) => {
     if (pairs[left]) return;
-    setAnswer({ pairs, activeLeft: left });
+
+    setAnswer({
+      pairs,
+      activeLeft: left,
+    });
   };
+
+
   const pickRight = (right) => {
     if (!activeLeft) return;
-    setAnswer({ pairs: { ...pairs, [activeLeft]: right }, activeLeft: null });
+
+    setAnswer({
+      pairs: {
+        ...pairs,
+        [activeLeft]: right,
+      },
+      activeLeft: null,
+    });
   };
+
 
   return (
     <div className="grid grid-cols-2 gap-4">
+
+      {/* LEFT SIDE */}
       <div className="space-y-2">
         {matchPairs.map((p) => {
+
           const isPaired = !!pairs[p.left];
           const isActive = activeLeft === p.left;
+
+          const color = getPairColor(p.left);
+
           return (
             <button
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
-                ? "border-orange-500 bg-orange-50 text-orange-700"
-                : isPaired
-                  ? "border-orange-300 bg-orange-50/60 text-orange-700"
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+              ${
+                isActive
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : isPaired
+                  ? `${color.border} ${color.bg} ${color.text}`
                   : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
-                }`}
+              }`}
             >
-              {p.left} {isPaired && <span className="text-orange-400">→ {pairs[p.left]}</span>}
+              {p.left}
+
+              {isPaired && (
+                <span className="ml-2">
+                  → {pairs[p.left]}
+                </span>
+              )}
+
             </button>
           );
         })}
       </div>
+
+
+      {/* RIGHT SIDE */}
       <div className="space-y-2">
-        {rightPool.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => pickRight(item.value)}
-            disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
-              ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-              : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
+
+        {rightPool.map((item) => {
+
+          const matchedLeft = Object.keys(pairs).find(
+            key => pairs[key] === item.value
+          );
+
+          const matchedColor = matchedLeft
+            ? getPairColor(matchedLeft)
+            : null;
+
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => pickRight(item.value)}
+              disabled={usedRights.has(item.value)}
+
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
+
+              ${
+                usedRights.has(item.value)
+
+                  ? `${matchedColor?.border || "border-slate-100"} 
+                     ${matchedColor?.bg || "bg-slate-50"} 
+                     ${matchedColor?.text || "text-slate-300"}`
+
+                  : "border-slate-300 bg-white text-slate-700 hover:border-orange-300"
               }`}
-          >
-            {item.value}
-          </button>
-        ))}
+            >
+
+              {item.value}
+
+            </button>
+          );
+        })}
+
       </div>
+
     </div>
   );
 }
@@ -483,8 +583,6 @@ const exitFullscreen = async () => {
     Back
   </button>
 
- 
-
   <button
     onClick={isFullscreen ? exitFullscreen : enterFullscreen}
     className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
@@ -510,9 +608,7 @@ const exitFullscreen = async () => {
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
                     Question {current + 1} of {questions.length}
                   </span>
-
-
-                   <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+                    <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
             {question.question_type === "mcq"
               ? "Multiple Choice"
               : question.question_type === "true_false"
@@ -521,9 +617,9 @@ const exitFullscreen = async () => {
               ? "Fill in the Blank"
               : question.question_type}
           </div>
-
                   <QuestionDots total={questions.length} current={current} answers={answers} />
                 </div>
+              
                 <ProgressBar value={progressPct} />
               </div>
 
