@@ -1006,6 +1006,23 @@ function ActiveQuiz({
                 Question {currentQuestionIndex + 1} of {total}
               </p>
             </div>
+
+            {/* ADDED: Question Type Badge */}
+          <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+            {q.question_type === "mcq"
+              ? "Multiple Choice"
+              : q.question_type === "true_false"
+              ? "True / False"
+              : q.question_type === "fill_blank"
+              ? "Fill in the Blank"
+              : q.question_type === "reorder"
+              ? "Reorder Sequence"
+              : q.question_type === "match"
+              ? "Match the Pairs"
+              : q.question_type === "short_answer"
+              ? "Short Answer"
+              : q.question_type}
+          </div>
             <span className="text-xs font-bold text-slate-500 shrink-0">
               • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
             </span>
