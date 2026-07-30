@@ -375,21 +375,21 @@ const confirmDelete = async () => {
 
                       <td className="p-4 pr-6">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => openViewModal(manual._id)}
-                            className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                            title="View Manual"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
+                         <button
+  onClick={() => router.push(`/institute-dashboard/practical-manual/view/${manual._id}`)}
+  className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+  title="View Manual"
+>
+  <Eye className="w-4 h-4" />
+</button>
 
-                          <button
-                            onClick={() => openSubmissionsModal(manual)}
-                            className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                            title="View Submissions"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
+                       <button
+  onClick={() => router.push(`/institute-dashboard/practical-manual/submissions/${manual._id}`)}
+  className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+  title="View Submissions"
+>
+  <Send className="w-4 h-4" />
+</button>
 
                           <button
                             onClick={() => router.push(`/institute-dashboard/practical-manual/${manual._id}`)}
@@ -452,136 +452,7 @@ const confirmDelete = async () => {
 />
       </div>
 
-      {/* ================= VIEW MODAL (Optional preview popup) ================= */}
-      {showViewModal && selectedManual && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div
-            onClick={() => setShowViewModal(false)}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-          />
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[85vh] flex flex-col relative z-10">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">
-                  {selectedManual.title}
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">Detailed view of practical manual</p>
-              </div>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-6">
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Course</span>
-                  <p className="font-bold text-slate-800 mt-1">
-                    {typeof selectedManual.course_id === "object"
-                      ? selectedManual.course_id?.course_name
-                      : selectedManual.course_id}
-                  </p>
-                </div>
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Topic</span>
-                  <p className="font-bold text-slate-800 mt-1">
-                    {typeof selectedManual.topic_id === "object"
-                      ? selectedManual.topic_id?.title
-                      : selectedManual.topic_id || "-"}
-                  </p>
-                </div>
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Questions</span>
-                  <p className="font-bold text-orange-600 mt-1">
-                    {selectedManual.questions?.length || 0}
-                  </p>
-                </div>
-              </div>
-
-              {selectedManual.attachment_url && (
-                <a
-                  href={selectedManual.attachment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-4 rounded-2xl font-bold hover:bg-emerald-100 transition-colors"
-                >
-                  <FileText className="w-5 h-5" />
-                  <span>Download / View Attachment File</span>
-                </a>
-              )}
-
-              <div className="space-y-4">
-                <h3 className="font-black text-lg text-slate-900">Questions List</h3>
-                <div className="space-y-3">
-                  {selectedManual.questions?.map((q, index) => (
-                    <div key={index} className="border border-slate-100 rounded-2xl p-5 bg-slate-50/50 space-y-2">
-                      <p className="font-bold text-slate-900">
-                        {index + 1}. {q.question_text}
-                      </p>
-                      <div
-                        className="text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-100"
-                        dangerouslySetInnerHTML={{ __html: q.answer_key_html }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= SUBMISSIONS MODAL ================= */}
-      {showSubmissionsModal && submissionsManual && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div
-            onClick={() => setShowSubmissionsModal(false)}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-          />
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[85vh] flex flex-col relative z-10">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">
-                  {submissionsManual.title}
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {submissions.length} student submission{submissions.length === 1 ? "" : "s"}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSubmissionsModal(false)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-3">
-              {submissionsLoading ? (
-                <div className="py-16 flex justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                </div>
-              ) : submissions.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-12">
-                  No submissions yet.
-                </p>
-              ) : (
-                submissions.map((sub) => (
-                  <PracticalSubmissionRow
-                    key={sub._id}
-                    submission={sub}
-                    questions={submissionsManual.questions || []}
-                    onGrade={(marks, feedback) => handleGradeSubmission(sub._id, marks, feedback)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+    
     </div>
   );
 }
