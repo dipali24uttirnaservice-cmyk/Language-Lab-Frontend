@@ -63,6 +63,18 @@ export default function PracticalManualPage() {
   const [submissionsManual, setSubmissionsManual] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+ const [deleteModal, setDeleteModal] = useState({
+  open: false,
+  id: null,
+});
+
+const [statusData, setStatusData] = useState({
+  open: false,
+  type: "",
+  title: "",
+  message: "",
+});
+
 
   // =========================
   // FETCH LIST
@@ -172,15 +184,47 @@ export default function PracticalManualPage() {
     }
   };
 
-  const handleDeleteManual = async (id) => {
-    if (!confirm("Are you sure you want to delete this practical manual?")) return;
-    try {
-      await deletePracticalManual(id);
-      fetchManuals();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+ const handleDeleteManual = (id) => {
+  setDeleteModal({
+    open: true,
+    id,
+  });
+};
+
+const confirmDelete = async () => {
+  try {
+    await deletePracticalManual(deleteModal.id);
+
+    setDeleteModal({
+      open: false,
+      id: null,
+    });
+
+    await fetchManuals();
+
+    setStatusData({
+      open: true,
+      type: "success",
+      title: "Deleted Successfully",
+      message: "Practical manual deleted successfully.",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    setDeleteModal({
+      open: false,
+      id: null,
+    });
+
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Delete Failed",
+      message: "Failed to delete practical manual.",
+    });
+  }
+};
 
   const filteredManuals = manuals.filter((item) =>
     item.title?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -377,6 +421,35 @@ export default function PracticalManualPage() {
             </tbody>
           </table>
         </div>
+        <StatusModal
+  open={statusData.open}
+  type={statusData.type}
+  title={statusData.title}
+  message={statusData.message}
+  onClose={() =>
+    setStatusData({
+      open: false,
+      type: "",
+      title: "",
+      message: "",
+    })
+  }
+/>
+
+<ConfirmModal
+  open={deleteModal.open}
+  onClose={() =>
+    setDeleteModal({
+      open: false,
+      id: null,
+    })
+  }
+  onConfirm={confirmDelete}
+  title="Delete Practical Manual"
+  message="Are you sure you want to delete this practical manual?"
+  confirmText="Delete"
+  cancelText="Cancel"
+/>
       </div>
 
       {/* ================= VIEW MODAL (Optional preview popup) ================= */}
@@ -585,6 +658,7 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
           <CheckCircle2 className="w-3.5 h-3.5" /> Save
         </button>
       </div>
+     
     </div>
   );
 }
