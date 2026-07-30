@@ -186,7 +186,7 @@ export default function InstituteDashboard() {
             sub={`+${enrolledStudents.new_this_week} added this week`}
           />
           <StatCard
-            title="Courses Licensed"
+            title="Courses"
             value={coursesLicensed.total}
             icon={BookOpen}
             color="from-amber-400 to-orange-500"
@@ -206,17 +206,15 @@ export default function InstituteDashboard() {
             color="from-rose-500 to-pink-600"
             sub="Across all module progress"
           />
-          <ActiveNowCard count={activeCount} />
            <motion.div
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: 0.1 }}
     className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex items-center justify-between"
   >
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div>
-        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Breakdown</p>
-        <h2 className="text-lg font-extrabold text-slate-900 leading-tight">Student Status</h2>
+        <h2 className="text-sm font-extrabold text-slate-900 leading-tight">Student Status</h2>
       </div>
       <div className="space-y-1.5">
         {statusData.map((data) => (
