@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import StatusModal from "@/components/molecules/StatusModal";
 import {
   Plus,
   Search,
@@ -21,6 +22,7 @@ import {
 } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
+import ConfirmModal from "@/components/molecules/ConfirmModal";
 
 export default function PracticalManualPage() {
   const router = useRouter();
@@ -52,6 +54,17 @@ export default function PracticalManualPage() {
   // View Modal State
   const [showViewModal, setShowViewModal] = useState(false);
 
+  const [deleteModal, setDeleteModal] = useState({
+  open: false,
+  id: null,
+});
+
+const [statusData, setStatusData] = useState({
+  open: false,
+  type: "",
+  title: "",
+  message: "",
+});
   // =========================
   // FETCH LIST
   // =========================
@@ -130,16 +143,47 @@ export default function PracticalManualPage() {
     }
   };
 
-  const handleDeleteManual = async (id) => {
-    if (!confirm("Are you sure you want to delete this practical manual?")) return;
-    try {
-      await deletePracticalManual(id);
-      fetchManuals();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+ const handleDeleteManual = (id) => {
+  setDeleteModal({
+    open: true,
+    id,
+  });
+};
 
+const confirmDelete = async () => {
+  try {
+    await deletePracticalManual(deleteModal.id);
+
+    setDeleteModal({
+      open: false,
+      id: null,
+    });
+
+    await fetchManuals();
+
+    setStatusData({
+      open: true,
+      type: "success",
+      title: "Deleted Successfully",
+      message: "Practical manual deleted successfully.",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    setDeleteModal({
+      open: false,
+      id: null,
+    });
+
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Delete Failed",
+      message: "Failed to delete practical manual.",
+    });
+  }
+};
   const filteredManuals = manuals.filter((item) =>
     item.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -305,13 +349,13 @@ export default function PracticalManualPage() {
                             <Edit3 className="w-4 h-4" />
                           </button>
 
-                          <button
-                            onClick={() => handleDeleteManual(manual._id)}
-                            className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
-                            title="Delete Manual"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <button
+  onClick={() => handleDeleteManual(manual._id)}
+  className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+  title="Delete Manual"
+>
+  <Trash2 className="w-4 h-4" />
+</button>
                         </div>
                       </td>
                     </motion.tr>
@@ -410,6 +454,35 @@ export default function PracticalManualPage() {
           </div>
         </div>
       )}
+         <StatusModal
+  open={statusData.open}
+  type={statusData.type}
+  title={statusData.title}
+  message={statusData.message}
+  onClose={() =>
+    setStatusData({
+      open: false,
+      type: "",
+      title: "",
+      message: "",
+    })
+  }
+/>
+        
+              <ConfirmModal
+  open={deleteModal.open}
+  onClose={() =>
+    setDeleteModal({
+      open: false,
+      id: null,
+    })
+  }
+  onConfirm={confirmDelete}
+  title="Delete Practical Manual"
+  message="Are you sure you want to delete this practical manual?"
+  confirmText="Delete"
+  cancelText="Cancel"
+/>
     </div>
   );
 }
