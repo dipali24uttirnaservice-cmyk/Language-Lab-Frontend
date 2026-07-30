@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo,useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +19,13 @@ import {
   HelpCircle,
   Play,
   RotateCcw,
+   CheckCircle2, 
+  Clock, 
+  Sparkles,
+  ChevronRight, 
+  Minimize2,
+  Maximize2,
+  ChevronLeft 
 } from "lucide-react";
 
 import { studentTaskApi } from "@/services/task/studentTaskApi";
@@ -226,120 +233,295 @@ function TaskRow({ task, onSelect }) {
    TASK WORKSPACE — dedicated detail view, same shell language
    as the Practical Manual workspace (top bar + content card).
 ========================================================== */
-function TaskWorkspace({ task, onBack, onSubmitted }) {
+
+
+
+
+
+
+
+
+
+export function TaskWorkspace({ task, onBack, onSubmitted }) {
   const meta = TYPE_META[task.type] || TYPE_META.text;
   const TypeIcon = meta.Icon;
   const submission = task.my_submission;
   const statusMeta = STATUS_META[taskStatusKey(task)];
 
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  // Track the current step index for sequential card navigation
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Define steps dynamically based on available task content
+  const steps = [
+    {
+      id: 'overview',
+      title: 'Overview & Instructions',
+    },
+    ...(task.type && (task.text_content || task.link_url || task.media_url) ? [{
+      id: 'content',
+      title: 'Task Material',
+    }] : []),
+    {
+      id: 'submission',
+      title: submission?.status === 'reviewed' ? 'Evaluation & Review' : 'Your Submission',
+    }
+  ];
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+  
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+  
+    return () => {
+      document.removeEventListener(
+        "fullscreenchange",
+        handleFullscreenChange
+      );
+    };
+  }, []);
+  
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      await containerRef.current.requestFullscreen();
+    }
+  };
+  
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-4">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-semibold text-sm transition"
-        >
-          <ArrowLeft size={18} />
-          Back to Tasks
-        </button>
+    <div
+      ref={containerRef}
+      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-emerald-50/30 overflow-y-auto flex flex-col transition-all ${
+        isFullscreen ? "h-screen w-screen p-2 md:p-4 bg-white" : "min-h-screen p-4 md:p-8"
+      }`}
+    >
+      <div className={`mx-w-4xl mx-auto space-y-6 flex-1 flex flex-col w-full ${isFullscreen ? "max-w-none h-full space-y-3 p-2" : ""}`}>
+        
+        {/* Top Navigation & Context Bar */}
+        <div className="flex items-center justify-between shrink-0">
+          <button
+            onClick={onBack}
+            className="group inline-flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-semibold text-sm transition-all duration-200 bg-white/80 hover:bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-200/60"
+          >
+            <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+            Back to Tasks
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 size={18} />
+              ) : (
+                <Maximize2 size={18} />
+              )}
+            </button>
+          </div>
+        </div>
 
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.10)]">
-          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-emerald-100 opacity-50 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-teal-100 opacity-50 blur-2xl pointer-events-none" />
+        {/* Main Workspace Card */}
+        <div className={`relative overflow-hidden border border-emerald-100/80 bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(16,185,129,0.07)] transition-all flex flex-col ${
+          isFullscreen ? "flex-1 rounded-3xl p-6 md:p-8 overflow-y-auto" : "rounded-[2.5rem] p-6 md:p-10"
+        }`}>
+          
+          {/* Ambient Background Glows */}
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-teal-200/40 blur-3xl pointer-events-none" />
 
-          <div className="relative space-y-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <span
-                  className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-white shadow-md shrink-0`}
-                >
-                  <TypeIcon size={24} />
-                </span>
-                <div>
-                  <span
-                    className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-                  >
-                    {statusMeta.label}
-                  </span>
-                  <h1 className="text-2xl font-black text-slate-900 mt-1">{task.title}</h1>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">
-                    {task.course_id?.course_name || "Course"} · {meta.label}
-                    {task.due_date && ` · Due ${new Date(task.due_date).toLocaleDateString()}`}
-                  </p>
+          <div className="relative space-y-8 flex-1 flex flex-col justify-between">
+            
+            <div className="space-y-8">
+              {/* STEP 0: Overview & Instructions */}
+              {currentStep === 0 && (
+                <div className="space-y-8 animate-fadeIn">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                    <div className="flex items-start gap-4">
+                      <span className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 shrink-0 transform hover:scale-105 transition-transform`}>
+                        <TypeIcon size={28} />
+                      </span>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border} shadow-sm`}>
+                            {statusMeta.label}
+                          </span>
+                          <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                            {meta.label}
+                          </span>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{task.title}</h1>
+                        <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                          <Clock size={14} />
+                          {task.due_date ? `Due ${new Date(task.due_date).toLocaleDateString()}` : "No due date"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {submission?.grade != null && (
+                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50/80 px-4 py-3 rounded-2xl border border-emerald-200/60 shadow-inner shrink-0 self-start md:self-auto">
+                        <Award size={20} className="text-emerald-600 animate-pulse" />
+                        <div>
+                          <p className="text-[10px] uppercase text-emerald-500 font-semibold">Score</p>
+                          <p className="text-base">{submission.grade} Pts</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {task.description && (
+                      <p className="text-base text-slate-600 leading-relaxed font-normal">{task.description}</p>
+                    )}
+
+                    {task.instructions && (
+                      <div className="bg-gradient-to-br from-slate-50 to-emerald-50/20 rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2">
+                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-emerald-600" />
+                          Instructions & Guidelines
+                        </p>
+                        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{task.instructions}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              {submission?.grade != null && (
-                <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 shrink-0">
-                  <Award size={16} />
-                  {submission.grade} Pts
+              )}
+
+              {/* STEP 1: Content Renderers (Text, Link, Media) - Only renders if content exists */}
+              {steps[currentStep]?.id === 'content' && (
+                <div className="space-y-4 animate-fadeIn">
+                  <h3 className="text-lg font-bold text-slate-800">Task Material & Resources</h3>
+                  {task.type === "text" && task.text_content && (
+                    <div
+                      className="bg-white rounded-2xl p-6 border border-slate-200/60 text-sm text-slate-700 prose prose-sm max-w-none shadow-sm"
+                      dangerouslySetInnerHTML={{ __html: task.text_content }}
+                    />
+                  )}
+                  
+                  {task.type === "link" && task.link_url && (
+                    <a
+                      href={task.link_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group inline-flex items-center gap-3 text-sm font-bold text-emerald-700 bg-emerald-50/80 border border-emerald-200 px-5 py-3 rounded-2xl hover:bg-emerald-100/80 transition-all shadow-sm"
+                    >
+                      <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                        <Link2 className="w-4 h-4" />
+                      </div>
+                      <span>Open External Resource</span>
+                      <ChevronRight size={16} className="text-emerald-500 transition-transform group-hover:translate-x-1" />
+                    </a>
+                  )}
+
+                  {["audio", "video", "document"].includes(task.type) && task.media_url && (
+                    <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60">
+                      {task.type === "audio" && <audio controls src={task.media_url} className="w-full" />}
+                      {task.type === "video" && (
+                        <video controls src={task.media_url} className="w-full rounded-2xl shadow-md max-h-[420px] object-cover" />
+                      )}
+                      {task.type === "document" && (
+                        <a
+                          href={task.media_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-3 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-5 py-3 rounded-2xl hover:bg-amber-100 transition-all shadow-sm"
+                        >
+                          <div className="p-2 bg-amber-600 text-white rounded-xl">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          View Document Asset
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* FINAL STEP: Submission Section / Review State */}
+              {steps[currentStep]?.id === 'submission' && (
+                <div className="space-y-6 animate-fadeIn">
+                  {submission?.status === "reviewed" ? (
+                    <div className="space-y-6">
+                      <div className="bg-emerald-50/70 border border-emerald-200 rounded-3xl p-6 space-y-3 shadow-sm">
+                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" /> 
+                          Instructor Evaluation Completed
+                          {submission.grade != null && ` — ${submission.grade} marks`}
+                        </p>
+                        {submission.feedback && (
+                          <p className="text-sm text-emerald-900 bg-white/60 p-4 rounded-2xl border border-emerald-100/60 leading-relaxed">
+                            "{submission.feedback}"
+                          </p>
+                        )}
+                      </div>
+                      {task.questions?.length > 0 && (
+                        <TaskQuestionsReview questions={task.questions} answers={submission.answers} />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm">
+                      <SubmissionForm task={task} submission={submission} onSubmitted={onSubmitted} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {task.description && <p className="text-sm text-slate-600">{task.description}</p>}
-
-            {task.instructions && (
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Instructions
-                </p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{task.instructions}</p>
-              </div>
-            )}
-
-            {task.type === "text" && task.text_content && (
-              <div
-                className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-sm text-slate-700 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: task.text_content }}
-              />
-            )}
-            {task.type === "link" && task.link_url && (
-              <a
-                href={task.link_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl hover:bg-emerald-100 transition-colors"
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
+              <button
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                  currentStep === 0
+                    ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm'
+                }`}
               >
-                <Link2 className="w-4 h-4" /> Open link
-              </a>
-            )}
-            {["audio", "video", "document"].includes(task.type) && task.media_url && (
-              <div className="space-y-2">
-                {task.type === "audio" && <audio controls src={task.media_url} className="w-full" />}
-                {task.type === "video" && (
-                  <video controls src={task.media_url} className="w-full rounded-xl max-h-96" />
-                )}
-                {task.type === "document" && (
-                  <a
-                    href={task.media_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-xl hover:bg-amber-100 transition-colors"
-                  >
-                    <File className="w-4 h-4" /> View document
-                  </a>
-                )}
-              </div>
-            )}
+                <ChevronLeft size={16} />
+                Previous
+              </button>
 
-            {submission?.status === "reviewed" ? (
-              <div className="space-y-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-1.5">
-                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5" /> Reviewed
-                    {submission.grade != null && ` — ${submission.grade} marks`}
-                  </p>
-                  {submission.feedback && (
-                    <p className="text-sm text-emerald-800">{submission.feedback}</p>
-                  )}
-                </div>
-                {task.questions?.length > 0 && (
-                  <TaskQuestionsReview questions={task.questions} answers={submission.answers} />
-                )}
-              </div>
-            ) : (
-              <SubmissionForm task={task} submission={submission} onSubmitted={onSubmitted} />
-            )}
+              <button
+                onClick={handleNext}
+                disabled={currentStep === steps.length - 1}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                  currentStep === steps.length - 1
+                    ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20'
+                }`}
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -390,6 +572,9 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Track the current active question index
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
   const [answers, setAnswers] = useState(() => {
     const prefilled = {};
     (submission?.answers || []).forEach((a) => {
@@ -398,6 +583,9 @@ function SubmissionForm({ task, submission, onSubmitted }) {
     });
     return prefilled;
   });
+
+  const totalQuestions = task.questions?.length || 0;
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -435,74 +623,107 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-1 border-t border-slate-100">
+    <form onSubmit={handleSubmit} className="space-y-4 pt-1 border-t border-slate-100">
       {submission && (
         <p className="text-xs font-semibold text-sky-600 flex items-center gap-1.5 pt-3">
           <Send className="w-3.5 h-3.5" /> Already submitted — resubmitting will replace it.
         </p>
       )}
 
-      {task.questions?.length > 0 && (
-        <div className="space-y-3 pt-2">
-          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Questions
-          </label>
-          {task.questions.map((q, idx) => (
-            <div key={idx} className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-800">
-                  {idx + 1}. {q.question_text}
-                </p>
-                <span className="text-[10px] font-bold text-slate-400 shrink-0">
-                  {q.marks || 1} mark{(q.marks || 1) > 1 ? "s" : ""}
-                </span>
-              </div>
-              <QuestionInput
-                question={q}
-                answer={answers[idx]}
-                setAnswer={(next) => setAnswers((prev) => ({ ...prev, [idx]: next }))}
-              />
-            </div>
-          ))}
+      {/* Checkpoint Questions Step-by-Step View */}
+      {totalQuestions > 0 && (
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Question {currentQuestionIndex + 1} of {totalQuestions}
+            </label>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+              {task.questions[currentQuestionIndex].marks || 1} mark{(task.questions[currentQuestionIndex].marks || 1) > 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {/* Active Question Card */}
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4 shadow-sm animate-fadeIn">
+            <p className="text-sm font-bold text-slate-800 leading-relaxed">
+              {currentQuestionIndex + 1}. {task.questions[currentQuestionIndex].question_text}
+            </p>
+            <QuestionInput
+              question={task.questions[currentQuestionIndex]}
+              answer={answers[currentQuestionIndex]}
+              setAnswer={(next) => setAnswers((prev) => ({ ...prev, [currentQuestionIndex]: next }))}
+            />
+          </div>
+
+          {/* Question Navigation & Submit Actions */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              disabled={currentQuestionIndex === 0}
+              onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                currentQuestionIndex === 0
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
+              }`}
+            >
+              Previous Question
+            </button>
+
+            {/* Render Next Button if not on the last question, or Submit Button if it is the last question */}
+            {!isLastQuestion ? (
+              <button
+                type="button"
+                onClick={() => setCurrentQuestionIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+              >
+                Next Question
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2 transition-all"
+              >
+                {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                {submitting ? "Submitting..." : submission ? "Resubmit" : "Submit Task"}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="space-y-1.5 pt-1">
-        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-          <MessageSquare className="w-3.5 h-3.5" /> Written response (optional)
-        </label>
-        <textarea
-          rows={3}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write your response here..."
-          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-          <Upload className="w-3.5 h-3.5" /> Attach a file (optional)
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full text-xs text-slate-500 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-bold"
-        />
-      </div>
-      {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-      {success && (
-        <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
-          <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
-        </p>
+      {/* Fallback Submit Button if there are no checkpoint questions at all */}
+      {totalQuestions === 0 && (
+        <div className="space-y-4 pt-4 border-t border-slate-100 animate-fadeIn">
+          {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+          {success && (
+            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2"
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {submitting ? "Submitting..." : submission ? "Resubmit" : "Submit Task"}
+          </button>
+        </div>
       )}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2"
-      >
-        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        {submitting ? "Submitting..." : submission ? "Resubmit" : "Submit Task"}
-      </button>
+
+      {/* Global Form Error & Success Messages on Last Question */}
+      {totalQuestions > 0 && isLastQuestion && (
+        <div className="pt-2 space-y-2">
+          {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+          {success && (
+            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
+            </p>
+          )}
+        </div>
+      )}
     </form>
   );
 }
@@ -732,29 +953,67 @@ function prettifyAnswer(question, raw) {
    READ-ONLY QUESTIONS REVIEW (once graded)
 ========================================================== */
 function TaskQuestionsReview({ questions, answers }) {
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const answerByIndex = {};
+  
   (answers || []).forEach((a) => {
     answerByIndex[a.question_index] = a.given_answer;
   });
 
+  const totalQuestions = questions?.length || 0;
+  if (totalQuestions === 0) return null;
+
+  const currentQuestion = questions[currentReviewIndex];
+
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-        <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Questions
-      </p>
-      {questions.map((q, idx) => (
-        <div key={idx} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <p className="text-sm font-semibold text-slate-800">
-            {idx + 1}. {q.question_text}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Your answer:{" "}
-            <span className="font-semibold text-slate-700">
-              {prettifyAnswer(q, answerByIndex[idx])}
-            </span>
-          </p>
-        </div>
-      ))}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Review ({currentReviewIndex + 1} of {totalQuestions})
+        </p>
+      </div>
+
+      {/* Review Active Card */}
+      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 shadow-sm animate-fadeIn">
+        <p className="text-sm font-bold text-slate-800 leading-relaxed">
+          {currentReviewIndex + 1}. {currentQuestion.question_text}
+        </p>
+        <p className="text-xs text-slate-500 mt-2">
+          Your answer:{" "}
+          <span className="font-semibold text-slate-700">
+            {prettifyAnswer(currentQuestion, answerByIndex[currentReviewIndex])}
+          </span>
+        </p>
+      </div>
+
+      {/* Review Pagination Controls */}
+      <div className="flex items-center justify-between pt-1">
+        <button
+          type="button"
+          disabled={currentReviewIndex === 0}
+          onClick={() => setCurrentReviewIndex((prev) => Math.max(0, prev - 1))}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentReviewIndex === 0
+              ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+              : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
+          }`}
+        >
+          Previous Question
+        </button>
+
+        <button
+          type="button"
+          disabled={currentReviewIndex === totalQuestions - 1}
+          onClick={() => setCurrentReviewIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentReviewIndex === totalQuestions - 1
+              ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          }`}
+        >
+          Next Question
+        </button>
+      </div>
     </div>
   );
 }
