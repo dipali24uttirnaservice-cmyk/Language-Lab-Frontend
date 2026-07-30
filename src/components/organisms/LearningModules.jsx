@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { courseApi } from "@/services/course/courseApi";
 import { studentTaskApi } from "@/services/task/studentTaskApi";
+import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
 import {
   Video,
   Headphones,
@@ -40,8 +41,8 @@ export default function LearningModules({ courseId, courseName }) {
     fetchCounts();
   }, [courseId]);
 
-  // Tasks aren't a ModuleType document, so they're not part of getModuleCount
-  // — fetch the assigned-task count for this course separately.
+  // Tasks and Practical Manuals aren't ModuleType documents, so they're not
+  // part of getModuleCount — fetch their counts for this course separately.
   useEffect(() => {
     if (!courseId) return;
     studentTaskApi
@@ -51,6 +52,14 @@ export default function LearningModules({ courseId, courseName }) {
         setModuleCounts((prev) => ({ ...prev, task: count }));
       })
       .catch((err) => console.error("[TaskCount] Failed:", err?.response?.status));
+
+    studentPracticalApi
+      .getMine({ courseId })
+      .then((res) => {
+        const count = res.data?.data?.practicals?.length || 0;
+        setModuleCounts((prev) => ({ ...prev, practical_manual: count }));
+      })
+      .catch((err) => console.error("[PracticalCount] Failed:", err?.response?.status));
   }, [courseId]);
 
   // 3D Floating Network Mesh Canvas Background Animation
@@ -294,15 +303,11 @@ export default function LearningModules({ courseId, courseName }) {
                 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  // Tasks are a flat assignment list, not topic/subtopic
-                  // content, so they get their own page instead of the
-                  // shared module-type browser.
-                  if (module.type === "task") {
-                    const taskParams = new URLSearchParams();
-                    if (courseId) taskParams.set("courseId", courseId);
-                    router.push(`/dashboard/tasks?${taskParams.toString()}`);
-                    return;
-                  }
+                  // Every module type — including Task and Practical Manual —
+                  // goes through Topic selection first, same as Video/Audio/
+                  // Text/Exercise/Vocabulary. Topic → SubTopic then special-
+                  // cases Task/Practical Manual to skip the SubTopic layer
+                  // (neither one has subtopics).
                   const params = new URLSearchParams();
                   if (courseId) params.set("courseId", courseId);
                   if (courseName) params.set("courseName", courseName);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import {
@@ -16,13 +16,106 @@ import {
   Loader2,
   Sparkles,
   Play,
-  Clock,
   Award,
   FileText,
+  RotateCcw,
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
+
+/* ==========================================================
+   WIDE ROW — same list-item language as the Exercise/Text/Audio
+   module rows in dashboard/module/[type]/[subtopicId]/page.js.
+========================================================== */
+function WideRow({ onClick, disabled, iconBg, icon, eyebrow, eyebrowClass, title, middle, right }) {
+  return (
+    <div
+      onClick={disabled ? undefined : onClick}
+      className={`group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 ${
+        disabled ? "opacity-60" : "cursor-pointer"
+      }`}
+    >
+      <div
+        className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md relative overflow-hidden transition-all duration-300 ${iconBg}`}
+      >
+        {icon}
+      </div>
+
+      <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
+        <div className="md:col-span-6 space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded border ${eyebrowClass}`}
+            >
+              {eyebrow}
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm md:text-base text-slate-900 truncate tracking-tight group-hover:text-orange-600 transition-colors">
+            {title}
+          </h3>
+        </div>
+
+        {middle && <div className="hidden md:block md:col-span-4">{middle}</div>}
+        <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4">
+          {right}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PracticalRow({ manual, onSelect, disabled }) {
+  const submission = manual.my_submission;
+  const status = submission?.status;
+
+  const eyebrow = status === "reviewed" ? "Reviewed" : status === "submitted" ? "Submitted" : "Not Started";
+  const eyebrowClass =
+    status === "reviewed"
+      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+      : status === "submitted"
+      ? "bg-sky-50 text-sky-600 border-sky-100"
+      : "bg-orange-50 text-orange-600 border-orange-100";
+
+  return (
+    <WideRow
+      onClick={() => onSelect(manual)}
+      disabled={disabled}
+      iconBg="bg-orange-50 group-hover:bg-orange-500 transition-colors duration-200"
+      icon={
+        <FileText
+          className="text-orange-500 group-hover:text-white transition-all duration-200 group-hover:scale-105"
+          size={18}
+        />
+      }
+      eyebrow={eyebrow}
+      eyebrowClass={eyebrowClass}
+      title={manual.title}
+      middle={
+        <p className="text-xs text-slate-400 font-medium truncate">
+          {manual.questions.length} question{manual.questions.length === 1 ? "" : "s"}
+          {submission?.submitted_at &&
+            ` · Submitted ${new Date(submission.submitted_at).toLocaleDateString()}`}
+        </p>
+      }
+      right={
+        <>
+          <div className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+            <Award size={12} className="text-orange-500" />
+            <span>{submission?.marks != null ? `${submission.marks} Pts` : "Ungraded"}</span>
+          </div>
+          <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
+            {status ? (
+              <RotateCcw className="group-hover:rotate-45 transition-transform" size={12} />
+            ) : (
+              <Play className="fill-current ml-0.5" size={12} />
+            )}
+          </div>
+        </>
+      }
+    />
+  );
+}
 
 /* ==========================================================
    PROGRESS BAR
@@ -184,6 +277,7 @@ export default function StudentPracticalManualPage() {
   const topicId = routeParams?.topicId || searchParams.get("topicId");
   const courseId = searchParams.get("courseId");
   const courseName = searchParams.get("courseName");
+  const topicName = searchParams.get("topicName");
 
   const [manualsList, setManualsList] = useState([]);
   const [listLoading, setListLoading] = useState(true);
@@ -309,18 +403,9 @@ export default function StudentPracticalManualPage() {
             </div>
           </div>
 
-          {/* Banner */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 p-8 text-white shadow-xl shadow-orange-200">
-            <div className="relative z-10 max-w-xl space-y-3">
-              <span className="text-xs font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-                {courseName ? `${courseName} Practical Exercises` : "Laboratory Practical Exercises"}
-              </span>
-              <h1 className="text-3xl font-black leading-tight">Practical Manuals</h1>
-              <p className="text-orange-100 text-sm leading-relaxed">
-                Select a practical manual from the list below to review the instructions, write your solutions, and submit your work.
-              </p>
-            </div>
-          </div>
+          <h1 className="text-xl font-black text-slate-800">
+            {topicName || courseName || "Practical Manuals"}
+          </h1>
 
           {listLoading ? (
             <div className="py-20 flex items-center justify-center text-slate-400">
@@ -333,76 +418,15 @@ export default function StudentPracticalManualPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {manualsList.map((manual) => {
-                const totalMarks = (manual.questions || []).reduce(
-                  (sum, q) => sum + (q.marks || 0),
-                  0,
-                );
-                const status = manual.my_submission?.status;
-                return (
-                  <motion.div
-                    key={manual._id}
-                    whileHover={{ y: -4 }}
-                    className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="h-10 w-10 rounded-2xl bg-orange-50 text-orange-600 font-black flex items-center justify-center border border-orange-100">
-                          <FileText size={20} />
-                        </span>
-                        {status && (
-                          <div
-                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                              status === "reviewed"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : "bg-sky-50 text-sky-700 border-sky-200"
-                            }`}
-                          >
-                            <CheckCircle2 size={14} />
-                            {status === "reviewed" ? "Reviewed" : "Submitted"}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">
-                          {manual.title}
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          Contains {manual.questions.length} experiment exercises requiring detailed solutions.
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 pt-2">
-                        {totalMarks > 0 && (
-                          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                            <Award size={14} className="text-amber-500" />
-                            {totalMarks} Total Marks
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                          <BookOpen size={14} className="text-orange-500" />
-                          {manual.questions.length} Questions
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleStartManual(manual)}
-                      disabled={detailLoading}
-                      className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md hover:shadow-orange-200 transition flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {detailLoading ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Play size={16} fill="white" />
-                      )}
-                      {status ? "Review Practical" : "Start Practical"}
-                    </button>
-                  </motion.div>
-                );
-              })}
+            <div className="space-y-4">
+              {manualsList.map((manual) => (
+                <PracticalRow
+                  key={manual._id}
+                  manual={manual}
+                  onSelect={handleStartManual}
+                  disabled={detailLoading}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -486,15 +510,7 @@ export default function StudentPracticalManualPage() {
       {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
         {/* TOP BAR */}
-        <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-between shrink-0">
-          <button
-            onClick={() => setSelectedManual(null)}
-            className="flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm transition"
-          >
-            <ArrowLeft size={18} />
-            Back to Manuals List
-          </button>
-
+        <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
           <button
             onClick={isFullscreen ? exitFullscreen : enterFullscreen}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"

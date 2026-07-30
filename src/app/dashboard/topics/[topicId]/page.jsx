@@ -46,10 +46,30 @@ console.log("Type:", type);
   const [topic, setTopic] = useState(null);
   const [subtopicProgress, setSubtopicProgress] = useState({});
 
+  // Task and Practical Manual are scoped to a Topic directly (course_id +
+  // optional topic_id) — they have no SubTopic layer, unlike Video/Audio/
+  // Text/Exercise/Vocabulary. So instead of listing subtopics, jump straight
+  // into that topic's tasks/practicals.
+  const isFlatTopicType = type === "task" || type === "practical_manual";
+
   useEffect(() => {
+    if (!isFlatTopicType) return;
+    const params = new URLSearchParams();
+    if (courseId) params.set("courseId", courseId);
+    if (courseName) params.set("courseName", courseName);
+    params.set("topicId", topicId);
+    if (topicName) params.set("topicName", topicName);
+
+    const destination =
+      type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";
+    router.replace(`${destination}?${params.toString()}`);
+  }, [isFlatTopicType, type, topicId, courseId, courseName, topicName, router]);
+
+  useEffect(() => {
+    if (isFlatTopicType) return;
     fetchTopic();
     fetchProgress();
-  }, [topicId]);
+  }, [topicId, isFlatTopicType]);
 
   const fetchTopic = async () => {
     try {
