@@ -19,3 +19,11 @@ export const updatePracticalManual = async (id, payload) => {
 export const deletePracticalManual = async (id) => {
   return await api.delete(`/practical/${id}`);
 };
+
+export const getPracticalSubmissions = async (id) => {
+  return await api.get(`/practical/${id}/submissions`);
+};
+
+export const gradePracticalSubmission = async (id, submissionId, payload) => {
+  return await api.put(`/practical/${id}/submissions/${submissionId}`, payload);
+};

@@ -12,13 +12,17 @@ import {
   Trash2,
   Loader2,
   FileText,
-  RefreshCw
+  RefreshCw,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 
 import {
   practicalManualList,
   practicalManualDetail,
-  deletePracticalManual
+  deletePracticalManual,
+  getPracticalSubmissions,
+  gradePracticalSubmission,
 } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
@@ -54,17 +58,12 @@ export default function PracticalManualPage() {
   // View Modal State
   const [showViewModal, setShowViewModal] = useState(false);
 
-  const [deleteModal, setDeleteModal] = useState({
-  open: false,
-  id: null,
-});
+  // Submissions Modal State
+  const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
+  const [submissionsManual, setSubmissionsManual] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
-const [statusData, setStatusData] = useState({
-  open: false,
-  type: "",
-  title: "",
-  message: "",
-});
   // =========================
   // FETCH LIST
   // =========================
@@ -143,47 +142,46 @@ const [statusData, setStatusData] = useState({
     }
   };
 
- const handleDeleteManual = (id) => {
-  setDeleteModal({
-    open: true,
-    id,
-  });
-};
+  const openSubmissionsModal = async (manual) => {
+    setSubmissionsManual(manual);
+    setShowSubmissionsModal(true);
+    setSubmissionsLoading(true);
+    try {
+      const response = await getPracticalSubmissions(manual._id);
+      const data = response?.data?.data || response?.data;
+      setSubmissions(data?.submissions || []);
+    } catch (error) {
+      console.error("Get Practical Submissions Error:", error);
+      setSubmissions([]);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
 
-const confirmDelete = async () => {
-  try {
-    await deletePracticalManual(deleteModal.id);
+  const handleGradeSubmission = async (submissionId, marks, feedback) => {
+    try {
+      await gradePracticalSubmission(submissionsManual._id, submissionId, {
+        marks: marks === "" ? undefined : Number(marks),
+        feedback,
+      });
+      const response = await getPracticalSubmissions(submissionsManual._id);
+      const data = response?.data?.data || response?.data;
+      setSubmissions(data?.submissions || []);
+    } catch (error) {
+      console.error("Grade Practical Submission Error:", error);
+    }
+  };
 
-    setDeleteModal({
-      open: false,
-      id: null,
-    });
+  const handleDeleteManual = async (id) => {
+    if (!confirm("Are you sure you want to delete this practical manual?")) return;
+    try {
+      await deletePracticalManual(id);
+      fetchManuals();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    await fetchManuals();
-
-    setStatusData({
-      open: true,
-      type: "success",
-      title: "Deleted Successfully",
-      message: "Practical manual deleted successfully.",
-    });
-
-  } catch (error) {
-    console.log(error);
-
-    setDeleteModal({
-      open: false,
-      id: null,
-    });
-
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Delete Failed",
-      message: "Failed to delete practical manual.",
-    });
-  }
-};
   const filteredManuals = manuals.filter((item) =>
     item.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -342,6 +340,14 @@ const confirmDelete = async () => {
                           </button>
 
                           <button
+                            onClick={() => openSubmissionsModal(manual)}
+                            className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                            title="View Submissions"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+
+                          <button
                             onClick={() => router.push(`/institute-dashboard/practical-manual/${manual._id}`)}
                             className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
                             title="Edit Manual"
@@ -454,35 +460,131 @@ const confirmDelete = async () => {
           </div>
         </div>
       )}
-         <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() =>
-    setStatusData({
-      open: false,
-      type: "",
-      title: "",
-      message: "",
-    })
-  }
-/>
-        
-              <ConfirmModal
-  open={deleteModal.open}
-  onClose={() =>
-    setDeleteModal({
-      open: false,
-      id: null,
-    })
-  }
-  onConfirm={confirmDelete}
-  title="Delete Practical Manual"
-  message="Are you sure you want to delete this practical manual?"
-  confirmText="Delete"
-  cancelText="Cancel"
-/>
+
+      {/* ================= SUBMISSIONS MODAL ================= */}
+      {showSubmissionsModal && submissionsManual && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div
+            onClick={() => setShowSubmissionsModal(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+          />
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[85vh] flex flex-col relative z-10">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">
+                  {submissionsManual.title}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {submissions.length} student submission{submissions.length === 1 ? "" : "s"}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSubmissionsModal(false)}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-3">
+              {submissionsLoading ? (
+                <div className="py-16 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                </div>
+              ) : submissions.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-12">
+                  No submissions yet.
+                </p>
+              ) : (
+                submissions.map((sub) => (
+                  <PracticalSubmissionRow
+                    key={sub._id}
+                    submission={sub}
+                    questions={submissionsManual.questions || []}
+                    onGrade={(marks, feedback) => handleGradeSubmission(sub._id, marks, feedback)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PracticalSubmissionRow({ submission, questions, onGrade }) {
+  const [marks, setMarks] = useState(submission.marks ?? "");
+  const [feedback, setFeedback] = useState(submission.feedback ?? "");
+  const [expanded, setExpanded] = useState(false);
+
+  const answerByQuestionId = {};
+  (submission.answers || []).forEach((a) => {
+    answerByQuestionId[a.question_id] = a.answer_html;
+  });
+
+  return (
+    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-800 truncate">
+            {submission.student_id?.full_name || "Unknown student"}
+          </p>
+          <p className="text-xs text-slate-400">
+            {submission.student_id?.enrollment_no} ·{" "}
+            <span className="font-semibold text-slate-500">{submission.status}</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto"
+        >
+          {expanded ? "Hide answers" : "View answers"}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="space-y-2 pt-1">
+          {questions.map((q, idx) => (
+            <div key={q._id} className="bg-white rounded-xl p-3 border border-slate-100">
+              <p className="text-xs font-bold text-slate-700 mb-1">
+                {idx + 1}. {q.question_text}
+              </p>
+              <div
+                className="text-xs text-slate-600"
+                dangerouslySetInnerHTML={{
+                  __html: answerByQuestionId[q._id] || "<em>No answer given.</em>",
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="number"
+          placeholder="Marks"
+          value={marks}
+          onChange={(e) => setMarks(e.target.value)}
+          className="w-full sm:w-24 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium"
+        />
+        <input
+          type="text"
+          placeholder="Feedback"
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium"
+        />
+        <button
+          type="button"
+          onClick={() => onGrade(marks, feedback)}
+          className="px-4 py-2 rounded-lg bg-orange-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" /> Save
+        </button>
+      </div>
     </div>
   );
 }
