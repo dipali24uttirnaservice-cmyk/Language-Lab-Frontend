@@ -118,7 +118,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
   return (
     <aside
-      className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between min-h-screen z-20 transition-all duration-300
+      className={`relative overflow-hidden bg-white border-r border-slate-200/80 flex flex-col justify-between h-screen z-20 transition-all duration-300
       ${isOpen ? "w-72 p-6" : "w-24 p-3"}`}
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -140,8 +140,9 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-indigo-400/40 to-transparent" />
       </div>
 
-      <div className="relative z-10">
-        <div className={`flex items-center ${isOpen ? "gap-3 px-2" : "justify-center"} mb-10`}>
+      {/* Top Header Section */}
+      <div className="relative z-10 shrink-0 pb-4">
+        <div className={`flex items-center ${isOpen ? "gap-3 px-2" : "justify-center"}`}>
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
@@ -166,102 +167,104 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
             </div>
           )}
         </div>
+      </div>
 
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
+      {/* Clean Scrollable Navigation Area (Scrollbar completely hidden using modern CSS classes) */}
+      <div className="relative z-10 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-2 space-y-2">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href;
 
-            const iconBox = (
-              <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-md bg-gradient-to-br ${item.color}
-                ${active ? "ring-2 ring-offset-2 ring-offset-white ring-slate-300 shadow-lg scale-105" : ""}
-                transition-all`}
-              >
-                <Icon size={16} />
-              </div>
-            );
+          const iconBox = (
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-md bg-gradient-to-br ${item.color}
+              ${active ? "ring-2 ring-offset-2 ring-offset-white ring-slate-300 shadow-lg scale-105" : ""}
+              transition-all`}
+            >
+              <Icon size={16} />
+            </div>
+          );
 
-            if (item.action === "logout") {
-              return (
-                <motion.div
-                  key={item.title}
-                  whileHover={{ x: isOpen ? 4 : 0, scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <button
-                    onClick={() => setShowLogoutModal(true)}
-                    title={!isOpen ? "Logout" : undefined}
-                    className={`relative flex items-center w-full rounded-xl transition-all group overflow-hidden hover:bg-red-50
-                    ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
-                  >
-                    {iconBox}
-                    {isOpen && (
-                      <span className="relative z-10 text-sm font-bold text-slate-700">
-                        {item.title}
-                      </span>
-                    )}
-                  </button>
-                </motion.div>
-              );
-            }
-
+          if (item.action === "logout") {
             return (
               <motion.div
                 key={item.title}
-                className="relative"
                 whileHover={{ x: isOpen ? 4 : 0, scale: 1.02 }}
                 transition={{ duration: 0.2 }}
-                onMouseEnter={() => !isOpen && setHoveredMenu(item.title)}
-                onMouseLeave={() => !isOpen && setHoveredMenu(null)}
               >
-                <Link
-                  href={item.href}
-                  title={!isOpen ? item.title : undefined}
-                  className={`relative flex items-center rounded-xl transition-all overflow-hidden
+                <button
+                  onClick={() => setShowLogoutModal(true)}
+                  title={!isOpen ? "Logout" : undefined}
+                  className={`relative flex items-center w-full rounded-xl transition-all group overflow-hidden hover:bg-red-50
                   ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
                 >
-                  {active && (
-                    <motion.div
-                      layoutId="activeInstituteSidebarGlow"
-                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg} border-2 ${item.border} shadow-lg`}
-                    />
-                  )}
-
                   {iconBox}
-
                   {isOpen && (
-                    <span
-                      className={`relative z-10 text-sm font-bold ${
-                        active ? item.text : "text-slate-700"
-                      }`}
-                    >
+                    <span className="relative z-10 text-sm font-bold text-slate-700">
                       {item.title}
                     </span>
                   )}
-                </Link>
-
-                <AnimatePresence>
-                  {!isOpen && hoveredMenu === item.title && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -8 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-lg bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 shadow-lg z-50"
-                    >
-                      {item.title}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                </button>
               </motion.div>
             );
-          })}
-        </div>
+          }
+
+          return (
+            <motion.div
+              key={item.title}
+              className="relative"
+              whileHover={{ x: isOpen ? 4 : 0, scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+              onMouseEnter={() => !isOpen && setHoveredMenu(item.title)}
+              onMouseLeave={() => !isOpen && setHoveredMenu(null)}
+            >
+              <Link
+                href={item.href}
+                title={!isOpen ? item.title : undefined}
+                className={`relative flex items-center rounded-xl transition-all overflow-hidden
+                ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="activeInstituteSidebarGlow"
+                    className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg} border-2 ${item.border} shadow-lg`}
+                  />
+                )}
+
+                {iconBox}
+
+                {isOpen && (
+                  <span
+                    className={`relative z-10 text-sm font-bold ${
+                      active ? item.text : "text-slate-700"
+                    }`}
+                  >
+                    {item.title}
+                  </span>
+                )}
+              </Link>
+
+              <AnimatePresence>
+                {!isOpen && hoveredMenu === item.title && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-lg bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 shadow-lg z-50"
+                  >
+                    {item.title}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
 
+      {/* Bottom Footer Section */}
       <div
-        className={`relative z-10 pt-5 border-t border-slate-100 ${
+        className={`relative z-10 pt-4 shrink-0 border-t border-slate-100 ${
           isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
         }`}
       >

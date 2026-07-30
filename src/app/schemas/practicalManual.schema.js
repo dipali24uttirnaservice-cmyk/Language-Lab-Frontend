@@ -20,29 +20,49 @@ export const questionSchema = Yup.object({
 });
 
 
-/**
- * Create Schema
- */
-export const createPracticalManualSchema = Yup.object({
 
+ 
+
+export const createPracticalManualSchema = Yup.object({
   title: Yup.string()
     .trim()
     .required(REQUIRED),
 
   course_id: Yup.string()
-    .trim()
     .required(REQUIRED),
 
   topic_id: Yup.string()
-    .trim()
-    .nullable()
-    .notRequired(),
-
-  questions: Yup.array()
-    .of(questionSchema)
-    .min(1, REQUIRED)
     .required(REQUIRED),
 
+  attachment: Yup.mixed()
+    .required(REQUIRED),
+
+  questions: Yup.array()
+    .min(1, REQUIRED)
+    .of(
+      Yup.object({
+        question_text: Yup.string()
+          .trim()
+          .required(REQUIRED),
+
+        answer_key_html: Yup.string()
+          .test(
+            "answer-required",
+            REQUIRED,
+            (value) => {
+              if (!value) return false;
+
+              return value
+                .replace(/<[^>]*>/g, "")
+                .trim()
+                .length > 0;
+            }
+          ),
+
+        answer_lines: Yup.number()
+          .required(REQUIRED)
+      })
+    )
 });
 
 
