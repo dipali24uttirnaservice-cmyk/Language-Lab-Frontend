@@ -12,6 +12,13 @@ export const taskApi = {
       },
     }),
 
+  updateTask: (id, formData) =>
+    api.put(`/task/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+
   deleteTask: (id) => api.delete(`/task/${id}`),
 
   getSubmissions: (id) => api.get(`/task/${id}/submissions`),
