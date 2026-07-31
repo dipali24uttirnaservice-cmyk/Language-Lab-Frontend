@@ -49,24 +49,23 @@ export default function PracticalManualPage() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10
+    limit: 10,
   });
 
   // View Modal State
   const [showViewModal, setShowViewModal] = useState(false);
 
- const [deleteModal, setDeleteModal] = useState({
-  open: false,
-  id: null,
-});
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    id: null,
+  });
 
-const [statusData, setStatusData] = useState({
-  open: false,
-  type: "",
-  title: "",
-  message: "",
-});
-
+  const [statusData, setStatusData] = useState({
+    open: false,
+    type: "",
+    title: "",
+    message: "",
+  });
 
   // =========================
   // FETCH LIST
@@ -90,7 +89,7 @@ const [statusData, setStatusData] = useState({
       setPagination({
         total: data?.total || list.length,
         page: data?.page || page,
-        limit: data?.limit || limit
+        limit: data?.limit || limit,
       });
     } catch (error) {
       console.log("Fetch practical error", error);
@@ -119,7 +118,9 @@ const [statusData, setStatusData] = useState({
     setFilterTopicsLoading(true);
     topicApi
       .getTopics(filterCourseId)
-      .then((res) => setFilterTopics(res.data?.data?.topics || res.data?.data || []))
+      .then((res) =>
+        setFilterTopics(res.data?.data?.topics || res.data?.data || []),
+      )
       .catch((error) => {
         console.error("Get Topics Error:", error);
         setFilterTopics([]);
@@ -146,50 +147,49 @@ const [statusData, setStatusData] = useState({
     }
   };
 
- const handleDeleteManual = (id) => {
-  setDeleteModal({
-    open: true,
-    id,
-  });
-};
-
-const confirmDelete = async () => {
-  try {
-    await deletePracticalManual(deleteModal.id);
-
+  const handleDeleteManual = (id) => {
     setDeleteModal({
-      open: false,
-      id: null,
-    });
-
-    await fetchManuals();
-
-    setStatusData({
       open: true,
-      type: "success",
-      title: "Deleted Successfully",
-      message: "Practical manual deleted successfully.",
+      id,
     });
+  };
 
-  } catch (error) {
-    console.log(error);
+  const confirmDelete = async () => {
+    try {
+      await deletePracticalManual(deleteModal.id);
 
-    setDeleteModal({
-      open: false,
-      id: null,
-    });
+      setDeleteModal({
+        open: false,
+        id: null,
+      });
 
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Delete Failed",
-      message: "Failed to delete practical manual.",
-    });
-  }
-};
+      await fetchManuals();
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Deleted Successfully",
+        message: "Practical manual deleted successfully.",
+      });
+    } catch (error) {
+      console.log(error);
+
+      setDeleteModal({
+        open: false,
+        id: null,
+      });
+
+      setStatusData({
+        open: true,
+        type: "error",
+        title: "Delete Failed",
+        message: "Failed to delete practical manual.",
+      });
+    }
+  };
 
   const filteredManuals = manuals.filter((item) =>
-    item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    item.title?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -204,14 +204,17 @@ const confirmDelete = async () => {
             Practical <span className="text-orange-600">Manuals</span>
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Manage practical curriculum, modules, and assignment questions efficiently.
+            Manage practical curriculum, modules, and assignment questions
+            efficiently.
           </p>
         </div>
 
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => router.push("/institute-dashboard/practical-manual/create")}
+          onClick={() =>
+            router.push("/institute-dashboard/practical-manual/create")
+          }
           className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-orange-500/10 border-b-2 border-orange-700 active:scale-95 flex items-center gap-2 justify-center transition-all"
         >
           <Plus className="w-5 h-5" />
@@ -238,7 +241,9 @@ const confirmDelete = async () => {
         >
           <option value="">All Courses</option>
           {filterCourses.map((c) => (
-            <option key={c._id} value={c._id}>{c.course_name}</option>
+            <option key={c._id} value={c._id}>
+              {c.course_name}
+            </option>
           ))}
         </select>
 
@@ -249,10 +254,16 @@ const confirmDelete = async () => {
           className="px-4 py-3 rounded-xl border border-orange-300 bg-white text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm min-w-42.5 cursor-pointer disabled:opacity-60"
         >
           <option value="">
-            {!filterCourseId ? "All Topics" : filterTopicsLoading ? "Loading..." : "All Topics"}
+            {!filterCourseId
+              ? "All Topics"
+              : filterTopicsLoading
+                ? "Loading..."
+                : "All Topics"}
           </option>
           {filterTopics.map((t) => (
-            <option key={t._id} value={t._id}>{t.title}</option>
+            <option key={t._id} value={t._id}>
+              {t.title}
+            </option>
           ))}
         </select>
 
@@ -337,37 +348,49 @@ const confirmDelete = async () => {
 
                       <td className="p-4 pr-6">
                         <div className="flex items-center justify-center gap-2">
-                         <button
-  onClick={() => router.push(`/institute-dashboard/practical-manual/view/${manual._id}`)}
-  className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-  title="View Manual"
->
-  <Eye className="w-4 h-4" />
-</button>
-
-                       <button
-  onClick={() => router.push(`/institute-dashboard/practical-manual/submissions/${manual._id}`)}
-  className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-  title="View Submissions"
->
-  <Send className="w-4 h-4" />
-</button>
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/practical-manual/view/${manual._id}`,
+                              )
+                            }
+                            className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            title="View Manual"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
 
                           <button
-                            onClick={() => router.push(`/institute-dashboard/practical-manual/${manual._id}`)}
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/practical-manual/submissions/${manual._id}`,
+                              )
+                            }
+                            className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                            title="View Submissions"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/practical-manual/${manual._id}`,
+                              )
+                            }
                             className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
                             title="Edit Manual"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
 
-                        <button
-  onClick={() => handleDeleteManual(manual._id)}
-  className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
-  title="Delete Manual"
->
-  <Trash2 className="w-4 h-4" />
-</button>
+                          <button
+                            onClick={() => handleDeleteManual(manual._id)}
+                            className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                            title="Delete Manual"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </motion.tr>
@@ -375,7 +398,10 @@ const confirmDelete = async () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-20 text-slate-400 font-medium">
+                  <td
+                    colSpan="6"
+                    className="text-center py-20 text-slate-400 font-medium"
+                  >
                     No practical manuals found matching your search.
                   </td>
                 </tr>
@@ -384,37 +410,35 @@ const confirmDelete = async () => {
           </table>
         </div>
         <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() =>
-    setStatusData({
-      open: false,
-      type: "",
-      title: "",
-      message: "",
-    })
-  }
-/>
+          open={statusData.open}
+          type={statusData.type}
+          title={statusData.title}
+          message={statusData.message}
+          onClose={() =>
+            setStatusData({
+              open: false,
+              type: "",
+              title: "",
+              message: "",
+            })
+          }
+        />
 
-<ConfirmModal
-  open={deleteModal.open}
-  onClose={() =>
-    setDeleteModal({
-      open: false,
-      id: null,
-    })
-  }
-  onConfirm={confirmDelete}
-  title="Delete Practical Manual"
-  message="Are you sure you want to delete this practical manual?"
-  confirmText="Delete"
-  cancelText="Cancel"
-/>
+        <ConfirmModal
+          open={deleteModal.open}
+          onClose={() =>
+            setDeleteModal({
+              open: false,
+              id: null,
+            })
+          }
+          onConfirm={confirmDelete}
+          title="Delete Practical Manual"
+          message="Are you sure you want to delete this practical manual?"
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
-
-
     </div>
   );
 }

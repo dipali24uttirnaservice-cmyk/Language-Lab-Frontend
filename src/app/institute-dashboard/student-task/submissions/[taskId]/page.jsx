@@ -2,25 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Loader2,
-  FileText,
-  ExternalLink,
-} from "lucide-react";
-import {
-  practicalManualDetail,
-  getPracticalSubmissions,
-  gradePracticalSubmission,
-} from "@/services/practical-Manual/page.jsx";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { taskApi } from "@/services/task/taskApi";
 
-export default function PracticalSubmissionsPage() {
+export default function StudentTaskSubmissionsPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.submissionId;
+  const id = params?.taskId || params?.id;
 
-  const [manual, setManual] = useState(null);
+  const [task, setTask] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,18 +19,18 @@ export default function PracticalSubmissionsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [manualRes, subRes] = await Promise.all([
-          practicalManualDetail(id),
-          getPracticalSubmissions(id),
+        const [taskRes, subRes] = await Promise.all([
+          taskApi.getTaskById(id),
+          taskApi.getSubmissions(id)
         ]);
 
-        const manualData = manualRes?.data || manualRes;
-        setManual(manualData?.data || manualData);
+        const taskData = taskRes?.data || taskRes;
+        setTask(taskData?.data || taskData);
 
         const subData = subRes?.data?.data || subRes?.data;
         setSubmissions(subData?.submissions || []);
       } catch (error) {
-        console.error("Failed to fetch submissions data:", error);
+        console.error("Failed to fetch task submissions data:", error);
       } finally {
         setLoading(false);
       }
@@ -50,15 +40,15 @@ export default function PracticalSubmissionsPage() {
 
   const handleGradeSubmission = async (submissionId, marks, feedback) => {
     try {
-      await gradePracticalSubmission(id, submissionId, {
+      await taskApi.gradeSubmission(id, submissionId, {
         marks: marks === "" ? undefined : Number(marks),
         feedback,
       });
-      const response = await getPracticalSubmissions(id);
+      const response = await taskApi.getSubmissions(id);
       const data = response?.data?.data || response?.data;
       setSubmissions(data?.submissions || []);
     } catch (error) {
-      console.error("Grade Practical Submission Error:", error);
+      console.error("Grade Task Submission Error:", error);
     }
   };
 
@@ -78,11 +68,8 @@ export default function PracticalSubmissionsPage() {
           onClick={() => router.back()}
           className="group inline-flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition-all bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200"
         >
-          <ArrowLeft
-            size={16}
-            className="transition-transform group-hover:-translate-x-1"
-          />
-          Back to Manuals
+          <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+          Back to Tasks
         </button>
       </div>
 
@@ -93,11 +80,10 @@ export default function PracticalSubmissionsPage() {
             Student Submissions
           </span>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mt-1.5">
-            {manual?.title}
+            {task?.title}
           </h1>
           <p className="text-xs text-slate-400 font-medium">
-            {submissions.length} student submission
-            {submissions.length === 1 ? "" : "s"} found
+            {submissions.length} student submission{submissions.length === 1 ? "" : "s"} found
           </p>
         </div>
 
@@ -108,13 +94,11 @@ export default function PracticalSubmissionsPage() {
             </div>
           ) : (
             submissions.map((sub) => (
-              <PracticalSubmissionRow
+              <TaskSubmissionRow
                 key={sub._id}
                 submission={sub}
-                questions={manual?.questions || []}
-                onGrade={(marks, feedback) =>
-                  handleGradeSubmission(sub._id, marks, feedback)
-                }
+                questions={task?.questions || []}
+                onGrade={(marks, feedback) => handleGradeSubmission(sub._id, marks, feedback)}
               />
             ))
           )}
@@ -124,26 +108,17 @@ export default function PracticalSubmissionsPage() {
   );
 }
 
-const STATUS_LABELS = {
-  draft: "Open Solution",
-  submitted: "Submitted",
-  reviewed: "Reviewed",
-};
-
-function PracticalSubmissionRow({ submission, questions, onGrade }) {
-  const [marks, setMarks] = useState(submission.marks ?? "");
+function TaskSubmissionRow({ submission, questions, onGrade }) {
+  const [marks, setMarks] = useState(submission.grade ?? submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
 
-  // Map answers both by question_id and fallback index order
-  const answerByQuestionId = {};
+  // Map answers by question_index correctly matching the data payload structure
   const answerByIndex = {};
-
-  (submission.answers || []).forEach((a, index) => {
-    if (a.question_id) {
-      answerByQuestionId[a.question_id] = a.answer_html;
+  (submission.answers || []).forEach((a) => {
+    if (a.question_index !== undefined) {
+      answerByIndex[a.question_index] = a.given_answer;
     }
-    answerByIndex[index] = a.answer_html;
   });
 
   return (
@@ -155,54 +130,35 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
           </p>
           <p className="text-xs text-slate-400">
             {submission.student_id?.enrollment_no} ·{" "}
-            <span className="font-semibold text-slate-500 uppercase">
-              {STATUS_LABELS[submission.status] || submission.status}
-            </span>
+            <span className="font-semibold text-slate-500 uppercase">{submission.status}</span>
           </p>
         </div>
-        {isFileSolution ? (
-          submission.attachment_url && (
-            <a
-              href={submission.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
-            >
-              <FileText size={13} /> Open Submitted PDF{" "}
-              <ExternalLink size={12} />
-            </a>
-          )
-        ) : (
-          <button
-            type="button"
-            onClick={() => setExpanded((prev) => !prev)}
-            className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
-          >
-            {expanded ? "Hide solution" : "View solution"}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+        >
+          {expanded ? "Hide answers" : "View answers"}
+        </button>
       </div>
 
-      {expanded && !isFileSolution && (
+      {expanded && (
         <div className="space-y-2 pt-1">
           {questions.map((q, idx) => {
-            // Checks ID first, then falls back to array index matching
-            const htmlContent = answerByQuestionId[q._id] || answerByIndex[idx];
+            const givenAnswer = answerByIndex[idx];
 
             return (
-              <div
-                key={q._id || idx}
-                className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner"
-              >
+              <div key={q._id || idx} className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner">
                 <p className="text-xs font-bold text-slate-800 mb-1.5">
                   {idx + 1}. {q.question_text}
                 </p>
-                <div
-                  className="text-xs text-slate-600 leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: htmlContent || "<em>No answer given.</em>",
-                  }}
-                />
+                <div className="text-xs text-slate-600 leading-relaxed">
+                  {givenAnswer ? (
+                    <span className="font-medium text-slate-700">{givenAnswer}</span>
+                  ) : (
+                    <em className="text-slate-400">No answer given.</em>
+                  )}
+                </div>
               </div>
             );
           })}
