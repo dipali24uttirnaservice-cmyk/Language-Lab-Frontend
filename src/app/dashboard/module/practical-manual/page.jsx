@@ -19,6 +19,9 @@ import {
   Award,
   FileText,
   RotateCcw,
+  UploadCloud,
+  ExternalLink,
+  X,
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
@@ -69,7 +72,7 @@ function PracticalRow({ manual, onSelect, disabled }) {
   const submission = manual.my_submission;
   const status = submission?.status;
 
-  const eyebrow = status === "reviewed" ? "Reviewed" : status === "submitted" ? "Submitted" : "Not Started";
+  const eyebrow = status === "reviewed" ? "Reviewed" : status === "submitted" ? "Submitted" : "Open Solution";
   const eyebrowClass =
     status === "reviewed"
       ? "bg-emerald-50 text-emerald-600 border-emerald-100"
@@ -293,6 +296,11 @@ export default function StudentPracticalManualPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // Solution type is chosen once for the whole practical, not per question.
+  const [solutionType, setSolutionType] = useState("text");
+  const [solutionFile, setSolutionFile] = useState(null);
+  const [existingAttachmentUrl, setExistingAttachmentUrl] = useState(null);
+
   useEffect(() => {
     const params = {};
     if (topicId) params.topicId = topicId;
@@ -335,6 +343,9 @@ export default function StudentPracticalManualPage() {
       setAnswers(prefilled);
       setSubmitted(mySubmission?.status === "submitted" || mySubmission?.status === "reviewed");
       setSubmitError("");
+      setSolutionType(mySubmission?.solution_type || "text");
+      setSolutionFile(null);
+      setExistingAttachmentUrl(mySubmission?.attachment_url || null);
     } catch (error) {
       console.error("Get Practical Detail Error:", error);
     } finally {
@@ -361,14 +372,27 @@ export default function StudentPracticalManualPage() {
   const submitManual = async () => {
     if (!selectedManual) return;
     setSubmitError("");
+
+    if (solutionType === "file" && !solutionFile && !existingAttachmentUrl) {
+      setSubmitError("Please upload a PDF solution file before submitting.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const payload = selectedManual.questions.map((q, idx) => ({
-        question_id: q._id,
-        answer_html: answers[idx] || "",
-      }));
       const formData = new FormData();
-      formData.append("answers", JSON.stringify(payload));
+      formData.append("solution_type", solutionType);
+
+      if (solutionType === "file") {
+        if (solutionFile) formData.append("practicalSubmissionAttachment", solutionFile);
+      } else {
+        const payload = selectedManual.questions.map((q, idx) => ({
+          question_id: q._id,
+          answer_html: answers[idx] || "",
+        }));
+        formData.append("answers", JSON.stringify(payload));
+      }
+
       await studentPracticalApi.submit(selectedManual._id, formData);
       setSubmitted(true);
     } catch (error) {
@@ -436,9 +460,21 @@ export default function StudentPracticalManualPage() {
 
   const manuals = selectedManual.questions;
   const currentQuestion = manuals[current];
-  const completedCount = Object.values(answers).filter((val) => val?.trim()).length;
+  const hasFileSolution = !!(solutionFile || existingAttachmentUrl);
+  const completedCount =
+    solutionType === "file"
+      ? hasFileSolution
+        ? manuals.length
+        : 0
+      : Object.values(answers).filter((val) => val?.trim()).length;
   const progressPct = (completedCount / manuals.length) * 100;
   const allAttempted = completedCount === manuals.length;
+  // Feeds QuestionDots/Sidebar's per-question "answered" indicator — in file
+  // mode there's one solution for the whole practical, not per question.
+  const dotsAnswers =
+    solutionType === "file"
+      ? Object.fromEntries(manuals.map((_, idx) => [idx, hasFileSolution ? "1" : ""]))
+      : answers;
 
   /* ==========================================================
      SUBMITTED SUCCESS STATE
@@ -457,7 +493,7 @@ export default function StudentPracticalManualPage() {
           </div>
           <h1 className="mt-6 text-2xl font-black text-slate-800">Practical Submitted!</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Your instructor will review your submitted practical manual answers.
+            Your instructor will review your submitted practical manual solution.
           </p>
           <button
             onClick={() => {
@@ -501,7 +537,7 @@ export default function StudentPracticalManualPage() {
       <Sidebar
         manuals={manuals}
         current={current}
-        answers={answers}
+        answers={dotsAnswers}
         setCurrent={setCurrent}
         search={search}
         setSearch={setSearch}
@@ -533,9 +569,35 @@ export default function StudentPracticalManualPage() {
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
                     Question {current + 1} of {manuals.length}
                   </span>
-                  <QuestionDots total={manuals.length} current={current} answers={answers} />
+                  <QuestionDots total={manuals.length} current={current} answers={dotsAnswers} />
                 </div>
                 <ProgressBar value={progressPct} />
+              </div>
+
+              {/* SOLUTION TYPE TOGGLE — applies to the whole practical, not per question */}
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 p-1.5 w-fit">
+                <button
+                  type="button"
+                  onClick={() => setSolutionType("text")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    solutionType === "text"
+                      ? "bg-white text-orange-600 shadow-sm border border-orange-100"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  Paragraph / Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSolutionType("file")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    solutionType === "file"
+                      ? "bg-white text-orange-600 shadow-sm border border-orange-100"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  File Upload
+                </button>
               </div>
 
               {allAttempted && (
@@ -576,28 +638,92 @@ export default function StudentPracticalManualPage() {
                     )}
                   </div>
 
-                  {/* Instruction Box */}
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Suggested Length
-                    </h3>
-                    <p className="text-slate-700 font-medium text-sm leading-relaxed">
-                      Write approximately {currentQuestion.answer_lines} lines for this answer.
-                    </p>
-                  </div>
+                  {solutionType === "text" ? (
+                    <>
+                      {/* Instruction Box */}
+                      <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Suggested Length
+                        </h3>
+                        <p className="text-slate-700 font-medium text-sm leading-relaxed">
+                          Write approximately {currentQuestion.answer_lines} lines for this solution.
+                        </p>
+                      </div>
 
-                  {/* RICH TEXT ANSWER FIELD */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      Your Answer
-                    </label>
-                    <RichTextEditor
-                      value={answers[current] || ""}
-                      onChange={saveAnswer}
-                      placeholder="Type your detailed solution here..."
-                      minHeight={250}
-                    />
-                  </div>
+                      {/* RICH TEXT SOLUTION FIELD */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                          Your Solution
+                        </label>
+                        <RichTextEditor
+                          value={answers[current] || ""}
+                          onChange={saveAnswer}
+                          placeholder="Type your detailed solution here..."
+                          minHeight={250}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    /* FILE UPLOAD SOLUTION — one file covers the whole practical */
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                        Your Solution (PDF)
+                      </label>
+                      <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/40 p-6 text-center space-y-3">
+                        {solutionFile ? (
+                          <div className="flex items-center justify-between gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200 text-left">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="w-5 h-5 text-orange-500 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-700 truncate">
+                                {solutionFile.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSolutionFile(null)}
+                              className="text-slate-400 hover:text-rose-500 shrink-0"
+                              title="Remove selected file"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : existingAttachmentUrl ? (
+                          <div className="flex items-center justify-between gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200 text-left">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="w-5 h-5 text-emerald-500 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-700">
+                                A solution PDF is already submitted.
+                              </span>
+                            </div>
+                            <a
+                              href={existingAttachmentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:underline shrink-0"
+                            >
+                              Open PDF <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        ) : (
+                          <UploadCloud className="w-8 h-8 text-orange-300 mx-auto" />
+                        )}
+
+                        <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-orange-300 text-orange-600 font-bold text-xs cursor-pointer hover:bg-orange-50 transition-all">
+                          <UploadCloud size={14} />
+                          {existingAttachmentUrl || solutionFile ? "Replace PDF" : "Choose PDF"}
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            className="hidden"
+                            onChange={(e) => setSolutionFile(e.target.files?.[0] || null)}
+                          />
+                        </label>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          Upload a single PDF covering your solution for all questions in this practical (max 10 MB).
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* BOTTOM ACTION NAVIGATION */}
                   <div className="flex items-center justify-between pt-6 border-t border-slate-200">

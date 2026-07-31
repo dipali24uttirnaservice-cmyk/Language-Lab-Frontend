@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, FileText, ExternalLink } from "lucide-react";
 import { 
   practicalManualDetail, 
   getPracticalSubmissions, 
@@ -112,10 +112,18 @@ export default function PracticalSubmissionsPage() {
   );
 }
 
+const STATUS_LABELS = {
+  draft: "Open Solution",
+  submitted: "Submitted",
+  reviewed: "Reviewed",
+};
+
 function PracticalSubmissionRow({ submission, questions, onGrade }) {
   const [marks, setMarks] = useState(submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
+
+  const isFileSolution = submission.solution_type === "file";
 
   const answerByQuestionId = {};
   (submission.answers || []).forEach((a) => {
@@ -131,19 +139,34 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
           </p>
           <p className="text-xs text-slate-400">
             {submission.student_id?.enrollment_no} ·{" "}
-            <span className="font-semibold text-slate-500 uppercase">{submission.status}</span>
+            <span className="font-semibold text-slate-500 uppercase">
+              {STATUS_LABELS[submission.status] || submission.status}
+            </span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setExpanded((prev) => !prev)}
-          className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
-        >
-          {expanded ? "Hide answers" : "View answers"}
-        </button>
+        {isFileSolution ? (
+          submission.attachment_url && (
+            <a
+              href={submission.attachment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+            >
+              <FileText size={13} /> Open Submitted PDF <ExternalLink size={12} />
+            </a>
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+          >
+            {expanded ? "Hide solution" : "View solution"}
+          </button>
+        )}
       </div>
 
-      {expanded && (
+      {expanded && !isFileSolution && (
         <div className="space-y-2 pt-1">
           {questions.map((q, idx) => (
             <div key={q._id} className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner">
@@ -153,7 +176,7 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
               <div
                 className="text-xs text-slate-600 leading-relaxed"
                 dangerouslySetInnerHTML={{
-                  __html: answerByQuestionId[q._id] || "<em>No answer given.</em>",
+                  __html: answerByQuestionId[q._id] || "<em>No solution given.</em>",
                 }}
               />
             </div>

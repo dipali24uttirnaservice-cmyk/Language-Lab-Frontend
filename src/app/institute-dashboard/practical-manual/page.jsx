@@ -14,15 +14,12 @@ import {
   FileText,
   RefreshCw,
   Send,
-  CheckCircle2,
 } from "lucide-react";
 
 import {
   practicalManualList,
   practicalManualDetail,
   deletePracticalManual,
-  getPracticalSubmissions,
-  gradePracticalSubmission,
 } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
@@ -58,11 +55,6 @@ export default function PracticalManualPage() {
   // View Modal State
   const [showViewModal, setShowViewModal] = useState(false);
 
-  // Submissions Modal State
-  const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
-  const [submissionsManual, setSubmissionsManual] = useState(null);
-  const [submissions, setSubmissions] = useState([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
  const [deleteModal, setDeleteModal] = useState({
   open: false,
   id: null,
@@ -151,36 +143,6 @@ const [statusData, setStatusData] = useState({
       console.log(error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const openSubmissionsModal = async (manual) => {
-    setSubmissionsManual(manual);
-    setShowSubmissionsModal(true);
-    setSubmissionsLoading(true);
-    try {
-      const response = await getPracticalSubmissions(manual._id);
-      const data = response?.data?.data || response?.data;
-      setSubmissions(data?.submissions || []);
-    } catch (error) {
-      console.error("Get Practical Submissions Error:", error);
-      setSubmissions([]);
-    } finally {
-      setSubmissionsLoading(false);
-    }
-  };
-
-  const handleGradeSubmission = async (submissionId, marks, feedback) => {
-    try {
-      await gradePracticalSubmission(submissionsManual._id, submissionId, {
-        marks: marks === "" ? undefined : Number(marks),
-        feedback,
-      });
-      const response = await getPracticalSubmissions(submissionsManual._id);
-      const data = response?.data?.data || response?.data;
-      setSubmissions(data?.submissions || []);
-    } catch (error) {
-      console.error("Grade Practical Submission Error:", error);
     }
   };
 
@@ -452,84 +414,7 @@ const confirmDelete = async () => {
 />
       </div>
 
-    
-    </div>
-  );
-}
 
-function PracticalSubmissionRow({ submission, questions, onGrade }) {
-  const [marks, setMarks] = useState(submission.marks ?? "");
-  const [feedback, setFeedback] = useState(submission.feedback ?? "");
-  const [expanded, setExpanded] = useState(false);
-
-  const answerByQuestionId = {};
-  (submission.answers || []).forEach((a) => {
-    answerByQuestionId[a.question_id] = a.answer_html;
-  });
-
-  return (
-    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-800 truncate">
-            {submission.student_id?.full_name || "Unknown student"}
-          </p>
-          <p className="text-xs text-slate-400">
-            {submission.student_id?.enrollment_no} ·{" "}
-            <span className="font-semibold text-slate-500">{submission.status}</span>
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setExpanded((prev) => !prev)}
-          className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto"
-        >
-          {expanded ? "Hide answers" : "View answers"}
-        </button>
-      </div>
-
-      {expanded && (
-        <div className="space-y-2 pt-1">
-          {questions.map((q, idx) => (
-            <div key={q._id} className="bg-white rounded-xl p-3 border border-slate-100">
-              <p className="text-xs font-bold text-slate-700 mb-1">
-                {idx + 1}. {q.question_text}
-              </p>
-              <div
-                className="text-xs text-slate-600"
-                dangerouslySetInnerHTML={{
-                  __html: answerByQuestionId[q._id] || "<em>No answer given.</em>",
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="number"
-          placeholder="Marks"
-          value={marks}
-          onChange={(e) => setMarks(e.target.value)}
-          className="w-full sm:w-24 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium"
-        />
-        <input
-          type="text"
-          placeholder="Feedback"
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium"
-        />
-        <button
-          type="button"
-          onClick={() => onGrade(marks, feedback)}
-          className="px-4 py-2 rounded-lg bg-orange-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"
-        >
-          <CheckCircle2 className="w-3.5 h-3.5" /> Save
-        </button>
-      </div>
-     
     </div>
   );
 }

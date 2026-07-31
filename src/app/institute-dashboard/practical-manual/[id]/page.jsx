@@ -406,7 +406,7 @@ export default function PracticalManualFormPage() {
 
                   <div className="max-w-40">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                      Answer Lines
+                      Solution Lines
                     </label>
 
                     <input
