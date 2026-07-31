@@ -108,7 +108,7 @@ console.log("Type:", type);
   return (
 
     
-   <div className="relative min-h-screen overflow-hidden p-2">
+   <div className="relative min-h-screen overflow-hidden p-6">
 {/* ================================================= */}
 {/* PREMIUM 3D ANIMATED BACKGROUND */}
 {/* ================================================= */}

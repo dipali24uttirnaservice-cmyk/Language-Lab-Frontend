@@ -1394,34 +1394,50 @@ export default function ExercisePage() {
   const [showReview, setShowReview] = useState(false);
 
   const containerRef = useRef(null);
-const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-useEffect(() => {
-  const handleFullscreenChange = () => {
-    setIsFullscreen(!!document.fullscreenElement);
-  };
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
-  document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
-  return () => {
-    document.removeEventListener(
-      "fullscreenchange",
-      handleFullscreenChange
-    );
-  };
-}, []);
+    return () => {
+      document.removeEventListener(
+        "fullscreenchange",
+        handleFullscreenChange
+      );
+    };
+  }, []);
 
-const enterFullscreen = async () => {
+ const enterFullscreen = async () => {
   if (containerRef.current?.requestFullscreen) {
-    await containerRef.current.requestFullscreen();
+    try {
+      await containerRef.current.requestFullscreen();
+    } catch (err) {
+      // Safely catches the browser's automatic restriction error without spamming the console
+      console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+    }
   }
 };
 
-const exitFullscreen = async () => {
-  if (document.fullscreenElement) {
-    await document.exitFullscreen();
-  }
-};
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically enter fullscreen on mount (once loading finishes or data is ready)
+  useEffect(() => {
+    if (!loading && selectedExercise && !isFullscreen) {
+      enterFullscreen();
+    }
+  }, [loading, selectedExercise]);
 
   useEffect(() => {
     fetchExercise();
@@ -1503,21 +1519,23 @@ const exitFullscreen = async () => {
   };
 
   if (loading) return <LoadingScreen />;
-if (!selectedExercise) {
+  if (!selectedExercise) {
+    return (
+      <EmptyState
+        scopedToLesson={Boolean(contentModuleId)}
+        onBack={() => router.back()}
+      />
+    );
+  }
+
   return (
-    <EmptyState
-      scopedToLesson={Boolean(contentModuleId)}
-      onBack={() => router.back()}
-    />
-  );
-}
-  return (
- <div
-    ref={containerRef}
-    className={`flex bg-slate-50 overflow-hidden ${
-      isFullscreen ? "h-screen w-screen" : "h-screen"
-    }`}
-  >      <ExerciseSidebar
+    <div
+      ref={containerRef}
+      className={`flex bg-slate-50 overflow-hidden ${
+        isFullscreen ? "h-screen w-screen" : "h-screen"
+      }`}
+    >     
+      <ExerciseSidebar
         exercises={exercises}
         selectedExercise={selectedExercise}
         onSelect={setSelectedExercise}
@@ -1526,21 +1544,21 @@ if (!selectedExercise) {
         scopedToLesson={Boolean(contentModuleId)}
       />
 
-      
       <div className="flex-1 overflow-y-auto w-full relative p-6 md:p-8">
-      <div className="sticky top-0 z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm">
-  <button
-    onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
-    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-  >
-    {isFullscreen ? (
-      <Minimize2 size={18} />
-    ) : (
-      <Maximize2 size={18} />
-    )}
-  </button>
-</div>
+        <div className="sticky top-0 z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm">
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize2 size={18} />
+            ) : (
+              <Maximize2 size={18} />
+            )}
+          </button>
+        </div>
+
         <ExerciseDetail
           selectedModule={selectedExercise}
           isQuizActive={isQuizActive}
