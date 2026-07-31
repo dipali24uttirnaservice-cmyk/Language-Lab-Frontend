@@ -437,13 +437,13 @@ export default function PracticalManualFormPage() {
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
-            >
-              Cancel
-            </button>
+           <button
+  type="button"
+  onClick={() => router.push("/institute-dashboard/practical-manual")}
+  className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
+>
+  Cancel
+</button>
 
             <motion.button
               type="submit"

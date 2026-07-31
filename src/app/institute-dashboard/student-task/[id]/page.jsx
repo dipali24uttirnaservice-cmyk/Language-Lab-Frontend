@@ -717,7 +717,7 @@ const handleSubmit = async (e) => {
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => router.push("/student-task")}
+              onClick={() =>  router.push("/institute-dashboard/student-task")}
               className="px-5 py-2.5 rounded-xl border border-orange-300 text-orange-700 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
             >
               Cancel
