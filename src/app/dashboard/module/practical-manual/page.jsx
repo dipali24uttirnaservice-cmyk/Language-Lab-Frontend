@@ -313,6 +313,33 @@ export default function StudentPracticalManualPage() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+      }
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically trigger fullscreen on mount / container availability
+  useEffect(() => {
+    if (!isFullscreen && containerRef.current) {
+      enterFullscreen();
+    }
+  }, [selectedManual]);
+
   const handleStartManual = useCallback(async (manual) => {
     setDetailLoading(true);
     try {
@@ -341,18 +368,6 @@ export default function StudentPracticalManualPage() {
       setDetailLoading(false);
     }
   }, []);
-
-  const enterFullscreen = async () => {
-    if (containerRef.current?.requestFullscreen) {
-      await containerRef.current.requestFullscreen();
-    }
-  };
-
-  const exitFullscreen = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    }
-  };
 
   const saveAnswer = (data) => {
     setAnswers((prev) => ({ ...prev, [current]: data }));
@@ -386,7 +401,7 @@ export default function StudentPracticalManualPage() {
   ========================================================== */
   if (!selectedManual) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-amber-50/20 p-6 md:p-8">
+      <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-amber-50/20 p-6 md:p-8">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Top Bar */}
           <div className="flex items-center justify-between">
@@ -397,9 +412,18 @@ export default function StudentPracticalManualPage() {
               <ArrowLeft size={18} />
               Back
             </button>
-            <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
-              <BookOpen size={16} />
-              {manualsList.length} Practical Manuals
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
+                <BookOpen size={16} />
+                {manualsList.length} Practical Manuals
+              </div>
+              <button
+                onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
             </div>
           </div>
 
@@ -443,32 +467,91 @@ export default function StudentPracticalManualPage() {
   /* ==========================================================
      SUBMITTED SUCCESS STATE
   ========================================================== */
+ /* ==========================================================
+     SUBMITTED SUCCESS / REVIEW STATE (LIST OF QUESTIONS & ANSWERS) - FULL WIDTH
+  ========================================================== */
   if (submitted) {
     return (
-      <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl p-10 text-center max-w-md w-full border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.15)] relative overflow-hidden"
-        >
-          <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
-          <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-            <CheckCircle2 size={44} />
+      <div ref={containerRef} className="min-h-screen w-full bg-slate-50 p-6 md:p-8 overflow-y-auto custom-main-scroll">
+        <div className="w-full space-y-6">
+          {/* Top Banner Header */}
+          <div className="bg-white rounded-3xl p-8 border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.10)] relative overflow-hidden flex items-center justify-between">
+            <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
+                <CheckCircle2 size={28} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-slate-800">Practical Submitted Successfully</h1>
+                <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                  Manual ID: <span className="font-mono text-slate-600">{selectedManual._id}</span>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedManual(null);
+                setSubmitted(false);
+              }}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
+            >
+              Back to Manuals List
+            </button>
           </div>
-          <h1 className="mt-6 text-2xl font-black text-slate-800">Practical Submitted!</h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Your instructor will review your submitted practical manual answers.
-          </p>
-          <button
-            onClick={() => {
-              setSelectedManual(null);
-              setSubmitted(false);
-            }}
-            className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition"
-          >
-            Back to Manuals List
-          </button>
-        </motion.div>
+
+          {/* List of Attempted Questions and Answers */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider px-1">
+              Attempted Questions & Answers ({manuals.length})
+            </h2>
+
+            {manuals.map((q, idx) => {
+              const studentAnswer = answers[idx] || "<p class='text-slate-400 italic'>No answer provided.</p>";
+              return (
+                <div
+                  key={q._id}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-sm w-full"
+                >
+                  {/* Question Info Header */}
+                  <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wide">
+                        Question {idx + 1}
+                      </span>
+                      <p className="text-xs font-mono text-slate-400">
+                        ID: <span className="text-slate-600">{q._id}</span>
+                      </p>
+                    </div>
+                    {q.marks > 0 && (
+                      <span className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg px-2.5 py-1 text-xs font-bold shrink-0">
+                        {q.marks} Marks
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Question Text */}
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Question Text</h3>
+                    <p className="text-slate-800 font-semibold text-sm leading-relaxed">
+                      {q.question_text}
+                    </p>
+                  </div>
+
+                  {/* Submitted Answer Display */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                      Your Answer
+                    </span>
+                    <div 
+                      className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-700 text-sm leading-relaxed prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: studentAnswer }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }

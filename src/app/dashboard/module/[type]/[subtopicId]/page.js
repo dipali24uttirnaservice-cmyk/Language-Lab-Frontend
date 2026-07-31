@@ -159,15 +159,7 @@ function buildPracticeUrl(selectedModule) {
     )}`;
 }
 
-function buildonPracticalManualUrl(selectedModule, searchParams) {
-    const params = new URLSearchParams();
-    if (selectedModule?.topic_id?._id) params.set("topicId", selectedModule.topic_id._id);
-    const courseId = searchParams.get("courseId");
-    if (courseId) params.set("courseId", courseId);
-    const courseName = searchParams.get("courseName");
-    if (courseName) params.set("courseName", courseName);
-    return `/dashboard/module/practical-manual?${params.toString()}`;
-}
+
 /* =========================================================================
    SMALL SHARED COMPONENTS
    ========================================================================= */
@@ -276,7 +268,7 @@ function ActionCard({
     );
 }
 
-function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
+function LessonActionsPanel({ onPractice, onExercise }) {
     return (
         <div className="space-y-6">
             <ActionCard
@@ -297,15 +289,7 @@ function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
                 buttonClass="bg-emerald-500 hover:bg-emerald-600"
                 onClick={onExercise}
             />
-            <ActionCard
-                icon={FileText}
-                iconClass="bg-amber-50 text-amber-600"
-                title="Practical Manual"
-                description="View and follow the step-by-step practical manual instructions."
-                buttonLabel="Open Manual"
-                buttonClass="bg-amber-500 hover:bg-amber-600"
-                onClick={onPracticalManual}
-            />
+           
         </div>
     );
 }
@@ -750,7 +734,6 @@ function VideoDetail({
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                             
                         }
-                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
@@ -985,7 +968,6 @@ function AudioDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
-                                                onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
@@ -1104,7 +1086,6 @@ function TextDetail({
                         onPractice={() => router.push(buildPracticeUrl(selectedModule))}
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))}
-                        onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
                     />
                 </div>
             </div>
@@ -1260,7 +1241,6 @@ function VocabularyDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
-                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
