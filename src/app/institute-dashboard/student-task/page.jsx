@@ -32,6 +32,7 @@ import {
   Info,
   Layers,
   UserCog,
+  Edit3,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
@@ -615,6 +616,16 @@ export default function StudentTaskPage() {
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => setDeleteModal({ open: true, id: task._id })}
                                     className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors"
+                                    title="Edit task"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                    
+                                  </motion.button>
+                                    <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setDeleteModal({ open: true, id: task._id })}
+                                    className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors"
                                     title="Delete task"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -678,8 +689,7 @@ export default function StudentTaskPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.2 }}
-            className="bg-white/90 backdrop-blur-md p-8 rounded-3xl border border-slate-200 shadow-sm max-w-2xl mx-auto space-y-6"
-          >
+className="min-h-screen w-full bg-white/95 backdrop-blur-md p-6 md:p-8 rounded-none border border-slate-200 shadow-sm space-y-6"          >
             <div className="border-b border-slate-100 pb-4">
               <h2 className="text-xl font-black text-slate-900">Create Task</h2>
               <p className="text-xs text-slate-500 mt-0.5">Assign audio, video, document, link, or text tasks to a course or specific students.</p>

@@ -55,41 +55,96 @@ export default function InstituteDashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <div className="h-12 w-12 rounded-full border-4 border-slate-200 border-t-indigo-500 animate-spin" />
-        <p className="text-sm font-extrabold uppercase tracking-wider text-slate-400">Loading Dashboard...</p>
+        <p className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
+          Loading Dashboard...
+        </p>
       </div>
     );
   }
 
-  const enrolledStudents = dashboard?.enrolled_students ?? { total: 0, new_this_week: 0 };
-  const coursesLicensed = dashboard?.courses_licensed ?? { total: 0, licensed_total: 0 };
-  const licenseUsage = dashboard?.license_usage ?? { total_seats: 0, used_seats: 0, active_licenses: 0 };
+  const enrolledStudents = dashboard?.enrolled_students ?? {
+    total: 0,
+    new_this_week: 0,
+  };
+  const coursesLicensed = dashboard?.courses_licensed ?? {
+    total: 0,
+    licensed_total: 0,
+  };
+  const licenseUsage = dashboard?.license_usage ?? {
+    total_seats: 0,
+    used_seats: 0,
+    active_licenses: 0,
+  };
   const completionRate = dashboard?.completion_rate ?? 0;
-  const statusBreakdown = dashboard?.student_status_breakdown ?? { active: 0, inactive: 0, suspended: 0, total: 0 };
-  const loginStatus = dashboard?.login_status_breakdown ?? { online: 0, offline: 0 };
-  const assignmentCompletion = dashboard?.assignment_completion ?? { completed: 0, pending: 0 };
+  const statusBreakdown = dashboard?.student_status_breakdown ?? {
+    active: 0,
+    inactive: 0,
+    suspended: 0,
+    total: 0,
+  };
+  const loginStatus = dashboard?.login_status_breakdown ?? {
+    online: 0,
+    offline: 0,
+  };
+  const assignmentCompletion = dashboard?.assignment_completion ?? {
+    completed: 0,
+    pending: 0,
+  };
   const recentActivity = dashboard?.recent_activity ?? [];
   const instituteName = dashboard?.institute_name || "Administrator";
 
   const statusData = [
-    { name: "Active", value: statusBreakdown.active, color: STATUS_COLORS.active },
-    { name: "Inactive", value: statusBreakdown.inactive, color: STATUS_COLORS.inactive },
+    {
+      name: "Active",
+      value: statusBreakdown.active,
+      color: STATUS_COLORS.active,
+    },
+    {
+      name: "Inactive",
+      value: statusBreakdown.inactive,
+      color: STATUS_COLORS.inactive,
+    },
     ...(statusBreakdown.suspended > 0
-      ? [{ name: "Suspended", value: statusBreakdown.suspended, color: STATUS_COLORS.suspended }]
+      ? [
+          {
+            name: "Suspended",
+            value: statusBreakdown.suspended,
+            color: STATUS_COLORS.suspended,
+          },
+        ]
       : []),
   ];
 
   const loginStatusData = [
-    { name: "Online", value: loginStatus.online, color: LOGIN_STATUS_COLORS.online },
-    { name: "Offline", value: loginStatus.offline, color: LOGIN_STATUS_COLORS.offline },
+    {
+      name: "Online",
+      value: loginStatus.online,
+      color: LOGIN_STATUS_COLORS.online,
+    },
+    {
+      name: "Offline",
+      value: loginStatus.offline,
+      color: LOGIN_STATUS_COLORS.offline,
+    },
   ];
 
   const assignmentData = [
-    { name: "Completed", value: assignmentCompletion.completed, color: ASSIGNMENT_COLORS.completed },
-    { name: "Pending", value: assignmentCompletion.pending, color: ASSIGNMENT_COLORS.pending },
+    {
+      name: "Completed",
+      value: assignmentCompletion.completed,
+      color: ASSIGNMENT_COLORS.completed,
+    },
+    {
+      name: "Pending",
+      value: assignmentCompletion.pending,
+      color: ASSIGNMENT_COLORS.pending,
+    },
   ];
 
   return (
-<div className="relative min-h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col"> {/* Background Floating Ambient Orbs */}
+    <div className="relative min-h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col">
+      {" "}
+      {/* Background Floating Ambient Orbs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:40px_40px] opacity-40" />
         <motion.div
@@ -99,13 +154,21 @@ export default function InstituteDashboard() {
         />
         <motion.div
           animate={{ scale: [1, 1.15, 1], x: [0, -20, 0], y: [0, 40, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
           className="absolute bottom-10 left-[10%] h-[350px] w-[350px] rounded-full bg-gradient-to-br from-blue-400/10 via-indigo-200/5 to-transparent blur-[80px]"
         />
       </div>
-
-<div className="relative z-10 max-w-7xl mx-auto w-full space-y-3 ">        {/* Header Section */}
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-3">          <div>
+      <div className="relative z-10 max-w-7xl mx-auto w-full space-y-3 ">
+        {" "}
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-3">
+          {" "}
+          <div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 shadow-sm mb-2">
               ✦ Institute Management Portal
             </span>
@@ -132,10 +195,9 @@ export default function InstituteDashboard() {
             </motion.button>
           </div>
         </div>
-
         {/* KPI Stats Grid */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-         <StatCard
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <StatCard
             title="Enrolled Students"
             value={enrolledStudents.total}
             icon={Users}
@@ -164,7 +226,6 @@ export default function InstituteDashboard() {
             sub="Across all module progress"
           />
         </div>
-
         {/* Charts & Analytics Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <PieStatCard
@@ -186,10 +247,11 @@ export default function InstituteDashboard() {
             eyebrowColor="text-indigo-500"
             title="Assignment Completion"
             data={assignmentData}
-            centerValue={assignmentCompletion.completed + assignmentCompletion.pending}
+            centerValue={
+              assignmentCompletion.completed + assignmentCompletion.pending
+            }
           />
         </div>
-
         {/* Recent Activity */}
         <div className="grid grid-cols-1 gap-6">
           <motion.div
@@ -199,8 +261,12 @@ export default function InstituteDashboard() {
             className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition duration-300 flex flex-col"
           >
             <div className="mb-4">
-              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live Updates</p>
-              <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
+              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                Live Updates
+              </p>
+              <h2 className="text-lg font-extrabold text-slate-900">
+                Recent Activity
+              </h2>
             </div>
 
             <div className="space-y-1">
@@ -215,14 +281,15 @@ export default function InstituteDashboard() {
                   fullName={item.full_name}
                   durationMinutes={item.duration_minutes}
                   onClick={() =>
-                    router.push(`/institute-dashboard/student-statistics?studentId=${item.student_id}`)
+                    router.push(
+                      `/institute-dashboard/student-statistics?studentId=${item.student_id}`,
+                    )
                   }
                 />
               ))}
             </div>
           </motion.div>
         </div>
-
       </div>
     </div>
   );
@@ -245,11 +312,15 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">
             {title}
           </p>
-          <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
+          <p className="text-3xl font-black text-slate-900 tracking-tight">
+            {value}
+          </p>
         </div>
 
         {/* Elevated icon with glow */}
-        <div className={`p-3 rounded-2xl text-white bg-gradient-to-br ${color} shadow-lg shadow-indigo-500/20 transition-transform duration-300 group-hover:scale-110`}>
+        <div
+          className={`p-3 rounded-2xl text-white bg-gradient-to-br ${color} shadow-lg shadow-indigo-500/20 transition-transform duration-300 group-hover:scale-110`}
+        >
           <Icon size={20} strokeWidth={2.5} />
         </div>
       </div>
@@ -275,13 +346,22 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
     >
       <div className="space-y-3">
         <div>
-          <p className={`text-[10px] font-bold uppercase tracking-widest ${eyebrowColor}`}>{eyebrow}</p>
-          <h2 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h2>
+          <p
+            className={`text-[10px] font-bold uppercase tracking-widest ${eyebrowColor}`}
+          >
+            {eyebrow}
+          </p>
+          <h2 className="text-lg font-extrabold text-slate-900 leading-tight">
+            {title}
+          </h2>
         </div>
         <div className="space-y-1.5">
           {data.map((d) => (
             <div key={d.name} className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: d.color }}
+              />
               <span className="text-[11px] font-semibold text-slate-600">
                 {d.name}: {d.value}
               </span>
@@ -293,7 +373,13 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
       <div className="relative h-[100px] w-[100px] shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} innerRadius={30} outerRadius={45} paddingAngle={5} dataKey="value">
+            <Pie
+              data={data}
+              innerRadius={30}
+              outerRadius={45}
+              paddingAngle={5}
+              dataKey="value"
+            >
               {data.map((entry, i) => (
                 <Cell key={i} fill={entry.color} />
               ))}
@@ -301,7 +387,9 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-sm font-black text-slate-900">{centerValue}</span>
+          <span className="text-sm font-black text-slate-900">
+            {centerValue}
+          </span>
         </div>
       </div>
     </motion.div>
@@ -324,7 +412,9 @@ function ActivityRow({ fullName, durationMinutes, onClick }) {
           {fullName}
         </p>
         <span className="text-[10px] font-bold text-slate-400 shrink-0">
-          {durationMinutes != null ? `Active for ${durationMinutes} mins` : "Active"}
+          {durationMinutes != null
+            ? `Active for ${durationMinutes} mins`
+            : "Active"}
         </span>
       </div>
     </motion.div>
