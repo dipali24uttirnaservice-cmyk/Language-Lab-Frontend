@@ -53,7 +53,7 @@ export default function PracticalManualFormPage() {
   });
 
   const [questionList, setQuestionList] = useState([
-    { question_text: "", answer_key_html: "", answer_lines: 5 }
+    { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
   ]);
 
   const [formErrors, setFormErrors] = useState({});
@@ -116,7 +116,8 @@ export default function PracticalManualFormPage() {
             manual.questions?.map((q) => ({
               question_text: q.question_text || "",
               answer_key_html: q.answer_key_html || "",
-              answer_lines: q.answer_lines || 5
+              answer_lines: q.answer_lines || 5,
+              solution_type: q.solution_type || "text"
             })) || []
           );
         } catch (error) {
@@ -327,7 +328,7 @@ export default function PracticalManualFormPage() {
                 onClick={() =>
                   setQuestionList([
                     ...questionList,
-                    { question_text: "", answer_key_html: "", answer_lines: 5 }
+                    { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
                   ])
                 }
                 className="px-4 py-2 rounded-xl bg-white text-orange-600 border border-orange-300 hover:bg-orange-50 active:scale-95 font-bold text-xs transition-all"
@@ -404,32 +405,58 @@ export default function PracticalManualFormPage() {
                     )}
                   </div>
 
-                  <div className="max-w-40">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                      Solution Lines
-                    </label>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="max-w-40">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                        Solution Lines
+                      </label>
 
-                    <input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={q.answer_lines}
-                      onChange={(e) => {
-                        const arr = [...questionList];
-                        arr[index].answer_lines = Number(e.target.value);
-                        setQuestionList(arr);
-                      }}
-                      className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                    />
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={q.answer_lines}
+                        onChange={(e) => {
+                          const arr = [...questionList];
+                          arr[index].answer_lines = Number(e.target.value);
+                          setQuestionList(arr);
+                        }}
+                        className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+                      />
 
-                    {formErrors[`questions[${index}].answer_lines`] && (
-                      <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                        <span className="!text-red-600">
-                          {formErrors[`questions[${index}].answer_lines`]}
-                        </span>
+                      {formErrors[`questions[${index}].answer_lines`] && (
+                        <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
+                          <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
+                          <span className="!text-red-600">
+                            {formErrors[`questions[${index}].answer_lines`]}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="max-w-52">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                        Solution Type
+                      </label>
+
+                      <select
+                        value={q.solution_type || "text"}
+                        onChange={(e) => {
+                          const arr = [...questionList];
+                          arr[index].solution_type = e.target.value;
+                          setQuestionList(arr);
+                        }}
+                        className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 cursor-pointer"
+                      >
+                        <option value="text">Paragraph / Text</option>
+                        <option value="file">File Upload</option>
+                      </select>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        {q.solution_type === "file"
+                          ? "Student uploads a file as the answer to this question."
+                          : "Student types a paragraph answer to this question."}
                       </p>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}

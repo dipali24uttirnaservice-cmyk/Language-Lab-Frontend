@@ -34,9 +34,6 @@ export const createPracticalManualSchema = Yup.object({
   topic_id: Yup.string()
     .required(REQUIRED),
 
-  attachment: Yup.mixed()
-    .required(REQUIRED),
-
   questions: Yup.array()
     .min(1, REQUIRED)
     .of(

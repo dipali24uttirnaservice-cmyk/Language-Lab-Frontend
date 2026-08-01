@@ -3,19 +3,17 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
-import { 
-  AlertCircle, 
-  Loader2, 
-  ArrowLeft, 
-  Trash2, 
-  Info, 
-  Layers, 
-  UserCog, 
-  HelpCircle, 
-  Plus 
+import {
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  Info,
+  Layers,
+  UserCog,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
+import { studentApi } from "@/services/student/studentApi";
 import {
   createStudentTaskSchema,
   updateStudentTaskSchema
@@ -67,8 +65,17 @@ export default function StudentTaskFormPage() {
   // Data Lists & Dropdowns
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+
+  // Only students enrolled in the currently selected course can be targeted —
+  // "all" already means "all students on this course" server-side, so the
+  // "selected" picker must offer the same pool, not every institute student.
+  const students = formCourseId
+    ? allStudents.filter((s) =>
+        (s.purchased_courses || []).some((c) => (c._id || c) === formCourseId),
+      )
+    : [];
 
   // Status Modal State
   const [statusData, setStatusData] = useState({
@@ -87,6 +94,11 @@ export default function StudentTaskFormPage() {
       .getCourses()
       .then((res) => setCourses(res.data?.data?.courses || []))
       .catch((error) => console.error("Get Courses Error:", error));
+
+    studentApi
+      .getStudents()
+      .then((res) => setAllStudents(res.data?.data?.students || []))
+      .catch((error) => console.error("Get Students Error:", error));
   }, []);
 
   useEffect(() => {
@@ -117,33 +129,6 @@ export default function StudentTaskFormPage() {
         ? prev.filter((id) => id !== studentId)
         : [...prev, studentId]
     );
-  };
-
-  const addQuestion = () => {
-    setQuestions((prev) => [
-      ...prev,
-      {
-        question_text: "",
-        answer_key_html: "",
-        correct_answer: "",
-        answer_lines: 5,
-        timestamp: 0,
-        options: [],
-        pairs: [],
-      },
-    ]);
-  };
-
-  const removeQuestion = (index) => {
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateQuestion = (index, key, value) => {
-    setQuestions((prev) => {
-      const arr = [...prev];
-      arr[index] = { ...arr[index], [key]: value };
-      return arr;
-    });
   };
 
   useEffect(() => {
@@ -576,7 +561,11 @@ const handleSubmit = async (e) => {
               </label>
               <div className="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-2xl p-2 space-y-1">
                 {students.length === 0 ? (
-                  <p className="text-xs text-slate-400 p-2">No students found or loaded.</p>
+                  <p className="text-xs text-slate-400 p-2">
+                    {formCourseId
+                      ? "No students are enrolled in this course yet."
+                      : "Select a course first."}
+                  </p>
                 ) : (
                   students.map((s) => (
                     <label
@@ -602,116 +591,6 @@ const handleSubmit = async (e) => {
               )}
             </div>
           )}
-
-          {/* Questions Setup Section */}
-          <div className="space-y-4 pt-5 mt-2 border-t-2 border-dashed border-orange-100">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
-                  <HelpCircle className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                    Questions Setup
-                    <span className="text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
-                      Optional
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Quiz-style checkpoints attached to this task.
-                  </p>
-                </div>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={addQuestion}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-black shadow-md shadow-orange-500/20 border-b-2 border-orange-700 hover:shadow-lg active:scale-95 transition-all shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Question
-              </motion.button>
-            </div>
-
-            {questions.length === 0 && (
-              <div className="py-8 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-                <p className="text-xs font-semibold text-slate-400">
-                  No questions yet — students see just the task itself.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {questions.map((q, index) => (
-                <div key={index} className="bg-slate-50/75 rounded-2xl p-5 border border-slate-100 space-y-4 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-xs text-slate-500 uppercase">
-                      Question #{index + 1}
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => removeQuestion(index)}
-                      className="text-rose-500 hover:text-rose-600 font-bold text-xs p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Question Text Field */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1 block">
-                      Question Text <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={q.question_text}
-                      onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
-                      placeholder="Type question text..."
-                      className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                    />
-                    {formErrors[`questions[${index}].question_text`] && (
-                      <p className="text-xs mt-1.5 text-red-600 font-semibold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {formErrors[`questions[${index}].question_text`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Correct Answer Field */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1 block">
-                      Correct Answer <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={q.correct_answer}
-                      onChange={(e) => updateQuestion(index, "correct_answer", e.target.value)}
-                      placeholder="Enter the correct answer..."
-                      className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                    />
-                    {formErrors[`questions[${index}].correct_answer`] && (
-                      <p className="text-xs mt-1.5 text-red-600 font-semibold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {formErrors[`questions[${index}].correct_answer`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Solution / Answer Key Field */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1 block">
-                      Solution
-                    </label>
-                    <RichTextEditor
-                      value={q.answer_key_html}
-                      onChange={(html) => updateQuestion(index, "answer_key_html", html)}
-                      placeholder="Model answer for this question…"
-                      minHeight={120}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Form Actions Footer */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">

@@ -15,8 +15,6 @@ import {
   RefreshCw,
   Send,
   Calendar,
-  Users,
-  CheckCircle,
   AlertCircle,
 } from "lucide-react";
 
@@ -318,7 +316,6 @@ export default function StudentTaskPage() {
                 <th className="p-4 text-left">Title & Attachment</th>
                 <th className="p-4 text-left">Course</th>
                 <th className="p-4 text-left">Due Date & Status</th>
-                <th className="p-4 text-center">Assigned / Submitted</th>
                 <th className="p-4 text-center">Questions</th>
                 <th className="p-4 text-center pr-6">Actions</th>
               </tr>
@@ -326,7 +323,7 @@ export default function StudentTaskPage() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-16">
+                  <td colSpan="6" className="text-center py-16">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-orange-500" />
                   </td>
                 </tr>
@@ -381,22 +378,25 @@ export default function StudentTaskPage() {
                       </td>
 
                       <td className="p-4 text-center">
-                        <div className="inline-flex items-center gap-3 text-xs font-semibold">
-                          <span className="flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-1 rounded-lg" title="Assigned Count">
-                            <Users className="w-3.5 h-3.5 text-slate-500" />
-                            {task.assigned_count ?? 0}
+                        <div className="inline-flex flex-col items-center gap-1.5">
+                          <span className="px-3 py-1 rounded-full bg-orange-50 text-orange-600 font-bold text-xs inline-block">
+                            {task.questions?.length || 0} Questions
                           </span>
-                          <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg" title="Submitted Count">
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                            {task.submitted_count ?? 0}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question`)}
+                              className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors text-[11px] font-bold"
+                            >
+                              + Add Q
+                            </button>
+                            <button
+                              onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question`)}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-[11px] font-bold"
+                            >
+                              View Q
+                            </button>
+                          </div>
                         </div>
-                      </td>
-
-                      <td className="p-4 text-center">
-                        <span className="px-3 py-1 rounded-full bg-orange-50 text-orange-600 font-bold text-xs inline-block">
-                          {task.questions?.length || 0} Questions
-                        </span>
                       </td>
 
                       <td className="p-4 pr-6">
@@ -441,7 +441,7 @@ export default function StudentTaskPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-20">
+                  <td colSpan="6" className="text-center py-20">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <AlertCircle className="w-8 h-8 text-orange-400" />
                       <p className="text-slate-600 font-semibold text-base">No tasks available for the selected course or filter criteria.</p>

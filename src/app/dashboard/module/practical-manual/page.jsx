@@ -20,6 +20,8 @@ import {
   Award,
   FileText,
   RotateCcw,
+  UploadCloud,
+  X,
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
@@ -327,6 +329,11 @@ export default function StudentPracticalManualPage() {
   const [search, setSearch] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
+  // Per-question file answers (question_type: "file") — questionFiles holds
+  // newly picked File objects (keyed by question index); existingFileUrls
+  // holds already-uploaded URLs from a prior submission, kept unless replaced.
+  const [questionFiles, setQuestionFiles] = useState({});
+  const [existingFileUrls, setExistingFileUrls] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -398,17 +405,21 @@ export default function StudentPracticalManualPage() {
 
       const answerByQuestionId = {};
       (mySubmission?.answers || []).forEach((a) => {
-        answerByQuestionId[a.question_id] = a.answer_html;
+        answerByQuestionId[a.question_id] = a;
       });
       const prefilled = {};
+      const prefilledFileUrls = {};
       (detail?.questions || []).forEach((q, idx) => {
-        if (answerByQuestionId[q._id])
-          prefilled[idx] = answerByQuestionId[q._id];
+        const existing = answerByQuestionId[q._id];
+        if (existing?.answer_html) prefilled[idx] = existing.answer_html;
+        if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
       });
 
       setSelectedManual(detail);
       setCurrent(0);
       setAnswers(prefilled);
+      setQuestionFiles({});
+      setExistingFileUrls(prefilledFileUrls);
       setSubmitted(
         mySubmission?.status === "submitted" ||
           mySubmission?.status === "reviewed",
@@ -433,11 +444,26 @@ export default function StudentPracticalManualPage() {
     enterFullscreen();
 
     try {
-      const payload = selectedManual.questions.map((q, idx) => ({
-        question_id: q._id,
-        answer_html: answers[idx] || "",
-      }));
       const formData = new FormData();
+
+      const payload = selectedManual.questions.map((q, idx) => {
+        if (q.solution_type === "file") {
+          // A newly picked file uploads separately over multipart, keyed by
+          // question id — the backend merges it into this answer entry. If
+          // no new file was picked, keep whatever URL was already there.
+          if (questionFiles[idx]) {
+            formData.append(`question_file_${q._id}`, questionFiles[idx]);
+          }
+          return {
+            question_id: q._id,
+            ...(existingFileUrls[idx] && !questionFiles[idx]
+              ? { answer_file_url: existingFileUrls[idx] }
+              : {}),
+          };
+        }
+        return { question_id: q._id, answer_html: answers[idx] || "" };
+      });
+
       formData.append("answers", JSON.stringify(payload));
       await studentPracticalApi.submit(selectedManual._id, formData);
       setSubmitted(true);
@@ -523,11 +549,18 @@ export default function StudentPracticalManualPage() {
 
   const manuals = selectedManual.questions;
   const currentQuestion = manuals[current];
-  const completedCount = Object.values(answers).filter((val) =>
-    val?.trim(),
-  ).length;
+  const isQuestionAnswered = (q, idx) =>
+    q.solution_type === "file"
+      ? !!(questionFiles[idx] || existingFileUrls[idx])
+      : !!answers[idx]?.trim();
+  const completedCount = manuals.filter((q, idx) => isQuestionAnswered(q, idx)).length;
   const progressPct = (completedCount / manuals.length) * 100;
   const allAttempted = completedCount === manuals.length;
+  // Sidebar/QuestionDots only check truthiness of a string per index — feed
+  // them a merged view so file-type questions register as "answered" too.
+  const dotsAnswers = Object.fromEntries(
+    manuals.map((q, idx) => [idx, isQuestionAnswered(q, idx) ? answers[idx] || "1" : ""]),
+  );
 
   /* ==========================================================
      SUBMITTED SUCCESS STATE
@@ -606,7 +639,10 @@ export default function StudentPracticalManualPage() {
             </h2>
 
             {manuals.map((q, idx) => {
-              const hasAnswer = !!answers[idx]?.replace(/<[^>]*>/g, "").trim();
+              const isFileQuestion = q.solution_type === "file";
+              const hasAnswer = isFileQuestion
+                ? !!existingFileUrls[idx]
+                : !!answers[idx]?.replace(/<[^>]*>/g, "").trim();
               const studentAnswer =
                 answers[idx] ||
                 "<p class='text-slate-400 italic'>No answer provided.</p>";
@@ -652,10 +688,27 @@ export default function StudentPracticalManualPage() {
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                       Your Answer
                     </span>
-                    <div
-                      className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-700 text-sm leading-relaxed prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: studentAnswer }}
-                    />
+                    {isFileQuestion ? (
+                      existingFileUrls[idx] ? (
+                        <a
+                          href={existingFileUrls[idx]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-bold text-orange-700 bg-orange-50 border border-orange-200 px-4 py-3 rounded-xl hover:bg-orange-100 transition-all"
+                        >
+                          <FileText size={16} /> View uploaded file
+                        </a>
+                      ) : (
+                        <p className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-400 italic text-sm">
+                          No file uploaded.
+                        </p>
+                      )
+                    ) : (
+                      <div
+                        className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-700 text-sm leading-relaxed prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: studentAnswer }}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -697,7 +750,7 @@ export default function StudentPracticalManualPage() {
       <Sidebar
         manuals={manuals}
         current={current}
-        answers={answers}
+        answers={dotsAnswers}
         setCurrent={setCurrent}
         search={search}
         setSearch={setSearch}
@@ -728,7 +781,7 @@ export default function StudentPracticalManualPage() {
                   <QuestionDots
                     total={manuals.length}
                     current={current}
-                    answers={answers}
+                    answers={dotsAnswers}
                   />
                 </div>
                 <ProgressBar value={progressPct} />
@@ -771,26 +824,85 @@ export default function StudentPracticalManualPage() {
                     )}
                   </div>
 
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Suggested Length
-                    </h3>
-                    <p className="text-slate-700 font-medium text-sm leading-relaxed">
-                      Write approximately {currentQuestion.answer_lines} lines
-                      for this answer.
-                    </p>
-                  </div>
+                  {currentQuestion.solution_type !== "file" && (
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Suggested Length
+                      </h3>
+                      <p className="text-slate-700 font-medium text-sm leading-relaxed">
+                        Write approximately {currentQuestion.answer_lines} lines
+                        for this answer.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Your Answer
                     </label>
-                    <RichTextEditor
-                      value={answers[current] || ""}
-                      onChange={saveAnswer}
-                      placeholder="Type your detailed solution here..."
-                      minHeight={250}
-                    />
+                    {currentQuestion.solution_type === "file" ? (
+                      <div className="space-y-3">
+                        {existingFileUrls[current] && !questionFiles[current] && (
+                          <a
+                            href={existingFileUrls[current]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm font-bold text-orange-700 bg-orange-50 border border-orange-200 px-4 py-3 rounded-2xl hover:bg-orange-100 transition-all w-fit"
+                          >
+                            <FileText size={16} /> View previously uploaded file
+                          </a>
+                        )}
+                        {questionFiles[current] ? (
+                          <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+                            <span className="flex items-center gap-2 text-sm font-bold text-emerald-700 truncate">
+                              <FileText size={16} className="shrink-0" />
+                              {questionFiles[current].name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuestionFiles((prev) => {
+                                  const next = { ...prev };
+                                  delete next[current];
+                                  return next;
+                                })
+                              }
+                              className="text-emerald-700 hover:text-emerald-900 shrink-0"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
+                            <UploadCloud size={28} className="text-slate-400" />
+                            <span className="text-sm font-bold text-slate-600">
+                              Click to upload your answer file
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {existingFileUrls[current]
+                                ? "Uploading a new file replaces the previous one"
+                                : "PDF, image, or document"}
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file)
+                                  setQuestionFiles((prev) => ({ ...prev, [current]: file }));
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ) : (
+                      <RichTextEditor
+                        value={answers[current] || ""}
+                        onChange={saveAnswer}
+                        placeholder="Type your detailed solution here..."
+                        minHeight={250}
+                      />
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between pt-6 border-t border-slate-200">

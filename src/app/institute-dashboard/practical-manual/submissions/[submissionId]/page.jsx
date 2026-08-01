@@ -148,7 +148,15 @@ function PracticalSubmissionRow({
   const [marks, setMarks] = useState(submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
-  const isFileSolution = submission.solution_type === "file";
+  const [saving, setSaving] = useState(false);
+
+  // Modal State Management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   // Map answers both by question_id and fallback index order
   const answerByQuestionId = {};
@@ -156,9 +164,9 @@ function PracticalSubmissionRow({
 
   (submission.answers || []).forEach((a, index) => {
     if (a.question_id) {
-      answerByQuestionId[a.question_id] = a.answer_html;
+      answerByQuestionId[a.question_id] = a;
     }
-    answerByIndex[index] = a.answer_html;
+    answerByIndex[index] = a;
   });
 
   const handleSaveClick = async () => {
@@ -226,8 +234,7 @@ function PracticalSubmissionRow({
         {expanded && !isFileSolution && (
           <div className="space-y-2 pt-1">
             {questions.map((q, idx) => {
-              const htmlContent =
-                answerByQuestionId[q._id] || answerByIndex[idx];
+              const answer = answerByQuestionId[q._id] || answerByIndex[idx];
 
               return (
                 <div
@@ -237,12 +244,28 @@ function PracticalSubmissionRow({
                   <p className="text-xs font-bold text-slate-800 mb-1.5">
                     {idx + 1}. {q.question_text}
                   </p>
-                  <div
-                    className="text-xs text-slate-600 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: htmlContent || "<em>No answer given.</em>",
-                    }}
-                  />
+                  {q.solution_type === "file" ? (
+                    answer?.answer_file_url ? (
+                      <a
+                        href={answer.answer_file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100"
+                      >
+                        <FileText size={12} /> View uploaded file
+                        <ExternalLink size={11} />
+                      </a>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">No file uploaded.</p>
+                    )
+                  ) : (
+                    <div
+                      className="text-xs text-slate-600 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: answer?.answer_html || "<em>No answer given.</em>",
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
