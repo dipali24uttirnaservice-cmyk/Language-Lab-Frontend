@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Maximize2,
+  Minimize2,
   Send,
   Loader2,
   Sparkles,
@@ -18,9 +20,6 @@ import {
   Award,
   FileText,
   RotateCcw,
-  UploadCloud,
-  ExternalLink,
-  X,
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
@@ -88,7 +87,7 @@ function PracticalRow({ manual, onSelect, disabled }) {
       ? "Reviewed"
       : status === "submitted"
         ? "Submitted"
-        : "Open Solution";
+        : "Not Started";
   const eyebrowClass =
     status === "reviewed"
       ? "bg-cyan-500 text-white border-cyan-600"
@@ -324,17 +323,13 @@ export default function StudentPracticalManualPage() {
 
   const [selectedManual, setSelectedManual] = useState(null);
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [search, setSearch] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-
-  // Solution type is chosen once for the whole practical, not per question.
-  const [solutionType, setSolutionType] = useState("text");
-  const [solutionFile, setSolutionFile] = useState(null);
-  const [existingAttachmentUrl, setExistingAttachmentUrl] = useState(null);
 
   useEffect(() => {
     const params = {};
@@ -348,30 +343,59 @@ export default function StudentPracticalManualPage() {
       .finally(() => setListLoading(false));
   }, [topicId, courseId]);
 
-  // Reflects the currently open manual in the URL as `lessonName` so the
-  // global breadcrumb (which reads searchParams, not component state) shows
-  // it as the final crumb, matching every other module page.
-  const syncLessonNameInUrl = useCallback(
-    (lessonName) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (lessonName) {
-        params.set("lessonName", lessonName);
-      } else {
-        params.delete("lessonName");
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        console.log(
+          "Auto-fullscreen blocked by browser policy. User interaction required.",
+        );
       }
-      router.replace(`/dashboard/module/practical-manual?${params.toString()}`);
-    },
-    [searchParams, router],
-  );
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically trigger fullscreen on mount
+  useEffect(() => {
+    enterFullscreen();
+  }, []);
+
+  // Automatically trigger fullscreen when workspace opens or submission status changes
+  useEffect(() => {
+    if (selectedManual || submitted) {
+      enterFullscreen();
+    }
+  }, [selectedManual, submitted]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const handleStartManual = useCallback(async (manual) => {
+    // Direct user-click action context allows full screen grant execution here
+    enterFullscreen();
+
     setDetailLoading(true);
     try {
       const res = await studentPracticalApi.getOneMine(manual._id);
       const detail = res.data?.data;
       const mySubmission = detail?.my_submission;
 
-      // Pre-fill previously saved answers, matched by question_id.
       const answerByQuestionId = {};
       (mySubmission?.answers || []).forEach((a) => {
         answerByQuestionId[a.question_id] = a.answer_html;
@@ -390,16 +414,12 @@ export default function StudentPracticalManualPage() {
           mySubmission?.status === "reviewed",
       );
       setSubmitError("");
-      setSolutionType(mySubmission?.solution_type || "text");
-      setSolutionFile(null);
-      setExistingAttachmentUrl(mySubmission?.attachment_url || null);
-      syncLessonNameInUrl(detail?.title);
     } catch (error) {
       console.error("Get Practical Detail Error:", error);
     } finally {
       setDetailLoading(false);
     }
-  }, [syncLessonNameInUrl]);
+  }, []);
 
   const saveAnswer = (data) => {
     setAnswers((prev) => ({ ...prev, [current]: data }));
@@ -408,28 +428,17 @@ export default function StudentPracticalManualPage() {
   const submitManual = async () => {
     if (!selectedManual) return;
     setSubmitError("");
-
-    if (solutionType === "file" && !solutionFile && !existingAttachmentUrl) {
-      setSubmitError("Please upload a PDF solution file before submitting.");
-      return;
-    }
-
     setSubmitting(true);
+
+    enterFullscreen();
+
     try {
+      const payload = selectedManual.questions.map((q, idx) => ({
+        question_id: q._id,
+        answer_html: answers[idx] || "",
+      }));
       const formData = new FormData();
-      formData.append("solution_type", solutionType);
-
-      if (solutionType === "file") {
-        if (solutionFile)
-          formData.append("practicalSubmissionAttachment", solutionFile);
-      } else {
-        const payload = selectedManual.questions.map((q, idx) => ({
-          question_id: q._id,
-          answer_html: answers[idx] || "",
-        }));
-        formData.append("answers", JSON.stringify(payload));
-      }
-
+      formData.append("answers", JSON.stringify(payload));
       await studentPracticalApi.submit(selectedManual._id, formData);
       setSubmitted(true);
       Swal.fire({
@@ -463,12 +472,8 @@ export default function StudentPracticalManualPage() {
   ========================================================== */
   if (!selectedManual) {
     return (
-      <div
-        ref={containerRef}
-        className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-amber-50/20 p-6 md:p-8"
-      >
+      <div className="w-full min-h-screen bg-slate-50 p-6 md:p-8">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Top Bar */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => router.back()}
@@ -518,29 +523,14 @@ export default function StudentPracticalManualPage() {
 
   const manuals = selectedManual.questions;
   const currentQuestion = manuals[current];
-  const hasFileSolution = !!(solutionFile || existingAttachmentUrl);
-  const completedCount =
-    solutionType === "file"
-      ? hasFileSolution
-        ? manuals.length
-        : 0
-      : Object.values(answers).filter((val) => val?.trim()).length;
+  const completedCount = Object.values(answers).filter((val) =>
+    val?.trim(),
+  ).length;
   const progressPct = (completedCount / manuals.length) * 100;
   const allAttempted = completedCount === manuals.length;
-  // Feeds QuestionDots/Sidebar's per-question "answered" indicator — in file
-  // mode there's one solution for the whole practical, not per question.
-  const dotsAnswers =
-    solutionType === "file"
-      ? Object.fromEntries(
-          manuals.map((_, idx) => [idx, hasFileSolution ? "1" : ""]),
-        )
-      : answers;
 
   /* ==========================================================
      SUBMITTED SUCCESS STATE
-  ========================================================== */
-  /* ==========================================================
-     SUBMITTED SUCCESS / REVIEW STATE (LIST OF QUESTIONS & ANSWERS) - FULL WIDTH
   ========================================================== */
   if (submitted) {
     return (
@@ -549,7 +539,6 @@ export default function StudentPracticalManualPage() {
         className="min-h-screen w-full bg-slate-50 p-6 md:p-8 overflow-y-auto custom-main-scroll"
       >
         <div className="w-full space-y-6">
-          {/* Top Banner Header */}
           <div className="bg-white rounded-3xl p-8 border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.10)] relative overflow-hidden flex items-center justify-between">
             <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
             <div className="flex items-center gap-4">
@@ -568,11 +557,28 @@ export default function StudentPracticalManualPage() {
               onClick={() => {
                 setSelectedManual(null);
                 setSubmitted(false);
-                syncLessonNameInUrl(null);
               }}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
             >
               Back to Manuals List
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
+                <CheckCircle2 size={28} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-slate-800">
+                  Practical Submitted Successfully
+                </h1>
+              </div>
+            </div>
+
+            <button
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
           </div>
 
@@ -609,7 +615,6 @@ export default function StudentPracticalManualPage() {
                   key={q._id}
                   className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-sm w-full"
                 >
-                  {/* Question Info Header */}
                   <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
                     <div className="space-y-1">
                       <span className="text-xs font-bold text-orange-500 uppercase tracking-wide">
@@ -634,7 +639,6 @@ export default function StudentPracticalManualPage() {
                     </div>
                   </div>
 
-                  {/* Question Text */}
                   <div className="space-y-1">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                       Question Text
@@ -644,7 +648,6 @@ export default function StudentPracticalManualPage() {
                     </p>
                   </div>
 
-                  {/* Submitted Answer Display */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-100">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                       Your Answer
@@ -694,22 +697,29 @@ export default function StudentPracticalManualPage() {
       <Sidebar
         manuals={manuals}
         current={current}
-        answers={dotsAnswers}
+        answers={answers}
         setCurrent={setCurrent}
         search={search}
         setSearch={setSearch}
       />
 
-      {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
-        {/* CONTENT CARD CONTAINER */}
+        <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+            title={isFullscreen ? "Minimize Manual" : "Maximize Manual"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        </div>
+
         <div className="px-8 pb-10 pt-4 w-full flex-1">
           <div className="w-full relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
             <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
             <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
 
             <div className="relative space-y-6">
-              {/* HEADER INFO & PROGRESS */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
@@ -718,36 +728,10 @@ export default function StudentPracticalManualPage() {
                   <QuestionDots
                     total={manuals.length}
                     current={current}
-                    answers={dotsAnswers}
+                    answers={answers}
                   />
                 </div>
                 <ProgressBar value={progressPct} />
-              </div>
-
-              {/* SOLUTION TYPE TOGGLE — applies to the whole practical, not per question */}
-              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 p-1.5 w-fit">
-                <button
-                  type="button"
-                  onClick={() => setSolutionType("text")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    solutionType === "text"
-                      ? "bg-white text-orange-600 shadow-sm border border-orange-100"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  Paragraph / Text
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSolutionType("file")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    solutionType === "file"
-                      ? "bg-white text-orange-600 shadow-sm border border-orange-100"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  File Upload
-                </button>
               </div>
 
               {allAttempted && (
@@ -767,7 +751,6 @@ export default function StudentPracticalManualPage() {
                 </div>
               )}
 
-              {/* CARD MAIN BODY */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={current}
@@ -788,100 +771,28 @@ export default function StudentPracticalManualPage() {
                     )}
                   </div>
 
-                  {solutionType === "text" ? (
-                    <>
-                      {/* Instruction Box */}
-                      <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Suggested Length
-                        </h3>
-                        <p className="text-slate-700 font-medium text-sm leading-relaxed">
-                          Write approximately {currentQuestion.answer_lines}{" "}
-                          lines for this solution.
-                        </p>
-                      </div>
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Suggested Length
+                    </h3>
+                    <p className="text-slate-700 font-medium text-sm leading-relaxed">
+                      Write approximately {currentQuestion.answer_lines} lines
+                      for this answer.
+                    </p>
+                  </div>
 
-                      {/* RICH TEXT SOLUTION FIELD */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                          Your Solution
-                        </label>
-                        <RichTextEditor
-                          value={answers[current] || ""}
-                          onChange={saveAnswer}
-                          placeholder="Type your detailed solution here..."
-                          minHeight={250}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    /* FILE UPLOAD SOLUTION — one file covers the whole practical */
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                        Your Solution (PDF)
-                      </label>
-                      <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/40 p-6 text-center space-y-3">
-                        {solutionFile ? (
-                          <div className="flex items-center justify-between gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200 text-left">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="w-5 h-5 text-orange-500 shrink-0" />
-                              <span className="text-sm font-semibold text-slate-700 truncate">
-                                {solutionFile.name}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setSolutionFile(null)}
-                              className="text-slate-400 hover:text-rose-500 shrink-0"
-                              title="Remove selected file"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ) : existingAttachmentUrl ? (
-                          <div className="flex items-center justify-between gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200 text-left">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="w-5 h-5 text-emerald-500 shrink-0" />
-                              <span className="text-sm font-semibold text-slate-700">
-                                A solution PDF is already submitted.
-                              </span>
-                            </div>
-                            <a
-                              href={existingAttachmentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:underline shrink-0"
-                            >
-                              Open PDF <ExternalLink size={12} />
-                            </a>
-                          </div>
-                        ) : (
-                          <UploadCloud className="w-8 h-8 text-orange-300 mx-auto" />
-                        )}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Your Answer
+                    </label>
+                    <RichTextEditor
+                      value={answers[current] || ""}
+                      onChange={saveAnswer}
+                      placeholder="Type your detailed solution here..."
+                      minHeight={250}
+                    />
+                  </div>
 
-                        <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-orange-300 text-orange-600 font-bold text-xs cursor-pointer hover:bg-orange-50 transition-all">
-                          <UploadCloud size={14} />
-                          {existingAttachmentUrl || solutionFile
-                            ? "Replace PDF"
-                            : "Choose PDF"}
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            className="hidden"
-                            onChange={(e) =>
-                              setSolutionFile(e.target.files?.[0] || null)
-                            }
-                          />
-                        </label>
-                        <p className="text-[11px] text-slate-400 font-medium">
-                          Upload a single PDF covering your solution for all
-                          questions in this practical (max 10 MB).
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* BOTTOM ACTION NAVIGATION */}
                   <div className="flex items-center justify-between pt-6 border-t border-slate-200">
                     <button
                       onClick={() => setCurrent((p) => p - 1)}
