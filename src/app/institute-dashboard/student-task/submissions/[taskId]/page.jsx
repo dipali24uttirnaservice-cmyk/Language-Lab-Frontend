@@ -41,8 +41,9 @@ export default function StudentTaskSubmissionsPage() {
   const handleGradeSubmission = async (submissionId, marks, feedback) => {
     try {
       await taskApi.gradeSubmission(id, submissionId, {
-        marks: marks === "" ? undefined : Number(marks),
+        grade: marks === "" ? undefined : Number(marks),
         feedback,
+        status: "reviewed",
       });
       const response = await taskApi.getSubmissions(id);
       const data = response?.data?.data || response?.data;

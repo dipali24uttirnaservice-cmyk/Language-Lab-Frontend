@@ -219,7 +219,8 @@ useEffect(() => {
       pathname.includes("/dashboard/audio") ||
       pathname.includes("/dashboard/text") ||
       pathname.includes("/dashboard/exercise") ||
-      pathname.includes("/dashboard/vocabulary");
+      pathname.includes("/dashboard/vocabulary") ||
+      pathname.includes("/dashboard/tasks");
 
     if (isLearningJourney) {
       // Step 3 — Current Course

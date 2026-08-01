@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
 import {
   ArrowLeft,
   CheckSquare,
@@ -59,15 +60,15 @@ const TYPE_META = {
 const STATUS_META = {
   pending: {
     label: "Pending",
-    bg: "bg-slate-100",
-    text: "text-slate-600",
-    border: "border-slate-200",
+    bg: "bg-rose-500",
+    text: "text-white",
+    border: "border-rose-600",
   },
   submitted: {
     label: "Submitted",
-    bg: "bg-sky-50",
-    text: "text-sky-700",
-    border: "border-sky-200",
+    bg: "bg-emerald-500",
+    text: "text-white",
+    border: "border-emerald-600",
   },
   late: {
     label: "Late",
@@ -77,9 +78,9 @@ const STATUS_META = {
   },
   reviewed: {
     label: "Reviewed",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    border: "border-emerald-200",
+    bg: "bg-cyan-500",
+    text: "text-white",
+    border: "border-cyan-600",
   },
   overdue: {
     label: "Overdue",
@@ -111,6 +112,22 @@ export default function StudentTasksPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Reflects the currently open task in the URL as `lessonName` so the
+  // global breadcrumb (which reads searchParams, not component state) shows
+  // it as the final crumb, matching every other module page.
+  const syncLessonNameInUrl = useCallback(
+    (lessonName) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (lessonName) {
+        params.set("lessonName", lessonName);
+      } else {
+        params.delete("lessonName");
+      }
+      router.replace(`/dashboard/tasks?${params.toString()}`);
+    },
+    [searchParams, router],
+  );
 
   const loadTasks = useCallback(async () => {
     try {
@@ -207,6 +224,7 @@ export default function StudentTasksPage() {
             onBack={() => {
               exitFullscreen();
               setSelectedTask(null);
+              syncLessonNameInUrl(null);
             }}
             onSubmitted={(submission) =>
               handleSubmitted(selectedTask._id, submission)
@@ -405,7 +423,9 @@ function TaskRow({ task, onSelect }) {
           </div>
         )}
 
-        <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-amber-500 group-hover:text-white group-hover:border-transparent transition-all duration-300 shadow-sm group-hover:scale-105">
+        <div
+          className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all duration-300 shadow-sm group-hover:scale-105 ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
+        >
           {submission ? (
             <RotateCcw
               className="group-hover:rotate-45 transition-transform duration-300"
@@ -713,6 +733,15 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
                         </p>
                       )}
                     </div>
+
+                    {task.questions?.length > 0 && (
+                      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm w-full">
+                        <TaskQuestionsReview
+                          questions={task.questions}
+                          answers={submission.answers}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm w-full">
@@ -852,11 +881,29 @@ function SubmissionForm({ task, submission, onSubmitted }) {
       const res = await studentTaskApi.submit(task._id, formData);
       onSubmitted(res.data?.data);
       setSuccess(true);
+      Swal.fire({
+        icon: "success",
+        title: submission ? "Resubmitted!" : "Submitted!",
+        text: submission
+          ? "Your task has been resubmitted successfully."
+          : "Your task has been submitted successfully.",
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } catch (err) {
       console.error("Submit Task Error:", err);
-      setError(
-        err?.response?.data?.message || "Failed to submit. Please try again.",
-      );
+      const message =
+        err?.response?.data?.message || "Failed to submit. Please try again.";
+      setError(message);
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: message,
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -865,6 +912,15 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   return (
     <form
       onSubmit={handleSubmit}
+      // Enter inside a text-type question field would otherwise submit the
+      // form early (native browser behavior) while the student is still
+      // stepping through checkpoint questions — only the last question's
+      // real submit button should be able to trigger it.
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && !isLastQuestion) {
+          e.preventDefault();
+        }
+      }}
       className="space-y-4 pt-1 border-t border-slate-100"
     >
       {submission && (
@@ -926,6 +982,7 @@ function SubmissionForm({ task, submission, onSubmitted }) {
             {/* Render Next Button if not on the last question, or Submit Button if it is the last question */}
             {!isLastQuestion ? (
               <button
+                key="next-question-btn"
                 type="button"
                 onClick={() =>
                   setCurrentQuestionIndex((prev) =>
@@ -938,6 +995,7 @@ function SubmissionForm({ task, submission, onSubmitted }) {
               </button>
             ) : (
               <button
+                key="submit-task-btn"
                 type="submit"
                 disabled={submitting}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2 transition-all"
@@ -1296,6 +1354,14 @@ function TaskQuestionsReview({ questions, answers }) {
   if (totalQuestions === 0) return null;
 
   const currentQuestion = questions[currentReviewIndex];
+  const givenRaw = answerByIndex[currentReviewIndex];
+  const normalize = (s) =>
+    String(s ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  const isCorrect =
+    givenRaw !== undefined &&
+    normalize(givenRaw) === normalize(currentQuestion.correct_answer);
 
   return (
     <div className="space-y-4">
@@ -1308,15 +1374,45 @@ function TaskQuestionsReview({ questions, answers }) {
 
       {/* Review Active Card */}
       <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 shadow-sm animate-fadeIn">
-        <p className="text-sm font-bold text-slate-800 leading-relaxed">
-          {currentReviewIndex + 1}. {currentQuestion.question_text}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-bold text-slate-800 leading-relaxed">
+            {currentReviewIndex + 1}. {currentQuestion.question_text}
+          </p>
+          {givenRaw !== undefined && (
+            <span
+              className={`shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                isCorrect
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
+              }`}
+            >
+              {isCorrect ? "Correct" : "Incorrect"}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-slate-500 mt-2">
           Your answer:{" "}
           <span className="font-semibold text-slate-700">
-            {prettifyAnswer(currentQuestion, answerByIndex[currentReviewIndex])}
+            {prettifyAnswer(currentQuestion, givenRaw)}
           </span>
         </p>
+        {!isCorrect && (
+          <p className="text-xs text-slate-500">
+            Correct answer:{" "}
+            <span className="font-semibold text-emerald-700">
+              {prettifyAnswer(currentQuestion, currentQuestion.correct_answer)}
+            </span>
+          </p>
+        )}
+        {currentQuestion.explanation && (
+          <div className="text-xs text-slate-500 bg-white/70 p-3 rounded-xl border border-slate-100 leading-relaxed">
+            <span className="font-bold text-slate-600">Explanation: </span>
+            <span
+              className="prose prose-sm max-w-none inline"
+              dangerouslySetInnerHTML={{ __html: currentQuestion.explanation }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Review Pagination Controls */}

@@ -2228,6 +2228,27 @@ export default function ModuleListPage() {
         }
     }, [selectedModule]);
 
+    // Time-on-module tracking — logs real elapsed seconds whenever the student
+    // switches to a different module or leaves the page, for every module
+    // type (video/audio/text/vocabulary/exercise alike). Distinct from the
+    // *_complete events above, which only exist for video/audio/exercise and
+    // don't all carry a duration — this is the one place all module types get
+    // a duration recorded, so the institute's "Time Spent" report reflects
+    // actual usage instead of only counting exercise attempts.
+    const moduleStartTimeRef = React.useRef(Date.now());
+    useEffect(() => {
+        moduleStartTimeRef.current = Date.now();
+        return () => {
+            if (!selectedModule) return;
+            const elapsed = Math.floor((Date.now() - moduleStartTimeRef.current) / 1000);
+            if (elapsed > 0) {
+                logModuleActivity(selectedModule, "module_time", {
+                    time_spent_sec: elapsed,
+                });
+            }
+        };
+    }, [selectedModule]);
+
     // Fetch past attempts whenever an exercise module is opened
     useEffect(() => {
         if (!selectedModule || (selectedModule.module_type || type) !== "exercise") {

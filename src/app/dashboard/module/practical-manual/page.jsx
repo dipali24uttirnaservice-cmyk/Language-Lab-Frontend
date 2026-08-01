@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
+import Swal from "sweetalert2";
 import {
   ArrowLeft,
   BookOpen,
@@ -90,10 +91,10 @@ function PracticalRow({ manual, onSelect, disabled }) {
         : "Open Solution";
   const eyebrowClass =
     status === "reviewed"
-      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+      ? "bg-cyan-500 text-white border-cyan-600"
       : status === "submitted"
-        ? "bg-sky-50 text-sky-600 border-sky-100"
-        : "bg-orange-50 text-orange-600 border-orange-100";
+        ? "bg-emerald-500 text-white border-emerald-600"
+        : "bg-rose-500 text-white border-rose-600";
 
   return (
     <WideRow
@@ -127,14 +128,22 @@ function PracticalRow({ manual, onSelect, disabled }) {
                 : "Ungraded"}
             </span>
           </div>
-          <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
+          <div
+            className={`h-10 w-10 rounded-xl border flex items-center justify-center text-white transition-all duration-300 shadow-sm group-hover:scale-105 ${
+              status === "reviewed"
+                ? "bg-cyan-500 border-cyan-600"
+                : status === "submitted"
+                  ? "bg-emerald-500 border-emerald-600"
+                  : "bg-rose-500 border-rose-600"
+            }`}
+          >
             {status ? (
               <RotateCcw
-                className="group-hover:rotate-45 transition-transform"
-                size={12}
+                className="group-hover:rotate-45 transition-transform duration-300"
+                size={14}
               />
             ) : (
-              <Play className="fill-current ml-0.5" size={12} />
+              <Play className="fill-current ml-0.5" size={14} />
             )}
           </div>
         </>
@@ -423,11 +432,27 @@ export default function StudentPracticalManualPage() {
 
       await studentPracticalApi.submit(selectedManual._id, formData);
       setSubmitted(true);
+      Swal.fire({
+        icon: "success",
+        title: "Submitted!",
+        text: "Your practical manual has been submitted successfully.",
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } catch (error) {
       console.error("Submit Practical Error:", error);
-      setSubmitError(
-        error?.response?.data?.message || "Failed to submit. Please try again.",
-      );
+      const message =
+        error?.response?.data?.message || "Failed to submit. Please try again.";
+      setSubmitError(message);
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: message,
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -533,14 +558,10 @@ export default function StudentPracticalManualPage() {
               </div>
               <div>
                 <h1 className="text-xl font-black text-slate-800">
-                  Practical Submitted Successfully
+                  {selectedManual.my_submission?.status === "reviewed"
+                    ? "Practical Reviewed"
+                    : "Practical Submitted Successfully"}
                 </h1>
-                <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                  Manual ID:{" "}
-                  <span className="font-mono text-slate-600">
-                    {selectedManual._id}
-                  </span>
-                </p>
               </div>
             </div>
             <button
@@ -555,6 +576,23 @@ export default function StudentPracticalManualPage() {
             </button>
           </div>
 
+          {/* Instructor Evaluation Card — only once reviewed */}
+          {selectedManual.my_submission?.status === "reviewed" && (
+            <div className="bg-cyan-50/70 border border-cyan-200 rounded-3xl p-6 space-y-3 shadow-sm">
+              <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-cyan-600" />
+                Instructor Evaluation Completed
+                {selectedManual.my_submission.marks != null &&
+                  ` — ${selectedManual.my_submission.marks} marks`}
+              </p>
+              {selectedManual.my_submission.feedback && (
+                <p className="text-sm text-cyan-900 bg-white/60 p-4 rounded-2xl border border-cyan-100/60 leading-relaxed">
+                  "{selectedManual.my_submission.feedback}"
+                </p>
+              )}
+            </div>
+          )}
+
           {/* List of Attempted Questions and Answers */}
           <div className="space-y-4">
             <h2 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider px-1">
@@ -562,6 +600,7 @@ export default function StudentPracticalManualPage() {
             </h2>
 
             {manuals.map((q, idx) => {
+              const hasAnswer = !!answers[idx]?.replace(/<[^>]*>/g, "").trim();
               const studentAnswer =
                 answers[idx] ||
                 "<p class='text-slate-400 italic'>No answer provided.</p>";
@@ -576,15 +615,23 @@ export default function StudentPracticalManualPage() {
                       <span className="text-xs font-bold text-orange-500 uppercase tracking-wide">
                         Question {idx + 1}
                       </span>
-                      <p className="text-xs font-mono text-slate-400">
-                        ID: <span className="text-slate-600">{q._id}</span>
-                      </p>
                     </div>
-                    {q.marks > 0 && (
-                      <span className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg px-2.5 py-1 text-xs font-bold shrink-0">
-                        {q.marks} Marks
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                          hasAnswer
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
+                        {hasAnswer ? "Answered" : "Not Answered"}
                       </span>
-                    )}
+                      {q.marks > 0 && (
+                        <span className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg px-2.5 py-1 text-xs font-bold">
+                          {q.marks} Marks
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Question Text */}

@@ -134,6 +134,7 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
   const [marks, setMarks] = useState(submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
+  const isFileSolution = submission.solution_type === "file";
 
   // Map answers both by question_id and fallback index order
   const answerByQuestionId = {};

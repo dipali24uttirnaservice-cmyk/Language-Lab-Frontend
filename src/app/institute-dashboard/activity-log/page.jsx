@@ -186,7 +186,6 @@ export default function ActivityLogPage() {
                   <th className="py-4 px-6">Sessions</th>
                   <th className="py-4 px-6">Time Spent</th>
                   <th className="py-4 px-6">Modules Opened</th>
-                  <th className="py-4 px-6">Last Activity</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium">
@@ -211,14 +210,11 @@ export default function ActivityLogPage() {
                         </span>
                       </td>
                       <td className="py-4 px-6 text-slate-800">{row.modules_opened}</td>
-                      <td className="py-4 px-6 text-slate-500 text-xs font-semibold">
-                        {row.last_activity ? new Date(row.last_activity).toLocaleString() : "—"}
-                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="py-12 text-center text-slate-400 text-sm font-semibold">
+                    <td colSpan="5" className="py-12 text-center text-slate-400 text-sm font-semibold">
                       No activity recorded for this filter.
                     </td>
                   </tr>
