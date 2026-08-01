@@ -9,6 +9,7 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
+import StatusModal from "@/components/molecules/StatusModal"; // Adjust the import path to where your StatusModal is located
 import {
   practicalManualDetail,
   getPracticalSubmissions,
@@ -57,8 +58,10 @@ export default function PracticalSubmissionsPage() {
       const response = await getPracticalSubmissions(id);
       const data = response?.data?.data || response?.data;
       setSubmissions(data?.submissions || []);
+      return true;
     } catch (error) {
       console.error("Grade Practical Submission Error:", error);
+      throw error;
     }
   };
 
@@ -69,6 +72,8 @@ export default function PracticalSubmissionsPage() {
       </div>
     );
   }
+
+  const isFileSolution = manual?.submission_type === "file" || !manual?.questions || manual?.questions.length === 0;
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 w-full space-y-6">
@@ -112,6 +117,7 @@ export default function PracticalSubmissionsPage() {
                 key={sub._id}
                 submission={sub}
                 questions={manual?.questions || []}
+                isFileSolution={isFileSolution}
                 onGrade={(marks, feedback) =>
                   handleGradeSubmission(sub._id, marks, feedback)
                 }
@@ -130,10 +136,19 @@ const STATUS_LABELS = {
   reviewed: "Reviewed",
 };
 
-function PracticalSubmissionRow({ submission, questions, onGrade }) {
+function PracticalSubmissionRow({ submission, questions, isFileSolution, onGrade }) {
   const [marks, setMarks] = useState(submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Modal State Management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   // Map answers both by question_id and fallback index order
   const answerByQuestionId = {};
@@ -146,92 +161,131 @@ function PracticalSubmissionRow({ submission, questions, onGrade }) {
     answerByIndex[index] = a.answer_html;
   });
 
+  const handleSaveClick = async () => {
+    setSaving(true);
+    try {
+      await onGrade(marks, feedback);
+      setModalState({
+        open: true,
+        type: "success",
+        title: "Grade Saved!",
+        message: "The student's grade and feedback have been successfully updated.",
+      });
+    } catch (error) {
+      console.error("Failed to save grade:", error);
+      setModalState({
+        open: true,
+        type: "error",
+        title: "Oops...",
+        message: "Failed to save the grade. Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-br from-slate-50/80 to-white rounded-2xl p-5 border border-orange-100/60 space-y-4 shadow-sm hover:border-orange-200 transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-900 truncate">
-            {submission.student_id?.full_name || "Unknown student"}
-          </p>
-          <p className="text-xs text-slate-400">
-            {submission.student_id?.enrollment_no} ·{" "}
-            <span className="font-semibold text-slate-500 uppercase">
-              {STATUS_LABELS[submission.status] || submission.status}
-            </span>
-          </p>
-        </div>
-        {isFileSolution ? (
-          submission.attachment_url && (
-            <a
-              href={submission.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+    <>
+      <div className="bg-gradient-to-br from-slate-50/80 to-white rounded-2xl p-5 border border-orange-100/60 space-y-4 shadow-sm hover:border-orange-200 transition-all">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {submission.student_id?.full_name || "Unknown student"}
+            </p>
+            <p className="text-xs text-slate-400">
+              {submission.student_id?.enrollment_no} ·{" "}
+              <span className="font-semibold text-slate-500 uppercase">
+                {STATUS_LABELS[submission.status] || submission.status}
+              </span>
+            </p>
+          </div>
+          {isFileSolution ? (
+            submission.attachment_url && (
+              <a
+                href={submission.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+              >
+                <FileText size={13} /> Open Submitted PDF{" "}
+                <ExternalLink size={12} />
+              </a>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={() => setExpanded((prev) => !prev)}
+              className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
             >
-              <FileText size={13} /> Open Submitted PDF{" "}
-              <ExternalLink size={12} />
-            </a>
-          )
-        ) : (
+              {expanded ? "Hide solution" : "View solution"}
+            </button>
+          )}
+        </div>
+
+        {expanded && !isFileSolution && (
+          <div className="space-y-2 pt-1">
+            {questions.map((q, idx) => {
+              const htmlContent = answerByQuestionId[q._id] || answerByIndex[idx];
+
+              return (
+                <div
+                  key={q._id || idx}
+                  className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner"
+                >
+                  <p className="text-xs font-bold text-slate-800 mb-1.5">
+                    {idx + 1}. {q.question_text}
+                  </p>
+                  <div
+                    className="text-xs text-slate-600 leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: htmlContent || "<em>No answer given.</em>",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
+          <input
+            type="number"
+            placeholder="Marks"
+            value={marks}
+            onChange={(e) => setMarks(e.target.value)}
+            className="w-full sm:w-28 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-200 focus:border-orange-500 outline-none"
+          />
+          <input
+            type="text"
+            placeholder="Feedback comments..."
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            className="flex-1 min-w-0 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-200 focus:border-orange-500 outline-none"
+          />
           <button
             type="button"
-            onClick={() => setExpanded((prev) => !prev)}
-            className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+            disabled={saving}
+            onClick={handleSaveClick}
+            className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-md shadow-orange-600/20 transition-all"
           >
-            {expanded ? "Hide solution" : "View solution"}
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+            {saving ? "Saving..." : "Save Grade"}
           </button>
-        )}
-      </div>
-
-      {expanded && !isFileSolution && (
-        <div className="space-y-2 pt-1">
-          {questions.map((q, idx) => {
-            // Checks ID first, then falls back to array index matching
-            const htmlContent = answerByQuestionId[q._id] || answerByIndex[idx];
-
-            return (
-              <div
-                key={q._id || idx}
-                className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner"
-              >
-                <p className="text-xs font-bold text-slate-800 mb-1.5">
-                  {idx + 1}. {q.question_text}
-                </p>
-                <div
-                  className="text-xs text-slate-600 leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: htmlContent || "<em>No answer given.</em>",
-                  }}
-                />
-              </div>
-            );
-          })}
         </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
-        <input
-          type="number"
-          placeholder="Marks"
-          value={marks}
-          onChange={(e) => setMarks(e.target.value)}
-          className="w-full sm:w-28 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-200 focus:border-orange-500 outline-none"
-        />
-        <input
-          type="text"
-          placeholder="Feedback comments..."
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          className="flex-1 min-w-0 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-200 focus:border-orange-500 outline-none"
-        />
-        <button
-          type="button"
-          onClick={() => onGrade(marks, feedback)}
-          className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-md shadow-orange-600/20 transition-all"
-        >
-          <CheckCircle2 className="w-3.5 h-3.5" /> Save Grade
-        </button>
       </div>
-    </div>
+
+      {/* Reusable Status Modal */}
+      <StatusModal
+        open={modalState.open}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+      />
+    </>
   );
 }
