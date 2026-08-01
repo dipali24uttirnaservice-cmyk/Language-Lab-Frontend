@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
-  Minimize2,
   Send,
   Loader2,
   Sparkles,
@@ -317,7 +315,6 @@ export default function StudentPracticalManualPage() {
 
   const [selectedManual, setSelectedManual] = useState(null);
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [search, setSearch] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -342,43 +339,21 @@ export default function StudentPracticalManualPage() {
       .finally(() => setListLoading(false));
   }, [topicId, courseId]);
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
-  const enterFullscreen = async () => {
-    if (containerRef.current?.requestFullscreen) {
-      try {
-        await containerRef.current.requestFullscreen();
-      } catch (err) {
-        console.log(
-          "Auto-fullscreen blocked by browser policy. User interaction required.",
-        );
+  // Reflects the currently open manual in the URL as `lessonName` so the
+  // global breadcrumb (which reads searchParams, not component state) shows
+  // it as the final crumb, matching every other module page.
+  const syncLessonNameInUrl = useCallback(
+    (lessonName) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (lessonName) {
+        params.set("lessonName", lessonName);
+      } else {
+        params.delete("lessonName");
       }
-    }
-  };
-
-  const exitFullscreen = async () => {
-    if (document.fullscreenElement) {
-      try {
-        await document.exitFullscreen();
-      } catch (err) {
-        console.error("Exit fullscreen failed:", err);
-      }
-    }
-  };
-
-  // Automatically trigger fullscreen on mount / container availability
-  useEffect(() => {
-    if (!isFullscreen && containerRef.current) {
-      enterFullscreen();
-    }
-  }, [selectedManual]);
+      router.replace(`/dashboard/module/practical-manual?${params.toString()}`);
+    },
+    [searchParams, router],
+  );
 
   const handleStartManual = useCallback(async (manual) => {
     setDetailLoading(true);
@@ -409,12 +384,13 @@ export default function StudentPracticalManualPage() {
       setSolutionType(mySubmission?.solution_type || "text");
       setSolutionFile(null);
       setExistingAttachmentUrl(mySubmission?.attachment_url || null);
+      syncLessonNameInUrl(detail?.title);
     } catch (error) {
       console.error("Get Practical Detail Error:", error);
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [syncLessonNameInUrl]);
 
   const saveAnswer = (data) => {
     setAnswers((prev) => ({ ...prev, [current]: data }));
@@ -481,17 +457,6 @@ export default function StudentPracticalManualPage() {
                 <BookOpen size={16} />
                 {manualsList.length} Practical Manuals
               </div>
-              <button
-                onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-              >
-                {isFullscreen ? (
-                  <Minimize2 size={16} />
-                ) : (
-                  <Maximize2 size={16} />
-                )}
-              </button>
             </div>
           </div>
 
@@ -582,6 +547,7 @@ export default function StudentPracticalManualPage() {
               onClick={() => {
                 setSelectedManual(null);
                 setSubmitted(false);
+                syncLessonNameInUrl(null);
               }}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
             >
@@ -689,17 +655,6 @@ export default function StudentPracticalManualPage() {
 
       {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
-        {/* TOP BAR */}
-        <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
-          <button
-            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-          >
-            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
-        </div>
-
         {/* CONTENT CARD CONTAINER */}
         <div className="px-8 pb-10 pt-4 w-full flex-1">
           <div className="w-full relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">

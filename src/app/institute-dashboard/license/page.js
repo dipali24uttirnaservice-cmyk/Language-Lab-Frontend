@@ -217,9 +217,10 @@ export default function LicensePage() {
                 <tr className="bg-slate-50/70 text-slate-400 border-b border-slate-200/60 text-[10px] font-black tracking-wider uppercase">
                   <th className="p-4 pl-6">Sr. No</th>
                   <th className="p-4">License Code</th>
-                  <th className="p-4">Assigned Target</th>
+                  <th className="p-4">Login</th>
                   <th className="p-4">System Status</th>
-                  <th className="p-4">Seat Capacity</th>
+                  <th className="p-4">Total Seats</th>
+                  <th className="p-4">Used Seats</th>
                   <th className="p-4">Timeline Left</th>
                   <th className="p-4 pr-6">Expiry Target</th>
                 </tr>
@@ -271,19 +272,11 @@ export default function LicensePage() {
                               {license.is_valid ? "Active" : "Expired"}
                             </span>
                           </td>
-                          <td className="p-4">
-                            <div className="flex flex-col w-36 gap-1.5">
-                              <div className="flex justify-between font-bold text-slate-400 text-[10px]">
-                                <span>Capacity</span>
-                                <span className="text-orange-600 font-extrabold">{Math.round(percentUsed)}%</span>
-                              </div>
-                              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/30">
-                                <div 
-                                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-500 rounded-full"
-                                  style={{ width: `${percentUsed}%` }}
-                                />
-                              </div>
-                            </div>
+                          <td className="p-4 font-black text-slate-800">
+                            {total}
+                          </td>
+                          <td className="p-4 font-black text-slate-800">
+                            {active}
                           </td>
                           <td className="p-4 font-bold text-slate-600 font-mono">
                             {license.days_remaining}d

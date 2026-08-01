@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo,useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -56,6 +56,7 @@ function taskStatusKey(task) {
    MAIN PAGE
 ========================================================== */
 export default function StudentTasksPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
   const topicId = searchParams.get("topicId");
@@ -64,6 +65,22 @@ export default function StudentTasksPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // Reflects the currently open task in the URL as `lessonName` so the
+  // global breadcrumb (which reads searchParams, not component state) shows
+  // it as the final crumb, matching every other module page.
+  const syncLessonNameInUrl = useCallback(
+    (lessonName) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (lessonName) {
+        params.set("lessonName", lessonName);
+      } else {
+        params.delete("lessonName");
+      }
+      router.replace(`/dashboard/tasks?${params.toString()}`);
+    },
+    [searchParams, router],
+  );
 
   const loadTasks = useCallback(async () => {
     try {
@@ -95,7 +112,10 @@ export default function StudentTasksPage() {
     return (
       <TaskWorkspace
         task={selectedTask}
-        onBack={() => setSelectedTask(null)}
+        onBack={() => {
+          setSelectedTask(null);
+          syncLessonNameInUrl(null);
+        }}
         onSubmitted={(submission) => handleSubmitted(selectedTask._id, submission)}
       />
     );
@@ -141,7 +161,14 @@ export default function StudentTasksPage() {
       ) : (
         <div className="space-y-4">
           {tasks.map((task) => (
-            <TaskRow key={task._id} task={task} onSelect={() => setSelectedTask(task)} />
+            <TaskRow
+              key={task._id}
+              task={task}
+              onSelect={() => {
+                setSelectedTask(task);
+                syncLessonNameInUrl(task.title);
+              }}
+            />
           ))}
         </div>
       )}

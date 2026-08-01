@@ -59,6 +59,7 @@ console.log("Type:", type);
     if (courseName) params.set("courseName", courseName);
     params.set("topicId", topicId);
     if (topicName) params.set("topicName", topicName);
+    params.set("type", type);
 
     const destination =
       type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";

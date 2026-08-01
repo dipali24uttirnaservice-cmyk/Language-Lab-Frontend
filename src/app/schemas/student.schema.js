@@ -2,6 +2,7 @@ import * as Yup from "yup";
 
 export const studentLoginSchema = Yup.object({
   instituteId: Yup.string().required("Please select your institute"),
+  licenseCode: Yup.string().required("Please select your license code"),
   enrollmentNo: Yup.string().trim().required("Enrollment Number is required"),
   password: Yup.string().required("Password is required"),
 });

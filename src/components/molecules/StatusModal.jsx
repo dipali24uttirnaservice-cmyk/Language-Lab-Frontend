@@ -9,6 +9,7 @@ export default function StatusModal({
   title,
   message,
   onClose,
+  showIcon = true,
 }) {
   return (
     <AnimatePresence>
@@ -41,17 +42,18 @@ export default function StatusModal({
            
 
             <div className="flex flex-col items-center text-center">
-              {type === "success" ? (
-                <CheckCircle2
-                  size={70}
-                  className="text-green-500"
-                />
-              ) : (
-                <XCircle
-                  size={70}
-                  className="text-red-500"
-                />
-              )}
+              {showIcon &&
+                (type === "success" ? (
+                  <CheckCircle2
+                    size={70}
+                    className="text-green-500"
+                  />
+                ) : (
+                  <XCircle
+                    size={70}
+                    className="text-red-500"
+                  />
+                ))}
 
               <h3 className="mt-4 text-2xl font-bold">
                 {title}
