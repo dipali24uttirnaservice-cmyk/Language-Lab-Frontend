@@ -61,9 +61,11 @@ export default function StudentTasksPage() {
   const topicId = searchParams.get("topicId");
   const topicName = searchParams.get("topicName");
 
+  const containerRef = useRef(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const loadTasks = useCallback(async () => {
     try {
@@ -84,6 +86,50 @@ export default function StudentTasksPage() {
     loadTasks();
   }, [loadTasks]);
 
+  // Fullscreen change listener to sync state with browser events (e.g. pressing ESC key)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+      }
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically trigger fullscreen once when a task is selected
+  useEffect(() => {
+    if (selectedTask && containerRef.current) {
+      enterFullscreen();
+    }
+  }, [selectedTask]);
+
+  const toggleFullscreen = () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  };
+
   const handleSubmitted = (taskId, submission) => {
     setTasks((prev) =>
       prev.map((t) => (t._id === taskId ? { ...t, my_submission: submission, overdue: false } : t)),
@@ -93,53 +139,87 @@ export default function StudentTasksPage() {
 
   if (selectedTask) {
     return (
-      <TaskWorkspace
-        task={selectedTask}
-        onBack={() => setSelectedTask(null)}
-        onSubmitted={(submission) => handleSubmitted(selectedTask._id, submission)}
-      />
+      <div ref={containerRef} className="h-screen w-full bg-white overflow-hidden flex flex-col">
+        {/* Workspace Top Action Bar containing the manual Minimize / Maximize button */}
+       
+
+        <div className="flex-1 overflow-hidden">
+          <TaskWorkspace
+            task={selectedTask}
+            onBack={() => {
+              exitFullscreen();
+              setSelectedTask(null);
+            }}
+            onSubmitted={(submission) => handleSubmitted(selectedTask._id, submission)}
+          />
+        </div>
+      </div>
     );
   }
 
   const pendingCount = tasks.filter((t) => !t.my_submission).length;
 
   return (
-    <div className="relative min-h-screen p-6 md:p-8 space-y-8 overflow-hidden font-sans">
+    <div className="relative min-h-screen w-full bg-white p-6 md:p-10 space-y-8 overflow-y-auto font-sans">
+      {/* Background Glow Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-teal-50/40 to-emerald-100/50" />
-        <div className="absolute top-10 right-10 h-96 w-96 rounded-full bg-gradient-to-br from-emerald-400/10 to-teal-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-50/40 via-white to-amber-50/20" />
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-orange-400/5 blur-3xl" />
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div>
+      <style jsx global>{`
+        ::-webkit-scrollbar {
+          width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #f97316;
+        }
+      `}</style>
+
+      {/* Top Header Card */}
+      <div className="w-full bg-slate-50/60 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.06)] flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
+        
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
-              Assignments
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse" />
+            <span className="text-xs font-black text-orange-600 uppercase tracking-widest">
+              Assignments Workspace
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
             {topicName ? `${topicName} Tasks` : "My Tasks"}
           </h1>
         </div>
-        <div className="px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm flex items-center gap-2">
-          <CheckSquare className="w-4 h-4" />
-          {pendingCount} pending of {tasks.length}
+
+        <div className="flex items-center gap-3">
+          <div className="px-5 py-3 rounded-2xl bg-orange-100/60 border border-orange-200/60 text-orange-800 font-extrabold text-xs flex items-center gap-2 shadow-sm">
+            <CheckSquare className="w-4 h-4 text-orange-600" />
+            {pendingCount} pending of {tasks.length} total
+          </div>
         </div>
       </div>
 
+      {/* Content Section */}
       {loading ? (
-        <div className="py-20 flex items-center justify-center text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin" />
+        <div className="py-32 flex items-center justify-center text-slate-400">
+          <Loader2 className="w-7 h-7 animate-spin text-orange-500" />
         </div>
       ) : tasks.length === 0 ? (
-        <div className="py-20 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
+        <div className="py-24 text-center bg-white rounded-3xl border border-dashed border-orange-200 shadow-sm">
           <p className="text-slate-400 text-sm font-semibold">
             No tasks have been assigned to you yet.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           {tasks.map((task) => (
             <TaskRow key={task._id} task={task} onSelect={() => setSelectedTask(task)} />
           ))}
@@ -195,37 +275,61 @@ function TaskRow({ task, onSelect }) {
   const statusMeta = STATUS_META[taskStatusKey(task)];
 
   return (
-    <WideRow
+    <div
       onClick={onSelect}
-      iconBg={`bg-gradient-to-br ${meta.gradient} group-hover:brightness-110`}
-      icon={<TypeIcon size={18} />}
-      eyebrow={statusMeta.label}
-      eyebrowClass={`${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-      title={task.title}
-      middle={
-        <p className="text-xs text-slate-400 font-medium truncate">
-          {task.course_id?.course_name || "Course"} · {meta.label}
-          {task.due_date && ` · Due ${new Date(task.due_date).toLocaleDateString()}`}
-        </p>
-      }
-      right={
-        <>
-          {submission?.grade != null && (
-            <div className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-              <Award size={12} className="text-emerald-500" />
-              <span>{submission.grade} Pts</span>
-            </div>
-          )}
-          <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
-            {submission ? (
-              <RotateCcw className="group-hover:rotate-45 transition-transform" size={12} />
-            ) : (
-              <Play className="fill-current ml-0.5" size={12} />
-            )}
+      className="group relative w-full bg-white hover:bg-orange-50/20 border border-slate-200/80 hover:border-orange-300/60 rounded-2xl p-5 transition-all duration-300 shadow-sm hover:shadow-[0_10px_30px_rgba(249,115,22,0.08)] cursor-pointer flex items-center justify-between gap-4 overflow-hidden"
+    >
+      {/* Decorative gradient glow on hover */}
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-orange-500 to-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Left section: Icon + Title & Metadata */}
+      <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-200 shrink-0 group-hover:scale-105 transition-transform duration-300">
+          <TypeIcon size={20} />
+        </div>
+
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h3 className="text-sm font-bold text-slate-800 group-hover:text-orange-600 transition-colors truncate">
+              {task.title}
+            </h3>
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}>
+              {statusMeta.label}
+            </span>
           </div>
-        </>
-      }
-    />
+
+          <p className="text-xs text-slate-400 font-medium truncate flex items-center gap-1.5">
+            <span className="text-slate-600 font-semibold">{task.course_id?.course_name || "Course"}</span>
+            <span>•</span>
+            <span>{meta.label}</span>
+            {task.due_date && (
+              <>
+                <span>•</span>
+                <span className="text-slate-500">Due {new Date(task.due_date).toLocaleDateString()}</span>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Right section: Grade / Points + Action Button */}
+      <div className="flex items-center gap-3 shrink-0">
+        {submission?.grade != null && (
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-50/80 px-3 py-1.5 rounded-xl border border-orange-200/60 shadow-xs">
+            <Award size={14} className="text-orange-500" />
+            <span>{submission.grade} Pts</span>
+          </div>
+        )}
+
+        <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-amber-500 group-hover:text-white group-hover:border-transparent transition-all duration-300 shadow-sm group-hover:scale-105">
+          {submission ? (
+            <RotateCcw className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+          ) : (
+            <Play className="fill-current ml-0.5" size={14} />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -242,23 +346,25 @@ function TaskRow({ task, onSelect }) {
 
 
 
+
+
+
+
+
+
 export function TaskWorkspace({ task, onBack, onSubmitted }) {
   const meta = TYPE_META[task.type] || TYPE_META.text;
   const TypeIcon = meta.Icon;
   const submission = task.my_submission;
   const statusMeta = STATUS_META[taskStatusKey(task)];
 
-  const [isExpanded, setIsExpanded] = useState(true);
-  
-  // Track the current step index for sequential card navigation
   const [currentStep, setCurrentStep] = useState(0);
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Define steps dynamically based on available task content
   const steps = [
-    {
-      id: 'overview',
-      title: 'Overview & Instructions',
-    },
+    { id: 'overview', title: 'Overview & Instructions' },
     ...(task.type && (task.text_content || task.link_url || task.media_url) ? [{
       id: 'content',
       title: 'Task Material',
@@ -283,30 +389,20 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
     }
   };
 
-  const containerRef = useRef(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-  
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-  
-    return () => {
-      document.removeEventListener(
-        "fullscreenchange",
-        handleFullscreenChange
-      );
-    };
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
-  
+
   const enterFullscreen = async () => {
     if (containerRef.current?.requestFullscreen) {
       await containerRef.current.requestFullscreen();
     }
   };
-  
+
   const exitFullscreen = async () => {
     if (document.fullscreenElement) {
       await document.exitFullscreen();
@@ -316,213 +412,224 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
   return (
     <div
       ref={containerRef}
-      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-emerald-50/30 overflow-y-auto flex flex-col transition-all ${
-        isFullscreen ? "h-screen w-screen p-2 md:p-4 bg-white" : "min-h-screen p-4 md:p-8"
+      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30 overflow-y-auto flex flex-col transition-all duration-300 ${
+        isFullscreen ? "h-screen w-screen p-3 md:p-6 bg-white" : "min-h-screen p-4 md:p-8"
       }`}
     >
-      <div className={`mx-w-4xl mx-auto space-y-6 flex-1 flex flex-col w-full ${isFullscreen ? "max-w-none h-full space-y-3 p-2" : ""}`}>
+      {/* Expanded container wrapper to allow full-width card scaling */}
+      <div className="w-full mx-auto space-y-6 flex-1 flex flex-col">
         
         {/* Top Navigation & Context Bar */}
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between shrink-0 px-2">
           <button
             onClick={onBack}
-            className="group inline-flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-semibold text-sm transition-all duration-200 bg-white/80 hover:bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-200/60"
+            className="group inline-flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition-all duration-200 bg-white/90 hover:bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200/60 backdrop-blur-md"
           >
             <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
             Back to Tasks
           </button>
           
-          <div className="flex items-center gap-2">
-            <button
-              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize2 size={18} />
-              ) : (
-                <Maximize2 size={18} />
-              )}
-            </button>
-          </div>
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
         </div>
 
-        {/* Main Workspace Card */}
-        <div className={`relative overflow-hidden border border-emerald-100/80 bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(16,185,129,0.07)] transition-all flex flex-col ${
-          isFullscreen ? "flex-1 rounded-3xl p-6 md:p-8 overflow-y-auto" : "rounded-[2.5rem] p-6 md:p-10"
+        {/* Step Progress Bar Indicator */}
+        <div  className="flex items-center justify-center gap-4 px-2">
+          {steps.map((step, idx) => (
+            <div key={step.id} className="flex items-center gap-2">
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                idx === currentStep 
+                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 ring-4 ring-orange-100' 
+                  : idx < currentStep 
+                  ? 'bg-orange-100 text-orange-700' 
+                  : 'bg-slate-200 text-slate-500'
+              }`}>
+                {idx + 1}
+              </div>
+              <span className={`text-xs font-semibold hidden md:inline ${idx === currentStep ? 'text-slate-900' : 'text-slate-400'}`}>
+                {step.title}
+              </span>
+              {idx < steps.length - 1 && <div className="h-[2px] w-12 md:w-24 bg-slate-200 mx-2" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Main Full-Width Workspace Card */}
+        <div className={`relative w-full overflow-hidden border border-orange-100/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(249,115,22,0.08)] transition-all flex flex-col justify-between ${
+          isFullscreen ? "flex-1 rounded-3xl p-6 md:p-12 overflow-y-auto" : "rounded-[2.5rem] p-6 md:p-12"
         }`}>
           
           {/* Ambient Background Glows */}
-          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-teal-200/40 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-amber-200/40 blur-3xl pointer-events-none" />
 
-          <div className="relative space-y-8 flex-1 flex flex-col justify-between">
+          <div className="relative space-y-8 flex-1 flex flex-col w-full">
             
-            <div className="space-y-8">
-              {/* STEP 0: Overview & Instructions */}
-              {currentStep === 0 && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-                    <div className="flex items-start gap-4">
-                      <span className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 shrink-0 transform hover:scale-105 transition-transform`}>
-                        <TypeIcon size={28} />
-                      </span>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border} shadow-sm`}>
-                            {statusMeta.label}
-                          </span>
-                          <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-md">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{task.title}</h1>
-                        <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
-                          <Clock size={14} />
-                          {task.due_date ? `Due ${new Date(task.due_date).toLocaleDateString()}` : "No due date"}
-                        </p>
+            {/* STEP 0: Overview & Instructions */}
+            {currentStep === 0 && (
+              <div className="space-y-8 animate-fadeIn w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                  <div className="flex items-start gap-4">
+                    <span className="h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 shrink-0">
+                      <TypeIcon size={28} />
+                    </span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border} shadow-sm`}>
+                          {statusMeta.label}
+                        </span>
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                          {meta.label}
+                        </span>
                       </div>
+                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{task.title}</h1>
+                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                        <Clock size={14} />
+                        {task.due_date ? `Due ${new Date(task.due_date).toLocaleDateString()}` : "No due date"}
+                      </p>
                     </div>
-
-                    {submission?.grade != null && (
-                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50/80 px-4 py-3 rounded-2xl border border-emerald-200/60 shadow-inner shrink-0 self-start md:self-auto">
-                        <Award size={20} className="text-emerald-600 animate-pulse" />
-                        <div>
-                          <p className="text-[10px] uppercase text-emerald-500 font-semibold">Score</p>
-                          <p className="text-base">{submission.grade} Pts</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
-                  <div className="space-y-4">
-                    {task.description && (
-                      <p className="text-base text-slate-600 leading-relaxed font-normal">{task.description}</p>
-                    )}
-
-                    {task.instructions && (
-                      <div className="bg-gradient-to-br from-slate-50 to-emerald-50/20 rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2">
-                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                          <Sparkles size={14} className="text-emerald-600" />
-                          Instructions & Guidelines
-                        </p>
-                        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{task.instructions}</p>
+                  {submission?.grade != null && (
+                    <div className="flex items-center gap-3 text-sm font-bold text-orange-700 bg-orange-50/80 px-4 py-3 rounded-2xl border border-orange-200/60 shadow-sm shrink-0">
+                      <Award size={22} className="text-orange-600" />
+                      <div>
+                        <p className="text-[10px] uppercase text-orange-500 font-semibold">Score Earned</p>
+                        <p className="text-base">{submission.grade} Pts</p>
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {task.description && (
+                    <p className="text-base text-slate-600 leading-relaxed">{task.description}</p>
+                  )}
+
+                  {task.instructions && (
+                    <div className="bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-2xl p-6 border border-slate-100 shadow-sm space-y-2">
+                      <p className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-orange-600" />
+                        Instructions & Guidelines
+                      </p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{task.instructions}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 1: Content Renderers */}
+            {steps[currentStep]?.id === 'content' && (
+              <div className="space-y-4 animate-fadeIn w-full">
+                <h3 className="text-lg font-bold text-slate-800">Task Material & Resources</h3>
+                {task.type === "text" && task.text_content && (
+                  <div
+                    className="bg-white rounded-2xl p-6 border border-slate-200/60 text-sm text-slate-700 prose prose-sm max-w-none shadow-sm"
+                    dangerouslySetInnerHTML={{ __html: task.text_content }}
+                  />
+                )}
+                
+                {task.type === "link" && task.link_url && (
+                  <a
+                    href={task.link_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center gap-3 text-sm font-bold text-orange-700 bg-orange-50/80 border border-orange-200 px-5 py-3.5 rounded-2xl hover:bg-orange-100/80 transition-all shadow-sm"
+                  >
+                    <div className="p-2 bg-orange-600 text-white rounded-xl shadow-sm">
+                      <Link2 className="w-4 h-4" />
+                    </div>
+                    <span>Open External Resource</span>
+                    <ChevronRight size={16} className="text-orange-500 transition-transform group-hover:translate-x-1" />
+                  </a>
+                )}
+
+                {["audio", "video", "document"].includes(task.type) && task.media_url && (
+                  <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60 w-full">
+                    {task.type === "audio" && <audio controls src={task.media_url} className="w-full" />}
+                    {task.type === "video" && (
+                      <video controls src={task.media_url} className="w-full rounded-2xl shadow-md max-h-[500px] object-cover" />
+                    )}
+                    {task.type === "document" && (
+                      <a
+                        href={task.media_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-3 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-5 py-3.5 rounded-2xl hover:bg-amber-100 transition-all shadow-sm"
+                      >
+                        <div className="p-2 bg-amber-600 text-white rounded-xl">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        View Document Asset
+                      </a>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            )}
 
-              {/* STEP 1: Content Renderers (Text, Link, Media) - Only renders if content exists */}
-              {steps[currentStep]?.id === 'content' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <h3 className="text-lg font-bold text-slate-800">Task Material & Resources</h3>
-                  {task.type === "text" && task.text_content && (
-                    <div
-                      className="bg-white rounded-2xl p-6 border border-slate-200/60 text-sm text-slate-700 prose prose-sm max-w-none shadow-sm"
-                      dangerouslySetInnerHTML={{ __html: task.text_content }}
-                    />
-                  )}
-                  
-                  {task.type === "link" && task.link_url && (
-                    <a
-                      href={task.link_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group inline-flex items-center gap-3 text-sm font-bold text-emerald-700 bg-emerald-50/80 border border-emerald-200 px-5 py-3 rounded-2xl hover:bg-emerald-100/80 transition-all shadow-sm"
-                    >
-                      <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
-                        <Link2 className="w-4 h-4" />
-                      </div>
-                      <span>Open External Resource</span>
-                      <ChevronRight size={16} className="text-emerald-500 transition-transform group-hover:translate-x-1" />
-                    </a>
-                  )}
-
-                  {["audio", "video", "document"].includes(task.type) && task.media_url && (
-                    <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60">
-                      {task.type === "audio" && <audio controls src={task.media_url} className="w-full" />}
-                      {task.type === "video" && (
-                        <video controls src={task.media_url} className="w-full rounded-2xl shadow-md max-h-[420px] object-cover" />
-                      )}
-                      {task.type === "document" && (
-                        <a
-                          href={task.media_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-3 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-5 py-3 rounded-2xl hover:bg-amber-100 transition-all shadow-sm"
-                        >
-                          <div className="p-2 bg-amber-600 text-white rounded-xl">
-                            <FileText className="w-4 h-4" />
-                          </div>
-                          View Document Asset
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* FINAL STEP: Submission Section / Review State */}
-              {steps[currentStep]?.id === 'submission' && (
-                <div className="space-y-6 animate-fadeIn">
-                  {submission?.status === "reviewed" ? (
-                    <div className="space-y-6">
-                      <div className="bg-emerald-50/70 border border-emerald-200 rounded-3xl p-6 space-y-3 shadow-sm">
-                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" /> 
-                          Instructor Evaluation Completed
-                          {submission.grade != null && ` — ${submission.grade} marks`}
+            {/* FINAL STEP: Submission Section / Review State */}
+            {steps[currentStep]?.id === 'submission' && (
+              <div className="space-y-6 animate-fadeIn w-full">
+                {submission?.status === "reviewed" ? (
+                  <div className="space-y-6 w-full">
+                    <div className="bg-orange-50/70 border border-orange-200 rounded-3xl p-6 space-y-3 shadow-sm">
+                      <p className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-orange-600" /> 
+                        Instructor Evaluation Completed
+                        {submission.grade != null && ` — ${submission.grade} marks`}
+                      </p>
+                      {submission.feedback && (
+                        <p className="text-sm text-orange-900 bg-white/60 p-4 rounded-2xl border border-orange-100/60 leading-relaxed">
+                          "{submission.feedback}"
                         </p>
-                        {submission.feedback && (
-                          <p className="text-sm text-emerald-900 bg-white/60 p-4 rounded-2xl border border-emerald-100/60 leading-relaxed">
-                            "{submission.feedback}"
-                          </p>
-                        )}
-                      </div>
-                      {task.questions?.length > 0 && (
-                        <TaskQuestionsReview questions={task.questions} answers={submission.answers} />
                       )}
                     </div>
-                  ) : (
-                    <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm">
-                      <SubmissionForm task={task} submission={submission} onSubmitted={onSubmitted} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
-              <button
-                onClick={handlePrev}
-                disabled={currentStep === 0}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
-                  currentStep === 0
-                    ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm'
-                }`}
-              >
-                <ChevronLeft size={16} />
-                Previous
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={currentStep === steps.length - 1}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
-                  currentStep === steps.length - 1
-                    ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20'
-                }`}
-              >
-                Next
-                <ChevronRight size={16} />
-              </button>
-            </div>
-
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm w-full">
+                    <SubmissionForm task={task} submission={submission} onSubmitted={onSubmitted} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-8 w-full">
+            <button
+              onClick={handlePrev}
+              disabled={currentStep === 0}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                currentStep === 0
+                  ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm'
+              }`}
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={currentStep === steps.length - 1}
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                currentStep === steps.length - 1
+                  ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20'
+              }`}
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
