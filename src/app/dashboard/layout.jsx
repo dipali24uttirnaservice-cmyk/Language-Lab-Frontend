@@ -89,7 +89,7 @@ const handleLogout = async () => {
 )}
 
         {/* Scrollable Content Only */}
-    <main className="flex-1 overflow-y-auto p-5 ">
+    <main className="flex-1 overflow-y-auto focus:outline-none">
   {children}
  <Toaster 
           position="top-right"

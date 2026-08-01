@@ -5,8 +5,6 @@ export const studentTaskApi = {
 
   getOneMine: (id) => api.get(`/task/mine/${id}`),
 
-  submit: (id, formData) =>
-    api.post(`/task/mine/${id}/submit`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+  // Remove the manual headers override so the browser can set the boundary automatically
+  submit: (id, formData) => api.post(`/task/mine/${id}/submit`, formData),
 };
