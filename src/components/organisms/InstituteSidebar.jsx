@@ -202,6 +202,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                 <button
                   onClick={() => setShowLogoutModal(true)}
                   title={!isOpen ? "Logout" : undefined}
+                  aria-label="Logout"
                   className={`relative flex items-center w-full rounded-xl transition-all group overflow-hidden hover:bg-red-50
                   ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
                 >

@@ -187,12 +187,14 @@ function AttemptHistory({ attempts }) {
           <>
             <button
               onClick={() => scroll("left")}
+              aria-label="Scroll attempts left"
               className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => scroll("right")}
+              aria-label="Scroll attempts right"
               className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <ChevronRight size={16} />
@@ -388,6 +390,7 @@ function AttemptResultModal({ attempt, onClose }) {
           <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
           <button
             onClick={onClose}
+            aria-label="Close"
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer"
           >
             <X size={16} />
@@ -1555,6 +1558,7 @@ setQuestionResults(response.data.data.question_results || []);
           onClick={isFullscreen ? exitFullscreen : enterFullscreen}
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
           title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
         >
           {isFullscreen ? (
             <Minimize2 size={18} />

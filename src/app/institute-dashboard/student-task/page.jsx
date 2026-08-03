@@ -409,6 +409,7 @@ export default function StudentTaskPage() {
                             onClick={() => router.push(`/institute-dashboard/student-task/view/${task._id}`)}
                             className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                             title="View Task"
+                            aria-label="View Task"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -419,6 +420,7 @@ export default function StudentTaskPage() {
                             }}
                             className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
                             title="View Submissions"
+                            aria-label="View Submissions"
                           >
                             <Send className="w-4 h-4" />
                           </button>
@@ -427,6 +429,7 @@ export default function StudentTaskPage() {
                             onClick={() => router.push(`/institute-dashboard/student-task/${task._id}`)}
                             className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
                             title="Edit Task"
+                            aria-label="Edit Task"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -435,6 +438,7 @@ export default function StudentTaskPage() {
                             onClick={() => handleDeleteTask(task._id)}
                             className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                             title="Delete Task"
+                            aria-label="Delete Task"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
