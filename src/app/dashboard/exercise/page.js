@@ -1496,7 +1496,7 @@ export default function ExercisePage() {
       if (response?.data?.success) {
         const attempt = response.data.data.attempt;
         setResultData(attempt);
-        setQuestionResults(response.data.data.results || []);
+setQuestionResults(response.data.data.question_results || []);
         setIsQuizActive(false);
         setShowResults(true);
         toast.success("Submitted successfully!");
