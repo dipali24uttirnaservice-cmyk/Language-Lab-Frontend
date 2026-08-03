@@ -48,7 +48,7 @@ const menuItems = [
     text: "text-orange-800",
   },
   {
-    title: "Student Task",
+    title: "Task Management",
     href: "/institute-dashboard/student-task",
     icon: ClipboardList,
     color: "from-teal-500 to-emerald-600",
