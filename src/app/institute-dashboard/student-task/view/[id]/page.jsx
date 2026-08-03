@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, FileText, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Calendar, CheckCircle2, Award } from "lucide-react";
 import { taskApi } from "@/services/task/taskApi";
 
 export default function ViewStudentTaskPage() {
@@ -125,6 +125,35 @@ export default function ViewStudentTaskPage() {
           </div>
         </div>
 
+        {/* Description & Instructions Section */}
+        {(task.description || task.instructions) && (
+          <div className="grid md:grid-cols-2 gap-4">
+            {task.description && (
+              <div className="bg-slate-50/60 rounded-2xl p-5 border border-slate-100 space-y-2">
+                <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Description</h4>
+                <p className="text-sm text-slate-700 font-medium leading-relaxed">{task.description}</p>
+              </div>
+            )}
+            {task.instructions && (
+              <div className="bg-slate-50/60 rounded-2xl p-5 border border-slate-100 space-y-2">
+                <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Instructions</h4>
+                <p className="text-sm text-slate-700 font-medium leading-relaxed">{task.instructions}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Text Content (HTML) Section */}
+        {task.text_content && (
+          <div className="space-y-2">
+            <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Content</h4>
+            <div
+              className="text-sm text-slate-700 bg-slate-50/60 p-5 rounded-2xl border border-slate-100 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: task.text_content }}
+            />
+          </div>
+        )}
+
         {/* Attachment Link */}
         {task.attachment_url && (
           <a
@@ -146,32 +175,85 @@ export default function ViewStudentTaskPage() {
         )}
 
         {/* Questions List Section */}
-        <div className="space-y-4 pt-2">
-          <h3 className="font-black text-lg text-slate-900 tracking-tight flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-            Questions List
-          </h3>
+        {task.questions && task.questions.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <h3 className="font-black text-lg text-slate-900 tracking-tight flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+              Questions List
+            </h3>
 
-          <div className="space-y-3">
-            {task.questions?.map((q, index) => (
-              <div
-                key={index}
-                className="border border-orange-100/60 rounded-2xl p-5 bg-gradient-to-br from-slate-50/80 to-white space-y-3 shadow-sm hover:border-orange-200 transition-all"
-              >
-                <p className="font-bold text-slate-900 text-sm md:text-base flex items-start gap-2">
-                  <span className="text-orange-600 font-black shrink-0">{index + 1}.</span>
-                  <span>{q.question_text}</span>
-                </p>
-                {q.answer_key_html && (
-                  <div
-                    className="text-sm text-slate-600 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: q.answer_key_html }}
-                  />
-                )}
-              </div>
-            ))}
+            <div className="space-y-4">
+              {task.questions.map((q, index) => (
+                <div
+                  key={index}
+                  className="border border-orange-100/60 rounded-2xl p-5 md:p-6 bg-gradient-to-br from-slate-50/80 to-white space-y-4 shadow-sm hover:border-orange-200 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="font-bold text-slate-900 text-sm md:text-base flex items-start gap-2">
+                      <span className="text-orange-600 font-black shrink-0">{index + 1}.</span>
+                      <span>{q.question_text}</span>
+                    </p>
+                    {q.marks !== undefined && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl bg-orange-50 text-orange-600 border border-orange-200/50 shrink-0">
+                        <Award className="w-3.5 h-3.5" />
+                        {q.marks} {q.marks === 1 ? 'Mark' : 'Marks'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Options List */}
+                  {q.options && q.options.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                      {q.options.map((option, optIdx) => {
+                        const isCorrect = option === q.correct_answer;
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all ${
+                              isCorrect
+                                ? "bg-green-50/80 border-green-200 text-green-800"
+                                : "bg-white border-slate-200 text-slate-700"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold ${
+                                isCorrect ? "bg-green-200 text-green-800" : "bg-slate-100 text-slate-600"
+                              }`}>
+                                {String.fromCharCode(65 + optIdx)}
+                              </span>
+                              <span>{option}</span>
+                            </div>
+                            {isCorrect && (
+                              <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100/60 px-2 py-0.5 rounded-md">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Correct
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Fallback Answer View if options aren't structured */}
+                  {(!q.options || q.options.length === 0) && q.correct_answer && (
+                    <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+                      <span className="font-bold text-slate-700">Correct Answer:</span>
+                      <span className="text-green-600 font-semibold">{q.correct_answer}</span>
+                    </div>
+                  )}
+
+                  {/* Answer Key HTML if available */}
+                  {q.answer_key_html && (
+                    <div
+                      className="text-sm text-slate-600 bg-white p-4 rounded-xl border border-slate-100 shadow-inner leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: q.answer_key_html }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
