@@ -396,7 +396,7 @@ export default function StudentTaskPage() {
                               onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question`)}
                               className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-[11px] font-bold"
                             >
-                              View Q
+                              Edit Q
                             </button>
                           </div>
                         </div>
