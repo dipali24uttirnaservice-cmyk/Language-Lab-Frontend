@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
@@ -32,11 +33,16 @@ export default function Navbar() {
           
           {/* Brand Logo - Font size increased to text-2xl/3xl */}
           <Link href="/" className="flex items-center gap-2.5">
-            <img
-              src={institute?.logo || DEFAULT_INSTITUTE_LOGO}
-              alt={institute?.institute_name || "Institute logo"}
-              className="h-10 w-10 rounded-lg object-contain"
-            />
+            <div className="relative h-10 w-10 shrink-0">
+              <Image
+                src={institute?.logo || DEFAULT_INSTITUTE_LOGO}
+                alt={institute?.institute_name || "Institute logo"}
+                fill
+                sizes="40px"
+                priority
+                className="rounded-lg object-contain"
+              />
+            </div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tighter text-slate-900 cursor-pointer">
               Language<span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">Lab</span>
             </h2>

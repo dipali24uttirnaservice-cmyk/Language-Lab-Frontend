@@ -5,6 +5,9 @@ import { Activity, Search, Download, Loader2, Calendar, Clock, Layers } from "lu
 
 import { activityLogApi } from "@/services/institute/activityLogApi";
 import { courseApi } from "@/services/course/courseApi";
+import Pagination from "@/components/molecules/Pagination";
+
+const PAGE_SIZE = 10;
 
 export default function ActivityLogPage() {
   const [courses, setCourses] = useState([]);
@@ -79,6 +82,18 @@ export default function ActivityLogPage() {
         r.enrollment_no?.toLowerCase().includes(q),
     );
   }, [rows, searchQuery]);
+
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [filteredRows]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRows = useMemo(
+    () => filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filteredRows, currentPage],
+  );
 
   const formatDuration = (sec) => {
     const s = sec || 0;
@@ -192,8 +207,8 @@ export default function ActivityLogPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium">
-                {filteredRows.length > 0 ? (
-                  filteredRows.map((row) => (
+                {paginatedRows.length > 0 ? (
+                  paginatedRows.map((row) => (
                     <tr key={row.student_id} className="hover:bg-sky-50/40 transition-colors">
                       <td className="py-4 px-6">
                         <div className="font-bold text-slate-900">{row.full_name}</div>
@@ -224,6 +239,15 @@ export default function ActivityLogPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {!loading && filteredRows.length > 0 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Showing {paginatedRows.length} of {filteredRows.length} students
+            </span>
+            <Pagination page={currentPage} totalPages={totalPages} setPage={setPage} />
           </div>
         )}
       </div>

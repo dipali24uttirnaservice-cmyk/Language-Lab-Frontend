@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -16,7 +16,7 @@ import { progressApi } from "@/services/progress/progressApi";
 import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-export default function TopicPage() {
+function TopicPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -484,4 +484,12 @@ return (
     </div>
   </div>
 );
+}
+
+export default function TopicPage() {
+  return (
+    <Suspense fallback={null}>
+      <TopicPageContent />
+    </Suspense>
+  );
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Loader2, Calendar, CheckCircle2, Award } from "lucide-react";
 import { taskApi } from "@/services/task/taskApi";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 export default function ViewStudentTaskPage() {
   const router = useRouter();
@@ -149,7 +150,7 @@ export default function ViewStudentTaskPage() {
             <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Content</h4>
             <div
               className="text-sm text-slate-700 bg-slate-50/60 p-5 rounded-2xl border border-slate-100 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: task.text_content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(task.text_content) }}
             />
           </div>
         )}
@@ -246,7 +247,7 @@ export default function ViewStudentTaskPage() {
                   {q.answer_key_html && (
                     <div
                       className="text-sm text-slate-600 bg-white p-4 rounded-xl border border-slate-100 shadow-inner leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: q.answer_key_html }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.answer_key_html) }}
                     />
                   )}
                 </div>

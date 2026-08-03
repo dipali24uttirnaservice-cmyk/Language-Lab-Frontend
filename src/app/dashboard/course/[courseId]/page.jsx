@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import LearningModules from "@/components/organisms/LearningModules";
 
-export default function CoursePage() {
+function CoursePageContent() {
   const { courseId } = useParams();
   const searchParams = useSearchParams();
 
@@ -14,5 +15,13 @@ export default function CoursePage() {
       courseId={courseId}
       courseName={courseName}
     />
+  );
+}
+
+export default function CoursePage() {
+  return (
+    <Suspense fallback={null}>
+      <CoursePageContent />
+    </Suspense>
   );
 }

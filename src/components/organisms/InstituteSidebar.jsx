@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -146,13 +147,19 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
-            <img
-              src={instituteLogo}
-              alt={instituteName}
-              className={`relative rounded-2xl object-cover border border-white shadow-lg bg-white transition-all ${
+            <div
+              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${
                 isOpen ? "h-14 w-14" : "h-11 w-11"
               }`}
-            />
+            >
+              <Image
+                src={instituteLogo}
+                alt={instituteName}
+                fill
+                sizes="56px"
+                className="rounded-2xl object-cover"
+              />
+            </div>
           </div>
 
           {isOpen && (
@@ -271,11 +278,15 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md" />
 
-          <img
-            src={instituteLogo}
-            alt={instituteName}
-            className="relative h-10 w-10 rounded-full object-cover border border-white shadow-sm"
-          />
+          <div className="relative h-10 w-10">
+            <Image
+              src={instituteLogo}
+              alt={instituteName}
+              fill
+              sizes="40px"
+              className="rounded-full object-cover border border-white shadow-sm"
+            />
+          </div>
         </div>
 
         {isOpen && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { studentApi } from "@/services/student/studentApi";
@@ -471,11 +472,15 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md" />
           {student?.profilePhoto ? (
-            <img
-              src={student.profilePhoto}
-              alt={studentName}
-              className="relative h-10 w-10 rounded-full object-cover border border-white shadow-sm"
-            />
+            <div className="relative h-10 w-10">
+              <Image
+                src={student.profilePhoto}
+                alt={studentName}
+                fill
+                sizes="40px"
+                className="rounded-full object-cover border border-white shadow-sm"
+              />
+            </div>
           ) : (
             <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-white shadow-sm">
               <FaUserCircle className="text-slate-500 text-lg" />

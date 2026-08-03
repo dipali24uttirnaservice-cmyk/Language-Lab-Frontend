@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { KeyRound, LogIn, ShieldCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/AnimatedBackground";
@@ -16,6 +18,7 @@ import {
   verifyInstituteOtp,
 } from "@/services/auth/loginApi";
 import { instituteLoginSchema } from "@/app/schemas/institute.schema";
+import { secureCookieOptions } from "@/utils/cookie";
 
 // Standalone utility page — not linked from the sidebar/navbar.
 // Flow: institute code -> email OTP -> institute login -> redirect to /institute-dashboard.
@@ -32,11 +35,16 @@ export default function ConfigPage() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-
   const [modal, setModal] = useState({ open: false, type: "", title: "", message: "" });
+
+  const {
+    register: registerLogin,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors, isSubmitting: loginSubmitting },
+  } = useForm({
+    resolver: yupResolver(instituteLoginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
   const handleCodeSubmit = async (e) => {
     e.preventDefault();
@@ -104,33 +112,8 @@ export default function ConfigPage() {
     }
   };
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
+  const handleLogin = async (formData) => {
     try {
-      await instituteLoginSchema.validate(formData, { abortEarly: false });
-      setErrors({});
-    } catch (err) {
-      if (err.inner) {
-        const newErrors = {};
-        err.inner.forEach((error) => {
-          newErrors[error.path] = error.message;
-        });
-        setErrors(newErrors);
-      }
-      return;
-    }
-
-    try {
-      setLoading(true);
-
       const response = await instituteLogin(formData);
       const apiResponse = response.data;
       const token = apiResponse?.data?.token;
@@ -139,11 +122,11 @@ export default function ConfigPage() {
         throw new Error("Token not found in response");
       }
 
-      Cookies.set("role", "institute", { expires: 7 });
-      Cookies.set("token", token, { expires: 7 });
+      Cookies.set("role", "institute", secureCookieOptions());
+      Cookies.set("token", token, secureCookieOptions());
 
       const institute = apiResponse?.data?.institute;
-      Cookies.set("userData", JSON.stringify({ institute }), { expires: 7 });
+      Cookies.set("userData", JSON.stringify({ institute }), secureCookieOptions());
 
       router.replace("/institute-dashboard/settings");
     } catch (error) {
@@ -154,8 +137,6 @@ export default function ConfigPage() {
         title: "Login Failed",
         message: error?.response?.data?.message || "Invalid Email or Password",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -273,31 +254,29 @@ export default function ConfigPage() {
               <h2 className="text-3xl font-black text-slate-900">Institute Login</h2>
               <p className="mt-2 text-slate-500">Sign in with your institute email and password.</p>
 
-              <form onSubmit={handleLogin} className="mt-8 space-y-5">
+              <form onSubmit={handleLoginSubmit(handleLogin)} className="mt-8 space-y-5">
                 <Input
                   label="Email Address"
                   type="email"
                   placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  error={errors.email}
+                  error={loginErrors.email?.message}
+                  {...registerLogin("email")}
                 />
 
                 <Input
                   label="Password"
                   type="password"
                   placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  error={errors.password}
+                  error={loginErrors.password?.message}
+                  {...registerLogin("password")}
                 />
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loginSubmitting}
                   className="w-full rounded-2xl bg-orange-500 py-4 text-white font-bold transition-all hover:bg-orange-600 hover:scale-[1.02] shadow-lg disabled:opacity-50"
                 >
-                  {loading ? "Signing In..." : "Sign In"}
+                  {loginSubmitting ? "Signing In..." : "Sign In"}
                 </button>
               </form>
             </motion.div>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
@@ -25,6 +25,7 @@ import {
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 /* =========================================================================
    SMALL SHARED PIECES
@@ -724,7 +725,7 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                   <Lightbulb size={13} className="shrink-0 mt-0.5" />
                   <span
                     className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
-                    dangerouslySetInnerHTML={{ __html: r.explanation }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation) }}
                   />
                 </div>
               )}
@@ -1372,7 +1373,7 @@ function ExerciseDetail({
    MAIN PAGE
    ========================================================================= */
 
-export default function ExercisePage() {
+function ExercisePageContent() {
   const searchParams = useSearchParams();
   const subTopicId = searchParams.get("subTopicId");
   const topicId = searchParams.get("topicId");
@@ -1604,5 +1605,13 @@ export default function ExercisePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ExercisePage() {
+  return (
+    <Suspense fallback={null}>
+      <ExercisePageContent />
+    </Suspense>
   );
 }

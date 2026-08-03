@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { ArrowLeft, Loader2, FileText, ExternalLink, CheckCircle2, User, BookOpen } from "lucide-react";
 import {
   practicalManualDetail,
   getPracticalSubmissions,
 } from "@/services/practical-Manual/page.jsx";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
-export default function StudentAnswerSheetViewPage() {
+function StudentAnswerSheetViewPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -172,7 +173,9 @@ export default function StudentAnswerSheetViewPage() {
                     <div
                       className="text-xs text-slate-700 leading-relaxed bg-white p-4 rounded-xl border border-slate-100"
                       dangerouslySetInnerHTML={{
-                        __html: answer?.answer_html || "<em class='text-slate-400'>No answer given.</em>",
+                        __html: sanitizeHtml(
+                          answer?.answer_html || "<em class='text-slate-400'>No answer given.</em>"
+                        ),
                       }}
                     />
                   )}
@@ -183,5 +186,13 @@ export default function StudentAnswerSheetViewPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function StudentAnswerSheetViewPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentAnswerSheetViewPageContent />
+    </Suspense>
   );
 }

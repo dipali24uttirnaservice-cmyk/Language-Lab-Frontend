@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 export default function ViewPracticalManualPage() {
   const router = useRouter();
@@ -146,7 +147,7 @@ export default function ViewPracticalManualPage() {
                 </p>
                 <div
                   className="text-sm text-slate-600 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: q.answer_key_html }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.answer_key_html) }}
                 />
               </div>
             ))}

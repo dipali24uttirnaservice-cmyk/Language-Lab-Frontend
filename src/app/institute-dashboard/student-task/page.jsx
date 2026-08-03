@@ -22,6 +22,7 @@ import { taskApi } from "@/services/task/taskApi";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
+import Pagination from "@/components/molecules/Pagination";
 
 export default function StudentTaskPage() {
   const router = useRouter();
@@ -456,6 +457,21 @@ export default function StudentTaskPage() {
             </tbody>
           </table>
         </div>
+
+        {pagination.total > pagination.limit && (
+          <div className="flex items-center justify-between px-2 py-4">
+            <span className="text-sm text-slate-500">
+              Showing {tasks.length ? (pagination.page - 1) * pagination.limit + 1 : 0}
+              –{(pagination.page - 1) * pagination.limit + tasks.length} of {pagination.total}
+            </span>
+            <Pagination
+              page={pagination.page}
+              totalPages={Math.max(1, Math.ceil(pagination.total / pagination.limit))}
+              setPage={setPage}
+            />
+          </div>
+        )}
+
         <StatusModal
           open={statusData.open}
           type={statusData.type}

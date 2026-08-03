@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { taskApi } from "@/services/task/taskApi";
 
-export default function StudentTaskAnswerViewPage() {
+function StudentTaskAnswerViewPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -163,6 +163,14 @@ export default function StudentTaskAnswerViewPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StudentTaskAnswerViewPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentTaskAnswerViewPageContent />
+    </Suspense>
   );
 }
 

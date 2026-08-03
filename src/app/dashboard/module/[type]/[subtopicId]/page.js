@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
 import Swal from "sweetalert2";
 import {
@@ -29,7 +31,16 @@ import {
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
 import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
-import VideoPlayer from "@/components/VideoPlayer";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
+
+// next-video/react-player are heavy media deps — only load them when a
+// video-type lesson is actually rendered, not on every module page load.
+const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
+    ssr: false,
+    loading: () => (
+        <div className="aspect-video w-full animate-pulse rounded-2xl bg-slate-100" />
+    ),
+});
 
 /* =========================================================================
    CONSTANTS & DESIGN TOKENS
@@ -472,7 +483,7 @@ function AudioRow({ item, onSelect }) {
                     <div
                         className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
                         dangerouslySetInnerHTML={{
-                            __html: item.description || "No context description.",
+                            __html: sanitizeHtml(item.description || "No context description.",)
                         }}
                     />
                 )
@@ -521,7 +532,7 @@ function TextRow({ item, onSelect }) {
                     <div
                         className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
                         dangerouslySetInnerHTML={{
-                            __html: item.description || "No context description.",
+                            __html: sanitizeHtml(item.description || "No context description.",)
                         }}
                     />
                 )
@@ -569,7 +580,8 @@ function VocabularyRow({ item, onSelect }) {
 
                 <div
                     className="text-sm text-slate-500 line-clamp-2 mt-2"
-                    dangerouslySetInnerHTML={{ __html: item.description || "" }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.description || "")
+                        }}
                 />
             </div>
 
@@ -600,10 +612,12 @@ function VideoCard({ item, type, onSelect }) {
         >
             <div className="aspect-video w-full bg-slate-950 relative overflow-hidden border-b border-slate-100 flex items-center justify-center">
                 {thumbnailSource ? (
-                    <img
+                    <Image
                         src={thumbnailSource}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        sizes="(min-width: 1024px) 33vw, 100vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : item.video?.url ? (
                     <video
@@ -647,7 +661,7 @@ function VideoCard({ item, type, onSelect }) {
                     <div
                         className="text-xs text-slate-500 line-clamp-2 leading-relaxed prose prose-slate"
                         dangerouslySetInnerHTML={{
-                            __html: item.description || "No description available.",
+                            __html: sanitizeHtml(item.description || "No description available.",)
                         }}
                     />
                 </div>
@@ -753,10 +767,12 @@ function VideoDetail({
                             >
                                 <div className="relative aspect-video bg-slate-100 overflow-hidden">
                                     {item.thumbnail || item.video?.thumbnail_url ? (
-                                        <img
+                                        <Image
                                             src={item.thumbnail || item.video?.thumbnail_url}
                                             alt={item.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            fill
+                                            sizes="(min-width: 1024px) 20vw, 50vw"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
                                     ) : item.video?.url ? (
                                         <video
@@ -879,7 +895,8 @@ function AudioDetail({
 
                                 <div
                                     className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.description || "")
+                        }}
                                 />
                             </div>
 
@@ -928,7 +945,8 @@ function AudioDetail({
                                     </h3>
                                     <div
                                         className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
-                                        dangerouslySetInnerHTML={{ __html: selectedModule.audio.transcript }}
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.audio.transcript)
+                        }}
                                     />
                                 </div>
                             )}
@@ -1047,14 +1065,16 @@ function TextDetail({
 
                             <div
                                 className="text-sm text-slate-500 mt-2 italic border-l-2 border-slate-200 pl-3 prose prose-slate max-w-none"
-                                dangerouslySetInnerHTML={{ __html: selectedModule.description || "" }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.description || "")
+                        }}
                             />
 
                             <hr className="border-slate-100" />
 
                             <div
                                 className="bg-slate-50 border border-slate-100 rounded-xl p-6 prose prose-slate max-w-none"
-                                dangerouslySetInnerHTML={{ __html: selectedModule.content?.body || "" }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.content?.body || "")
+                        }}
                             />
 
                             <PrevNextNav
@@ -1157,8 +1177,8 @@ function VocabularyDetail({
                             <div
                                 className="text-slate-600 mb-6 prose prose-slate max-w-none"
                                 dangerouslySetInnerHTML={{
-                                    __html: selectedModule.description || "",
-                                }}
+                                    __html: sanitizeHtml(selectedModule.description || "",)
+                        }}
                             />
 
                             {/* Vocabulary */}
@@ -1645,7 +1665,8 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                                     <Lightbulb size={13} className="shrink-0 mt-0.5" />
                                     <span
                                         className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
-                                        dangerouslySetInnerHTML={{ __html: r.explanation }}
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation)
+                        }}
                                     />
                                 </div>
                             )}
@@ -2152,7 +2173,7 @@ function ExerciseDetail({
    MAIN PAGE
    ========================================================================= */
 
-export default function ModuleListPage() {
+function ModuleListPageContent() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -2604,5 +2625,13 @@ export default function ModuleListPage() {
                 />
             )}
         </div>
+    );
+}
+
+export default function ModuleListPage() {
+    return (
+        <Suspense fallback={null}>
+            <ModuleListPageContent />
+        </Suspense>
     );
 }

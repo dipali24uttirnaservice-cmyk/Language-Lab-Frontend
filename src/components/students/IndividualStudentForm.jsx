@@ -496,6 +496,9 @@ await studentApi.createStudent(data);
     {/* Image Preview */}
     <div className="relative">
       {photoPreview ? (
+        // photoPreview can be a blob: URL from URL.createObjectURL() before upload —
+        // next/image can't optimize blob URLs, so a plain <img> is intentional here.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={photoPreview}
           alt="Student"

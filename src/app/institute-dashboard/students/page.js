@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import DataTable from "@/components/organisms/DataTable";
 import TableActions from "@/components/molecules/TableActions";
@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
 import { courseApi } from "@/services/course/courseApi";
-export default function StudentsPage() {
+function StudentsPageContent() {
 
   const searchParams = useSearchParams();
 
@@ -916,5 +916,13 @@ showSelection={showSelection}
   </div>
 )}
     </div>
+  );
+}
+
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentsPageContent />
+    </Suspense>
   );
 }

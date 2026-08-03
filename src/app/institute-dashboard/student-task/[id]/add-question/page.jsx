@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import { ArrowLeft, Plus, Trash2, X, Loader2, HelpCircle } from "lucide-react";
@@ -32,7 +32,7 @@ const blankQuestion = () => ({
   marks: 1,
 });
 
-export default function AddTaskQuestionPage() {
+function AddTaskQuestionPageContent() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -448,5 +448,13 @@ export default function AddTaskQuestionPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function AddTaskQuestionPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddTaskQuestionPageContent />
+    </Suspense>
   );
 }
