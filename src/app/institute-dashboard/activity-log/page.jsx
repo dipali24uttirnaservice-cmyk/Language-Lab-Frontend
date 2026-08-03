@@ -20,7 +20,10 @@ export default function ActivityLogPage() {
   useEffect(() => {
     courseApi
       .getCourses()
-      .then((res) => setCourses(res.data?.data?.courses || []))
+      .then((res) => {
+        const allCourses = res.data?.data?.courses || [];
+        setCourses(allCourses.filter((course) => course.is_downloaded));
+      })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
 

@@ -8,8 +8,9 @@ import {
   Loader2,
   FileText,
   ExternalLink,
+  Eye,
 } from "lucide-react";
-import StatusModal from "@/components/molecules/StatusModal"; // Adjust the import path to where your StatusModal is located
+import StatusModal from "@/components/molecules/StatusModal";
 import {
   practicalManualDetail,
   getPracticalSubmissions,
@@ -19,7 +20,7 @@ import {
 export default function PracticalSubmissionsPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.submissionId;
+  const id = params?.submissionId; // This is the practical manual ID based on your route
 
   const [manual, setManual] = useState(null);
   const [submissions, setSubmissions] = useState([]);
@@ -118,8 +119,8 @@ export default function PracticalSubmissionsPage() {
             submissions.map((sub) => (
               <PracticalSubmissionRow
                 key={sub._id}
+                manualId={id}
                 submission={sub}
-                questions={manual?.questions || []}
                 isFileSolution={isFileSolution}
                 onGrade={(marks, feedback) =>
                   handleGradeSubmission(sub._id, marks, feedback)
@@ -140,33 +141,21 @@ const STATUS_LABELS = {
 };
 
 function PracticalSubmissionRow({
+  manualId,
   submission,
-  questions,
   isFileSolution,
   onGrade,
 }) {
+  const router = useRouter();
   const [marks, setMarks] = useState(submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
-  const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Modal State Management
   const [modalState, setModalState] = useState({
     open: false,
     type: "success",
     title: "",
     message: "",
-  });
-
-  // Map answers both by question_id and fallback index order
-  const answerByQuestionId = {};
-  const answerByIndex = {};
-
-  (submission.answers || []).forEach((a, index) => {
-    if (a.question_id) {
-      answerByQuestionId[a.question_id] = a;
-    }
-    answerByIndex[index] = a;
   });
 
   const handleSaveClick = async () => {
@@ -193,6 +182,11 @@ function PracticalSubmissionRow({
     }
   };
 
+const handleViewAnswerSheet = () => {
+router.push(
+  `/institute-dashboard/practical-manual/submissions/${submission._id}/view?manualId=${manualId}`
+);
+};
   return (
     <>
       <div className="bg-gradient-to-br from-slate-50/80 to-white rounded-2xl p-5 border border-orange-100/60 space-y-4 shadow-sm hover:border-orange-200 transition-all">
@@ -208,6 +202,7 @@ function PracticalSubmissionRow({
               </span>
             </p>
           </div>
+
           {isFileSolution ? (
             submission.attachment_url && (
               <a
@@ -223,54 +218,13 @@ function PracticalSubmissionRow({
           ) : (
             <button
               type="button"
-              onClick={() => setExpanded((prev) => !prev)}
-              className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+              onClick={handleViewAnswerSheet}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:bg-orange-100 shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-2 rounded-xl border border-orange-100 transition-all shadow-sm"
             >
-              {expanded ? "Hide solution" : "View solution"}
+              <Eye size={14} /> View Answer Sheet
             </button>
           )}
         </div>
-
-        {expanded && !isFileSolution && (
-          <div className="space-y-2 pt-1">
-            {questions.map((q, idx) => {
-              const answer = answerByQuestionId[q._id] || answerByIndex[idx];
-
-              return (
-                <div
-                  key={q._id || idx}
-                  className="bg-white rounded-xl p-4 border border-slate-100 shadow-inner"
-                >
-                  <p className="text-xs font-bold text-slate-800 mb-1.5">
-                    {idx + 1}. {q.question_text}
-                  </p>
-                  {q.solution_type === "file" ? (
-                    answer?.answer_file_url ? (
-                      <a
-                        href={answer.answer_file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100"
-                      >
-                        <FileText size={12} /> View uploaded file
-                        <ExternalLink size={11} />
-                      </a>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic">No file uploaded.</p>
-                    )
-                  ) : (
-                    <div
-                      className="text-xs text-slate-600 leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: answer?.answer_html || "<em>No answer given.</em>",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
           <input
@@ -303,7 +257,6 @@ function PracticalSubmissionRow({
         </div>
       </div>
 
-      {/* Reusable Status Modal */}
       <StatusModal
         open={modalState.open}
         type={modalState.type}

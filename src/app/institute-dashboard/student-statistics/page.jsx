@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpenCheck,
@@ -19,7 +20,6 @@ import {
   LogIn,
   Activity,
   History,
-  X,
 } from "lucide-react";
 
 import { reportApi } from "@/services/institute/reportApi";
@@ -58,6 +58,7 @@ const CARD_META = {
 };
 
 export default function StudentStatisticsPage() {
+  const router = useRouter();
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
 
@@ -78,11 +79,6 @@ export default function StudentStatisticsPage() {
   const [loading, setLoading] = useState(false);
 
   const [activitySummary, setActivitySummary] = useState(null);
-  const [showActivityModal, setShowActivityModal] = useState(false);
-  const [activityHistory, setActivityHistory] = useState([]);
-  const [activityHistoryLoading, setActivityHistoryLoading] = useState(false);
-  const [activityHistoryPage, setActivityHistoryPage] = useState(1);
-  const [activityHistoryTotal, setActivityHistoryTotal] = useState(0);
 
   useEffect(() => {
     studentApi
@@ -92,7 +88,11 @@ export default function StudentStatisticsPage() {
 
     courseApi
       .getCourses()
-      .then((res) => setCourses(res.data?.data?.courses || []))
+      .then((res) => {
+        const allCourses = res.data?.data?.courses || [];
+        // Only downloaded courses are assignable/relevant here.
+        setCourses(allCourses.filter((course) => course.is_downloaded));
+      })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
 
@@ -126,48 +126,8 @@ export default function StudentStatisticsPage() {
 
   useEffect(() => {
     setActiveTab("overview");
-    setShowActivityModal(false);
-    setActivityHistory([]);
-    setActivityHistoryPage(1);
     loadReports();
   }, [loadReports]);
-
-  const openActivityHistory = async () => {
-    if (!selectedStudent) return;
-    setShowActivityModal(true);
-    setActivityHistoryLoading(true);
-    try {
-      const res = await reportApi.getActivityHistory(selectedStudent._id, { page: 1, limit: 50 });
-      const data = res.data?.data || {};
-      setActivityHistory(data.logs || []);
-      setActivityHistoryTotal(data.total || 0);
-      setActivityHistoryPage(1);
-    } catch (error) {
-      console.error("Get Activity History Error:", error);
-      setActivityHistory([]);
-    } finally {
-      setActivityHistoryLoading(false);
-    }
-  };
-
-  const loadMoreActivityHistory = async () => {
-    if (!selectedStudent) return;
-    const nextPage = activityHistoryPage + 1;
-    setActivityHistoryLoading(true);
-    try {
-      const res = await reportApi.getActivityHistory(selectedStudent._id, {
-        page: nextPage,
-        limit: 50,
-      });
-      const data = res.data?.data || {};
-      setActivityHistory((prev) => [...prev, ...(data.logs || [])]);
-      setActivityHistoryPage(nextPage);
-    } catch (error) {
-      console.error("Get Activity History Error:", error);
-    } finally {
-      setActivityHistoryLoading(false);
-    }
-  };
 
   const matchingStudents = useMemo(() => {
     if (!studentQuery) return [];
@@ -305,7 +265,9 @@ export default function StudentStatisticsPage() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={openActivityHistory}
+            onClick={() =>
+              router.push(`/institute-dashboard/student-statistics/${selectedStudent._id}/activity-history`)
+            }
             className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 rounded-xl shadow-sm hover:shadow-orange-500/25 transition-all"
           >
             <History className="w-3.5 h-3.5" /> View Activity History
@@ -440,122 +402,7 @@ export default function StudentStatisticsPage() {
         </>
       )}
 
-      <ActivityHistoryModal
-        open={showActivityModal}
-        onClose={() => setShowActivityModal(false)}
-        student={selectedStudent}
-        logs={activityHistory}
-        loading={activityHistoryLoading}
-        total={activityHistoryTotal}
-        onLoadMore={loadMoreActivityHistory}
-      />
     </div>
-  );
-}
-
-function ActivityHistoryModal({ open, onClose, student, logs, loading, total, onLoadMore }) {
-  const formatActivityType = (type) =>
-    String(type || "")
-      .split("_")
-      .join(" ")
-      .replace(/^./, (c) => c.toUpperCase());
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed left-1/2 top-1/2 z-[110] w-[92%] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
-          >
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <History className="w-5 h-5 text-orange-600" /> Activity History
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {student?.full_name} · {total} recorded activit{total === 1 ? "y" : "ies"}
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto flex-1">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 sticky top-0">
-                    <th className="py-3 px-6">Module</th>
-                    <th className="py-3 px-6">Action</th>
-                    <th className="py-3 px-6">Time Spent</th>
-                    <th className="py-3 px-6">Score</th>
-                    <th className="py-3 px-6">When</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm font-medium">
-                  {logs.length > 0 ? (
-                    logs.map((log) => (
-                      <tr key={log._id} className="hover:bg-orange-50/40 transition-colors">
-                        <td className="py-3 px-6 text-slate-800">
-                          <div className="font-bold">{log.topic_id?.title || "—"}</div>
-                          {log.sub_topic_id?.title && (
-                            <div className="text-xs text-slate-400">{log.sub_topic_id.title}</div>
-                          )}
-                        </td>
-                        <td className="py-3 px-6 text-slate-600">
-                          {formatActivityType(log.activity_type)}
-                        </td>
-                        <td className="py-3 px-6 text-slate-600">
-                          {log.time_spent_sec ? `${Math.round(log.time_spent_sec / 60)} min` : "—"}
-                        </td>
-                        <td className="py-3 px-6 text-slate-600">
-                          {log.score != null ? `${log.score}${log.max_score ? `/${log.max_score}` : ""}` : "—"}
-                        </td>
-                        <td className="py-3 px-6 text-slate-500 text-xs">
-                          {log.logged_at ? new Date(log.logged_at).toLocaleString() : "—"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-400 text-sm font-semibold">
-                        {loading ? "Loading activity…" : "No activity recorded yet."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              {logs.length > 0 && logs.length < total && (
-                <div className="p-4 text-center border-t border-slate-100">
-                  <button
-                    onClick={onLoadMore}
-                    disabled={loading}
-                    className="px-5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-all disabled:opacity-60"
-                  >
-                    {loading ? "Loading…" : "Load more"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
   );
 }
 

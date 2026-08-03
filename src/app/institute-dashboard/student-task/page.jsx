@@ -111,7 +111,10 @@ export default function StudentTaskPage() {
   useEffect(() => {
     courseApi
       .getCourses()
-      .then((res) => setFilterCourses(res.data?.data?.courses || []))
+      .then((res) => {
+        const allCourses = res.data?.data?.courses || [];
+        setFilterCourses(allCourses.filter((course) => course.is_downloaded));
+      })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
 
@@ -384,7 +387,7 @@ export default function StudentTaskPage() {
                           </span>
                           <div className="flex items-center gap-1.5">
                             <button
-                              onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question`)}
+                              onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question?mode=new`)}
                               className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors text-[11px] font-bold"
                             >
                               + Add Q

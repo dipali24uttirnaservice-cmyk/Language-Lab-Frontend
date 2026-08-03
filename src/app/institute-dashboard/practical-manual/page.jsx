@@ -106,7 +106,10 @@ export default function PracticalManualPage() {
   useEffect(() => {
     courseApi
       .getCourses()
-      .then((res) => setFilterCourses(res.data?.data?.courses || []))
+      .then((res) => {
+        const allCourses = res.data?.data?.courses || [];
+        setFilterCourses(allCourses.filter((course) => course.is_downloaded));
+      })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
 

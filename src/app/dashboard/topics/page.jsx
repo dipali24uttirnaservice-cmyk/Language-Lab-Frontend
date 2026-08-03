@@ -55,9 +55,14 @@ const topicName = searchParams.get("topicName");
 const fetchTopics = async () => {
   try {
     const response = await topicApi.getTopics(courseId);
-    setTopics(response.data.data || []);
+    const fetchedTopics = response.data.data || [];
+    console.log(
+      `[topics] GET /topic?course_id=${courseId} -> ${fetchedTopics.length} topic(s)`,
+      response.data,
+    );
+    setTopics(fetchedTopics);
   } catch (error) {
-    console.error(error);
+    console.error(`[topics] GET /topic?course_id=${courseId} failed:`, error);
   } finally {
     setLoading(false);
   }

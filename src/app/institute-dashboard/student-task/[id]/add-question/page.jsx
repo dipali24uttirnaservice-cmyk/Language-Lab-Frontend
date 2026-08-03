@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import { ArrowLeft, Plus, Trash2, X, Loader2, HelpCircle } from "lucide-react";
 
@@ -35,11 +35,19 @@ const blankQuestion = () => ({
 export default function AddTaskQuestionPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // "+ Add Q" links here with ?mode=new so the form always starts blank;
+  // otherwise ("View Q") this page loads existing questions for editing.
+  const isNewMode = searchParams.get("mode") === "new";
 
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [questions, setQuestions] = useState([blankQuestion()]);
+  // In "new" mode the form only holds the question(s) being added, so the
+  // task's existing questions (kept here, not in `questions`) must be
+  // re-attached on submit instead of being overwritten.
+  const [existingQuestions, setExistingQuestions] = useState([]);
 
   useEffect(() => {
     taskApi
@@ -47,9 +55,14 @@ export default function AddTaskQuestionPage() {
       .then((res) => {
         const data = res.data?.data || res.data;
         setTask(data);
-        // Pre-load existing questions so they can be edited/deleted here too,
-        // not just appended to — this page is the full question manager.
-        setQuestions(data?.questions?.length ? data.questions : [blankQuestion()]);
+        if (isNewMode) {
+          setExistingQuestions(data?.questions || []);
+          setQuestions([blankQuestion()]);
+        } else {
+          // Pre-load existing questions so they can be edited/deleted here too,
+          // not just appended to — this page is the full question manager.
+          setQuestions(data?.questions?.length ? data.questions : [blankQuestion()]);
+        }
       })
       .catch((err) => {
         Swal.fire({
@@ -88,6 +101,15 @@ export default function AddTaskQuestionPage() {
           : q,
       ),
     );
+  // Only complete pairs (both sides filled) count toward the answer —
+  // otherwise a half-filled pair like "banana:" would still produce a
+  // non-empty correct_answer and slip past the save validation below.
+  const buildMatchAnswer = (pairs) =>
+    pairs
+      .filter((pr) => pr.left.trim() && pr.right.trim())
+      .map((pr) => `${pr.left}:${pr.right}`)
+      .join("|");
+
   const updPair = (qi, pi, side, v) =>
     setQuestions((p) =>
       p.map((q, idx) => {
@@ -98,7 +120,7 @@ export default function AddTaskQuestionPage() {
         return {
           ...q,
           match_pairs: pairs,
-          correct_answer: pairs.map((pr) => `${pr.left}:${pr.right}`).join("|"),
+          correct_answer: buildMatchAnswer(pairs),
         };
       }),
     );
@@ -118,7 +140,7 @@ export default function AddTaskQuestionPage() {
         return {
           ...q,
           match_pairs: pairs,
-          correct_answer: pairs.map((pr) => `${pr.left}:${pr.right}`).join("|"),
+          correct_answer: buildMatchAnswer(pairs),
         };
       }),
     );
@@ -142,7 +164,8 @@ export default function AddTaskQuestionPage() {
     setSaving(true);
     try {
       const formData = new FormData();
-      formData.append("questions", JSON.stringify(valid));
+      const toSave = isNewMode ? [...existingQuestions, ...valid] : valid;
+      formData.append("questions", JSON.stringify(toSave));
       await taskApi.updateTask(id, formData);
       Swal.fire({
         icon: "success",
