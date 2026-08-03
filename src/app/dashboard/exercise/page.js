@@ -1284,31 +1284,31 @@ function ExerciseDetail({
   setShowReview,
 }) {
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-4 animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-3 animate-fade-in pb-8">
       <BackToLessonsButton onBack={onBack} />
 
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl min-h-[calc(100vh-140px)]">
-        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 p-6 text-white">
-          <div className="absolute top-0 right-0 p-6 opacity-10">
-            <Award size={100} />
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-6 py-5 text-white">
+          <div className="absolute top-0 right-0 p-6 opacity-15 pointer-events-none">
+            <Award size={80} />
           </div>
-          <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
+          <div className="absolute -top-8 -left-8 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+          <div className="absolute -bottom-10 right-10 h-24 w-24 rounded-full bg-yellow-200/25 blur-2xl" />
 
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-md mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-sm mb-2">
             <Award size={12} />
             Challenge Activity
           </span>
 
-          <h2 className="relative text-2xl font-black tracking-tight">
+          <h2 className="relative text-xl md:text-2xl font-black tracking-tight">
             {selectedModule.title}
           </h2>
-          <p className="relative mt-1 text-sm text-orange-50">
+          <p className="relative mt-0.5 text-xs md:text-sm text-orange-50">
             Complete the challenge to test your understanding.
           </p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4">
           {!isQuizActive && !showResults ? (
             <PreAssessment
               selectedModule={selectedModule}
@@ -1533,36 +1533,40 @@ setQuestionResults(response.data.data.question_results || []);
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={`flex bg-slate-50 overflow-hidden ${
-        isFullscreen ? "h-screen w-screen" : "h-screen"
-      }`}
-    >     
-      <ExerciseSidebar
-        exercises={exercises}
-        selectedExercise={selectedExercise}
-        onSelect={setSelectedExercise}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        scopedToLesson={Boolean(contentModuleId)}
-      />
+   <div
+    ref={containerRef}
+    className={`flex bg-slate-50 overflow-hidden ${
+      isFullscreen ? "h-screen w-screen" : "h-screen"
+    } w-full`}
+  > 
+    <ExerciseSidebar
+      exercises={exercises}
+      selectedExercise={selectedExercise}
+      onSelect={setSelectedExercise}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      scopedToLesson={Boolean(contentModuleId)}
+    />
 
-      <div className="flex-1 overflow-y-auto w-full relative p-6 md:p-8">
-        <div className="sticky top-0 z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm">
-          <button
-            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-          >
-            {isFullscreen ? (
-              <Minimize2 size={18} />
-            ) : (
-              <Maximize2 size={18} />
-            )}
-          </button>
-        </div>
+    <div className="flex-1 w-full h-full relative flex flex-col p-6 md:p-8 overflow-hidden">
+      <div className="z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm shrink-0">
+        <button
+          onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        >
+          {isFullscreen ? (
+            <Minimize2 size={18} />
+          ) : (
+            <Maximize2 size={18} />
+          )}
+        </button>
+      </div>
 
+      {/* Added scrollbar-none and inline styles to hide scrollbars across different browsers */}
+      <div 
+        className="flex-1 overflow-y-auto min-h-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
         <ExerciseDetail
           selectedModule={selectedExercise}
           isQuizActive={isQuizActive}
@@ -1595,14 +1599,15 @@ setQuestionResults(response.data.data.question_results || []);
           showReview={showReview}
           setShowReview={setShowReview}
         />
-        
-        {selectedAttempt && (
-          <AttemptResultModal
-            attempt={selectedAttempt}
-            onClose={() => setSelectedAttempt(null)}
-          />
-        )}
       </div>
+        
+      {selectedAttempt && (
+        <AttemptResultModal
+          attempt={selectedAttempt}
+          onClose={() => setSelectedAttempt(null)}
+        />
+      )}
     </div>
+  </div>
   );
 }
