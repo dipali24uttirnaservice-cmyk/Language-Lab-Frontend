@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
 import {
   ArrowLeft,
   CheckSquare,
@@ -19,44 +20,114 @@ import {
   HelpCircle,
   Play,
   RotateCcw,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  ChevronRight,
+  Minimize2,
+  Maximize2,
+  ChevronLeft,
 } from "lucide-react";
 
 import { studentTaskApi } from "@/services/task/studentTaskApi";
-import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
+import {
+  getMatchPairs,
+  hasAnswer,
+  answerToString,
+  shuffledPool,
+} from "@/utils/questionAnswers";
 
 const TYPE_META = {
-  text: { label: "Text", Icon: FileText, gradient: "from-blue-500 to-blue-600" },
+  text: {
+    label: "Text",
+    Icon: FileText,
+    gradient: "from-blue-500 to-blue-600",
+  },
   link: { label: "Link", Icon: Link2, gradient: "from-slate-500 to-slate-600" },
   audio: { label: "Audio", Icon: Music, gradient: "from-teal-500 to-teal-600" },
-  video: { label: "Video", Icon: Video, gradient: "from-purple-500 to-purple-600" },
-  document: { label: "Document", Icon: File, gradient: "from-amber-500 to-amber-600" },
+  video: {
+    label: "Video",
+    Icon: Video,
+    gradient: "from-purple-500 to-purple-600",
+  },
+  document: {
+    label: "Document",
+    Icon: File,
+    gradient: "from-amber-500 to-amber-600",
+  },
 };
 
 const STATUS_META = {
-  pending: { label: "Pending", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" },
-  submitted: { label: "Submitted", bg: "bg-sky-50", text: "text-sky-700", border: "border-sky-200" },
-  late: { label: "Late", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-  reviewed: { label: "Reviewed", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  overdue: { label: "Overdue", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  pending: {
+    label: "Pending",
+    bg: "bg-rose-500",
+    text: "text-white",
+    border: "border-rose-600",
+  },
+  submitted: {
+    label: "Submitted",
+    bg: "bg-emerald-500",
+    text: "text-white",
+    border: "border-emerald-600",
+  },
+  late: {
+    label: "Late",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+  },
+  reviewed: {
+    label: "Reviewed",
+    bg: "bg-cyan-500",
+    text: "text-white",
+    border: "border-cyan-600",
+  },
+  overdue: {
+    label: "Overdue",
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+  },
 };
 
 function taskStatusKey(task) {
   const submission = task.my_submission;
-  return task.overdue && !submission ? "overdue" : submission?.status || "pending";
+  return task.overdue && !submission
+    ? "overdue"
+    : submission?.status || "pending";
 }
 
 /* ==========================================================
    MAIN PAGE
 ========================================================== */
 export default function StudentTasksPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
   const topicId = searchParams.get("topicId");
   const topicName = searchParams.get("topicName");
 
+  const containerRef = useRef(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Reflects the currently open task in the URL as `lessonName` so the
+  // global breadcrumb (which reads searchParams, not component state) shows
+  // it as the final crumb, matching every other module page.
+  const syncLessonNameInUrl = useCallback(
+    (lessonName) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (lessonName) {
+        params.set("lessonName", lessonName);
+      } else {
+        params.delete("lessonName");
+      }
+      router.replace(`/dashboard/tasks?${params.toString()}`);
+    },
+    [searchParams, router],
+  );
 
   const loadTasks = useCallback(async () => {
     try {
@@ -77,64 +148,165 @@ export default function StudentTasksPage() {
     loadTasks();
   }, [loadTasks]);
 
+  // Fullscreen change listener to sync state with browser events (e.g. pressing ESC key)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        console.log(
+          "Auto-fullscreen blocked by browser policy. User interaction required.",
+        );
+      }
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically trigger fullscreen once when a task is selected
+  useEffect(() => {
+    if (selectedTask && containerRef.current) {
+      enterFullscreen();
+    }
+  }, [selectedTask]);
+
+  const toggleFullscreen = () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  };
+
   const handleSubmitted = (taskId, submission) => {
     setTasks((prev) =>
-      prev.map((t) => (t._id === taskId ? { ...t, my_submission: submission, overdue: false } : t)),
+      prev.map((t) =>
+        t._id === taskId
+          ? { ...t, my_submission: submission, overdue: false }
+          : t,
+      ),
     );
-    setSelectedTask((prev) => (prev && prev._id === taskId ? { ...prev, my_submission: submission } : prev));
+    setSelectedTask((prev) =>
+      prev && prev._id === taskId
+        ? { ...prev, my_submission: submission }
+        : prev,
+    );
   };
 
   if (selectedTask) {
     return (
-      <TaskWorkspace
-        task={selectedTask}
-        onBack={() => setSelectedTask(null)}
-        onSubmitted={(submission) => handleSubmitted(selectedTask._id, submission)}
-      />
+      <div
+        ref={containerRef}
+        className="h-screen w-full bg-white overflow-hidden flex flex-col"
+      >
+        {/* Workspace Top Action Bar containing the manual Minimize / Maximize button */}
+
+        <div className="flex-1 overflow-hidden">
+          <TaskWorkspace
+            task={selectedTask}
+            onBack={() => {
+              exitFullscreen();
+              setSelectedTask(null);
+              syncLessonNameInUrl(null);
+            }}
+            onSubmitted={(submission) =>
+              handleSubmitted(selectedTask._id, submission)
+            }
+          />
+        </div>
+      </div>
     );
   }
 
   const pendingCount = tasks.filter((t) => !t.my_submission).length;
 
   return (
-    <div className="relative min-h-screen p-6 md:p-8 space-y-8 overflow-hidden font-sans">
+    <div className="relative min-h-screen w-full bg-white p-6 md:p-10 space-y-8 overflow-y-auto font-sans">
+      {/* Background Glow Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-teal-50/40 to-emerald-100/50" />
-        <div className="absolute top-10 right-10 h-96 w-96 rounded-full bg-gradient-to-br from-emerald-400/10 to-teal-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-50/40 via-white to-amber-50/20" />
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-orange-400/5 blur-3xl" />
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div>
+      <style jsx global>{`
+        ::-webkit-scrollbar {
+          width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #f97316;
+        }
+      `}</style>
+
+      {/* Top Header Card */}
+      <div className="w-full bg-slate-50/60 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.06)] flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
+
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
-              Assignments
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse" />
+            <span className="text-xs font-black text-orange-600 uppercase tracking-widest">
+              Assignments Workspace
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
             {topicName ? `${topicName} Tasks` : "My Tasks"}
           </h1>
         </div>
-        <div className="px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm flex items-center gap-2">
-          <CheckSquare className="w-4 h-4" />
-          {pendingCount} pending of {tasks.length}
+
+        <div className="flex items-center gap-3">
+          <div className="px-5 py-3 rounded-2xl bg-orange-100/60 border border-orange-200/60 text-orange-800 font-extrabold text-xs flex items-center gap-2 shadow-sm">
+            <CheckSquare className="w-4 h-4 text-orange-600" />
+            {pendingCount} pending of {tasks.length} total
+          </div>
         </div>
       </div>
 
+      {/* Content Section */}
       {loading ? (
-        <div className="py-20 flex items-center justify-center text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin" />
+        <div className="py-32 flex items-center justify-center text-slate-400">
+          <Loader2 className="w-7 h-7 animate-spin text-orange-500" />
         </div>
       ) : tasks.length === 0 ? (
-        <div className="py-20 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
+        <div className="py-24 text-center bg-white rounded-3xl border border-dashed border-orange-200 shadow-sm">
           <p className="text-slate-400 text-sm font-semibold">
             No tasks have been assigned to you yet.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           {tasks.map((task) => (
-            <TaskRow key={task._id} task={task} onSelect={() => setSelectedTask(task)} />
+            <TaskRow
+              key={task._id}
+              task={task}
+              onSelect={() => {
+                setSelectedTask(task);
+                syncLessonNameInUrl(task.title);
+              }}
+            />
           ))}
         </div>
       )}
@@ -146,7 +318,16 @@ export default function StudentTasksPage() {
    WIDE ROW — same list-item language as the Practical Manual /
    Exercise / Text / Audio module rows.
 ========================================================== */
-function WideRow({ onClick, iconBg, icon, eyebrow, eyebrowClass, title, middle, right }) {
+function WideRow({
+  onClick,
+  iconBg,
+  icon,
+  eyebrow,
+  eyebrowClass,
+  title,
+  middle,
+  right,
+}) {
   return (
     <div
       onClick={onClick}
@@ -172,7 +353,9 @@ function WideRow({ onClick, iconBg, icon, eyebrow, eyebrowClass, title, middle, 
           </h3>
         </div>
 
-        {middle && <div className="hidden md:block md:col-span-4">{middle}</div>}
+        {middle && (
+          <div className="hidden md:block md:col-span-4">{middle}</div>
+        )}
         <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4">
           {right}
         </div>
@@ -188,37 +371,72 @@ function TaskRow({ task, onSelect }) {
   const statusMeta = STATUS_META[taskStatusKey(task)];
 
   return (
-    <WideRow
+    <div
       onClick={onSelect}
-      iconBg={`bg-gradient-to-br ${meta.gradient} group-hover:brightness-110`}
-      icon={<TypeIcon size={18} />}
-      eyebrow={statusMeta.label}
-      eyebrowClass={`${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-      title={task.title}
-      middle={
-        <p className="text-xs text-slate-400 font-medium truncate">
-          {task.course_id?.course_name || "Course"} · {meta.label}
-          {task.due_date && ` · Due ${new Date(task.due_date).toLocaleDateString()}`}
-        </p>
-      }
-      right={
-        <>
-          {submission?.grade != null && (
-            <div className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-              <Award size={12} className="text-emerald-500" />
-              <span>{submission.grade} Pts</span>
-            </div>
-          )}
-          <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
-            {submission ? (
-              <RotateCcw className="group-hover:rotate-45 transition-transform" size={12} />
-            ) : (
-              <Play className="fill-current ml-0.5" size={12} />
-            )}
+      className="group relative w-full bg-white hover:bg-orange-50/20 border border-slate-200/80 hover:border-orange-300/60 rounded-2xl p-5 transition-all duration-300 shadow-sm hover:shadow-[0_10px_30px_rgba(249,115,22,0.08)] cursor-pointer flex items-center justify-between gap-4 overflow-hidden"
+    >
+      {/* Decorative gradient glow on hover */}
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-orange-500 to-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Left section: Icon + Title & Metadata */}
+      <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-200 shrink-0 group-hover:scale-105 transition-transform duration-300">
+          <TypeIcon size={20} />
+        </div>
+
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h3 className="text-sm font-bold text-slate-800 group-hover:text-orange-600 transition-colors truncate">
+              {task.title}
+            </h3>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
+            >
+              {statusMeta.label}
+            </span>
           </div>
-        </>
-      }
-    />
+
+          <p className="text-xs text-slate-400 font-medium truncate flex items-center gap-1.5">
+            <span className="text-slate-600 font-semibold">
+              {task.course_id?.course_name || "Course"}
+            </span>
+            <span>•</span>
+            <span>{meta.label}</span>
+            {task.due_date && (
+              <>
+                <span>•</span>
+                <span className="text-slate-500">
+                  Due {new Date(task.due_date).toLocaleDateString()}
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Right section: Grade / Points + Action Button */}
+      <div className="flex items-center gap-3 shrink-0">
+        {submission?.grade != null && (
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-50/80 px-3 py-1.5 rounded-xl border border-orange-200/60 shadow-xs">
+            <Award size={14} className="text-orange-500" />
+            <span>{submission.grade} Pts</span>
+          </div>
+        )}
+
+        <div
+          className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all duration-300 shadow-sm group-hover:scale-105 ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
+        >
+          {submission ? (
+            <RotateCcw
+              className="group-hover:rotate-45 transition-transform duration-300"
+              size={14}
+            />
+          ) : (
+            <Play className="fill-current ml-0.5" size={14} />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -226,120 +444,345 @@ function TaskRow({ task, onSelect }) {
    TASK WORKSPACE — dedicated detail view, same shell language
    as the Practical Manual workspace (top bar + content card).
 ========================================================== */
-function TaskWorkspace({ task, onBack, onSubmitted }) {
+
+export function TaskWorkspace({ task, onBack, onSubmitted }) {
   const meta = TYPE_META[task.type] || TYPE_META.text;
   const TypeIcon = meta.Icon;
   const submission = task.my_submission;
   const statusMeta = STATUS_META[taskStatusKey(task)];
 
+  const [currentStep, setCurrentStep] = useState(0);
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Define steps dynamically based on available task content
+  const steps = [
+    { id: "overview", title: "Overview & Instructions" },
+    ...(task.type && (task.text_content || task.link_url || task.media_url)
+      ? [
+          {
+            id: "content",
+            title: "Task Material",
+          },
+        ]
+      : []),
+    {
+      id: "submission",
+      title:
+        submission?.status === "reviewed"
+          ? "Evaluation & Review"
+          : "Your Submission",
+    },
+  ];
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      await containerRef.current.requestFullscreen();
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-4">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-semibold text-sm transition"
-        >
-          <ArrowLeft size={18} />
-          Back to Tasks
-        </button>
+    <div
+      ref={containerRef}
+      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30 overflow-y-auto flex flex-col transition-all duration-300 ${
+        isFullscreen
+          ? "h-screen w-screen p-3 md:p-6 bg-white"
+          : "min-h-screen p-4 md:p-8"
+      }`}
+    >
+      {/* Expanded container wrapper to allow full-width card scaling */}
+      <div className="w-full mx-auto space-y-6 flex-1 flex flex-col">
+        {/* Top Navigation & Context Bar */}
+        <div className="flex items-center justify-between shrink-0 px-2">
+          <button
+            onClick={onBack}
+            className="group inline-flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition-all duration-200 bg-white/90 hover:bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200/60 backdrop-blur-md"
+          >
+            <ArrowLeft
+              size={16}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            Back to Tasks
+          </button>
 
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.10)]">
-          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-emerald-100 opacity-50 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-teal-100 opacity-50 blur-2xl pointer-events-none" />
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        </div>
 
-          <div className="relative space-y-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <span
-                  className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-white shadow-md shrink-0`}
-                >
-                  <TypeIcon size={24} />
-                </span>
-                <div>
-                  <span
-                    className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-                  >
-                    {statusMeta.label}
-                  </span>
-                  <h1 className="text-2xl font-black text-slate-900 mt-1">{task.title}</h1>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">
-                    {task.course_id?.course_name || "Course"} · {meta.label}
-                    {task.due_date && ` · Due ${new Date(task.due_date).toLocaleDateString()}`}
-                  </p>
-                </div>
+        {/* Step Progress Bar Indicator */}
+        <div className="flex items-center justify-center gap-4 px-2">
+          {steps.map((step, idx) => (
+            <div key={step.id} className="flex items-center gap-2">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  idx === currentStep
+                    ? "bg-orange-500 text-white shadow-md shadow-orange-500/30 ring-4 ring-orange-100"
+                    : idx < currentStep
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-slate-200 text-slate-500"
+                }`}
+              >
+                {idx + 1}
               </div>
-              {submission?.grade != null && (
-                <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 shrink-0">
-                  <Award size={16} />
-                  {submission.grade} Pts
-                </div>
+              <span
+                className={`text-xs font-semibold hidden md:inline ${idx === currentStep ? "text-slate-900" : "text-slate-400"}`}
+              >
+                {step.title}
+              </span>
+              {idx < steps.length - 1 && (
+                <div className="h-[2px] w-12 md:w-24 bg-slate-200 mx-2" />
               )}
             </div>
+          ))}
+        </div>
 
-            {task.description && <p className="text-sm text-slate-600">{task.description}</p>}
+        {/* Main Full-Width Workspace Card */}
+        <div
+          className={`relative w-full overflow-hidden border border-orange-100/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(249,115,22,0.08)] transition-all flex flex-col justify-between ${
+            isFullscreen
+              ? "flex-1 rounded-3xl p-6 md:p-12 overflow-y-auto"
+              : "rounded-[2.5rem] p-6 md:p-12"
+          }`}
+        >
+          {/* Ambient Background Glows */}
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-amber-200/40 blur-3xl pointer-events-none" />
 
-            {task.instructions && (
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Instructions
-                </p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{task.instructions}</p>
-              </div>
-            )}
+          <div className="relative space-y-8 flex-1 flex flex-col w-full">
+            {/* STEP 0: Overview & Instructions */}
+            {currentStep === 0 && (
+              <div className="space-y-8 animate-fadeIn w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                  <div className="flex items-start gap-4">
+                    <span className="h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 shrink-0">
+                      <TypeIcon size={28} />
+                    </span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border} shadow-sm`}
+                        >
+                          {statusMeta.label}
+                        </span>
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                          {meta.label}
+                        </span>
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                        {task.title}
+                      </h1>
+                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                        <Clock size={14} />
+                        {task.due_date
+                          ? `Due ${new Date(task.due_date).toLocaleDateString()}`
+                          : "No due date"}
+                      </p>
+                    </div>
+                  </div>
 
-            {task.type === "text" && task.text_content && (
-              <div
-                className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-sm text-slate-700 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: task.text_content }}
-              />
-            )}
-            {task.type === "link" && task.link_url && (
-              <a
-                href={task.link_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl hover:bg-emerald-100 transition-colors"
-              >
-                <Link2 className="w-4 h-4" /> Open link
-              </a>
-            )}
-            {["audio", "video", "document"].includes(task.type) && task.media_url && (
-              <div className="space-y-2">
-                {task.type === "audio" && <audio controls src={task.media_url} className="w-full" />}
-                {task.type === "video" && (
-                  <video controls src={task.media_url} className="w-full rounded-xl max-h-96" />
-                )}
-                {task.type === "document" && (
-                  <a
-                    href={task.media_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-xl hover:bg-amber-100 transition-colors"
-                  >
-                    <File className="w-4 h-4" /> View document
-                  </a>
-                )}
-              </div>
-            )}
-
-            {submission?.status === "reviewed" ? (
-              <div className="space-y-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-1.5">
-                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5" /> Reviewed
-                    {submission.grade != null && ` — ${submission.grade} marks`}
-                  </p>
-                  {submission.feedback && (
-                    <p className="text-sm text-emerald-800">{submission.feedback}</p>
+                  {submission?.grade != null && (
+                    <div className="flex items-center gap-3 text-sm font-bold text-orange-700 bg-orange-50/80 px-4 py-3 rounded-2xl border border-orange-200/60 shadow-sm shrink-0">
+                      <Award size={22} className="text-orange-600" />
+                      <div>
+                        <p className="text-[10px] uppercase text-orange-500 font-semibold">
+                          Score Earned
+                        </p>
+                        <p className="text-base">{submission.grade} Pts</p>
+                      </div>
+                    </div>
                   )}
                 </div>
-                {task.questions?.length > 0 && (
-                  <TaskQuestionsReview questions={task.questions} answers={submission.answers} />
+
+                <div className="space-y-4">
+                  {task.description && (
+                    <p className="text-base text-slate-600 leading-relaxed">
+                      {task.description}
+                    </p>
+                  )}
+
+                  {task.instructions && (
+                    <div className="bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-2xl p-6 border border-slate-100 shadow-sm space-y-2">
+                      <p className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-orange-600" />
+                        Instructions & Guidelines
+                      </p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                        {task.instructions}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 1: Content Renderers */}
+            {steps[currentStep]?.id === "content" && (
+              <div className="space-y-4 animate-fadeIn w-full">
+                <h3 className="text-lg font-bold text-slate-800">
+                  Task Material & Resources
+                </h3>
+                {task.type === "text" && task.text_content && (
+                  <div
+                    className="bg-white rounded-2xl p-6 border border-slate-200/60 text-sm text-slate-700 prose prose-sm max-w-none shadow-sm"
+                    dangerouslySetInnerHTML={{ __html: task.text_content }}
+                  />
+                )}
+
+                {task.type === "link" && task.link_url && (
+                  <a
+                    href={task.link_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center gap-3 text-sm font-bold text-orange-700 bg-orange-50/80 border border-orange-200 px-5 py-3.5 rounded-2xl hover:bg-orange-100/80 transition-all shadow-sm"
+                  >
+                    <div className="p-2 bg-orange-600 text-white rounded-xl shadow-sm">
+                      <Link2 className="w-4 h-4" />
+                    </div>
+                    <span>Open External Resource</span>
+                    <ChevronRight
+                      size={16}
+                      className="text-orange-500 transition-transform group-hover:translate-x-1"
+                    />
+                  </a>
+                )}
+
+                {["audio", "video", "document"].includes(task.type) &&
+                  task.media_url && (
+                    <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60 w-full">
+                      {task.type === "audio" && (
+                        <audio
+                          controls
+                          src={task.media_url}
+                          className="w-full"
+                        />
+                      )}
+                      {task.type === "video" && (
+                        <video
+                          controls
+                          src={task.media_url}
+                          className="w-full rounded-2xl shadow-md max-h-[500px] object-cover"
+                        />
+                      )}
+                      {task.type === "document" && (
+                        <a
+                          href={task.media_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-3 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-5 py-3.5 rounded-2xl hover:bg-amber-100 transition-all shadow-sm"
+                        >
+                          <div className="p-2 bg-amber-600 text-white rounded-xl">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          View Document Asset
+                        </a>
+                      )}
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {/* FINAL STEP: Submission Section / Review State */}
+            {steps[currentStep]?.id === "submission" && (
+              <div className="space-y-6 animate-fadeIn w-full">
+                {submission?.status === "reviewed" ? (
+                  <div className="space-y-6 w-full">
+                    <div className="bg-orange-50/70 border border-orange-200 rounded-3xl p-6 space-y-3 shadow-sm">
+                      <p className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-orange-600" />
+                        Instructor Evaluation Completed
+                        {submission.grade != null &&
+                          ` — ${submission.grade} marks`}
+                      </p>
+                      {submission.feedback && (
+                        <p className="text-sm text-orange-900 bg-white/60 p-4 rounded-2xl border border-orange-100/60 leading-relaxed">
+                          "{submission.feedback}"
+                        </p>
+                      )}
+                    </div>
+
+                    {task.questions?.length > 0 && (
+                      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm w-full">
+                        <TaskQuestionsReview
+                          questions={task.questions}
+                          answers={submission.answers}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-sm w-full">
+                    <SubmissionForm
+                      task={task}
+                      submission={submission}
+                      onSubmitted={onSubmitted}
+                    />
+                  </div>
                 )}
               </div>
-            ) : (
-              <SubmissionForm task={task} submission={submission} onSubmitted={onSubmitted} />
             )}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-8 w-full">
+            <button
+              onClick={handlePrev}
+              disabled={currentStep === 0}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                currentStep === 0
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
+              }`}
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={currentStep === steps.length - 1}
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
+                currentStep === steps.length - 1
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+                  : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20"
+              }`}
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -390,14 +833,24 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Track the current active question index
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
   const [answers, setAnswers] = useState(() => {
     const prefilled = {};
     (submission?.answers || []).forEach((a) => {
       const question = task.questions?.[a.question_index];
-      if (question) prefilled[a.question_index] = parseGivenAnswer(question, a.given_answer);
+      if (question)
+        prefilled[a.question_index] = parseGivenAnswer(
+          question,
+          a.given_answer,
+        );
     });
     return prefilled;
   });
+
+  const totalQuestions = task.questions?.length || 0;
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -406,7 +859,9 @@ function SubmissionForm({ task, submission, onSubmitted }) {
       .filter(([idx, q]) => hasAnswer(q, answers[idx]));
 
     if (!text.trim() && !file && answeredEntries.length === 0) {
-      setError("Add a file, write a response, or answer the questions before submitting.");
+      setError(
+        "Add a file, write a response, or answer the questions before submitting.",
+      );
       return;
     }
     setError("");
@@ -426,83 +881,185 @@ function SubmissionForm({ task, submission, onSubmitted }) {
       const res = await studentTaskApi.submit(task._id, formData);
       onSubmitted(res.data?.data);
       setSuccess(true);
+      Swal.fire({
+        icon: "success",
+        title: submission ? "Resubmitted!" : "Submitted!",
+        text: submission
+          ? "Your task has been resubmitted successfully."
+          : "Your task has been submitted successfully.",
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } catch (err) {
       console.error("Submit Task Error:", err);
-      setError(err?.response?.data?.message || "Failed to submit. Please try again.");
+      const message =
+        err?.response?.data?.message || "Failed to submit. Please try again.";
+      setError(message);
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: message,
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-1 border-t border-slate-100">
+    <form
+      onSubmit={handleSubmit}
+      // Enter inside a text-type question field would otherwise submit the
+      // form early (native browser behavior) while the student is still
+      // stepping through checkpoint questions — only the last question's
+      // real submit button should be able to trigger it.
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && !isLastQuestion) {
+          e.preventDefault();
+        }
+      }}
+      className="space-y-4 pt-1 border-t border-slate-100"
+    >
       {submission && (
         <p className="text-xs font-semibold text-sky-600 flex items-center gap-1.5 pt-3">
-          <Send className="w-3.5 h-3.5" /> Already submitted — resubmitting will replace it.
+          <Send className="w-3.5 h-3.5" /> Already submitted — resubmitting will
+          replace it.
         </p>
       )}
 
-      {task.questions?.length > 0 && (
-        <div className="space-y-3 pt-2">
-          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Questions
-          </label>
-          {task.questions.map((q, idx) => (
-            <div key={idx} className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-800">
-                  {idx + 1}. {q.question_text}
-                </p>
-                <span className="text-[10px] font-bold text-slate-400 shrink-0">
-                  {q.marks || 1} mark{(q.marks || 1) > 1 ? "s" : ""}
-                </span>
-              </div>
-              <QuestionInput
-                question={q}
-                answer={answers[idx]}
-                setAnswer={(next) => setAnswers((prev) => ({ ...prev, [idx]: next }))}
-              />
-            </div>
-          ))}
+      {/* Checkpoint Questions Step-by-Step View */}
+      {totalQuestions > 0 && (
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Question{" "}
+              {currentQuestionIndex + 1} of {totalQuestions}
+            </label>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+              {task.questions[currentQuestionIndex].marks || 1} mark
+              {(task.questions[currentQuestionIndex].marks || 1) > 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {/* Active Question Card */}
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4 shadow-sm animate-fadeIn">
+            <p className="text-sm font-bold text-slate-800 leading-relaxed">
+              {currentQuestionIndex + 1}.{" "}
+              {task.questions[currentQuestionIndex].question_text}
+            </p>
+            <QuestionInput
+              question={task.questions[currentQuestionIndex]}
+              answer={answers[currentQuestionIndex]}
+              setAnswer={(next) =>
+                setAnswers((prev) => ({
+                  ...prev,
+                  [currentQuestionIndex]: next,
+                }))
+              }
+            />
+          </div>
+
+          {/* Question Navigation & Submit Actions */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              disabled={currentQuestionIndex === 0}
+              onClick={() =>
+                setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
+              }
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                currentQuestionIndex === 0
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
+              }`}
+            >
+              Previous Question
+            </button>
+
+            {/* Render Next Button if not on the last question, or Submit Button if it is the last question */}
+            {!isLastQuestion ? (
+              <button
+                key="next-question-btn"
+                type="button"
+                onClick={() =>
+                  setCurrentQuestionIndex((prev) =>
+                    Math.min(totalQuestions - 1, prev + 1),
+                  )
+                }
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+              >
+                Next Question
+              </button>
+            ) : (
+              <button
+                key="submit-task-btn"
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2 transition-all"
+              >
+                {submitting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                {submitting
+                  ? "Submitting..."
+                  : submission
+                    ? "Resubmit"
+                    : "Submit Task"}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="space-y-1.5 pt-1">
-        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-          <MessageSquare className="w-3.5 h-3.5" /> Written response (optional)
-        </label>
-        <textarea
-          rows={3}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write your response here..."
-          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-          <Upload className="w-3.5 h-3.5" /> Attach a file (optional)
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full text-xs text-slate-500 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-bold"
-        />
-      </div>
-      {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-      {success && (
-        <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
-          <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
-        </p>
+      {/* Fallback Submit Button if there are no checkpoint questions at all */}
+      {totalQuestions === 0 && (
+        <div className="space-y-4 pt-4 border-t border-slate-100 animate-fadeIn">
+          {error && (
+            <p className="text-xs font-semibold text-rose-600">{error}</p>
+          )}
+          {success && (
+            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2"
+          >
+            {submitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            {submitting
+              ? "Submitting..."
+              : submission
+                ? "Resubmit"
+                : "Submit Task"}
+          </button>
+        </div>
       )}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 disabled:opacity-60 flex items-center gap-2"
-      >
-        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        {submitting ? "Submitting..." : submission ? "Resubmit" : "Submit Task"}
-      </button>
+
+      {/* Global Form Error & Success Messages on Last Question */}
+      {totalQuestions > 0 && isLastQuestion && (
+        <div className="pt-2 space-y-2">
+          {error && (
+            <p className="text-xs font-semibold text-rose-600">{error}</p>
+          )}
+          {success && (
+            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" /> Submitted successfully.
+            </p>
+          )}
+        </div>
+      )}
     </form>
   );
 }
@@ -533,7 +1090,11 @@ function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
   );
 }
 
-function TextAnswerInput({ answer, setAnswer, placeholder = "Type your answer..." }) {
+function TextAnswerInput({
+  answer,
+  setAnswer,
+  placeholder = "Type your answer...",
+}) {
   return (
     <input
       type="text"
@@ -567,13 +1128,17 @@ function SequenceBuilder({ question, answer, setAnswer }) {
     <div className="space-y-2.5">
       <div className="min-h-14 rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 flex flex-wrap items-center gap-2 p-3">
         {order.length === 0 && (
-          <span className="text-sm text-slate-400 italic">Tap items below to build your answer…</span>
+          <span className="text-sm text-slate-400 italic">
+            Tap items below to build your answer…
+          </span>
         )}
         {order.map((id, pos) => (
           <button
             type="button"
             key={pos}
-            onClick={() => setAnswer({ order: order.filter((_, i) => i !== pos) })}
+            onClick={() =>
+              setAnswer({ order: order.filter((_, i) => i !== pos) })
+            }
             className="px-3.5 py-2 rounded-lg border-2 border-emerald-400 bg-emerald-100 text-emerald-800 font-semibold text-sm hover:border-emerald-500"
           >
             {question.options[id]}
@@ -598,7 +1163,11 @@ function SequenceBuilder({ question, answer, setAnswer }) {
 
 const MATCH_PAIR_COLORS = [
   { border: "border-blue-400", bg: "bg-blue-50", text: "text-blue-700" },
-  { border: "border-emerald-400", bg: "bg-emerald-50", text: "text-emerald-700" },
+  {
+    border: "border-emerald-400",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+  },
   { border: "border-purple-400", bg: "bg-purple-50", text: "text-purple-700" },
   { border: "border-pink-400", bg: "bg-pink-50", text: "text-pink-700" },
   { border: "border-amber-400", bg: "bg-amber-50", text: "text-amber-700" },
@@ -609,14 +1178,18 @@ function MatchBuilder({ question, answer, setAnswer }) {
   const activeLeft = answer?.activeLeft || null;
 
   const matchPairs = useMemo(() => getMatchPairs(question), [question]);
-  const rightPool = useMemo(() => shuffledPool(matchPairs.map((p) => p.right)), [matchPairs]);
+  const rightPool = useMemo(
+    () => shuffledPool(matchPairs.map((p) => p.right)),
+    [matchPairs],
+  );
   const usedRights = new Set(Object.values(pairs));
 
   const getPairColor = (left) => {
     const index = matchPairs.findIndex((item) => item.left === left);
     return MATCH_PAIR_COLORS[index % MATCH_PAIR_COLORS.length];
   };
-  const getMatchedLeft = (right) => Object.keys(pairs).find((left) => pairs[left] === right);
+  const getMatchedLeft = (right) =>
+    Object.keys(pairs).find((left) => pairs[left] === right);
   const pickLeft = (left) => {
     if (pairs[left]) return;
     setAnswer({ pairs, activeLeft: left });
@@ -643,8 +1216,8 @@ function MatchBuilder({ question, answer, setAnswer }) {
                 isActive
                   ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                   : isPaired
-                  ? `${color.border} ${color.bg} ${color.text}`
-                  : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
+                    ? `${color.border} ${color.bg} ${color.text}`
+                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
               }`}
             >
               {p.left}
@@ -682,26 +1255,64 @@ function MatchBuilder({ question, answer, setAnswer }) {
 function QuestionInput({ question, answer, setAnswer }) {
   switch (question.question_type) {
     case "mcq":
-      return <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} />;
+      return (
+        <ChoiceOptions
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+        />
+      );
     case "true_false": {
       const hasValidOptions = question.options?.filter(Boolean).length === 2;
-      const tfQuestion = hasValidOptions ? question : { ...question, options: ["True", "False"] };
-      return <ChoiceOptions question={tfQuestion} answer={answer} setAnswer={setAnswer} grid />;
+      const tfQuestion = hasValidOptions
+        ? question
+        : { ...question, options: ["True", "False"] };
+      return (
+        <ChoiceOptions
+          question={tfQuestion}
+          answer={answer}
+          setAnswer={setAnswer}
+          grid
+        />
+      );
     }
     case "fill_blank":
       return question.options?.length ? (
-        <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} grid />
+        <ChoiceOptions
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+          grid
+        />
       ) : (
         <TextAnswerInput answer={answer} setAnswer={setAnswer} />
       );
     case "short_answer":
       return <ShortAnswerInput answer={answer} setAnswer={setAnswer} />;
     case "recorder":
-      return <SequenceBuilder question={question} answer={answer} setAnswer={setAnswer} />;
+      return (
+        <SequenceBuilder
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+        />
+      );
     case "spell_word":
-      return <ChoiceOptions question={question} answer={answer} setAnswer={setAnswer} />;
+      return (
+        <ChoiceOptions
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+        />
+      );
     case "match":
-      return <MatchBuilder question={question} answer={answer} setAnswer={setAnswer} />;
+      return (
+        <MatchBuilder
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+        />
+      );
     default:
       return <TextAnswerInput answer={answer} setAnswer={setAnswer} />;
   }
@@ -732,29 +1343,110 @@ function prettifyAnswer(question, raw) {
    READ-ONLY QUESTIONS REVIEW (once graded)
 ========================================================== */
 function TaskQuestionsReview({ questions, answers }) {
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const answerByIndex = {};
+
   (answers || []).forEach((a) => {
     answerByIndex[a.question_index] = a.given_answer;
   });
 
+  const totalQuestions = questions?.length || 0;
+  if (totalQuestions === 0) return null;
+
+  const currentQuestion = questions[currentReviewIndex];
+  const givenRaw = answerByIndex[currentReviewIndex];
+  const normalize = (s) =>
+    String(s ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  const isCorrect =
+    givenRaw !== undefined &&
+    normalize(givenRaw) === normalize(currentQuestion.correct_answer);
+
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-        <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Questions
-      </p>
-      {questions.map((q, idx) => (
-        <div key={idx} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <p className="text-sm font-semibold text-slate-800">
-            {idx + 1}. {q.question_text}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Review (
+          {currentReviewIndex + 1} of {totalQuestions})
+        </p>
+      </div>
+
+      {/* Review Active Card */}
+      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 shadow-sm animate-fadeIn">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-bold text-slate-800 leading-relaxed">
+            {currentReviewIndex + 1}. {currentQuestion.question_text}
           </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Your answer:{" "}
-            <span className="font-semibold text-slate-700">
-              {prettifyAnswer(q, answerByIndex[idx])}
+          {givenRaw !== undefined && (
+            <span
+              className={`shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                isCorrect
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
+              }`}
+            >
+              {isCorrect ? "Correct" : "Incorrect"}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-2">
+          Your answer:{" "}
+          <span className="font-semibold text-slate-700">
+            {prettifyAnswer(currentQuestion, givenRaw)}
+          </span>
+        </p>
+        {!isCorrect && (
+          <p className="text-xs text-slate-500">
+            Correct answer:{" "}
+            <span className="font-semibold text-emerald-700">
+              {prettifyAnswer(currentQuestion, currentQuestion.correct_answer)}
             </span>
           </p>
-        </div>
-      ))}
+        )}
+        {currentQuestion.explanation && (
+          <div className="text-xs text-slate-500 bg-white/70 p-3 rounded-xl border border-slate-100 leading-relaxed">
+            <span className="font-bold text-slate-600">Explanation: </span>
+            <span
+              className="prose prose-sm max-w-none inline"
+              dangerouslySetInnerHTML={{ __html: currentQuestion.explanation }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Review Pagination Controls */}
+      <div className="flex items-center justify-between pt-1">
+        <button
+          type="button"
+          disabled={currentReviewIndex === 0}
+          onClick={() => setCurrentReviewIndex((prev) => Math.max(0, prev - 1))}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentReviewIndex === 0
+              ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+              : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
+          }`}
+        >
+          Previous Question
+        </button>
+
+        <button
+          type="button"
+          disabled={currentReviewIndex === totalQuestions - 1}
+          onClick={() =>
+            setCurrentReviewIndex((prev) =>
+              Math.min(totalQuestions - 1, prev + 1),
+            )
+          }
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentReviewIndex === totalQuestions - 1
+              ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          }`}
+        >
+          Next Question
+        </button>
+      </div>
     </div>
   );
 }

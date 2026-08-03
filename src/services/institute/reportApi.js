@@ -25,4 +25,10 @@ export const reportApi = {
     api.get(`/institute/students/${studentId}/progress-report`, {
       params: courseId ? { courseId } : {},
     }),
+
+  getActivitySummary: (studentId) =>
+    api.get(`/institute/students/${studentId}/activity-summary`),
+
+  getActivityHistory: (studentId, params = {}) =>
+    api.get(`/institute/students/${studentId}/activity-history`, { params }),
 };

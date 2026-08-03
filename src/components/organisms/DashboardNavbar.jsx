@@ -219,7 +219,8 @@ useEffect(() => {
       pathname.includes("/dashboard/audio") ||
       pathname.includes("/dashboard/text") ||
       pathname.includes("/dashboard/exercise") ||
-      pathname.includes("/dashboard/vocabulary");
+      pathname.includes("/dashboard/vocabulary") ||
+      pathname.includes("/dashboard/tasks");
 
     if (isLearningJourney) {
       // Step 3 — Current Course
@@ -230,9 +231,15 @@ useEffect(() => {
         });
       }
 
-      // Step 4 — Content type (Video / Audio / Text etc.)
+      // Step 4 — Content type (Video / Audio / Text / Practical Manual etc.)
       if (type && courseId && courseName) {
-        let typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+        const typeLabelOverrides = {
+          practical_manual: "Practical Manual",
+          task: "Tasks",
+        };
+        let typeLabel =
+          typeLabelOverrides[type.toLowerCase()] ||
+          type.charAt(0).toUpperCase() + type.slice(1);
         if (["video", "audio", "text"].includes(type.toLowerCase())) {
           typeLabel += " Lesson";
         }

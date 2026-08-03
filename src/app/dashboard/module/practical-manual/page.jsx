@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
+import Swal from "sweetalert2";
 import {
   ArrowLeft,
   BookOpen,
@@ -19,6 +20,8 @@ import {
   Award,
   FileText,
   RotateCcw,
+  UploadCloud,
+  X,
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
@@ -28,7 +31,17 @@ import RichTextEditor from "@/components/molecules/RichTextEditor";
    WIDE ROW — same list-item language as the Exercise/Text/Audio
    module rows in dashboard/module/[type]/[subtopicId]/page.js.
 ========================================================== */
-function WideRow({ onClick, disabled, iconBg, icon, eyebrow, eyebrowClass, title, middle, right }) {
+function WideRow({
+  onClick,
+  disabled,
+  iconBg,
+  icon,
+  eyebrow,
+  eyebrowClass,
+  title,
+  middle,
+  right,
+}) {
   return (
     <div
       onClick={disabled ? undefined : onClick}
@@ -56,7 +69,9 @@ function WideRow({ onClick, disabled, iconBg, icon, eyebrow, eyebrowClass, title
           </h3>
         </div>
 
-        {middle && <div className="hidden md:block md:col-span-4">{middle}</div>}
+        {middle && (
+          <div className="hidden md:block md:col-span-4">{middle}</div>
+        )}
         <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4">
           {right}
         </div>
@@ -69,13 +84,18 @@ function PracticalRow({ manual, onSelect, disabled }) {
   const submission = manual.my_submission;
   const status = submission?.status;
 
-  const eyebrow = status === "reviewed" ? "Reviewed" : status === "submitted" ? "Submitted" : "Not Started";
+  const eyebrow =
+    status === "reviewed"
+      ? "Reviewed"
+      : status === "submitted"
+        ? "Submitted"
+        : "Not Started";
   const eyebrowClass =
     status === "reviewed"
-      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+      ? "bg-cyan-500 text-white border-cyan-600"
       : status === "submitted"
-      ? "bg-sky-50 text-sky-600 border-sky-100"
-      : "bg-orange-50 text-orange-600 border-orange-100";
+        ? "bg-emerald-500 text-white border-emerald-600"
+        : "bg-rose-500 text-white border-rose-600";
 
   return (
     <WideRow
@@ -93,7 +113,8 @@ function PracticalRow({ manual, onSelect, disabled }) {
       title={manual.title}
       middle={
         <p className="text-xs text-slate-400 font-medium truncate">
-          {manual.questions.length} question{manual.questions.length === 1 ? "" : "s"}
+          {manual.questions.length} question
+          {manual.questions.length === 1 ? "" : "s"}
           {submission?.submitted_at &&
             ` · Submitted ${new Date(submission.submitted_at).toLocaleDateString()}`}
         </p>
@@ -102,13 +123,28 @@ function PracticalRow({ manual, onSelect, disabled }) {
         <>
           <div className="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
             <Award size={12} className="text-orange-500" />
-            <span>{submission?.marks != null ? `${submission.marks} Pts` : "Ungraded"}</span>
+            <span>
+              {submission?.marks != null
+                ? `${submission.marks} Pts`
+                : "Ungraded"}
+            </span>
           </div>
-          <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
+          <div
+            className={`h-10 w-10 rounded-xl border flex items-center justify-center text-white transition-all duration-300 shadow-sm group-hover:scale-105 ${
+              status === "reviewed"
+                ? "bg-cyan-500 border-cyan-600"
+                : status === "submitted"
+                  ? "bg-emerald-500 border-emerald-600"
+                  : "bg-rose-500 border-rose-600"
+            }`}
+          >
             {status ? (
-              <RotateCcw className="group-hover:rotate-45 transition-transform" size={12} />
+              <RotateCcw
+                className="group-hover:rotate-45 transition-transform duration-300"
+                size={14}
+              />
             ) : (
-              <Play className="fill-current ml-0.5" size={12} />
+              <Play className="fill-current ml-0.5" size={14} />
             )}
           </div>
         </>
@@ -150,8 +186,8 @@ function QuestionDots({ total, current, answers }) {
               isCurrent
                 ? "w-6 bg-orange-500"
                 : hasAnswered
-                ? "w-2 bg-emerald-400"
-                : "w-2 bg-slate-200"
+                  ? "w-2 bg-emerald-400"
+                  : "w-2 bg-slate-200"
             }`}
           />
         );
@@ -169,7 +205,9 @@ function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
 
   const filtered = manuals
     .map((item, originalIndex) => ({ ...item, originalIndex }))
-    .filter((q) => q.question_text.toLowerCase().includes(search.toLowerCase()));
+    .filter((q) =>
+      q.question_text.toLowerCase().includes(search.toLowerCase()),
+    );
 
   return (
     <div className="w-80 shrink-0 border-r border-slate-200 bg-white flex flex-col h-full">
@@ -209,7 +247,9 @@ function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
       {/* QUESTIONS LIST */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-sidebar-scroll">
         {filtered.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-8">No matches found.</p>
+          <p className="text-xs text-slate-400 text-center py-8">
+            No matches found.
+          </p>
         ) : (
           filtered.map((item) => {
             const index = item.originalIndex;
@@ -289,6 +329,11 @@ export default function StudentPracticalManualPage() {
   const [search, setSearch] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
+  // Per-question file answers (question_type: "file") — questionFiles holds
+  // newly picked File objects (keyed by question index); existingFileUrls
+  // holds already-uploaded URLs from a prior submission, kept unless replaced.
+  const [questionFiles, setQuestionFiles] = useState({});
+  const [existingFileUrls, setExistingFileUrls] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -305,35 +350,80 @@ export default function StudentPracticalManualPage() {
       .finally(() => setListLoading(false));
   }, [topicId, courseId]);
 
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        console.log(
+          "Auto-fullscreen blocked by browser policy. User interaction required.",
+        );
+      }
+    }
+  };
+
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically trigger fullscreen on mount
+  useEffect(() => {
+    enterFullscreen();
+  }, []);
+
+  // Automatically trigger fullscreen when workspace opens or submission status changes
+  useEffect(() => {
+    if (selectedManual || submitted) {
+      enterFullscreen();
+    }
+  }, [selectedManual, submitted]);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const handleStartManual = useCallback(async (manual) => {
+    // Direct user-click action context allows full screen grant execution here
+    enterFullscreen();
+
     setDetailLoading(true);
     try {
       const res = await studentPracticalApi.getOneMine(manual._id);
       const detail = res.data?.data;
       const mySubmission = detail?.my_submission;
 
-      // Pre-fill previously saved answers, matched by question_id.
       const answerByQuestionId = {};
       (mySubmission?.answers || []).forEach((a) => {
-        answerByQuestionId[a.question_id] = a.answer_html;
+        answerByQuestionId[a.question_id] = a;
       });
       const prefilled = {};
+      const prefilledFileUrls = {};
       (detail?.questions || []).forEach((q, idx) => {
-        if (answerByQuestionId[q._id]) prefilled[idx] = answerByQuestionId[q._id];
+        const existing = answerByQuestionId[q._id];
+        if (existing?.answer_html) prefilled[idx] = existing.answer_html;
+        if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
       });
 
       setSelectedManual(detail);
       setCurrent(0);
       setAnswers(prefilled);
-      setSubmitted(mySubmission?.status === "submitted" || mySubmission?.status === "reviewed");
+      setQuestionFiles({});
+      setExistingFileUrls(prefilledFileUrls);
+      setSubmitted(
+        mySubmission?.status === "submitted" ||
+          mySubmission?.status === "reviewed",
+      );
       setSubmitError("");
     } catch (error) {
       console.error("Get Practical Detail Error:", error);
@@ -341,18 +431,6 @@ export default function StudentPracticalManualPage() {
       setDetailLoading(false);
     }
   }, []);
-
-  const enterFullscreen = async () => {
-    if (containerRef.current?.requestFullscreen) {
-      await containerRef.current.requestFullscreen();
-    }
-  };
-
-  const exitFullscreen = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    }
-  };
 
   const saveAnswer = (data) => {
     setAnswers((prev) => ({ ...prev, [current]: data }));
@@ -362,20 +440,54 @@ export default function StudentPracticalManualPage() {
     if (!selectedManual) return;
     setSubmitError("");
     setSubmitting(true);
+
+    enterFullscreen();
+
     try {
-      const payload = selectedManual.questions.map((q, idx) => ({
-        question_id: q._id,
-        answer_html: answers[idx] || "",
-      }));
       const formData = new FormData();
+
+      const payload = selectedManual.questions.map((q, idx) => {
+        if (q.solution_type === "file") {
+          // A newly picked file uploads separately over multipart, keyed by
+          // question id — the backend merges it into this answer entry. If
+          // no new file was picked, keep whatever URL was already there.
+          if (questionFiles[idx]) {
+            formData.append(`question_file_${q._id}`, questionFiles[idx]);
+          }
+          return {
+            question_id: q._id,
+            ...(existingFileUrls[idx] && !questionFiles[idx]
+              ? { answer_file_url: existingFileUrls[idx] }
+              : {}),
+          };
+        }
+        return { question_id: q._id, answer_html: answers[idx] || "" };
+      });
+
       formData.append("answers", JSON.stringify(payload));
       await studentPracticalApi.submit(selectedManual._id, formData);
       setSubmitted(true);
+      Swal.fire({
+        icon: "success",
+        title: "Submitted!",
+        text: "Your practical manual has been submitted successfully.",
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } catch (error) {
       console.error("Submit Practical Error:", error);
-      setSubmitError(
-        error?.response?.data?.message || "Failed to submit. Please try again.",
-      );
+      const message =
+        error?.response?.data?.message || "Failed to submit. Please try again.";
+      setSubmitError(message);
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: message,
+        confirmButtonColor: "#f97316",
+        confirmButtonText: "Okay",
+        target: document.fullscreenElement || document.body,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -386,9 +498,8 @@ export default function StudentPracticalManualPage() {
   ========================================================== */
   if (!selectedManual) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-amber-50/20 p-6 md:p-8">
+      <div className="w-full min-h-screen bg-slate-50 p-6 md:p-8">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Top Bar */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => router.back()}
@@ -397,9 +508,11 @@ export default function StudentPracticalManualPage() {
               <ArrowLeft size={18} />
               Back
             </button>
-            <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
-              <BookOpen size={16} />
-              {manualsList.length} Practical Manuals
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
+                <BookOpen size={16} />
+                {manualsList.length} Practical Manuals
+              </div>
             </div>
           </div>
 
@@ -436,39 +549,172 @@ export default function StudentPracticalManualPage() {
 
   const manuals = selectedManual.questions;
   const currentQuestion = manuals[current];
-  const completedCount = Object.values(answers).filter((val) => val?.trim()).length;
+  const isQuestionAnswered = (q, idx) =>
+    q.solution_type === "file"
+      ? !!(questionFiles[idx] || existingFileUrls[idx])
+      : !!answers[idx]?.trim();
+  const completedCount = manuals.filter((q, idx) => isQuestionAnswered(q, idx)).length;
   const progressPct = (completedCount / manuals.length) * 100;
   const allAttempted = completedCount === manuals.length;
+  // Sidebar/QuestionDots only check truthiness of a string per index — feed
+  // them a merged view so file-type questions register as "answered" too.
+  const dotsAnswers = Object.fromEntries(
+    manuals.map((q, idx) => [idx, isQuestionAnswered(q, idx) ? answers[idx] || "1" : ""]),
+  );
 
   /* ==========================================================
      SUBMITTED SUCCESS STATE
   ========================================================== */
   if (submitted) {
     return (
-      <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl p-10 text-center max-w-md w-full border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.15)] relative overflow-hidden"
-        >
-          <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
-          <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-            <CheckCircle2 size={44} />
+      <div
+        ref={containerRef}
+        className="min-h-screen w-full bg-slate-50 p-6 md:p-8 overflow-y-auto custom-main-scroll"
+      >
+        <div className="w-full space-y-6">
+          <div className="bg-white rounded-3xl p-8 border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.10)] relative overflow-hidden flex items-center justify-between">
+            <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
+                <CheckCircle2 size={28} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-slate-800">
+                  {selectedManual.my_submission?.status === "reviewed"
+                    ? "Practical Reviewed"
+                    : "Practical Submitted Successfully"}
+                </h1>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedManual(null);
+                setSubmitted(false);
+              }}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
+            >
+              Back to Manuals List
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
+                <CheckCircle2 size={28} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-slate-800">
+                  Practical Submitted Successfully
+                </h1>
+              </div>
+            </div>
+
+            <button
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
           </div>
-          <h1 className="mt-6 text-2xl font-black text-slate-800">Practical Submitted!</h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Your instructor will review your submitted practical manual answers.
-          </p>
-          <button
-            onClick={() => {
-              setSelectedManual(null);
-              setSubmitted(false);
-            }}
-            className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition"
-          >
-            Back to Manuals List
-          </button>
-        </motion.div>
+
+          {/* Instructor Evaluation Card — only once reviewed */}
+          {selectedManual.my_submission?.status === "reviewed" && (
+            <div className="bg-cyan-50/70 border border-cyan-200 rounded-3xl p-6 space-y-3 shadow-sm">
+              <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-cyan-600" />
+                Instructor Evaluation Completed
+                {selectedManual.my_submission.marks != null &&
+                  ` — ${selectedManual.my_submission.marks} marks`}
+              </p>
+              {selectedManual.my_submission.feedback && (
+                <p className="text-sm text-cyan-900 bg-white/60 p-4 rounded-2xl border border-cyan-100/60 leading-relaxed">
+                  "{selectedManual.my_submission.feedback}"
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* List of Attempted Questions and Answers */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider px-1">
+              Attempted Questions & Answers ({manuals.length})
+            </h2>
+
+            {manuals.map((q, idx) => {
+              const isFileQuestion = q.solution_type === "file";
+              const hasAnswer = isFileQuestion
+                ? !!existingFileUrls[idx]
+                : !!answers[idx]?.replace(/<[^>]*>/g, "").trim();
+              const studentAnswer =
+                answers[idx] ||
+                "<p class='text-slate-400 italic'>No answer provided.</p>";
+              return (
+                <div
+                  key={q._id}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-sm w-full"
+                >
+                  <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wide">
+                        Question {idx + 1}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                          hasAnswer
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
+                        {hasAnswer ? "Answered" : "Not Answered"}
+                      </span>
+                      {q.marks > 0 && (
+                        <span className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg px-2.5 py-1 text-xs font-bold">
+                          {q.marks} Marks
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Question Text
+                    </h3>
+                    <p className="text-slate-800 font-semibold text-sm leading-relaxed">
+                      {q.question_text}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                      Your Answer
+                    </span>
+                    {isFileQuestion ? (
+                      existingFileUrls[idx] ? (
+                        <a
+                          href={existingFileUrls[idx]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-bold text-orange-700 bg-orange-50 border border-orange-200 px-4 py-3 rounded-xl hover:bg-orange-100 transition-all"
+                        >
+                          <FileText size={16} /> View uploaded file
+                        </a>
+                      ) : (
+                        <p className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-400 italic text-sm">
+                          No file uploaded.
+                        </p>
+                      )
+                    ) : (
+                      <div
+                        className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-700 text-sm leading-relaxed prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: studentAnswer }}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }
@@ -477,7 +723,10 @@ export default function StudentPracticalManualPage() {
      VIEW 2: WORKSPACE EDITOR VIEW
   ========================================================== */
   return (
-    <div ref={containerRef} className="flex bg-slate-50 h-screen w-full overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex bg-slate-50 h-screen w-full overflow-hidden"
+    >
       <style jsx global>{`
         .custom-sidebar-scroll::-webkit-scrollbar,
         .custom-main-scroll::-webkit-scrollbar {
@@ -501,39 +750,39 @@ export default function StudentPracticalManualPage() {
       <Sidebar
         manuals={manuals}
         current={current}
-        answers={answers}
+        answers={dotsAnswers}
         setCurrent={setCurrent}
         search={search}
         setSearch={setSearch}
       />
 
-      {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
-        {/* TOP BAR */}
         <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
           <button
             onClick={isFullscreen ? exitFullscreen : enterFullscreen}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            title={isFullscreen ? "Minimize Manual" : "Maximize Manual"}
           >
             {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
         </div>
 
-        {/* CONTENT CARD CONTAINER */}
         <div className="px-8 pb-10 pt-4 w-full flex-1">
           <div className="w-full relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 shadow-[0_20px_60px_rgba(249,115,22,0.10)] transition-all duration-300">
             <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-100 opacity-50 blur-2xl pointer-events-none" />
             <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-100 opacity-50 blur-2xl pointer-events-none" />
 
             <div className="relative space-y-6">
-              {/* HEADER INFO & PROGRESS */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-orange-500 uppercase tracking-wide">
                     Question {current + 1} of {manuals.length}
                   </span>
-                  <QuestionDots total={manuals.length} current={current} answers={answers} />
+                  <QuestionDots
+                    total={manuals.length}
+                    current={current}
+                    answers={dotsAnswers}
+                  />
                 </div>
                 <ProgressBar value={progressPct} />
               </div>
@@ -555,7 +804,6 @@ export default function StudentPracticalManualPage() {
                 </div>
               )}
 
-              {/* CARD MAIN BODY */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={current}
@@ -576,30 +824,87 @@ export default function StudentPracticalManualPage() {
                     )}
                   </div>
 
-                  {/* Instruction Box */}
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Suggested Length
-                    </h3>
-                    <p className="text-slate-700 font-medium text-sm leading-relaxed">
-                      Write approximately {currentQuestion.answer_lines} lines for this answer.
-                    </p>
-                  </div>
+                  {currentQuestion.solution_type !== "file" && (
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Suggested Length
+                      </h3>
+                      <p className="text-slate-700 font-medium text-sm leading-relaxed">
+                        Write approximately {currentQuestion.answer_lines} lines
+                        for this answer.
+                      </p>
+                    </div>
+                  )}
 
-                  {/* RICH TEXT ANSWER FIELD */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Your Answer
                     </label>
-                    <RichTextEditor
-                      value={answers[current] || ""}
-                      onChange={saveAnswer}
-                      placeholder="Type your detailed solution here..."
-                      minHeight={250}
-                    />
+                    {currentQuestion.solution_type === "file" ? (
+                      <div className="space-y-3">
+                        {existingFileUrls[current] && !questionFiles[current] && (
+                          <a
+                            href={existingFileUrls[current]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm font-bold text-orange-700 bg-orange-50 border border-orange-200 px-4 py-3 rounded-2xl hover:bg-orange-100 transition-all w-fit"
+                          >
+                            <FileText size={16} /> View previously uploaded file
+                          </a>
+                        )}
+                        {questionFiles[current] ? (
+                          <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+                            <span className="flex items-center gap-2 text-sm font-bold text-emerald-700 truncate">
+                              <FileText size={16} className="shrink-0" />
+                              {questionFiles[current].name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuestionFiles((prev) => {
+                                  const next = { ...prev };
+                                  delete next[current];
+                                  return next;
+                                })
+                              }
+                              className="text-emerald-700 hover:text-emerald-900 shrink-0"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
+                            <UploadCloud size={28} className="text-slate-400" />
+                            <span className="text-sm font-bold text-slate-600">
+                              Click to upload your answer file
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {existingFileUrls[current]
+                                ? "Uploading a new file replaces the previous one"
+                                : "PDF, image, or document"}
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file)
+                                  setQuestionFiles((prev) => ({ ...prev, [current]: file }));
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ) : (
+                      <RichTextEditor
+                        value={answers[current] || ""}
+                        onChange={saveAnswer}
+                        placeholder="Type your detailed solution here..."
+                        minHeight={250}
+                      />
+                    )}
                   </div>
 
-                  {/* BOTTOM ACTION NAVIGATION */}
                   <div className="flex items-center justify-between pt-6 border-t border-slate-200">
                     <button
                       onClick={() => setCurrent((p) => p - 1)}

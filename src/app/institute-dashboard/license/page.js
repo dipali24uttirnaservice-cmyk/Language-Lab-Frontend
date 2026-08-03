@@ -7,6 +7,8 @@ import {
   CheckCircle,
   XCircle,
   Users,
+  UserCheck,
+  CalendarClock,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -44,6 +46,9 @@ export default function LicensePage() {
         activeCount,
         expiredCount,
         freeSeatsCount,
+        totalSeats: data.total_seats,
+        usedSeats: data.used_seats,
+        expiryDate: data.expiry_date,
       });
 
       setLicenses(data.licenses);
@@ -145,6 +150,36 @@ export default function LicensePage() {
             iconBg="from-rose-500 to-pink-500 shadow-rose-500/20"
             subtext="Requires administrative review"
           />
+          <StatCard
+            icon={<Users size={20} />}
+            title="Total Seats"
+            value={summary?.totalSeats ?? 0}
+            iconBg="from-blue-500 to-indigo-500 shadow-blue-500/20"
+            subtext="Across all license keys"
+          />
+          <StatCard
+            icon={<UserCheck size={20} />}
+            title="Currently In Use Seats"
+            value={summary?.usedSeats ?? 0}
+            iconBg="from-violet-500 to-purple-500 shadow-violet-500/20"
+            subtext="Live student sessions now"
+          />
+          <StatCard
+            icon={<CalendarClock size={20} />}
+            title="Expiry Date"
+            value={
+              summary?.expiryDate
+                ? new Date(summary.expiryDate).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "—"
+            }
+            iconBg="from-sky-500 to-cyan-500 shadow-sky-500/20"
+            subtext="Nearest upcoming renewal"
+            valueClassName="text-xl"
+          />
         </div>
 
         {/* Table & Filtering Block */}
@@ -182,9 +217,10 @@ export default function LicensePage() {
                 <tr className="bg-slate-50/70 text-slate-400 border-b border-slate-200/60 text-[10px] font-black tracking-wider uppercase">
                   <th className="p-4 pl-6">Sr. No</th>
                   <th className="p-4">License Code</th>
-                  <th className="p-4">Assigned Target</th>
+                  <th className="p-4">Login</th>
                   <th className="p-4">System Status</th>
-                  <th className="p-4">Seat Capacity</th>
+                  <th className="p-4">Total Seats</th>
+                  <th className="p-4">Used Seats</th>
                   <th className="p-4">Timeline Left</th>
                   <th className="p-4 pr-6">Expiry Target</th>
                 </tr>
@@ -236,19 +272,11 @@ export default function LicensePage() {
                               {license.is_valid ? "Active" : "Expired"}
                             </span>
                           </td>
-                          <td className="p-4">
-                            <div className="flex flex-col w-36 gap-1.5">
-                              <div className="flex justify-between font-bold text-slate-400 text-[10px]">
-                                <span>Capacity</span>
-                                <span className="text-orange-600 font-extrabold">{Math.round(percentUsed)}%</span>
-                              </div>
-                              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/30">
-                                <div 
-                                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-500 rounded-full"
-                                  style={{ width: `${percentUsed}%` }}
-                                />
-                              </div>
-                            </div>
+                          <td className="p-4 font-black text-slate-800">
+                            {total}
+                          </td>
+                          <td className="p-4 font-black text-slate-800">
+                            {active}
                           </td>
                           <td className="p-4 font-bold text-slate-600 font-mono">
                             {license.days_remaining}d
@@ -324,14 +352,14 @@ export default function LicensePage() {
 }
 
 /* Premium Stat Card matching screen layout identities */
-const StatCard = ({ icon, title, value, iconBg, subtext }) => {
+const StatCard = ({ icon, title, value, iconBg, subtext, valueClassName = "text-3xl" }) => {
   return (
     <div className="relative bg-gradient-to-b from-white to-slate-50/50 border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between group">
       <div className="space-y-1">
         <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 group-hover:text-orange-500 transition-colors">
           {title}
         </p>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+        <h2 className={`font-black text-slate-900 tracking-tight ${valueClassName}`}>
           {value}
         </h2>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight pt-1">

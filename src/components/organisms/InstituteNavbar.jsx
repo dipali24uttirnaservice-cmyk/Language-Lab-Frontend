@@ -16,6 +16,25 @@ import {
 import Link from "next/link";
 
 import { logoutUser } from "@/services/auth/logoutApi";
+import { taskApi } from "@/services/task/taskApi";
+import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
+
+const MONGO_ID = /^[a-f\d]{24}$/i;
+
+// Maps a path segment to the API call that resolves a Mongo ID appearing
+// right after it into a human-readable title, and where on the response
+// that title lives — so the breadcrumb never shows a raw ObjectId for
+// these detail routes.
+const ID_RESOLVERS = {
+  "student-task": {
+    fetch: (id) => taskApi.getTaskById(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+  "practical-manual": {
+    fetch: (id) => practicalManualDetail(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+};
 
 export default function InstituteNavbar({
  isSidebarOpen,
@@ -43,15 +62,49 @@ const router = useRouter();
       ?.toUpperCase() || "I";
 
 
+  // Resolves a Mongo ID segment to its item's real title, so the breadcrumb
+  // reads "Vocabulary Practice" instead of a raw ObjectId — keyed by
+  // pathname so it refetches on navigation. Covers both the direct
+  // /student-task/{id} route and sub-routes like /student-task/view/{id} or
+  // /student-task/submissions/{id} — anything where a resolver key
+  // (student-task, practical-manual, …) appears earlier in the path, not
+  // just immediately before the ID.
+  const findResolverFor = (segments, idIndex) => {
+    for (let i = idIndex - 1; i >= 0; i--) {
+      if (ID_RESOLVERS[segments[i]]) return ID_RESOLVERS[segments[i]];
+      if (MONGO_ID.test(segments[i])) return null; // hit a different ID first
+    }
+    return null;
+  };
+
+  const [resolvedTitle, setResolvedTitle] = useState(null);
+  useEffect(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    const idIndex = segments.findIndex((seg) => MONGO_ID.test(seg));
+    const resolver = idIndex >= 0 ? findResolverFor(segments, idIndex) : null;
+
+    if (resolver) {
+      resolver
+        .fetch(segments[idIndex])
+        .then((res) => setResolvedTitle(resolver.getTitle(res) || null))
+        .catch(() => setResolvedTitle(null));
+    } else {
+      setResolvedTitle(null);
+    }
+  }, [pathname]);
+
   const breadcrumbs = pathname
   .split("/")
   .filter(Boolean)
-  .map((item, index, arr) => ({
-    label: item
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase()),
-    href: "/" + arr.slice(0, index + 1).join("/"),
-  }));
+  .map((item, index, arr) => {
+    const isResolvableId = MONGO_ID.test(item) && !!findResolverFor(arr, index);
+    return {
+      label: isResolvableId
+        ? resolvedTitle || "…"
+        : item.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      href: "/" + arr.slice(0, index + 1).join("/"),
+    };
+  });
 
 
 

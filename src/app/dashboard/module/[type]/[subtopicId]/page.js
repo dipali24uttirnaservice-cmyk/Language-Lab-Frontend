@@ -159,15 +159,7 @@ function buildPracticeUrl(selectedModule) {
     )}`;
 }
 
-function buildonPracticalManualUrl(selectedModule, searchParams) {
-    const params = new URLSearchParams();
-    if (selectedModule?.topic_id?._id) params.set("topicId", selectedModule.topic_id._id);
-    const courseId = searchParams.get("courseId");
-    if (courseId) params.set("courseId", courseId);
-    const courseName = searchParams.get("courseName");
-    if (courseName) params.set("courseName", courseName);
-    return `/dashboard/module/practical-manual?${params.toString()}`;
-}
+
 /* =========================================================================
    SMALL SHARED COMPONENTS
    ========================================================================= */
@@ -276,7 +268,7 @@ function ActionCard({
     );
 }
 
-function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
+function LessonActionsPanel({ onPractice, onExercise }) {
     return (
         <div className="space-y-6">
             <ActionCard
@@ -297,15 +289,7 @@ function LessonActionsPanel({ onPractice, onExercise, onPracticalManual }) {
                 buttonClass="bg-emerald-500 hover:bg-emerald-600"
                 onClick={onExercise}
             />
-            <ActionCard
-                icon={FileText}
-                iconClass="bg-amber-50 text-amber-600"
-                title="Practical Manual"
-                description="View and follow the step-by-step practical manual instructions."
-                buttonLabel="Open Manual"
-                buttonClass="bg-amber-500 hover:bg-amber-600"
-                onClick={onPracticalManual}
-            />
+           
         </div>
     );
 }
@@ -750,7 +734,6 @@ function VideoDetail({
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                             
                         }
-                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
@@ -985,7 +968,6 @@ function AudioDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
-                                                onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
@@ -1104,7 +1086,6 @@ function TextDetail({
                         onPractice={() => router.push(buildPracticeUrl(selectedModule))}
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))}
-                        onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
                     />
                 </div>
             </div>
@@ -1260,7 +1241,6 @@ function VocabularyDetail({
                         onExercise={() =>
                             router.push(buildExerciseUrl(selectedModule, searchParams))
                         }
-                                                    onPracticalManual={() => router.push(buildonPracticalManualUrl(selectedModule, searchParams))}
 
                     />
                 </div>
@@ -2246,6 +2226,27 @@ export default function ModuleListPage() {
             attendanceLoggedRef.current = true;
             logModuleActivity(selectedModule, "attendance_marked");
         }
+    }, [selectedModule]);
+
+    // Time-on-module tracking — logs real elapsed seconds whenever the student
+    // switches to a different module or leaves the page, for every module
+    // type (video/audio/text/vocabulary/exercise alike). Distinct from the
+    // *_complete events above, which only exist for video/audio/exercise and
+    // don't all carry a duration — this is the one place all module types get
+    // a duration recorded, so the institute's "Time Spent" report reflects
+    // actual usage instead of only counting exercise attempts.
+    const moduleStartTimeRef = React.useRef(Date.now());
+    useEffect(() => {
+        moduleStartTimeRef.current = Date.now();
+        return () => {
+            if (!selectedModule) return;
+            const elapsed = Math.floor((Date.now() - moduleStartTimeRef.current) / 1000);
+            if (elapsed > 0) {
+                logModuleActivity(selectedModule, "module_time", {
+                    time_spent_sec: elapsed,
+                });
+            }
+        };
     }, [selectedModule]);
 
     // Fetch past attempts whenever an exercise module is opened

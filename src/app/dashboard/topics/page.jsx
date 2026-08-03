@@ -112,7 +112,7 @@ const fetchCourseProgress = async () => {
   }
 
 return (
-  <div className="relative min-h-screen overflow-hidden p-2">
+  <div className="relative min-h-screen overflow-hidden p-6">
 
 
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

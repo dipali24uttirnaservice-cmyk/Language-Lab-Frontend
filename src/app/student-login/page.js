@@ -24,6 +24,7 @@ export default function StudentLogin() {
   const [institutes, setInstitutes] = useState([]);
   const [institutesLoading, setInstitutesLoading] = useState(true);
   const [instituteId, setInstituteId] = useState("");
+  const [licenseCode, setLicenseCode] = useState("");
   const [enrollmentNo, setEnrollmentNo] = useState("");
   const [password, setPassword] = useState("");
 
@@ -64,6 +65,7 @@ export default function StudentLogin() {
     try {
       await studentLoginSchema.validateAt(field, {
         instituteId,
+        licenseCode,
         enrollmentNo,
         password,
         [field]: value,
@@ -74,9 +76,15 @@ export default function StudentLogin() {
     }
   };
 
+  // Dropdown option values are "<instituteId>::<licenseCode>" — a student
+  // picks one specific license, and that license's seats are what get
+  // checked at login (no falling back to a different license automatically).
   const handleInstituteChange = (value) => {
-    setInstituteId(value);
-    validateField("instituteId", value);
+    const [selectedInstituteId, selectedLicenseCode] = value.split("::");
+    setInstituteId(selectedInstituteId || "");
+    setLicenseCode(selectedLicenseCode || "");
+    validateField("instituteId", selectedInstituteId || "");
+    validateField("licenseCode", selectedLicenseCode || "");
   };
 
   const handleEnrollmentNoChange = (value) => {
@@ -94,7 +102,7 @@ export default function StudentLogin() {
 
     try {
       await studentLoginSchema.validate(
-        { instituteId, enrollmentNo, password },
+        { instituteId, licenseCode, enrollmentNo, password },
         { abortEarly: false },
       );
       setErrors({});
@@ -114,6 +122,7 @@ export default function StudentLogin() {
 
       const response = await studentLogin({
         institute_id: instituteId,
+        license_code: licenseCode,
         enrollment_no: enrollmentNo,
         password,
       });
@@ -139,14 +148,23 @@ export default function StudentLogin() {
 
       router.push("/dashboard");
     } catch (error) {
-      console.error(error);
+      const backendMessage = error?.response?.data?.message;
+
+      // Only log unexpected failures (network errors, 5xx, no message from
+      // backend) — a 4xx like wrong password or no free seats is normal
+      // business logic, not a bug, so it shouldn't spam the console/dev overlay.
+      if (!backendMessage) {
+        console.error(error);
+      }
+
+      const seatsFull = backendMessage?.toLowerCase().includes("no free seats available");
 
       setModal({
         open: true,
         type: "error",
-        title: "Login Failed",
+        title: seatsFull ? "No Free Seats Available" : "Login Failed",
         message:
-          error?.response?.data?.message ||
+          backendMessage ||
           "Invalid institute, enrollment number, or password",
       });
     } finally {
@@ -232,14 +250,14 @@ export default function StudentLogin() {
               License Code
             </label>
             <select
-              value={instituteId}
+              value={instituteId && licenseCode ? `${instituteId}::${licenseCode}` : ""}
               onChange={(e) => handleInstituteChange(e.target.value)}
               disabled={institutesLoading}
               className={`
                 w-full rounded-xl border bg-white px-4 py-3 text-slate-900
                 outline-none transition-all focus:ring-4 disabled:opacity-60
                 ${
-                  errors.instituteId
+                  errors.instituteId || errors.licenseCode
                     ? "border-red-500 focus:border-red-500 focus:ring-red-100"
                     : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
                 }
@@ -253,29 +271,19 @@ export default function StudentLogin() {
               {institutes.flatMap((inst) => {
                 const codes = inst.license_codes || [];
 
-                // One option per license code — every code under an institute
-                // resolves to the same institute_id on submit (the backend
-                // auto-assigns whichever specific seat is actually free), so
-                // this is purely about letting the student see and pick a
-                // recognizable code, not routing to a different institute.
-                if (codes.length === 0) {
-                  return [
-                    <option key={inst._id} value={inst._id}>
-                      {inst.institute_name}
-                    </option>,
-                  ];
-                }
-
+                // One option per license code, each carrying its own institute
+                // id + code. Seats are checked against this exact license only
+                // — a full license does not silently fall back to another one.
                 return codes.map((code) => (
-                  <option key={`${inst._id}-${code}`} value={inst._id}>
+                  <option key={`${inst._id}-${code}`} value={`${inst._id}::${code}`}>
                     {code}
                   </option>
                 ));
               })}
             </select>
-            {errors.instituteId && (
+            {(errors.instituteId || errors.licenseCode) && (
               <div className="mt-1 text-sm text-red-500 font-medium">
-                {errors.instituteId}
+                {errors.instituteId || errors.licenseCode}
               </div>
             )}
           </div>
@@ -326,6 +334,7 @@ export default function StudentLogin() {
         title={modal.title}
         message={modal.message}
         onClose={handleModalClose}
+        showIcon={false}
       />
     </main>
   );

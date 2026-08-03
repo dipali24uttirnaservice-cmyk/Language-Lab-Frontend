@@ -59,6 +59,7 @@ console.log("Type:", type);
     if (courseName) params.set("courseName", courseName);
     params.set("topicId", topicId);
     if (topicName) params.set("topicName", topicName);
+    params.set("type", type);
 
     const destination =
       type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";
@@ -108,7 +109,7 @@ console.log("Type:", type);
   return (
 
     
-   <div className="relative min-h-screen overflow-hidden p-2">
+   <div className="relative min-h-screen overflow-hidden p-6">
 {/* ================================================= */}
 {/* PREMIUM 3D ANIMATED BACKGROUND */}
 {/* ================================================= */}
