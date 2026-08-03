@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -47,7 +48,7 @@ const menuItems = [
     text: "text-orange-800",
   },
   {
-    title: "Student Task",
+    title: "Task Management",
     href: "/institute-dashboard/student-task",
     icon: ClipboardList,
     color: "from-teal-500 to-emerald-600",
@@ -146,13 +147,19 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
-            <img
-              src={instituteLogo}
-              alt={instituteName}
-              className={`relative rounded-2xl object-cover border border-white shadow-lg bg-white transition-all ${
+            <div
+              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${
                 isOpen ? "h-14 w-14" : "h-11 w-11"
               }`}
-            />
+            >
+              <Image
+                src={instituteLogo}
+                alt={instituteName}
+                fill
+                sizes="56px"
+                className="rounded-2xl object-cover"
+              />
+            </div>
           </div>
 
           {isOpen && (
@@ -195,6 +202,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                 <button
                   onClick={() => setShowLogoutModal(true)}
                   title={!isOpen ? "Logout" : undefined}
+                  aria-label="Logout"
                   className={`relative flex items-center w-full rounded-xl transition-all group overflow-hidden hover:bg-red-50
                   ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
                 >
@@ -271,11 +279,15 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md" />
 
-          <img
-            src={instituteLogo}
-            alt={instituteName}
-            className="relative h-10 w-10 rounded-full object-cover border border-white shadow-sm"
-          />
+          <div className="relative h-10 w-10">
+            <Image
+              src={instituteLogo}
+              alt={instituteName}
+              fill
+              sizes="40px"
+              className="rounded-full object-cover border border-white shadow-sm"
+            />
+          </div>
         </div>
 
         {isOpen && (

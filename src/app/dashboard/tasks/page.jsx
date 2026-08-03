@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 
 import { studentTaskApi } from "@/services/task/studentTaskApi";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 import {
   getMatchPairs,
   hasAnswer,
@@ -100,7 +101,7 @@ function taskStatusKey(task) {
 /* ==========================================================
    MAIN PAGE
 ========================================================== */
-export default function StudentTasksPage() {
+function StudentTasksPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
@@ -311,6 +312,14 @@ export default function StudentTasksPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function StudentTasksPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentTasksPageContent />
+    </Suspense>
   );
 }
 
@@ -658,7 +667,7 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
                 {task.type === "text" && task.text_content && (
                   <div
                     className="bg-white rounded-2xl p-6 border border-slate-200/60 text-sm text-slate-700 prose prose-sm max-w-none shadow-sm"
-                    dangerouslySetInnerHTML={{ __html: task.text_content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(task.text_content) }}
                   />
                 )}
 
@@ -1409,7 +1418,7 @@ function TaskQuestionsReview({ questions, answers }) {
             <span className="font-bold text-slate-600">Explanation: </span>
             <span
               className="prose prose-sm max-w-none inline"
-              dangerouslySetInnerHTML={{ __html: currentQuestion.explanation }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentQuestion.explanation) }}
             />
           </div>
         )}

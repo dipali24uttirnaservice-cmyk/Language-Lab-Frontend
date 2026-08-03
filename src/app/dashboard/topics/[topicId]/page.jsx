@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import {
   useParams,
   useRouter,
@@ -17,7 +17,7 @@ import {
 import { topicApi } from "@/services/topic/topicApi";
 import { progressApi } from "@/services/progress/progressApi";
 import ProgressBar from "@/components/atoms/ProgressBar";
-export default function TopicDetailsPage() {
+function TopicDetailsPageContent() {
     const { topicId } = useParams();
 
   const router = useRouter();
@@ -514,5 +514,13 @@ params.set("subTopicName", subtopic.title);
   </div>
 
 </div>
+  );
+}
+
+export default function TopicDetailsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TopicDetailsPageContent />
+    </Suspense>
   );
 }

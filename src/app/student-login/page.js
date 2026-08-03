@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/RegisterBackground";
@@ -14,19 +16,14 @@ import { publicInstituteApi } from "@/services/institute/publicInstituteApi";
 import { ArrowLeft } from "lucide-react";
 import { studentLoginSchema } from "@/app/schemas/student.schema";
 import { useAuth } from "@/context/AuthContext";
+import { secureCookieOptions } from "@/utils/cookie";
 
 export default function StudentLogin() {
   const router = useRouter();
   const { login } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
 
   const [institutes, setInstitutes] = useState([]);
   const [institutesLoading, setInstitutesLoading] = useState(true);
-  const [instituteId, setInstituteId] = useState("");
-  const [licenseCode, setLicenseCode] = useState("");
-  const [enrollmentNo, setEnrollmentNo] = useState("");
-  const [password, setPassword] = useState("");
 
   const [modal, setModal] = useState({
     open: false,
@@ -34,6 +31,25 @@ export default function StudentLogin() {
     title: "",
     message: "",
   });
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(studentLoginSchema),
+    defaultValues: {
+      instituteId: "",
+      licenseCode: "",
+      enrollmentNo: "",
+      password: "",
+    },
+  });
+
+  const instituteId = watch("instituteId");
+  const fieldsDisabled = !instituteId;
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -60,66 +76,8 @@ export default function StudentLogin() {
       .finally(() => setInstitutesLoading(false));
   }, []);
 
-  const validateField = async (field, value) => {
-    if (!errors[field]) return;
+  const onSubmit = async ({ instituteId, licenseCode, enrollmentNo, password }) => {
     try {
-      await studentLoginSchema.validateAt(field, {
-        instituteId,
-        licenseCode,
-        enrollmentNo,
-        password,
-        [field]: value,
-      });
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    } catch (err) {
-      setErrors((prev) => ({ ...prev, [field]: err.message }));
-    }
-  };
-
-  // Dropdown option values are "<instituteId>::<licenseCode>" — a student
-  // picks one specific license, and that license's seats are what get
-  // checked at login (no falling back to a different license automatically).
-  const handleInstituteChange = (value) => {
-    const [selectedInstituteId, selectedLicenseCode] = value.split("::");
-    setInstituteId(selectedInstituteId || "");
-    setLicenseCode(selectedLicenseCode || "");
-    validateField("instituteId", selectedInstituteId || "");
-    validateField("licenseCode", selectedLicenseCode || "");
-  };
-
-  const handleEnrollmentNoChange = (value) => {
-    setEnrollmentNo(value);
-    validateField("enrollmentNo", value);
-  };
-
-  const handlePasswordChange = (value) => {
-    setPassword(value);
-    validateField("password", value);
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
-    try {
-      await studentLoginSchema.validate(
-        { instituteId, licenseCode, enrollmentNo, password },
-        { abortEarly: false },
-      );
-      setErrors({});
-    } catch (err) {
-      if (err.inner) {
-        const newErrors = {};
-        err.inner.forEach((error) => {
-          newErrors[error.path] = error.message;
-        });
-        setErrors(newErrors);
-      }
-      return;
-    }
-
-    try {
-      setLoading(true);
-
       const response = await studentLogin({
         institute_id: instituteId,
         license_code: licenseCode,
@@ -135,13 +93,9 @@ export default function StudentLogin() {
         throw new Error("Token not found in response");
       }
 
-      Cookies.set("role", "student", {
-        expires: 7,
-      });
+      Cookies.set("role", "student", secureCookieOptions());
 
-      Cookies.set("token", token, {
-        expires: 7,
-      });
+      Cookies.set("token", token, secureCookieOptions());
 
       // Store in AuthContext instead of cookie
       login(apiResponse.data.student);
@@ -167,8 +121,6 @@ export default function StudentLogin() {
           backendMessage ||
           "Invalid institute, enrollment number, or password",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -182,8 +134,6 @@ export default function StudentLogin() {
       router.push("/dashboard");
     }
   };
-
-  const fieldsDisabled = !instituteId;
 
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
@@ -244,14 +194,22 @@ export default function StudentLogin() {
           password.
         </p>
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
               License Code
             </label>
             <select
-              value={instituteId && licenseCode ? `${instituteId}::${licenseCode}` : ""}
-              onChange={(e) => handleInstituteChange(e.target.value)}
+              value={
+                watch("instituteId") && watch("licenseCode")
+                  ? `${watch("instituteId")}::${watch("licenseCode")}`
+                  : ""
+              }
+              onChange={(e) => {
+                const [selectedInstituteId, selectedLicenseCode] = e.target.value.split("::");
+                setValue("instituteId", selectedInstituteId || "", { shouldValidate: true });
+                setValue("licenseCode", selectedLicenseCode || "", { shouldValidate: true });
+              }}
               disabled={institutesLoading}
               className={`
                 w-full rounded-xl border bg-white px-4 py-3 text-slate-900
@@ -283,7 +241,7 @@ export default function StudentLogin() {
             </select>
             {(errors.instituteId || errors.licenseCode) && (
               <div className="mt-1 text-sm text-red-500 font-medium">
-                {errors.instituteId || errors.licenseCode}
+                {errors.instituteId?.message || errors.licenseCode?.message}
               </div>
             )}
           </div>
@@ -291,25 +249,23 @@ export default function StudentLogin() {
           <Input
             label="Enrollment Number"
             placeholder="EN2024001"
-            value={enrollmentNo}
             disabled={fieldsDisabled}
-            onChange={(e) => handleEnrollmentNoChange(e.target.value)}
-            error={errors.enrollmentNo}
+            error={errors.enrollmentNo?.message}
+            {...register("enrollmentNo")}
           />
 
           <Input
             label="Password"
             type="password"
             placeholder="Enter your password"
-            value={password}
             disabled={fieldsDisabled}
-            onChange={(e) => handlePasswordChange(e.target.value)}
-            error={errors.password}
+            error={errors.password?.message}
+            {...register("password")}
           />
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="
               w-full
               rounded-2xl
@@ -323,7 +279,7 @@ export default function StudentLogin() {
               disabled:opacity-50
             "
           >
-            {loading ? "Signing In..." : "Sign In"}
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
       </motion.div>

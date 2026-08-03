@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -26,6 +26,7 @@ import {
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 /* ==========================================================
    WIDE ROW — same list-item language as the Exercise/Text/Audio
@@ -308,7 +309,7 @@ function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
 /* ==========================================================
    MAIN COMPONENT
 ========================================================== */
-export default function StudentPracticalManualPage() {
+function StudentPracticalManualPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeParams = useParams();
@@ -706,7 +707,7 @@ export default function StudentPracticalManualPage() {
                     ) : (
                       <div
                         className="rounded-xl bg-slate-50 border border-slate-200/60 p-4 text-slate-700 text-sm leading-relaxed prose max-w-none"
-                        dangerouslySetInnerHTML={{ __html: studentAnswer }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(studentAnswer) }}
                       />
                     )}
                   </div>
@@ -951,5 +952,13 @@ export default function StudentPracticalManualPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StudentPracticalManualPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentPracticalManualPageContent />
+    </Suspense>
   );
 }

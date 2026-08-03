@@ -22,6 +22,7 @@ import { taskApi } from "@/services/task/taskApi";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
+import Pagination from "@/components/molecules/Pagination";
 
 export default function StudentTaskPage() {
   const router = useRouter();
@@ -396,7 +397,7 @@ export default function StudentTaskPage() {
                               onClick={() => router.push(`/institute-dashboard/student-task/${task._id}/add-question`)}
                               className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-[11px] font-bold"
                             >
-                              View Q
+                              Edit Q
                             </button>
                           </div>
                         </div>
@@ -408,6 +409,7 @@ export default function StudentTaskPage() {
                             onClick={() => router.push(`/institute-dashboard/student-task/view/${task._id}`)}
                             className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                             title="View Task"
+                            aria-label="View Task"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -418,6 +420,7 @@ export default function StudentTaskPage() {
                             }}
                             className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
                             title="View Submissions"
+                            aria-label="View Submissions"
                           >
                             <Send className="w-4 h-4" />
                           </button>
@@ -426,6 +429,7 @@ export default function StudentTaskPage() {
                             onClick={() => router.push(`/institute-dashboard/student-task/${task._id}`)}
                             className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
                             title="Edit Task"
+                            aria-label="Edit Task"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -434,6 +438,7 @@ export default function StudentTaskPage() {
                             onClick={() => handleDeleteTask(task._id)}
                             className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                             title="Delete Task"
+                            aria-label="Delete Task"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -456,6 +461,21 @@ export default function StudentTaskPage() {
             </tbody>
           </table>
         </div>
+
+        {pagination.total > pagination.limit && (
+          <div className="flex items-center justify-between px-2 py-4">
+            <span className="text-sm text-slate-500">
+              Showing {tasks.length ? (pagination.page - 1) * pagination.limit + 1 : 0}
+              –{(pagination.page - 1) * pagination.limit + tasks.length} of {pagination.total}
+            </span>
+            <Pagination
+              page={pagination.page}
+              totalPages={Math.max(1, Math.ceil(pagination.total / pagination.limit))}
+              setPage={setPage}
+            />
+          </div>
+        )}
+
         <StatusModal
           open={statusData.open}
           type={statusData.type}

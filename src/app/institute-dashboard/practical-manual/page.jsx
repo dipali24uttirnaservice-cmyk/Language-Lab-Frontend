@@ -24,6 +24,7 @@ import {
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import ConfirmModal from "@/components/molecules/ConfirmModal";
+import Pagination from "@/components/molecules/Pagination";
 
 export default function PracticalManualPage() {
   const router = useRouter();
@@ -412,6 +413,21 @@ export default function PracticalManualPage() {
             </tbody>
           </table>
         </div>
+
+        {pagination.total > pagination.limit && (
+          <div className="flex items-center justify-between px-2 py-4">
+            <span className="text-sm text-slate-500">
+              Showing {manuals.length ? (pagination.page - 1) * pagination.limit + 1 : 0}
+              –{(pagination.page - 1) * pagination.limit + manuals.length} of {pagination.total}
+            </span>
+            <Pagination
+              page={pagination.page}
+              totalPages={Math.max(1, Math.ceil(pagination.total / pagination.limit))}
+              setPage={setPage}
+            />
+          </div>
+        )}
+
         <StatusModal
           open={statusData.open}
           type={statusData.type}

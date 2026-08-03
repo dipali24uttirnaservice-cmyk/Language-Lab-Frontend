@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   MapPin,
   Globe,
@@ -104,11 +105,15 @@ export default function Hero() {
           {/* Institute identity strip */}
           <div className="mt-6 flex items-center gap-4 max-w-md">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 shadow-[0_10px_25px_rgba(245,158,11,0.4)]">
-              <img
-                src={INSTITUTE_PLACEHOLDER}
-                alt={institute?.institute_name || "Institute"}
-                className="h-6 w-6 object-contain"
-              />
+              <div className="relative h-6 w-6">
+                <Image
+                  src={INSTITUTE_PLACEHOLDER}
+                  alt={institute?.institute_name || "Institute"}
+                  fill
+                  sizes="24px"
+                  className="object-contain"
+                />
+              </div>
             </div>
 
             <div className="min-w-0">
@@ -146,11 +151,14 @@ export default function Hero() {
           <div className="absolute -inset-6 bg-gradient-to-tr from-amber-400/25 to-orange-400/25 blur-3xl rounded-full -z-10" />
           <div className="relative h-80 md:h-112 overflow-hidden rounded-3xl border-2 border-white shadow-[0_25px_60px_rgba(0,0,0,0.18)] transition-transform duration-500 hover:scale-[1.015]">
             {HERO_CAROUSEL_IMAGES.map((src, idx) => (
-              <img
+              <Image
                 key={src}
                 src={src}
                 alt={institute?.institute_name || "Institute campus"}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${idx === slide ? "opacity-100" : "opacity-0"
+                fill
+                priority={idx === 0}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className={`object-cover transition-opacity duration-1000 ${idx === slide ? "opacity-100" : "opacity-0"
                   }`}
               />
             ))}

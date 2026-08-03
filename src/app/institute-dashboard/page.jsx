@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import {
   Users,
   GraduationCap,
@@ -10,8 +11,13 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { dashboardApi } from "@/services/institute/dashboardApi";
+
+// Code-split recharts (heavy dependency) out of the initial dashboard bundle.
+const MiniPieChart = dynamic(() => import("@/components/organisms/MiniPieChart"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse rounded-full bg-slate-100" />,
+});
 
 const STATUS_COLORS = {
   active: "#4F46E5",
@@ -371,21 +377,7 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
       </div>
 
       <div className="relative h-[100px] w-[100px] shrink-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              innerRadius={30}
-              outerRadius={45}
-              paddingAngle={5}
-              dataKey="value"
-            >
-              {data.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+        <MiniPieChart data={data} />
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span className="text-sm font-black text-slate-900">
             {centerValue}

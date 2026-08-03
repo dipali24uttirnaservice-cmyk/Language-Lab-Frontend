@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, Suspense } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";import {
   BookOpen,
   CheckCircle2,
@@ -438,7 +438,7 @@ function MatchPanel({ question, answer, setAnswer }) {
    MAIN PAGE
    ========================================================================= */
 
-export default function PracticeQuestionsPage() {
+function PracticeQuestionsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -807,5 +807,13 @@ export default function PracticeQuestionsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PracticeQuestionsPage() {
+  return (
+    <Suspense fallback={null}>
+      <PracticeQuestionsPageContent />
+    </Suspense>
   );
 }

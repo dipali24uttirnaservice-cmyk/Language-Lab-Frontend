@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { FaBell, FaBars, FaChevronRight, FaHome, FaBookReader } from "react-icons/fa";
@@ -331,6 +332,7 @@ useEffect(() => {
           {/* Sidebar toggle */}
           <button
             onClick={() => setIsOpen(!isSidebarOpen)}
+            aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
           >
             <FaBars size={18} />
@@ -422,6 +424,7 @@ useEffect(() => {
           {/* Notification bell */}
           <motion.button
             whileHover={{ scale: 1.05 }}
+            aria-label="Notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500"
           >
             <FaBell className="text-sm" />
@@ -437,11 +440,13 @@ useEffect(() => {
             className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all"
           >
             {profileImage ? (
-              <div className="relative">
-                <img
+              <div className="relative h-10 w-10">
+                <Image
                   src={profileImage}
                   alt={studentName}
-                  className="h-10 w-10 rounded-xl object-cover border border-slate-200"
+                  fill
+                  sizes="40px"
+                  className="rounded-xl object-cover border border-slate-200"
                 />
                 <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
