@@ -2272,9 +2272,13 @@ export default function ModuleListPage() {
                 setLoading(true);
                 const res = await moduleApi.getModulesBySubtopic(type, subtopicId);
                 const fetchedData = res?.data?.data || res?.data || [];
+                console.log(
+                    `[Module] GET /module/${type}/${subtopicId} -> ${fetchedData.length} item(s)`,
+                    fetchedData,
+                );
                 setModules(fetchedData);
             } catch (error) {
-                console.error("Failed to fetch modules:", error);
+                console.error(`[Module] GET /module/${type}/${subtopicId} failed:`, error);
             } finally {
                 setLoading(false);
             }

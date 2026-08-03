@@ -85,6 +85,10 @@ export default function StudentTaskFormPage() {
     message: "",
   });
 
+  // Set when a new task is created, so the success modal can route to
+  // Add Question instead of the task list.
+  const [createdTaskId, setCreatedTaskId] = useState(null);
+
   // Questions Setup State
   const [questions, setQuestions] = useState([]);
   const [formErrors, setFormErrors] = useState({});
@@ -92,7 +96,10 @@ export default function StudentTaskFormPage() {
   useEffect(() => {
     courseApi
       .getCourses()
-      .then((res) => setCourses(res.data?.data?.courses || []))
+      .then((res) => {
+        const allCourses = res.data?.data?.courses || [];
+        setCourses(allCourses.filter((course) => course.is_downloaded));
+      })
       .catch((error) => console.error("Get Courses Error:", error));
 
     studentApi
@@ -217,7 +224,9 @@ const handleSubmit = async (e) => {
         if (editingManualId) {
           await taskApi.updateTask(editingManualId, payload);
         } else {
-          await taskApi.createTask(payload);
+          const res = await taskApi.createTask(payload);
+          const created = res.data?.data || res.data;
+          setCreatedTaskId(created?._id || null);
         }
       } else {
         const formData = new FormData();
@@ -245,7 +254,9 @@ const handleSubmit = async (e) => {
         if (editingManualId) {
           await taskApi.updateTask(editingManualId, formData);
         } else {
-          await taskApi.createTask(formData);
+          const res = await taskApi.createTask(formData);
+          const created = res.data?.data || res.data;
+          setCreatedTaskId(created?._id || null);
         }
       }
 
@@ -637,7 +648,12 @@ const handleSubmit = async (e) => {
 
     if (isSuccess) {
   setTimeout(() => {
-    router.push("/institute-dashboard/student-task");
+    // Fresh task (not an edit) → send them straight to Add Question.
+    if (!editingManualId && createdTaskId) {
+      router.push(`/institute-dashboard/student-task/${createdTaskId}/add-question?mode=new`);
+    } else {
+      router.push("/institute-dashboard/student-task");
+    }
   }, 100);
 }
   }}

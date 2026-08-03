@@ -25,6 +25,7 @@ export default function LearningJourneyPage() {
             try {
                 const res = await studentApi.getAvailableCourses();
                 const data = res.data?.data?.purchased_courses?.courses || [];
+                console.log(`[LearningJourney] GET /student/me/available-courses -> ${data.length} course(s)`, data);
                 setCourses(data);
             } catch (err) {
                 console.error("Failed to load courses:", err);

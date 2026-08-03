@@ -31,6 +31,7 @@ export default function LearningModules({ courseId, courseName }) {
         const res = await courseApi.getModuleCount(courseId);
         // API → { success: true, data: { module_counts: { video, audio, text, vocabulary, exercise } } }
         const counts = res.data?.data?.module_counts || {};
+        console.log(`[ModuleCount] GET /module/course/${courseId}/count ->`, counts);
         setModuleCounts(counts);
       } catch (err) {
         console.error("[ModuleCount] Failed:", err?.response?.status);

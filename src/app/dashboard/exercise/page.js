@@ -1464,11 +1464,15 @@ export default function ExercisePage() {
         ? await moduleApi.getExercisesByContentModule(contentModuleId)
         : await moduleApi.getModulesBySubtopic("exercise", subTopicId);
       const data = res.data?.data || [];
+      console.log(
+        `[Exercise] ${contentModuleId ? `GET exercises for contentModule ${contentModuleId}` : `GET /module/exercise/${subTopicId}`} -> ${data.length} item(s)`,
+        data,
+      );
       setExercises(data);
       if (data.length) setSelectedExercise(data[0]);
       else setSelectedExercise(null);
     } catch (err) {
-      console.error(err);
+      console.error(`[Exercise] fetch failed:`, err);
     } finally {
       setLoading(false);
     }

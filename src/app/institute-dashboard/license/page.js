@@ -217,7 +217,6 @@ export default function LicensePage() {
                 <tr className="bg-slate-50/70 text-slate-400 border-b border-slate-200/60 text-[10px] font-black tracking-wider uppercase">
                   <th className="p-4 pl-6">Sr. No</th>
                   <th className="p-4">License Code</th>
-                  <th className="p-4">Login</th>
                   <th className="p-4">System Status</th>
                   <th className="p-4">Total Seats</th>
                   <th className="p-4">Used Seats</th>
@@ -233,7 +232,7 @@ export default function LicensePage() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <td colSpan={7} className="text-center py-16 text-slate-400 font-extrabold uppercase tracking-wider bg-slate-50/20">
+                      <td colSpan={6} className="text-center py-16 text-slate-400 font-extrabold uppercase tracking-wider bg-slate-50/20">
                         <Ticket size={32} className="mx-auto mb-2 text-slate-300" />
                         No matching records found
                       </td>
@@ -261,9 +260,6 @@ export default function LicensePage() {
                             <span className="font-mono bg-slate-100 border border-slate-200/50 text-slate-700 px-2 py-1 rounded-lg text-[11px]">
                               {license.license_code}
                             </span>
-                          </td>
-                          <td className="p-4 font-bold text-slate-800">
-                            {license.user_id || <span className="text-slate-300 italic font-medium">Unassigned</span>}
                           </td>
                           <td className="p-4">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
