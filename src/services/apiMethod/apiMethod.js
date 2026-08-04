@@ -31,10 +31,10 @@ api.interceptors.response.use(
         "Network error. Please check your internet connection."
       );
     } else if (error.response.status === 401) {
-      // Optional: Handle token expiration globally if needed
       usePopupStore.getState().showPopup(
         "Session Expired",
-        "Your session has expired. Please log in again."
+        "Your session has expired. Please log in again.",
+        { sessionExpired: true }
       );
     }
 

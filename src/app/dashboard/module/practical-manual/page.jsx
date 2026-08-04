@@ -335,9 +335,17 @@ function StudentPracticalManualPageContent() {
   // holds already-uploaded URLs from a prior submission, kept unless replaced.
   const [questionFiles, setQuestionFiles] = useState({});
   const [existingFileUrls, setExistingFileUrls] = useState({});
+  // For solution_type: "both" questions — which format the student picked
+  // for that question (keyed by question index). Defaults to "text".
+  const [answerMode, setAnswerMode] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  // Effective answer format for a question — "both" questions defer to the
+  // student's picked mode (default "text") instead of a fixed type.
+  const getMode = (q, idx) =>
+    q.solution_type === "both" ? answerMode[idx] || "text" : q.solution_type;
 
   useEffect(() => {
     const params = {};
@@ -410,10 +418,14 @@ function StudentPracticalManualPageContent() {
       });
       const prefilled = {};
       const prefilledFileUrls = {};
+      const prefilledMode = {};
       (detail?.questions || []).forEach((q, idx) => {
         const existing = answerByQuestionId[q._id];
         if (existing?.answer_html) prefilled[idx] = existing.answer_html;
         if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
+        if (q.solution_type === "both") {
+          prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
+        }
       });
 
       setSelectedManual(detail);
@@ -421,6 +433,7 @@ function StudentPracticalManualPageContent() {
       setAnswers(prefilled);
       setQuestionFiles({});
       setExistingFileUrls(prefilledFileUrls);
+      setAnswerMode(prefilledMode);
       setSubmitted(
         mySubmission?.status === "submitted" ||
           mySubmission?.status === "reviewed",
@@ -448,7 +461,7 @@ function StudentPracticalManualPageContent() {
       const formData = new FormData();
 
       const payload = selectedManual.questions.map((q, idx) => {
-        if (q.solution_type === "file") {
+        if (getMode(q, idx) === "file") {
           // A newly picked file uploads separately over multipart, keyed by
           // question id — the backend merges it into this answer entry. If
           // no new file was picked, keep whatever URL was already there.
@@ -551,7 +564,7 @@ function StudentPracticalManualPageContent() {
   const manuals = selectedManual.questions;
   const currentQuestion = manuals[current];
   const isQuestionAnswered = (q, idx) =>
-    q.solution_type === "file"
+    getMode(q, idx) === "file"
       ? !!(questionFiles[idx] || existingFileUrls[idx])
       : !!answers[idx]?.trim();
   const completedCount = manuals.filter((q, idx) => isQuestionAnswered(q, idx)).length;
@@ -640,7 +653,7 @@ function StudentPracticalManualPageContent() {
             </h2>
 
             {manuals.map((q, idx) => {
-              const isFileQuestion = q.solution_type === "file";
+              const isFileQuestion = getMode(q, idx) === "file";
               const hasAnswer = isFileQuestion
                 ? !!existingFileUrls[idx]
                 : !!answers[idx]?.replace(/<[^>]*>/g, "").trim();
@@ -825,7 +838,28 @@ function StudentPracticalManualPageContent() {
                     )}
                   </div>
 
-                  {currentQuestion.solution_type !== "file" && (
+                  {currentQuestion.solution_type === "both" && (
+                    <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 p-2 w-fit">
+                      {["text", "file"].map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() =>
+                            setAnswerMode((prev) => ({ ...prev, [current]: mode }))
+                          }
+                          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                            getMode(currentQuestion, current) === mode
+                              ? "bg-orange-500 text-white shadow-md"
+                              : "text-slate-500 hover:text-orange-600"
+                          }`}
+                        >
+                          {mode === "file" ? "Upload File" : "Type Answer"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {getMode(currentQuestion, current) !== "file" && (
                     <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                         Suggested Length
@@ -841,7 +875,7 @@ function StudentPracticalManualPageContent() {
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Your Answer
                     </label>
-                    {currentQuestion.solution_type === "file" ? (
+                    {getMode(currentQuestion, current) === "file" ? (
                       <div className="space-y-3">
                         {existingFileUrls[current] && !questionFiles[current] && (
                           <a

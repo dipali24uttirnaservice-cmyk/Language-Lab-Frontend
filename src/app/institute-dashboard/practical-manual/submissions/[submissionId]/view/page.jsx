@@ -154,7 +154,8 @@ function StudentAnswerSheetViewPageContent() {
                     Student Submission
                   </p>
                   
-                  {q.solution_type === "file" ? (
+                  {q.solution_type === "file" ||
+                  (q.solution_type === "both" && answer?.answer_file_url) ? (
                     answer?.answer_file_url ? (
                       <a
                         href={answer.answer_file_url}

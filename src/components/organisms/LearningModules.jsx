@@ -34,7 +34,13 @@ export default function LearningModules({ courseId, courseName }) {
         console.log(`[ModuleCount] GET /module/course/${courseId}/count ->`, counts);
         setModuleCounts(counts);
       } catch (err) {
-        console.error("[ModuleCount] Failed:", err?.response?.status);
+        // A 401 here means the session was invalidated (e.g. the same
+        // account logged in from another device) — the global axios
+        // interceptor already surfaces that via the "Session Expired"
+        // popup, so logging it again here would just be noise.
+        if (err?.response?.status !== 401) {
+          console.error("[ModuleCount] Failed:", err?.response?.status);
+        }
       } finally {
         setCountsLoading(false);
       }
@@ -52,7 +58,11 @@ export default function LearningModules({ courseId, courseName }) {
         const count = res.data?.data?.tasks?.length || 0;
         setModuleCounts((prev) => ({ ...prev, task: count }));
       })
-      .catch((err) => console.error("[TaskCount] Failed:", err?.response?.status));
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("[TaskCount] Failed:", err?.response?.status);
+        }
+      });
 
     studentPracticalApi
       .getMine({ courseId })
@@ -60,7 +70,11 @@ export default function LearningModules({ courseId, courseName }) {
         const count = res.data?.data?.practicals?.length || 0;
         setModuleCounts((prev) => ({ ...prev, practical_manual: count }));
       })
-      .catch((err) => console.error("[PracticalCount] Failed:", err?.response?.status));
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("[PracticalCount] Failed:", err?.response?.status);
+        }
+      });
   }, [courseId]);
 
   // 3D Floating Network Mesh Canvas Background Animation

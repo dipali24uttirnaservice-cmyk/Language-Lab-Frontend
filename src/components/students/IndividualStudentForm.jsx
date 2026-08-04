@@ -60,7 +60,9 @@ console.log("Roll No:", student.roll_no);
   setFormData({
   full_name: student.full_name || "",
   email: student.email || "",
-  password: student.password || "",
+  // Never prefill with the returned value — that's the bcrypt hash, not a
+  // usable password. Leaving this blank means "keep the current password".
+  password: "",
   phone: student.phone || "",
   roll_no: student.roll_no || "",
   enrollment_no: student.enrollment_no || "",
@@ -185,7 +187,6 @@ await studentApi.createStudent(data);
 
   data.append("full_name", formData.full_name);
   data.append("email", formData.email);
-  data.append("password",formData.password);
   data.append("phone", formData.phone);
   data.append("roll_no", formData.roll_no);
   data.append("enrollment_no", formData.enrollment_no);
@@ -354,7 +355,7 @@ await studentApi.createStudent(data);
 <div className="relative">
   <input
     type={showPassword ? "text" : "password"}
-    placeholder="Enter Password"
+    placeholder={mode === "edit" ? "Leave blank to keep current password" : "Enter Password"}
     value={formData.password}
     onChange={(e) =>
       handleChange("password", e.target.value)
