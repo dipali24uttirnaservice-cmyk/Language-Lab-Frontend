@@ -479,8 +479,44 @@ function StudentPracticalManualPageContent() {
       });
 
       formData.append("answers", JSON.stringify(payload));
-      await studentPracticalApi.submit(selectedManual._id, formData);
-      setSubmitted(true);
+   await studentPracticalApi.submit(selectedManual._id, formData);
+
+// Reload latest data
+const res = await studentPracticalApi.getOneMine(selectedManual._id);
+const detail = res.data?.data;
+const mySubmission = detail?.my_submission;
+
+const answerByQuestionId = {};
+(mySubmission?.answers || []).forEach((a) => {
+  answerByQuestionId[a.question_id] = a;
+});
+
+const prefilled = {};
+const prefilledFileUrls = {};
+const prefilledMode = {};
+
+(detail?.questions || []).forEach((q, idx) => {
+  const existing = answerByQuestionId[q._id];
+
+  if (existing?.answer_html) {
+    prefilled[idx] = existing.answer_html;
+  }
+
+  if (existing?.answer_file_url) {
+    prefilledFileUrls[idx] = existing.answer_file_url;
+  }
+
+  if (q.solution_type === "both") {
+    prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
+  }
+});
+
+setSelectedManual(detail);
+setAnswers(prefilled);
+setExistingFileUrls(prefilledFileUrls);
+setAnswerMode(prefilledMode);
+
+setSubmitted(true);
       Swal.fire({
         icon: "success",
         title: "Submitted!",
@@ -512,22 +548,37 @@ function StudentPracticalManualPageContent() {
   ========================================================== */
   if (!selectedManual) {
     return (
-      <div className="w-full min-h-screen bg-slate-50 p-6 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-8">
+<div
+  ref={containerRef}
+  className="w-full min-h-screen bg-slate-50 p-6 md:p-8"
+>        <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
-            >
-              <ArrowLeft size={18} />
-              Back
-            </button>
+           <button
+  onClick={() => {
+    router.back();
+  }}
+  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
+>
+  <ArrowLeft size={18} />
+  Back
+</button>
+
+
+
             <div className="flex items-center gap-3">
               <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
                 <BookOpen size={16} />
                 {manualsList.length} Practical Manuals
               </div>
             </div>
+
+             <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+            title={isFullscreen ? "Minimize Manual" : "Maximize Manual"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
           </div>
 
           <h1 className="text-xl font-black text-slate-800">
@@ -609,16 +660,7 @@ function StudentPracticalManualPageContent() {
             >
               Back to Manuals List
             </button>
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
-                <CheckCircle2 size={28} />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-slate-800">
-                  Practical Submitted Successfully
-                </h1>
-              </div>
-            </div>
+          
 
             <button
               onClick={isFullscreen ? exitFullscreen : enterFullscreen}
@@ -772,6 +814,19 @@ function StudentPracticalManualPageContent() {
 
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
         <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
+        <div className="flex-1 flex items-center gap-3">
+       <button
+  onClick={() => {
+    setSelectedManual(null);
+    setSubmitted(false);
+    setCurrent(0);
+  }}
+  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
+>
+  <ArrowLeft size={18} />
+  Back to List
+</button>
+          </div>
           <button
             onClick={isFullscreen ? exitFullscreen : enterFullscreen}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"

@@ -403,12 +403,28 @@ function ActivityRow({ fullName, durationMinutes, onClick }) {
         <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
           {fullName}
         </p>
-        <span className="text-[10px] font-bold text-slate-400 shrink-0">
-          {durationMinutes != null
-            ? `Active for ${durationMinutes} mins`
-            : "Active"}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-emerald-600">
+            Online from {formatDuration(durationMinutes)}
+          </span>
+        </div>
       </div>
     </motion.div>
   );
+}
+
+function formatDuration(minutes) {
+  if (!minutes || minutes < 1) return "just now";
+  
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hrs === 0) {
+    return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  }
+  
+  return mins === 0 
+    ? `${hrs} hr${hrs === 1 ? "" : "s"} ago` 
+    : `${hrs} hr${hrs === 1 ? "" : "s"} ${mins} min${mins === 1 ? "" : "s"} ago`;
 }
