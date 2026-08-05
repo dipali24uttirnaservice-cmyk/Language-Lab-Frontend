@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import Swal from "sweetalert2";
+import statusModal from "@/components/molecules/StatusModal";
 import {
   ArrowLeft,
   CheckSquare,
@@ -842,6 +842,28 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // StatusModal state management
+       const [modalState, setModalState] = useState({
+           open: false,
+           type: "warning",
+           title: "",
+           message: "",
+           onClose: null,
+       });
+   
+       const triggerModal = (type, title, message, onClose = null) => {
+           setModalState({
+               open: true,
+               type,
+               title,
+               message,
+               onClose: () => {
+                   setModalState((prev) => ({ ...prev, open: false }));
+                   if (onClose) onClose();
+               },
+           });
+       };
+
   // Track the current active question index
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -890,28 +912,29 @@ function SubmissionForm({ task, submission, onSubmitted }) {
       const res = await studentTaskApi.submit(task._id, formData);
       onSubmitted(res.data?.data);
       setSuccess(true);
-      Swal.fire({
-        icon: "success",
-        title: submission ? "Resubmitted!" : "Submitted!",
-        text: submission
+
+      // Show Custom Success Modal
+      const isResubmission = !!submission;
+      setStatusModal({
+        isOpen: true,
+        type: "success",
+        title: isResubmission ? "Resubmitted!" : "Submitted!",
+        message: isResubmission
           ? "Your task has been resubmitted successfully."
           : "Your task has been submitted successfully.",
-        confirmButtonColor: "#f97316",
-        confirmButtonText: "Okay",
-        target: document.fullscreenElement || document.body,
       });
     } catch (err) {
       console.error("Submit Task Error:", err);
       const message =
         err?.response?.data?.message || "Failed to submit. Please try again.";
       setError(message);
-      Swal.fire({
-        icon: "error",
+
+      // Show Custom Error Modal
+      setStatusModal({
+        isOpen: true,
+        type: "error",
         title: "Submission Failed",
-        text: message,
-        confirmButtonColor: "#f97316",
-        confirmButtonText: "Okay",
-        target: document.fullscreenElement || document.body,
+        message: message,
       });
     } finally {
       setSubmitting(false);
@@ -921,17 +944,37 @@ function SubmissionForm({ task, submission, onSubmitted }) {
   return (
     <form
       onSubmit={handleSubmit}
-      // Enter inside a text-type question field would otherwise submit the
-      // form early (native browser behavior) while the student is still
-      // stepping through checkpoint questions — only the last question's
-      // real submit button should be able to trigger it.
       onKeyDown={(e) => {
         if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && !isLastQuestion) {
           e.preventDefault();
         }
       }}
-      className="space-y-4 pt-1 border-t border-slate-100"
+      className="space-y-4 pt-1 border-t border-slate-100 relative"
     >
+      {/* Custom Status Modal */}
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 text-center space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className={`mx-auto h-12 w-12 rounded-full flex items-center justify-center ${
+              statusModal.type === "success" ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
+            }`}>
+              {statusModal.type === "success" ? <CheckSquare size={24} /> : <X size={24} />}
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-slate-800">{statusModal.title}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{statusModal.message}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatusModal((prev) => ({ ...prev, isOpen: false }))}
+              className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md transition"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
+
       {submission && (
         <p className="text-xs font-semibold text-sky-600 flex items-center gap-1.5 pt-3">
           <Send className="w-3.5 h-3.5" /> Already submitted — resubmitting will
@@ -988,7 +1031,6 @@ function SubmissionForm({ task, submission, onSubmitted }) {
               Previous Question
             </button>
 
-            {/* Render Next Button if not on the last question, or Submit Button if it is the last question */}
             {!isLastQuestion ? (
               <button
                 key="next-question-btn"
