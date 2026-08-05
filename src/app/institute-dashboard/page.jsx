@@ -285,7 +285,6 @@ export default function InstituteDashboard() {
                 <ActivityRow
                   key={item.student_id}
                   fullName={item.full_name}
-                  durationMinutes={item.duration_minutes}
                   onClick={() =>
                     router.push(
                       `/institute-dashboard/student-statistics?studentId=${item.student_id}`,
@@ -388,7 +387,7 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
   );
 }
 
-function ActivityRow({ fullName, durationMinutes, onClick }) {
+function ActivityRow({ fullName, onClick }) {
   return (
     <motion.div
       whileHover={{ x: 4 }}
@@ -404,9 +403,7 @@ function ActivityRow({ fullName, durationMinutes, onClick }) {
           {fullName}
         </p>
         <span className="text-[10px] font-bold text-slate-400 shrink-0">
-          {durationMinutes != null
-            ? `Active for ${durationMinutes} mins`
-            : "Active"}
+          Active
         </span>
       </div>
     </motion.div>
