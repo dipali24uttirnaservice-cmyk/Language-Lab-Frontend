@@ -107,8 +107,8 @@ setTimeout(() => {
 const downloadSampleExcel = () => {
   const link = document.createElement("a");
 
-  link.href = "/sample_students1 .xlsx";
-  link.download = "sample_students1 .xlsx";
+  link.href = "/sample_students1.xlsx";
+  link.download = "/sample_students1.xlsx";
 
   document.body.appendChild(link);
   link.click();

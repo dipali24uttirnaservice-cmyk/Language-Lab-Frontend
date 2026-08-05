@@ -73,158 +73,7 @@ function EmptyState({ scopedToLesson = false,  onBack
   );
 }
 
-function ProgressBar({ value }) {
-  return (
-    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-      <motion.div
-        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500"
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      />
-    </div>
-  );
-}
 
-function QuestionDots({ total, current, answers }) {
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {Array.from({ length: total }).map((_, i) => {
-        const isDone = answers[i] !== undefined;
-        const isCurrent = i === current;
-        return (
-          <div
-            key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${isCurrent
-              ? "w-6 bg-blue-500"
-              : isDone
-                ? "w-2 bg-green-500"
-                : "w-2 bg-yellow-400"
-              }`}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function QuestionNumberGrid({ total, current, answers, onSelect }) {
-  return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Questions</p>
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: total }).map((_, i) => {
-          const isDone = answers[i] !== undefined;
-          const isCurrent = i === current;
-          return (
-            <button
-              key={i}
-              onClick={() => onSelect(i)}
-              className={`w-9 h-9 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${isCurrent
-                ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
-                : isDone
-                  ? "bg-green-500 border-green-500 text-white shadow-sm shadow-green-200"
-                  : "bg-yellow-400 border-yellow-400 text-white"
-                }`}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-4 pt-1">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Legend</p>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> Attempted</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Current</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Unattempted</span>
-      </div>
-    </div>
-  );
-}
-
-
-
-function AttemptHistory({ attempts }) {
-  const scrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [attempts]);
-
-  if (!attempts || attempts.length === 0) return null;
-
-  const scroll = (dir) => {
-    scrollRef.current?.scrollBy({
-      left: dir === 'left' ? -320 : 320,
-      behavior: 'smooth'
-    });
-  };
-
-  return (
-    <div className="mt-8 relative px-2">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <Clock size={15} className="text-orange-400" />
-          Previous Attempts
-        </h4>
-      </div>
-
-      <div className="relative group">
-        {/* Navigation Arrows: Only show if there are more than 4 items */}
-        {attempts.length > 4 && (
-          <>
-            <button
-              onClick={() => scroll("left")}
-              aria-label="Scroll attempts left"
-              className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              aria-label="Scroll attempts right"
-              className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </>
-        )}
-
-        <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
-        >
-          {attempts.map((attempt, i) => (
-            <motion.div
-              key={i}
-              className="flex-shrink-0 w-40 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-orange-200 transition-colors"
-            >
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Attempt {i + 1}</p>
-              <div className="text-xl font-black text-slate-900">{attempt.score}/{attempt.max_score}</div>
-              <div className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${attempt.is_passed ? "text-emerald-700 bg-emerald-50" : "text-orange-700 bg-orange-50"
-                }`}>
-                {attempt.is_passed ? "Passed" : "Failed"}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* =========================================================================
    SIDEBAR
@@ -661,80 +510,155 @@ function prettifyAnswer(question, raw) {
   }
 }
 
+
+
+
+
+
+
+
+
 function ReviewScreen({ selectedModule, questionResults, onBack }) {
+  const [filter, setFilter] = useState("all"); // 'all' | 'correct' | 'incorrect'
+  const [activeCard, setActiveCard] = useState(null);
+
+  // Filter questions based on selection tab
+  const filteredResults = questionResults.filter((r) => {
+    if (filter === "correct") return r.is_correct;
+    if (filter === "incorrect") return !r.is_correct;
+    return true;
+  });
+
+  const correctCount = questionResults.filter((r) => r.is_correct).length;
+  const incorrectCount = questionResults.length - correctCount;
+
   return (
-    <div className="py-6 animate-fade-in space-y-4">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors"
-      >
-        <ArrowLeft size={16} /> Back to result
-      </button>
+    <div className="min-h-screen w-full bg-slate-50/50 py-8 px-4 sm:px-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Top Bar / Navigation & Filters Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-3xl shadow-sm">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors bg-slate-50 border border-slate-200/60 px-4 py-2.5 rounded-2xl shadow-sm"
+          >
+            <ArrowLeft size={16} /> Back to Result
+          </button>
 
-      <div className="space-y-4">
-        {questionResults.map((r, i) => {
-          const q = selectedModule.questions[r.question_index ?? i] || {};
-          return (
-            <div
-              key={i}
-              className={`rounded-2xl border p-5 space-y-3 ${r.is_correct
-                ? "border-green-500 bg-green-500 !text-white"
-                : "border-red-500 bg-red-500 !text-white"
-                }`}
+          {/* Quick Filters */}
+          <div className="flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 text-xs font-bold w-full sm:w-auto justify-center">
+            <button
+              onClick={() => setFilter("all")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+              }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black !text-white/80 uppercase tracking-wide">
-                  Question {(r.question_index ?? i) + 1} · {q.marks || 1} mark
-                  {(q.marks || 1) > 1 ? "s" : ""}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${r.is_correct
-                    ? "bg-white/20 !text-white"
-                    : "bg-white/20 !text-white"
-                    }`}
-                >
-                  {r.is_correct ? <Check size={11} /> : <X size={11} />}
-                  {r.is_correct ? "Correct" : "Incorrect"}
-                </span>
-              </div>
+              All ({questionResults.length})
+            </button>
+            <button
+              onClick={() => setFilter("correct")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "correct" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-emerald-700"
+              }`}
+            >
+              Correct ({correctCount})
+            </button>
+            <button
+              onClick={() => setFilter("incorrect")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "incorrect" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:text-red-700"
+              }`}
+            >
+              Incorrect ({incorrectCount})
+            </button>
+          </div>
+        </div>
 
-              <p className="font-bold !text-white">
-                {r.question_text || q.question_text}
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
-                    Your Answer
-                  </p>
-                  <p className="text-sm font-semibold !text-white">
-                    {prettifyAnswer(q, r.given_answer)}
-                  </p>
-                </div>
-                {!r.is_correct && (
-                  <div>
-                    <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
-                      Correct Answer
-                    </p>
-                    <p className="text-sm font-semibold !text-white">
-                      {prettifyAnswer(q, r.correct_answer)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {r.explanation && (
-                <div className="flex items-start gap-2 text-xs !text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2">
-                  <Lightbulb size={13} className="shrink-0 mt-0.5" />
-                  <span
-                    className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation) }}
-                  />
-                </div>
-              )}
+        {/* Review Cards List */}
+        <div className="space-y-4">
+          {filteredResults.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 font-bold text-sm">No questions found for this filter.</p>
             </div>
-          );
-        })}
+          ) : (
+            filteredResults.map((r, i) => {
+              const originalIndex = questionResults.indexOf(r);
+              const q = selectedModule.questions[r.question_index ?? originalIndex] || {};
+              const isSelected = activeCard === originalIndex;
+
+              return (
+                <div
+                  key={originalIndex}
+                  onClick={() => setActiveCard(isSelected ? null : originalIndex)}
+                  className={`group rounded-3xl border transition-all duration-300 p-6 sm:p-8 space-y-4 cursor-pointer ${
+                    r.is_correct
+                      ? "bg-emerald-100 border-emerald-400 hover:border-emerald-500 shadow-sm shadow-emerald-500/10"
+                      : "bg-red-100 border-red-400 hover:border-red-500 shadow-sm shadow-red-500/10"
+                  } ${isSelected ? "ring-2 ring-orange-400/50" : ""}`}
+                >
+                  {/* Header info */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-black uppercase tracking-widest ${r.is_correct ? "text-emerald-900" : "text-red-900"}`}>
+                      Question {(r.question_index ?? originalIndex) + 1} · {q.marks || 1} mark
+                      {(q.marks || 1) > 1 ? "s" : ""}
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide ${
+                        r.is_correct
+                          ? "bg-emerald-600 text-white border border-emerald-700 shadow-sm"
+                          : "bg-red-600 text-white border border-red-700 shadow-sm"
+                      }`}
+                    >
+                      {r.is_correct ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
+                      {r.is_correct ? "Correct" : "Incorrect"}
+                    </span>
+                  </div>
+
+                  {/* Question text */}
+                  <p className="font-bold text-slate-900 text-base sm:text-lg">
+                    {r.question_text || q.question_text}
+                  </p>
+
+                  {/* Answer Comparisons Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className={`p-4 rounded-2xl border bg-white ${r.is_correct ? "border-emerald-300" : "border-red-300"}`}>
+                      <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${r.is_correct ? "text-emerald-800" : "text-red-800"}`}>
+                        Your Answer
+                      </p>
+                      <p className="text-sm font-bold text-slate-800">
+                        {prettifyAnswer(q, r.given_answer)}
+                      </p>
+                    </div>
+
+                    {!r.is_correct && (
+                      <div className="p-4 rounded-2xl border bg-white border-emerald-300">
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-1">
+                          Correct Answer
+                        </p>
+                        <p className="text-sm font-bold text-emerald-950">
+                          {prettifyAnswer(q, r.correct_answer)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Explanation Block */}
+                  {r.explanation && (
+                    <div className="flex items-start gap-2.5 text-xs text-amber-900 bg-amber-50/90 border border-amber-200/80 rounded-2xl px-4 py-3.5">
+                      <Lightbulb size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                      <span
+                        className="prose prose-sm [&_p]:m-0 [&_p]:text-amber-900 font-medium"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation) }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
       </div>
     </div>
   );

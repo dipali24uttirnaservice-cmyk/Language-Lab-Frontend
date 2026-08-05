@@ -1,6 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import { usePopupStore } from "@/store/usePopupStore"; // <-- 1. Import your popup store
+import { usePopupStore } from "@/store/usePopupStore";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -20,21 +20,41 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ---> 2. ADD THIS RESPONSE INTERCEPTOR <---
+// Response Interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Check if the error is a network connection failure (offline / no internet)
     if (!error.response) {
+      // ---> CONNECTION ERROR <---
       usePopupStore.getState().showPopup(
         "Connection Error",
-        "Network error. Please check your internet connection."
+        "Network error. Please check your internet connection.",
+        {
+          onConfirm: () => {
+            // Check if navigator is explicitly offline, or try reloading.
+            // If you want a safeguard: if navigator is offline, or if you want to route to login after a retry attempt:
+            if (!navigator.onLine) {
+              Cookies.remove("token");
+              window.location.href = "/login";
+            } else {
+              // Reload page to retry the connection
+              window.location.reload();
+            }
+          }
+        }
       );
     } else if (error.response.status === 401) {
+      // ---> SESSION EXPIRED ERROR <---
       usePopupStore.getState().showPopup(
         "Session Expired",
         "Your session has expired. Please log in again.",
-        { sessionExpired: true }
+        { 
+          sessionExpired: true,
+          onConfirm: () => {
+            Cookies.remove("token");
+            window.location.href = "/login";
+          }
+        }
       );
     }
 
