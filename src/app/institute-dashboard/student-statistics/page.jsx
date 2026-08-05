@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpenCheck,
@@ -57,8 +57,10 @@ const CARD_META = {
   },
 };
 
-export default function StudentStatisticsPage() {
+function StudentStatisticsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const studentIdParam = searchParams.get("studentId");
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
 
@@ -95,6 +97,15 @@ export default function StudentStatisticsPage() {
       })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
+
+  // Coming from the dashboard's Recent Activity list (?studentId=...) — jump
+  // straight to that student's reports instead of making them search again.
+  useEffect(() => {
+    if (!studentIdParam || !students.length) return;
+    if (selectedStudent?._id === studentIdParam) return;
+    const match = students.find((s) => s._id === studentIdParam);
+    if (match) setSelectedStudent(match);
+  }, [studentIdParam, students, selectedStudent]);
 
   const loadReports = useCallback(async () => {
     if (!selectedStudent) return;
@@ -403,6 +414,14 @@ export default function StudentStatisticsPage() {
       )}
 
     </div>
+  );
+}
+
+export default function StudentStatisticsPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentStatisticsPageContent />
+    </Suspense>
   );
 }
 

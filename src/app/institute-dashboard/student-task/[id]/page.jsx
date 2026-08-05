@@ -166,7 +166,13 @@ export default function StudentTaskFormPage() {
           setTaskTextContent(manual.text_content || "");
           setTaskLinkUrl(manual.link_url || "");
           setTaskTarget(manual.target || "all");
-          setStudentIds(manual.student_ids || manual.selected_student_ids || []);
+          // Backend returns student_ids populated (full_name, enrollment_no) —
+          // unwrap back to plain id strings, same as course_id/topic_id above.
+          setStudentIds(
+            (manual.student_ids || manual.selected_student_ids || []).map((s) =>
+              typeof s === "object" ? s._id : s
+            )
+          );
 
           setQuestions(
             manual.questions?.map((q) => ({

@@ -1,11 +1,26 @@
 "use client";
 import React from "react";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import { usePopupStore } from "@/store/usePopupStore";
+import { clearAuthData } from "@/utils/cookie";
 
 export default function GlobalPopup() {
-  const { isOpen, title, message, hidePopup } = usePopupStore();
+  const { isOpen, title, message, sessionExpired, hidePopup } = usePopupStore();
+  const router = useRouter();
 
   if (!isOpen) return null;
+
+  const handleOk = () => {
+    if (sessionExpired) {
+      const role = Cookies.get("role");
+      clearAuthData();
+      hidePopup();
+      router.replace(role === "institute" ? "/login" : "/student-login");
+      return;
+    }
+    hidePopup();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -41,7 +56,7 @@ export default function GlobalPopup() {
 
         {/* Action Button */}
         <button
-          onClick={hidePopup}
+          onClick={handleOk}
           className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-md shadow-red-600/20 active:scale-[0.98]"
         >
           OK

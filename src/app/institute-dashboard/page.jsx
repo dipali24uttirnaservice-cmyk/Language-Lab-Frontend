@@ -14,10 +14,15 @@ import {
 import { dashboardApi } from "@/services/institute/dashboardApi";
 
 // Code-split recharts (heavy dependency) out of the initial dashboard bundle.
-const MiniPieChart = dynamic(() => import("@/components/organisms/MiniPieChart"), {
-  ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse rounded-full bg-slate-100" />,
-});
+const MiniPieChart = dynamic(
+  () => import("@/components/organisms/MiniPieChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full animate-pulse rounded-full bg-slate-100" />
+    ),
+  },
+);
 
 const STATUS_COLORS = {
   active: "#4F46E5",
@@ -285,7 +290,6 @@ export default function InstituteDashboard() {
                 <ActivityRow
                   key={item.student_id}
                   fullName={item.full_name}
-                  durationMinutes={item.duration_minutes}
                   onClick={() =>
                     router.push(
                       `/institute-dashboard/student-statistics?studentId=${item.student_id}`,
@@ -388,7 +392,7 @@ function PieStatCard({ eyebrow, eyebrowColor, title, data, centerValue }) {
   );
 }
 
-function ActivityRow({ fullName, durationMinutes, onClick }) {
+function ActivityRow({ fullName, onClick }) {
   return (
     <motion.div
       whileHover={{ x: 4 }}
@@ -404,11 +408,24 @@ function ActivityRow({ fullName, durationMinutes, onClick }) {
           {fullName}
         </p>
         <span className="text-[10px] font-bold text-slate-400 shrink-0">
-          {durationMinutes != null
-            ? `Active for ${durationMinutes} mins`
-            : "Active"}
+          Active
         </span>
       </div>
     </motion.div>
   );
+}
+
+function formatDuration(minutes) {
+  if (!minutes || minutes < 1) return "just now";
+
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hrs === 0) {
+    return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  }
+
+  return mins === 0
+    ? `${hrs} hr${hrs === 1 ? "" : "s"} ago`
+    : `${hrs} hr${hrs === 1 ? "" : "s"} ${mins} min${mins === 1 ? "" : "s"} ago`;
 }

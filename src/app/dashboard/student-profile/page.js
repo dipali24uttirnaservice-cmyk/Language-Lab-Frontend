@@ -352,21 +352,21 @@ export default function ProfilePage() {
           <ReadOnlyCard
             icon="🎓"
             label="Enrollment No"
-            value={profile.enrollment_no}
+            value={profile?.enrollment_no}
           />
 
           <ReadOnlyCard
             icon="🆔"
             label="Roll No"
-            value={profile.roll_no}
+            value={profile?.roll_no}
           />
 
-         
+
 
           <ReadOnlyCard
             icon="🏆"
             label="Year"
-            value={profile.year}
+            value={profile?.year}
           />
 
         </div>
