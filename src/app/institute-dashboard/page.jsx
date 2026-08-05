@@ -14,10 +14,15 @@ import {
 import { dashboardApi } from "@/services/institute/dashboardApi";
 
 // Code-split recharts (heavy dependency) out of the initial dashboard bundle.
-const MiniPieChart = dynamic(() => import("@/components/organisms/MiniPieChart"), {
-  ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse rounded-full bg-slate-100" />,
-});
+const MiniPieChart = dynamic(
+  () => import("@/components/organisms/MiniPieChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full animate-pulse rounded-full bg-slate-100" />
+    ),
+  },
+);
 
 const STATUS_COLORS = {
   active: "#4F46E5",
@@ -408,4 +413,19 @@ function ActivityRow({ fullName, onClick }) {
       </div>
     </motion.div>
   );
+}
+
+function formatDuration(minutes) {
+  if (!minutes || minutes < 1) return "just now";
+
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hrs === 0) {
+    return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  }
+
+  return mins === 0
+    ? `${hrs} hr${hrs === 1 ? "" : "s"} ago`
+    : `${hrs} hr${hrs === 1 ? "" : "s"} ${mins} min${mins === 1 ? "" : "s"} ago`;
 }

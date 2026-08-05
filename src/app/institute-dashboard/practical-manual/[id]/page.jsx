@@ -453,7 +453,7 @@ export default function PracticalManualFormPage() {
                       >
                         <option value="text">Paragraph / Text</option>
                         <option value="file">File Upload</option>
-                        <option value="both">Both (Student's Choice)</option>
+                        <option value="both">File Upload + Text</option>
                       </select>
                       <p className="text-[10px] text-slate-400 mt-1">
                         {q.solution_type === "file"
