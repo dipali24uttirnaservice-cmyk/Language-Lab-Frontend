@@ -456,7 +456,7 @@ function AddTaskQuestionPageContent() {
           <div className="flex justify-end gap-4 pt-4 border-t border-orange-500/10">
             <button
               type="button"
-              onClick={() => router.push(`/institute-dashboard/student-task/${id}`)}
+              onClick={() => router.push(`/institute-dashboard/student-task`)}
               className="px-5 py-2.5 rounded-xl border border-orange-300 text-orange-700 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
             >
               Cancel

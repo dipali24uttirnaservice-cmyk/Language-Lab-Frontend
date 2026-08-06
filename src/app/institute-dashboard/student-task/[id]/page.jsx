@@ -22,6 +22,17 @@ import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
 import StatusModal from "@/components/molecules/StatusModal";
+import ChunkedFileUpload from "@/components/molecules/ChunkedFileUpload";
+
+// The backend's /task route never registered a raw multer field for task
+// media — it only accepts these files via the chunked-upload endpoints
+// (/upload/chunk/*), each keyed by one of these fieldnames. The task itself
+// then stores the resulting URL under `media_url`, same as `link_url`.
+const MEDIA_FIELDNAMES = {
+  audio: "audioFile",
+  video: "videoFile",
+  document: "documentFile",
+};
 
 const SectionDivider = ({ icon: Icon, title }) => (
   <div className="flex items-center gap-2 pb-2 border-b border-orange-100">
@@ -58,7 +69,7 @@ export default function StudentTaskFormPage() {
   const [taskStatus, setTaskStatus] = useState("published");
   const [taskTextContent, setTaskTextContent] = useState("");
   const [taskLinkUrl, setTaskLinkUrl] = useState("");
-  const [taskMediaFile, setTaskMediaFile] = useState(null);
+  const [taskMediaUrl, setTaskMediaUrl] = useState("");
   const [taskTarget, setTaskTarget] = useState("all");
   const [studentIds, setStudentIds] = useState([]);
 
@@ -165,6 +176,7 @@ export default function StudentTaskFormPage() {
           setTaskStatus(manual.status || "published");
           setTaskTextContent(manual.text_content || "");
           setTaskLinkUrl(manual.link_url || "");
+          setTaskMediaUrl(manual.media_url || "");
           setTaskTarget(manual.target || "all");
           // Backend returns student_ids populated (full_name, enrollment_no) —
           // unwrap back to plain id strings, same as course_id/topic_id above.
@@ -210,6 +222,7 @@ const handleSubmit = async (e) => {
       status: taskStatus,
       text_content: taskTextContent,
       link_url: taskLinkUrl,
+      media_url: taskMediaUrl,
       target: taskTarget,
       student_ids: studentIds,
       questions,
@@ -226,44 +239,16 @@ const handleSubmit = async (e) => {
 
       setSubmitting(true);
 
-      if (!taskMediaFile) {
-        if (editingManualId) {
-          await taskApi.updateTask(editingManualId, payload);
-        } else {
-          const res = await taskApi.createTask(payload);
-          const created = res.data?.data || res.data;
-          setCreatedTaskId(created?._id || null);
-        }
+      // Audio/video/document files are uploaded separately via the chunked
+      // upload endpoints (see ChunkedFileUpload below) — by the time we get
+      // here, taskMediaUrl already holds the resulting file URL, so /task
+      // always receives a plain JSON payload, never a multipart file.
+      if (editingManualId) {
+        await taskApi.updateTask(editingManualId, payload);
       } else {
-        const formData = new FormData();
-        formData.append("title", formTitle);
-        formData.append("course_id", formCourseId);
-        if (formTopicId) formData.append("topic_id", formTopicId);
-        if (taskDueDate) formData.append("due_date", taskDueDate);
-        formData.append("description", taskDescription);
-        formData.append("instructions", taskInstructions);
-        formData.append("type", taskType);
-        formData.append("status", taskStatus);
-        formData.append("text_content", taskTextContent);
-        formData.append("link_url", taskLinkUrl);
-        formData.append("target", taskTarget);
-        
-        studentIds.forEach((id) => formData.append("student_ids[]", id));
-        questions.forEach((q, index) => {
-          formData.append(`questions[${index}][question_text]`, q.question_text);
-          formData.append(`questions[${index}][correct_answer]`, q.correct_answer);
-          formData.append(`questions[${index}][answer_key_html]`, q.answer_key_html || "");
-        });
-
-        formData.append("media_file", taskMediaFile);
-
-        if (editingManualId) {
-          await taskApi.updateTask(editingManualId, formData);
-        } else {
-          const res = await taskApi.createTask(formData);
-          const created = res.data?.data || res.data;
-          setCreatedTaskId(created?._id || null);
-        }
+        const res = await taskApi.createTask(payload);
+        const created = res.data?.data || res.data;
+        setCreatedTaskId(created?._id || null);
       }
 
       // Turn off submitting loader first
@@ -540,8 +525,8 @@ const handleSubmit = async (e) => {
               <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Upload {taskType} file
               </label>
-              <input
-                type="file"
+              <ChunkedFileUpload
+                fieldname={MEDIA_FIELDNAMES[taskType]}
                 accept={
                   taskType === "audio"
                     ? "audio/*"
@@ -549,9 +534,24 @@ const handleSubmit = async (e) => {
                     ? "video/*"
                     : undefined
                 }
-                onChange={(e) => setTaskMediaFile(e.target.files?.[0] || null)}
-                className="w-full px-4 py-3 bg-white border border-orange-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 file:mr-3 file:px-3 file:py-1.5 file:rounded-xl file:border-0 file:bg-orange-500 file:text-white file:text-xs file:font-bold"
+                label={`Upload ${taskType} file`}
+                onUploaded={(uploaded) =>
+                  setTaskMediaUrl(uploaded?.cdnUrl || uploaded?.fullS3URL || "")
+                }
               />
+              {taskMediaUrl && (
+                <p className="text-xs text-slate-500 truncate">
+                  Current file:{" "}
+                  <a
+                    href={taskMediaUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-orange-600 font-semibold hover:underline"
+                  >
+                    {taskMediaUrl}
+                  </a>
+                </p>
+              )}
             </div>
           )}
 

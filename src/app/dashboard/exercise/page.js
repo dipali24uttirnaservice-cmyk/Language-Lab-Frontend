@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
-import Swal from "sweetalert2";
+import StatusModal from "@/components/molecules/StatusModal";
 import {
   ChevronRight,
   Award,
@@ -1191,6 +1191,7 @@ function ActiveQuiz({
   );
 }
 
+
 function ExerciseDetail({
   selectedModule,
   isQuizActive,
@@ -1211,8 +1212,39 @@ function ExerciseDetail({
   showReview,
   setShowReview,
 }) {
+  // StatusModal state management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "warning",
+    title: "",
+    message: "",
+    onClose: null,
+  });
+
+  const triggerModal = (type, title, message, onClose = null) => {
+    setModalState({
+      open: true,
+      type,
+      title,
+      message,
+      onClose: () => {
+        setModalState((prev) => ({ ...prev, open: false }));
+        if (onClose) onClose();
+      },
+    });
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-3 animate-fade-in pb-8">
+      {/* Status Modal Component Integration */}
+      <StatusModal
+        open={modalState.open}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={modalState.onClose}
+      />
+
       <BackToLessonsButton onBack={onBack} />
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg">
@@ -1271,17 +1303,16 @@ function ExerciseDetail({
               setUserAnswers={setUserAnswers}
               onSubmit={onSubmit}
               onTimeUp={() => {
-                Swal.fire({
-                  icon: "warning",
-                  title: "Time's Up!",
-                  text: "You ran out of time for this exercise. Try again!",
-                  confirmButtonColor: "#f97316",
-                  confirmButtonText: "Okay",
-                  target: document.fullscreenElement || document.body,
-                });
-                setIsQuizActive(false);
-                setUserAnswers({});
-                setCurrentQuestionIndex(0);
+                triggerModal(
+                  "warning",
+                  "Time's Up!",
+                  "You ran out of time for this exercise. Try again!",
+                  () => {
+                    setIsQuizActive(false);
+                    setUserAnswers({});
+                    setCurrentQuestionIndex(0);
+                  }
+                );
               }}
             />
           )}

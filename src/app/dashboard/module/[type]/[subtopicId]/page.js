@@ -5,7 +5,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
-import Swal from "sweetalert2";
+import StatusModal from "@/components/molecules/StatusModal";
+
 import {
     Play,
     Headphones,
@@ -1600,74 +1601,108 @@ function prettifyAnswer(question, raw) {
 
 function ReviewScreen({ selectedModule, questionResults, onBack }) {
     return (
-        <div className="py-6 animate-fade-in space-y-4">
-            <button
-                onClick={onBack}
-                className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors"
-            >
-                <ArrowLeft size={16} /> Back to result
-            </button>
+        <div className="py-6 animate-fade-in space-y-6 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={onBack}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-600 hover:text-orange-600 hover:border-orange-200 shadow-sm transition-all"
+                >
+                    <ArrowLeft size={16} /> Back to result
+                </button>
+                <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                    Reviewing {questionResults.length} Questions
+                </div>
+            </div>
 
             <div className="space-y-4">
                 {questionResults.map((r, i) => {
                     const q = selectedModule.questions[r.question_index ?? i] || {};
+                    const isCorrect = r.is_correct;
+
                     return (
                         <div
                             key={i}
-                            className={`rounded-2xl border p-5 space-y-3 ${r.is_correct
-                                ? "border-green-500 bg-green-500 !text-white"
-                                : "border-red-500 bg-red-500 !text-white"
-                                }`}
+                            className={`rounded-3xl border p-6 space-y-5 transition-all shadow-sm ${
+                                isCorrect
+                                    ? "border-emerald-300 bg-emerald-50"
+                                    : "border-rose-300 bg-rose-50"
+                            }`}
                         >
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-black !text-white/80 uppercase tracking-wide">
-                                    Question {(r.question_index ?? i) + 1} · {q.marks || 1} mark
-                                    {(q.marks || 1) > 1 ? "s" : ""}
-                                </span>
+                            {/* Question Header Card info */}
+                            <div className={`flex items-center justify-between border-b pb-4 ${
+                                isCorrect ? "border-emerald-200" : "border-rose-200"
+                            }`}>
+                                <div className="flex items-center gap-3">
+                                    <span className={`h-8 w-8 rounded-xl flex items-center justify-center font-black text-xs ${
+                                        isCorrect ? "bg-emerald-200 text-emerald-800" : "bg-rose-200 text-rose-800"
+                                    }`}>
+                                        {(r.question_index ?? i) + 1}
+                                    </span>
+                                    <div>
+                                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider block">
+                                            Question {(r.question_index ?? i) + 1}
+                                        </span>
+                                        <span className="text-xs font-bold text-slate-700">
+                                            {q.marks || 1} {(q.marks || 1) > 1 ? "Marks" : "Mark"}
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <span
-                                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${r.is_correct
-                                        ? "bg-white/20 !text-white"
-                                        : "bg-white/20 !text-white"
-                                        }`}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${
+                                        isCorrect
+                                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                            : "bg-rose-100 text-rose-800 border-rose-300"
+                                    }`}
                                 >
-                                    {r.is_correct ? <Check size={11} /> : <X size={11} />}
-                                    {r.is_correct ? "Correct" : "Incorrect"}
+                                    {isCorrect ? <Check size={14} /> : <X size={14} />}
+                                    {isCorrect ? "Correct" : "Incorrect"}
                                 </span>
                             </div>
 
-                            <p className="font-bold !text-white">
+                            {/* Question Text */}
+                            <h3 className="font-bold text-slate-900 text-base leading-snug">
                                 {r.question_text || q.question_text}
-                            </p>
+                            </h3>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
+                            {/* Answers Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                <div className="rounded-2xl bg-white border border-slate-200/80 p-4 space-y-1.5 shadow-xs">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                                         Your Answer
                                     </p>
-                                    <p className="text-sm font-semibold !text-white">
+                                    <p className="text-sm font-bold text-slate-800">
                                         {prettifyAnswer(q, r.given_answer)}
                                     </p>
                                 </div>
-                                {!r.is_correct && (
-                                    <div>
-                                        <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
+
+                                {!isCorrect && (
+                                    <div className="rounded-2xl bg-white border border-emerald-200 p-4 space-y-1.5 shadow-xs">
+                                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">
                                             Correct Answer
                                         </p>
-                                        <p className="text-sm font-semibold !text-white">
+                                        <p className="text-sm font-bold text-emerald-950">
                                             {prettifyAnswer(q, r.correct_answer)}
                                         </p>
                                     </div>
                                 )}
                             </div>
 
+                            {/* Explanation Box */}
                             {r.explanation && (
-                                <div className="flex items-start gap-2 text-xs !text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2">
-                                    <Lightbulb size={13} className="shrink-0 mt-0.5" />
-                                    <span
-                                        className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
-                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation)
-                        }}
-                                    />
+                                <div className="flex items-start gap-3 text-xs text-amber-950 bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 shadow-xs">
+                                    <div className="h-7 w-7 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                                        <Lightbulb size={15} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="font-bold uppercase tracking-wider text-[10px] text-amber-700 block">
+                                            Explanation
+                                        </span>
+                                        <div
+                                            className="prose prose-sm text-slate-800 leading-relaxed [&_p]:m-0"
+                                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation) }}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -1677,8 +1712,7 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
         </div>
     );
 }
-
-/* =========================================================================
+    /* =========================================================================
    PER-TYPE ANSWER INPUTS (Exercise "Challenge Activity" quiz)
    Answer shapes: see src/utils/questionAnswers.js
    ========================================================================= */
@@ -2070,6 +2104,8 @@ function ActiveQuiz({
     );
 }
 
+
+
 function ExerciseDetail({
     selectedModule,
     isQuizActive,
@@ -2090,8 +2126,39 @@ function ExerciseDetail({
     showReview,
     setShowReview,
 }) {
+    // StatusModal state management
+    const [modalState, setModalState] = useState({
+        open: false,
+        type: "warning",
+        title: "",
+        message: "",
+        onClose: null,
+    });
+
+    const triggerModal = (type, title, message, onClose = null) => {
+        setModalState({
+            open: true,
+            type,
+            title,
+            message,
+            onClose: () => {
+                setModalState((prev) => ({ ...prev, open: false }));
+                if (onClose) onClose();
+            },
+        });
+    };
+
     return (
         <div className="w-full max-w-6xl mx-auto space-y-4 animate-fade-in">
+            {/* Status Modal Integration */}
+            <StatusModal
+                open={modalState.open}
+                type={modalState.type}
+                title={modalState.title}
+                message={modalState.message}
+                onClose={modalState.onClose}
+            />
+
             <BackToLessonsButton onBack={onBack} />
 
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl min-h-[calc(100vh-140px)]">
@@ -2150,16 +2217,16 @@ function ExerciseDetail({
                             setUserAnswers={setUserAnswers}
                             onSubmit={onSubmit}
                             onTimeUp={() => {
-                                Swal.fire({
-                                    icon: "warning",
-                                    title: "Time's Up!",
-                                    text: "You ran out of time for this exercise. Try again!",
-                                    confirmButtonColor: "#f97316",
-                                    confirmButtonText: "Okay",
-                                });
-                                setIsQuizActive(false);
-                                setUserAnswers({});
-                                setCurrentQuestionIndex(0);
+                                triggerModal(
+                                    "warning",
+                                    "Time's Up!",
+                                    "You ran out of time for this exercise. Try again!",
+                                    () => {
+                                        setIsQuizActive(false);
+                                        setUserAnswers({});
+                                        setCurrentQuestionIndex(0);
+                                    }
+                                );
                             }}
                         />
                     )}
