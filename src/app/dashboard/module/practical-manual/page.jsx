@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import Swal from "sweetalert2";
+import StatusModal from "@/components/molecules/StatusModal";
 import {
   ArrowLeft,
   BookOpen,
@@ -342,6 +342,29 @@ function StudentPracticalManualPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+
+   // StatusModal state management
+      const [modalState, setModalState] = useState({
+          open: false,
+          type: "warning",
+          title: "",
+          message: "",
+          onClose: null,
+      });
+  
+      const triggerModal = (type, title, message, onClose = null) => {
+          setModalState({
+              open: true,
+              type,
+              title,
+              message,
+              onClose: () => {
+                  setModalState((prev) => ({ ...prev, open: false }));
+                  if (onClose) onClose();
+              },
+          });
+      };
+  
   // Effective answer format for a question — "both" questions defer to the
   // student's picked mode (default "text") instead of a fixed type.
   const getMode = (q, idx) =>
@@ -479,65 +502,62 @@ function StudentPracticalManualPageContent() {
       });
 
       formData.append("answers", JSON.stringify(payload));
-   await studentPracticalApi.submit(selectedManual._id, formData);
+      await studentPracticalApi.submit(selectedManual._id, formData);
 
-// Reload latest data
-const res = await studentPracticalApi.getOneMine(selectedManual._id);
-const detail = res.data?.data;
-const mySubmission = detail?.my_submission;
+      // Reload latest data
+      const res = await studentPracticalApi.getOneMine(selectedManual._id);
+      const detail = res.data?.data;
+      const mySubmission = detail?.my_submission;
 
-const answerByQuestionId = {};
-(mySubmission?.answers || []).forEach((a) => {
-  answerByQuestionId[a.question_id] = a;
-});
-
-const prefilled = {};
-const prefilledFileUrls = {};
-const prefilledMode = {};
-
-(detail?.questions || []).forEach((q, idx) => {
-  const existing = answerByQuestionId[q._id];
-
-  if (existing?.answer_html) {
-    prefilled[idx] = existing.answer_html;
-  }
-
-  if (existing?.answer_file_url) {
-    prefilledFileUrls[idx] = existing.answer_file_url;
-  }
-
-  if (q.solution_type === "both") {
-    prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
-  }
-});
-
-setSelectedManual(detail);
-setAnswers(prefilled);
-setExistingFileUrls(prefilledFileUrls);
-setAnswerMode(prefilledMode);
-
-setSubmitted(true);
-      Swal.fire({
-        icon: "success",
-        title: "Submitted!",
-        text: "Your practical manual has been submitted successfully.",
-        confirmButtonColor: "#f97316",
-        confirmButtonText: "Okay",
-        target: document.fullscreenElement || document.body,
+      const answerByQuestionId = {};
+      (mySubmission?.answers || []).forEach((a) => {
+        answerByQuestionId[a.question_id] = a;
       });
+
+      const prefilled = {};
+      const prefilledFileUrls = {};
+      const prefilledMode = {};
+
+      (detail?.questions || []).forEach((q, idx) => {
+        const existing = answerByQuestionId[q._id];
+
+        if (existing?.answer_html) {
+          prefilled[idx] = existing.answer_html;
+        }
+
+        if (existing?.answer_file_url) {
+          prefilledFileUrls[idx] = existing.answer_file_url;
+        }
+
+        if (q.solution_type === "both") {
+          prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
+        }
+      });
+
+      setSelectedManual(detail);
+      setAnswers(prefilled);
+      setExistingFileUrls(prefilledFileUrls);
+      setAnswerMode(prefilledMode);
+
+      setSubmitted(true);
+      
+      triggerModal(
+        "success",
+        "Submitted!",
+        "Your practical manual has been submitted successfully."
+      );
+
     } catch (error) {
       console.error("Submit Practical Error:", error);
       const message =
         error?.response?.data?.message || "Failed to submit. Please try again.";
       setSubmitError(message);
-      Swal.fire({
-        icon: "error",
-        title: "Submission Failed",
-        text: message,
-        confirmButtonColor: "#f97316",
-        confirmButtonText: "Okay",
-        target: document.fullscreenElement || document.body,
-      });
+      
+      triggerModal(
+        "error",
+        "Submission Failed",
+        message
+      );
     } finally {
       setSubmitting(false);
     }
@@ -548,22 +568,30 @@ setSubmitted(true);
   ========================================================== */
   if (!selectedManual) {
     return (
-<div
-  ref={containerRef}
-  className="w-full min-h-screen bg-slate-50 p-6 md:p-8"
->        <div className="max-w-6xl mx-auto space-y-8">
+      <div
+        ref={containerRef}
+        className="w-full min-h-screen bg-slate-50 p-6 md:p-8"
+      >
+
+        {/* Status Modal Component Integration */}
+            <StatusModal
+              open={modalState.open}
+              type={modalState.type}
+              title={modalState.title}
+              message={modalState.message}
+              onClose={modalState.onClose}
+            />
+        <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
-           <button
-  onClick={() => {
-    router.back();
-  }}
-  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
->
-  <ArrowLeft size={18} />
-  Back
-</button>
-
-
+            <button
+              onClick={() => {
+                router.back();
+              }}
+              className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
+            >
+              <ArrowLeft size={18} />
+              Back
+            </button>
 
             <div className="flex items-center gap-3">
               <div className="px-4 py-2 rounded-xl bg-orange-100/60 border border-orange-200/50 text-orange-700 font-bold text-xs flex items-center gap-2">
@@ -572,13 +600,13 @@ setSubmitted(true);
               </div>
             </div>
 
-             <button
-            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
-            title={isFullscreen ? "Minimize Manual" : "Maximize Manual"}
-          >
-            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
+            <button
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+              title={isFullscreen ? "Minimize Manual" : "Maximize Manual"}
+            >
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
           </div>
 
           <h1 className="text-xl font-black text-slate-800">
@@ -660,7 +688,6 @@ setSubmitted(true);
             >
               Back to Manuals List
             </button>
-          
 
             <button
               onClick={isFullscreen ? exitFullscreen : enterFullscreen}
@@ -814,18 +841,18 @@ setSubmitted(true);
 
       <div className="flex-1 flex flex-col h-full overflow-y-auto custom-main-scroll">
         <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm px-8 pt-6 pb-2 flex items-center justify-end shrink-0">
-        <div className="flex-1 flex items-center gap-3">
-       <button
-  onClick={() => {
-    setSelectedManual(null);
-    setSubmitted(false);
-    setCurrent(0);
-  }}
-  className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
->
-  <ArrowLeft size={18} />
-  Back to List
-</button>
+          <div className="flex-1 flex items-center gap-3">
+            <button
+              onClick={() => {
+                setSelectedManual(null);
+                setSubmitted(false);
+                setCurrent(0);
+              }}
+              className="flex items-center gap-2 text-slate-600 hover:text-orange-600 font-semibold text-sm transition"
+            >
+              <ArrowLeft size={18} />
+              Back to List
+            </button>
           </div>
           <button
             onClick={isFullscreen ? exitFullscreen : enterFullscreen}

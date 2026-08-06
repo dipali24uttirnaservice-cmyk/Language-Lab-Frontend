@@ -2,11 +2,11 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Swal from "sweetalert2";
 import { ArrowLeft, Plus, Trash2, X, Loader2, HelpCircle } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
+import StatusModal from "@/components/molecules/StatusModal";
 
 // Matches Task.questions[].question_type exactly (Task.js model / taskValidation.js)
 const Q_TYPES = [
@@ -49,6 +49,28 @@ function AddTaskQuestionPageContent() {
   // re-attached on submit instead of being overwritten.
   const [existingQuestions, setExistingQuestions] = useState([]);
 
+  // StatusModal state management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+    onClose: null,
+  });
+
+  const triggerModal = (type, title, message, onClose = null) => {
+    setModalState({
+      open: true,
+      type,
+      title,
+      message,
+      onClose: () => {
+        setModalState((prev) => ({ ...prev, open: false }));
+        if (onClose) onClose();
+      },
+    });
+  };
+
   useEffect(() => {
     taskApi
       .getTaskById(id)
@@ -65,13 +87,12 @@ function AddTaskQuestionPageContent() {
         }
       })
       .catch((err) => {
-        Swal.fire({
-          icon: "error",
-          title: "Failed to load task",
-          text: err?.response?.data?.message || err.message,
-          confirmButtonColor: "#f97316",
-        });
-        router.push(`/institute-dashboard/student-task/${id}`);
+        triggerModal(
+          "error",
+          "Failed to load task",
+          err?.response?.data?.message || err.message,
+          () => router.push(`/institute-dashboard/student-task/${id}`)
+        );
       })
       .finally(() => setLoading(false));
   }, [id, router]);
@@ -153,11 +174,11 @@ function AddTaskQuestionPageContent() {
     // A deliberately empty list (all rows removed) clears the task's
     // questions entirely — only block save when a row was left half-filled.
     if (!valid.length && questions.length > 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Complete each question, or remove it, before saving",
-        confirmButtonColor: "#f97316",
-      });
+      triggerModal(
+        "error",
+        "Incomplete Questions",
+        "Complete each question, or remove it, before saving"
+      );
       return;
     }
 
@@ -167,21 +188,18 @@ function AddTaskQuestionPageContent() {
       const toSave = isNewMode ? [...existingQuestions, ...valid] : valid;
       formData.append("questions", JSON.stringify(toSave));
       await taskApi.updateTask(id, formData);
-      Swal.fire({
-        icon: "success",
-        title: "Questions Saved",
-        text: `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
-        timer: 1200,
-        showConfirmButton: false,
-      });
-      router.push(`/institute-dashboard/student-task/${id}`);
+      triggerModal(
+        "success",
+        "Questions Saved",
+        `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
+        () => router.push(`/institute-dashboard/student-task`)
+      );
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed",
-        text: err?.response?.data?.message || err.message,
-        confirmButtonColor: "#f97316",
-      });
+      triggerModal(
+        "error",
+        "Failed",
+        err?.response?.data?.message || err.message
+      );
     } finally {
       setSaving(false);
     }
@@ -197,11 +215,20 @@ function AddTaskQuestionPageContent() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 space-y-6 w-full">
+      {/* Status Modal Component Integration */}
+      <StatusModal
+        open={modalState.open}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={modalState.onClose}
+      />
+
       {/* Top Header */}
       <div className="flex items-center gap-4">
         <button
           type="button"
-          onClick={() => router.push(`/institute-dashboard/student-task/${id}`)}
+          onClick={() => router.push(`/institute-dashboard/student-task`)}
           className="p-3 rounded-2xl bg-white border border-slate-200 hover:bg-orange-50/50 text-slate-600 transition-colors shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-orange-500" />
@@ -429,7 +456,7 @@ function AddTaskQuestionPageContent() {
           <div className="flex justify-end gap-4 pt-4 border-t border-orange-500/10">
             <button
               type="button"
-              onClick={() => router.push(`/institute-dashboard/student-task/${id}`)}
+              onClick={() => router.push(`/institute-dashboard/student-task`)}
               className="px-5 py-2.5 rounded-xl border border-orange-300 text-orange-700 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
             >
               Cancel

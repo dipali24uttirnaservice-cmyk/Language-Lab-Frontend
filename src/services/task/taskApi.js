@@ -5,19 +5,12 @@ export const taskApi = {
 
   getTaskById: (id) => api.get(`/task/${id}`),
 
-  createTask: (formData) =>
-    api.post("/task", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
+  // Task media (audio/video/document) is uploaded separately via the
+  // chunked-upload endpoints; /task itself only ever receives JSON, with
+  // the resulting file URL passed as `media_url`.
+  createTask: (payload) => api.post("/task", payload),
 
-  updateTask: (id, formData) =>
-    api.put(`/task/${id}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
+  updateTask: (id, payload) => api.put(`/task/${id}`, payload),
 
   deleteTask: (id) => api.delete(`/task/${id}`),
 
