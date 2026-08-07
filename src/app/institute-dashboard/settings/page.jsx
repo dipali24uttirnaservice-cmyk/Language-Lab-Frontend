@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertCircle, BookOpen, Check, Download, Inbox, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +11,7 @@ import { courseApi } from "@/services/course/courseApi";
 const storageKey = (courseId) => `downloaded_course_${courseId}`;
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user: institute } = useAuth();
   const instituteName = institute?.institute_name || "Institute";
 
@@ -18,8 +20,37 @@ export default function SettingsPage() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadedIds, setDownloadedIds] = useState({});
   const [staleIds, setStaleIds] = useState({});
+  // Video files finish caching to local disk in the background after the
+  // course metadata download responds — this tracks that separately so the
+  // "Downloaded" state doesn't lie about videos still being fetched from AWS.
+  const [videoProgress, setVideoProgress] = useState({}); // courseId -> { total, completed, summary }
 
   const [modal, setModal] = useState({ open: false, type: "", title: "", message: "" });
+
+  // Polls download-status until every video for this course has finished
+  // (or failed) caching to local disk. Runs on its own after the metadata
+  // download responds — the "Downloaded" button doesn't wait on it.
+  const pollVideoProgress = (courseId) => {
+    const tick = async () => {
+      try {
+        const response = await courseApi.getCourseDownloadStatus(courseId);
+        const status = response.data?.data;
+        if (!status) return;
+
+        setVideoProgress((prev) => ({
+          ...prev,
+          [courseId]: { total: status.total, completed: status.summary.completed, summary: status.summary },
+        }));
+
+        const stillWorking = status.total > 0 && !status.all_completed &&
+          (status.summary.pending > 0 || status.summary.downloading > 0);
+        if (stillWorking) setTimeout(tick, 4000);
+      } catch (error) {
+        console.error("Video Download Status Error:", error);
+      }
+    };
+    tick();
+  };
 
   useEffect(() => {
     if (!courses) return;
@@ -29,6 +60,13 @@ export default function SettingsPage() {
       next[course._id] = !!localStorage.getItem(storageKey(course._id));
     }
     setDownloadedIds(next);
+
+    // Resume tracking video-caching progress for anything already
+    // downloaded, in case some videos were still mid-download (or failed)
+    // when this page was last closed.
+    for (const course of courses) {
+      if (next[course._id]) pollVideoProgress(course._id);
+    }
 
     // For courses already pulled, check if the source content has changed
     // since the last pull — if so, flag them as needing "Update Data".
@@ -86,12 +124,13 @@ export default function SettingsPage() {
       localStorage.setItem(storageKey(course._id), JSON.stringify(pulledData));
       setDownloadedIds((prev) => ({ ...prev, [course._id]: true }));
       setStaleIds((prev) => ({ ...prev, [course._id]: false }));
+      pollVideoProgress(course._id);
 
       setModal({
         open: true,
         type: "success",
         title: "Course Data Pulled",
-        message: `"${course.course_name}" is now downloaded successfully.`,
+        message: `"${course.course_name}" is now downloaded. Videos are being cached locally in the background.`,
       });
     } catch (error) {
       console.error("Download Course Error:", error);
@@ -175,6 +214,29 @@ export default function SettingsPage() {
                       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         {course.course_code}
                       </p>
+                      {(() => {
+                        const progress = videoProgress[course._id];
+                        if (!progress || progress.total === 0) return null;
+                        const done = progress.completed === progress.total;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/settings/video-progress/${course._id}?courseName=${encodeURIComponent(course.course_name)}`,
+                              )
+                            }
+                            className={`text-xs mt-0.5 font-medium underline decoration-dotted underline-offset-2 hover:no-underline ${done ? "text-emerald-600" : "text-slate-400"}`}
+                          >
+                            {done
+                              ? `Videos cached locally (${progress.total}/${progress.total})`
+                              : `Caching videos locally… ${progress.completed}/${progress.total}`}
+                            {progress.summary.failed > 0 && (
+                              <span className="text-red-500"> · {progress.summary.failed} failed</span>
+                            )}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
 
