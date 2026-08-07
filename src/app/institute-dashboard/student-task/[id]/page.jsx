@@ -463,7 +463,17 @@ const handleSubmit = async (e) => {
               <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Type</label>
               <select
                 value={taskType}
-                onChange={(e) => setTaskType(e.target.value)}
+                onChange={(e) => {
+                  const nextType = e.target.value;
+                  setTaskType(nextType);
+                  // A file uploaded for the previous type (e.g. an audio
+                  // .webm) is meaningless once you switch to video/document
+                  // — without this, editing a task and changing its type
+                  // silently carries the old media_url over, so the saved
+                  // task ends up with a type/file mismatch (see taskController
+                  // .update: it trusts media_url as-is for any media type).
+                  if (nextType !== taskType) setTaskMediaUrl("");
+                }}
                 className="w-full px-4 py-3 bg-white border border-orange-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
               >
                 <option value="text">Text</option>

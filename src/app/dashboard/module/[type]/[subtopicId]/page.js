@@ -33,6 +33,7 @@ import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
 import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { getPlayableVideoUrl } from "@/utils/media";
 
 // next-video/react-player are heavy media deps — only load them when a
 // video-type lesson is actually rendered, not on every module page load.
@@ -602,9 +603,43 @@ function VocabularyRow({ item, onSelect }) {
     );
 }
 
+// Same NotSupportedError guard as VideoCard's thumbnail (see its comment) —
+// pulled into its own component because it lives inside a .map() and needs
+// its own per-item error state.
+function RelatedVideoThumb({ video }) {
+    const [failed, setFailed] = useState(false);
+    const playableUrl = getPlayableVideoUrl(video);
+
+    if (!playableUrl || failed) {
+        return (
+            <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                <Play className="text-slate-400 fill-current" size={24} />
+            </div>
+        );
+    }
+
+    return (
+        <video
+            src={`${playableUrl}#t=2`}
+            preload="metadata"
+            muted
+            playsInline
+            onError={() => setFailed(true)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+        />
+    );
+}
+
 function VideoCard({ item, type, onSelect }) {
     const thumbnailSource =
         item.video?.thumbnail_url || item.thumbnail || item.thumbnail_url;
+    // A bare <video src> that fails to load (e.g. still downloading locally,
+    // or a stale AWS link) fires a MediaError the browser surfaces as an
+    // uncaught "NotSupportedError" — Next's dev overlay treats that as a
+    // crash even though it's harmless here. Falling back to the placeholder
+    // icon on error avoids ever leaving a broken <video> in the DOM.
+    const [thumbFailed, setThumbFailed] = useState(false);
+    const playableUrl = getPlayableVideoUrl(item.video);
 
     return (
         <div
@@ -620,12 +655,13 @@ function VideoCard({ item, type, onSelect }) {
                         sizes="(min-width: 1024px) 33vw, 100vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                ) : item.video?.url ? (
+                ) : playableUrl && !thumbFailed ? (
                     <video
-                        src={`${item.video.url}#t=2`}
+                        src={`${playableUrl}#t=2`}
                         preload="metadata"
                         muted
                         playsInline
+                        onError={() => setThumbFailed(true)}
                         className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500 pointer-events-none"
                     />
                 ) : (
@@ -711,7 +747,7 @@ function VideoDetail({
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
                      <VideoPlayer
-  src={selectedModule.video?.url?.trim() || undefined}
+  src={getPlayableVideoUrl(selectedModule.video) || undefined}
   poster={
     selectedModule.video?.thumbnail_url?.trim() ||
     selectedModule.thumbnail?.trim() ||
@@ -775,18 +811,8 @@ function VideoDetail({
                                             sizes="(min-width: 1024px) 20vw, 50vw"
                                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
-                                    ) : item.video?.url ? (
-                                        <video
-                                            src={`${item.video.url}#t=2`}
-                                            preload="metadata"
-                                            muted
-                                            playsInline
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                                        />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-slate-200">
-                                            <Play className="text-slate-400 fill-current" size={24} />
-                                        </div>
+                                        <RelatedVideoThumb video={item.video} />
                                     )}
 
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition">

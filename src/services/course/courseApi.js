@@ -14,4 +14,9 @@ export const courseApi = {
 
   getCourseLastUpdated: (courseId) =>
     api.get(`/institute/me/courses/${courseId}/last-updated`),
+
+  // Poll target while the backend finishes caching this course's videos to
+  // local disk in the background (kicked off by downloadCourse above).
+  getCourseDownloadStatus: (courseId) =>
+    api.get(`/institute/me/courses/${courseId}/download-status`),
 };

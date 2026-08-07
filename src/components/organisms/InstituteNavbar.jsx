@@ -19,6 +19,7 @@ import Image from "next/image";
 import { logoutUser } from "@/services/auth/logoutApi";
 import { taskApi } from "@/services/task/taskApi";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
+import { courseApi } from "@/services/course/courseApi";
 
 const MONGO_ID = /^[a-f\d]{24}$/i;
 
@@ -34,6 +35,13 @@ const ID_RESOLVERS = {
   "practical-manual": {
     fetch: (id) => practicalManualDetail(id),
     getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+  // No get-course-by-id endpoint for the institute role — reuse the
+  // already-fetched "my courses" list and pick the matching one out of it.
+  "video-progress": {
+    fetch: () => courseApi.getCourses(),
+    getTitle: (res, id) =>
+      (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
   },
 };
 
@@ -85,9 +93,10 @@ const router = useRouter();
     const resolver = idIndex >= 0 ? findResolverFor(segments, idIndex) : null;
 
     if (resolver) {
+      const id = segments[idIndex];
       resolver
-        .fetch(segments[idIndex])
-        .then((res) => setResolvedTitle(resolver.getTitle(res) || null))
+        .fetch(id)
+        .then((res) => setResolvedTitle(resolver.getTitle(res, id) || null))
         .catch(() => setResolvedTitle(null));
     } else {
       setResolvedTitle(null);
