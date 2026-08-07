@@ -64,6 +64,7 @@ export default function StatusModal({
               </p>
 
                <button
+  type="button"
   onClick={onClose}
   className="mt-6 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white hover:bg-orange-600"
 >
