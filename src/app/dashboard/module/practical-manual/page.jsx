@@ -664,6 +664,18 @@ function StudentPracticalManualPageContent() {
         ref={containerRef}
         className="min-h-screen w-full bg-slate-50 p-6 md:p-8 overflow-y-auto custom-main-scroll"
       >
+        {/* Without this, triggerModal("Submitted!"...) from submitManual()
+            sets modalState but has nothing to render it against — this is
+            the view the student actually lands on right after submitting
+            (submitted flips true before this renders), so the modal needs
+            to live here too, not just in the list view below. */}
+        <StatusModal
+          open={modalState.open}
+          type={modalState.type}
+          title={modalState.title}
+          message={modalState.message}
+          onClose={modalState.onClose}
+        />
         <div className="w-full space-y-6">
           <div className="bg-white rounded-3xl p-8 border border-orange-100 shadow-[0_20px_60px_rgba(249,115,22,0.10)] relative overflow-hidden flex items-center justify-between">
             <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-100 opacity-60 blur-2xl pointer-events-none" />
@@ -810,6 +822,17 @@ function StudentPracticalManualPageContent() {
       ref={containerRef}
       className="flex bg-slate-50 h-screen w-full overflow-hidden"
     >
+      {/* Same reasoning as the "submitted" view above — a failed submit
+          calls triggerModal("Submission Failed"...) while still on this
+          view (submitted only flips true on success), so it needs its own
+          modal instance too. */}
+      <StatusModal
+        open={modalState.open}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={modalState.onClose}
+      />
       <style jsx global>{`
         .custom-sidebar-scroll::-webkit-scrollbar,
         .custom-main-scroll::-webkit-scrollbar {
