@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Clock, Loader2, RefreshCw, VideoOff } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Loader2, RefreshCw, VideoOff, Video, Headphones } from "lucide-react";
 import { courseApi } from "@/services/course/courseApi";
 
 const formatBytes = (bytes) => {
@@ -27,11 +27,15 @@ function VideoRow({ asset }) {
   }[asset.status] || { icon: Clock, color: "text-slate-400", bar: "bg-slate-300", label: asset.status };
 
   const Icon = statusMeta.icon;
+  const TypeIcon = asset.module_type === "audio" ? Headphones : Video;
 
   return (
     <div className="py-4 px-6">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <p className="text-sm font-semibold text-slate-800 truncate">{asset.title || "Untitled video"}</p>
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 truncate min-w-0">
+          <TypeIcon size={13} className="text-slate-400 shrink-0" />
+          <span className="truncate">{asset.title || "Untitled"}</span>
+        </p>
         <span className={`flex items-center gap-1 text-xs font-bold shrink-0 ${statusMeta.color}`}>
           <Icon size={14} className={statusMeta.spin ? "animate-spin" : ""} />
           {statusMeta.label}
@@ -137,7 +141,7 @@ export default function VideoDownloadProgressPage() {
         </button>
 
         <div className="border-b border-slate-200/60 pb-5">
-          <h1 className="text-2xl font-black text-slate-900">Video Download Progress</h1>
+          <h1 className="text-2xl font-black text-slate-900">Video & Audio Download Progress</h1>
           <p className="mt-1 text-slate-500">{courseName}</p>
         </div>
 
@@ -147,7 +151,7 @@ export default function VideoDownloadProgressPage() {
               <Loader2 size={18} className="animate-spin" /> Loading…
             </div>
           ) : assets.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm">No videos in this course.</div>
+            <div className="py-16 text-center text-slate-400 text-sm">No video or audio in this course.</div>
           ) : (
             assets.map((asset) => <VideoRow key={asset.module_id} asset={asset} />)
           )}
@@ -159,7 +163,7 @@ export default function VideoDownloadProgressPage() {
             onClick={retryFailed}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-200 px-4 py-2.5 text-sm font-bold hover:bg-red-100 transition-colors"
           >
-            <RefreshCw size={16} /> Retry {failedCount} failed video{failedCount > 1 ? "s" : ""}
+            <RefreshCw size={16} /> Retry {failedCount} failed item{failedCount > 1 ? "s" : ""}
           </button>
         )}
       </div>
