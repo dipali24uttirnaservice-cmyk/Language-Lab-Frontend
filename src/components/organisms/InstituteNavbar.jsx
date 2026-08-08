@@ -20,6 +20,7 @@ import { logoutUser } from "@/services/auth/logoutApi";
 import { taskApi } from "@/services/task/taskApi";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
+import { getInstituteLogoUrl } from "@/utils/media";
 
 const MONGO_ID = /^[a-f\d]{24}$/i;
 
@@ -57,8 +58,7 @@ const router = useRouter();
   const { user: institute } = useAuth();
 
 
-  const instituteLogo =
-    institute?.logo || "/collage-logo.png";
+  const instituteLogo = getInstituteLogoUrl(institute);
 
 
   const instituteName =

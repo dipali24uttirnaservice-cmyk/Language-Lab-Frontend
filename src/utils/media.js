@@ -25,3 +25,21 @@ export const getPlayableVideoUrl = (video) => {
   if (video.local_url) return resolveMediaUrl(video.local_url);
   return video.url?.trim() || "";
 };
+
+// Same idea, for an audio module (see instituteController.downloadCourseData
+// — audio modules get the same download_status/local_url treatment as video).
+export const getPlayableAudioUrl = (audio) => {
+  if (!audio) return "";
+  if (audio.local_url) return resolveMediaUrl(audio.local_url);
+  return audio.url?.trim() || "";
+};
+
+// The institute's own logo, once cached locally (see downloadCourseData's
+// opportunistic queueSingleAssetDownload for institute_logo + getMe's
+// local_logo_url) — falls back to the AWS-hosted logo, then a bundled
+// default if the institute has no logo at all.
+export const getInstituteLogoUrl = (institute, fallback = "/collage-logo.png") => {
+  if (!institute) return fallback;
+  if (institute.local_logo_url) return resolveMediaUrl(institute.local_logo_url);
+  return institute.logo || fallback;
+};
