@@ -2,14 +2,18 @@
 //
 // Locally-cached course videos (see Language-Lab-Backend's
 // instituteController.downloadCourseData + service/videoDownloadService.js)
-// are served from the backend's /media static route, which sits OUTSIDE the
-// /api prefix that NEXT_PUBLIC_API_URL points at. This resolves a module's
-// relative `video.local_url` (e.g. "/media/<instituteId>/<moduleId>.mp4")
-// into an absolute URL against the same backend host.
-const getMediaBaseUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-  return apiUrl.replace(/\/api\/?$/, "");
-};
+// are served from the backend's /api/media static route (server.js also
+// mounts a bare /media for setups with no reverse proxy in front). This
+// resolves a module's relative `video.local_url` (e.g.
+// "/media/<instituteId>/<moduleId>.mp4") into an absolute URL.
+//
+// Deliberately built by appending straight onto NEXT_PUBLIC_API_URL as-is
+// (not stripping its /api suffix) — some deployments sit behind a reverse
+// proxy that only forwards paths starting with /api, so a URL built from the
+// bare host+port (no /api) would 404 at the proxy before ever reaching this
+// server. Piggybacking on the exact same base every other API call already
+// uses successfully avoids having to guess at the network setup.
+const getMediaBaseUrl = () => (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
 export const resolveMediaUrl = (path) => {
   if (!path) return null;
