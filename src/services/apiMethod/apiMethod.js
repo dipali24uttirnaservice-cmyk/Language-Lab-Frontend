@@ -43,28 +43,15 @@ api.interceptors.request.use((config) => {
 masterApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response) {
-      // ---> CONNECTION ERROR <---
-      usePopupStore
-        .getState()
-        .showPopup(
-          "Connection Error",
-          "Network error. Please check your internet connection.",
-          {
-            onConfirm: () => {
-              // Check if navigator is explicitly offline, or try reloading.
-              // If you want a safeguard: if navigator is offline, or if you want to route to login after a retry attempt:
-              if (!navigator.onLine) {
-                Cookies.remove("token");
-                window.location.href = "/login";
-              } else {
-                // Reload page to retry the connection
-                window.location.reload();
-              }
-            },
-          },
-        );
-    } else if (error.response.status === 401) {
+    // Deliberately NO "Connection Error" popup here for master's network
+    // errors (unlike the local `api` instance below) — master being
+    // unreachable is now an EXPECTED, handled condition in the offline-first
+    // design (see courseApi.js's masterWithLocalFallback, instituteConfigLogin,
+    // etc.), not a fatal one. Showing a blocking popup on every master call
+    // that fails while offline would defeat the whole point of falling back
+    // to the local backend's cached data silently. The caller's own
+    // try/catch still sees this rejection and decides what to do with it.
+    if (error.response?.status === 401) {
       // ---> SESSION EXPIRED ERROR <---
       usePopupStore
         .getState()
