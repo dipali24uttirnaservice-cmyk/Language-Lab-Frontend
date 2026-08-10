@@ -18,6 +18,7 @@ import {
 
 import { profileApi } from "@/services/institute/profileApi";
 import StatusModal from "@/components/molecules/StatusModal";
+import { getInstituteLogoUrl } from "@/utils/media";
 
 export default function InstituteProfilePage() {
   const [institute, setInstitute] = useState(null);
@@ -228,7 +229,7 @@ useEffect(() => {
                 <div className="absolute inset-0 bg-indigo-500/25 blur-xl rounded-3xl" />
                 <div className="relative w-32 h-32 rounded-3xl border-4 border-white bg-white shadow-xl overflow-hidden">
                   <Image
-                    src={institute?.logo || "/collage-logo.png"}
+                    src={getInstituteLogoUrl(institute)}
                     alt="Logo"
                     width={128}
                     height={128}

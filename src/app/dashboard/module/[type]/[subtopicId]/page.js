@@ -33,7 +33,7 @@ import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
 import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
-import { getPlayableVideoUrl } from "@/utils/media";
+import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
 
 // next-video/react-player are heavy media deps — only load them when a
 // video-type lesson is actually rendered, not on every module page load.
@@ -948,7 +948,7 @@ function AudioDetail({
                                 {selectedModule.audio?.url ? (
                                     <audio
                                         key={selectedModule._id}
-                                        src={selectedModule.audio.url}
+                                        src={getPlayableAudioUrl(selectedModule.audio)}
                                         controls
                                         className="w-full sm:w-72 md:w-96 focus:outline-none"
                                         onEnded={onComplete}

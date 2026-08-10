@@ -64,8 +64,18 @@ function QuestionDots({ total, current, answers }) {
 }
 
 function EmptyCard({ title, subtitle }) {
+  const router = useRouter();
+
   return (
-    <div className="h-screen flex items-center justify-center bg-slate-50">
+    <div className="relative h-screen flex flex-col items-center justify-center bg-slate-50">
+      <button
+        onClick={() => router.back()}
+        className="absolute top-6 left-8 flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm"
+      >
+        <ArrowLeft size={18} />
+        Back
+      </button>
+
       <div className="text-center max-w-sm">
         <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center">
           <BookOpen className="text-orange-400" size={28} />

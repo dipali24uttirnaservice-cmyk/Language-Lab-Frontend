@@ -27,8 +27,8 @@ export default function LoginPage() {
   } = useForm({
     resolver: yupResolver(instituteLoginSchema),
     defaultValues: {
-      email: "institute@abcli.edu",
-      password: "Institute@123",
+      email: "",
+      password: "",
     },
   });
 

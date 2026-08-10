@@ -1,30 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { KeyRound, LogIn, ShieldCheck } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { KeyRound, ShieldCheck } from "lucide-react";
 
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/AnimatedBackground";
 import StatusModal from "@/components/molecules/StatusModal";
 
-import {
-  instituteLogin,
-  sendInstituteOtp,
-  verifyInstituteOtp,
-} from "@/services/auth/loginApi";
-import { instituteLoginSchema } from "@/app/schemas/institute.schema";
-import { secureCookieOptions } from "@/utils/cookie";
+import { sendInstituteOtp, verifyInstituteOtp } from "@/services/auth/loginApi";
 
 // Standalone utility page — not linked from the sidebar/navbar.
-// Flow: institute code -> email OTP -> institute login -> redirect to /institute-dashboard.
+// Flow: institute code -> email OTP -> /config/login (separate route) -> redirect to /institute-dashboard.
 export default function ConfigPage() {
   const router = useRouter();
-  const [step, setStep] = useState("code"); // "code" | "otp" | "login"
+  const [step, setStep] = useState("code"); // "code" | "otp"
 
   const [instituteCode, setInstituteCode] = useState("");
   const [codeError, setCodeError] = useState("");
@@ -36,15 +27,6 @@ export default function ConfigPage() {
   const [resending, setResending] = useState(false);
 
   const [modal, setModal] = useState({ open: false, type: "", title: "", message: "" });
-
-  const {
-    register: registerLogin,
-    handleSubmit: handleLoginSubmit,
-    formState: { errors: loginErrors, isSubmitting: loginSubmitting },
-  } = useForm({
-    resolver: yupResolver(instituteLoginSchema),
-    defaultValues: { email: "", password: "" },
-  });
 
   const handleCodeSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +62,7 @@ export default function ConfigPage() {
       setOtpLoading(true);
       setOtpError("");
       await verifyInstituteOtp(instituteCode.trim(), otp.trim());
-      setStep("login");
+      router.push(`/config/login?code=${encodeURIComponent(instituteCode.trim())}`);
     } catch (error) {
       setOtpError(error?.response?.data?.message || "Invalid OTP");
     } finally {
@@ -109,34 +91,6 @@ export default function ConfigPage() {
       });
     } finally {
       setResending(false);
-    }
-  };
-
-  const handleLogin = async (formData) => {
-    try {
-      const response = await instituteLogin(formData);
-      const apiResponse = response.data;
-      const token = apiResponse?.data?.token;
-
-      if (!token) {
-        throw new Error("Token not found in response");
-      }
-
-      Cookies.set("role", "institute", secureCookieOptions());
-      Cookies.set("token", token, secureCookieOptions());
-
-      const institute = apiResponse?.data?.institute;
-      Cookies.set("userData", JSON.stringify({ institute }), secureCookieOptions());
-
-      router.replace("/institute-dashboard/settings");
-    } catch (error) {
-      console.error("Login Error:", error);
-      setModal({
-        open: true,
-        type: "error",
-        title: "Login Failed",
-        message: error?.response?.data?.message || "Invalid Email or Password",
-      });
     }
   };
 
@@ -235,48 +189,6 @@ export default function ConfigPage() {
                   className="w-full text-center text-sm font-semibold text-orange-600 hover:text-orange-700 disabled:opacity-50"
                 >
                   {resending ? "Resending..." : "Resend OTP"}
-                </button>
-              </form>
-            </motion.div>
-          )}
-
-          {step === "login" && (
-            <motion.div
-              key="login"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600 mb-6">
-                <LogIn size={16} /> {instituteCode}
-              </div>
-
-              <h2 className="text-3xl font-black text-slate-900">Institute Login</h2>
-              <p className="mt-2 text-slate-500">Sign in with your institute email and password.</p>
-
-              <form onSubmit={handleLoginSubmit(handleLogin)} className="mt-8 space-y-5">
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your email"
-                  error={loginErrors.email?.message}
-                  {...registerLogin("email")}
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  error={loginErrors.password?.message}
-                  {...registerLogin("password")}
-                />
-
-                <button
-                  type="submit"
-                  disabled={loginSubmitting}
-                  className="w-full rounded-2xl bg-orange-500 py-4 text-white font-bold transition-all hover:bg-orange-600 hover:scale-[1.02] shadow-lg disabled:opacity-50"
-                >
-                  {loginSubmitting ? "Signing In..." : "Sign In"}
                 </button>
               </form>
             </motion.div>

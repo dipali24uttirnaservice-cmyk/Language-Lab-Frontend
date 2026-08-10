@@ -229,8 +229,8 @@ export default function SettingsPage() {
                             className={`text-xs mt-0.5 font-medium underline decoration-dotted underline-offset-2 hover:no-underline ${done ? "text-emerald-600" : "text-slate-400"}`}
                           >
                             {done
-                              ? `Videos cached locally (${progress.total}/${progress.total})`
-                              : `Caching videos locally… ${progress.completed}/${progress.total}`}
+                              ? `Video & audio cached locally (${progress.total}/${progress.total})`
+                              : `Caching video & audio locally… ${progress.completed}/${progress.total}`}
                             {progress.summary.failed > 0 && (
                               <span className="text-red-500"> · {progress.summary.failed} failed</span>
                             )}

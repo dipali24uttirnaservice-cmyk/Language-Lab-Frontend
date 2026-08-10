@@ -43,6 +43,7 @@ export const saveAuthData = ({
 
 export const clearAuthData = () => {
   Cookies.remove("token");
+  Cookies.remove("masterToken");
   Cookies.remove("role");
   Cookies.remove("userData");
   Cookies.remove("studentData");
