@@ -1,7 +1,19 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+    Suspense,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+
+import {
+    useParams,
+    useRouter,
+    useSearchParams,
+} from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { toast } from "react-hot-toast";
@@ -746,11 +758,10 @@ function VideoDetail({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
-                     <VideoPlayer
+             <VideoPlayer
   src={getPlayableVideoUrl(selectedModule.video) || undefined}
   poster={
     selectedModule.video?.thumbnail_url?.trim() ||
-    selectedModule.thumbnail?.trim() ||
     undefined
   }
   onEnded={onComplete}
@@ -863,7 +874,7 @@ function AudioDetail({
     searchParams,
 }) {
     const accent = getAccent("audio");
-    const containerRef = React.useRef(null);
+const containerRef = useRef(null);
     const { isFullscreen, enter, exit } = useFullscreen(containerRef);
     return (
         <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
@@ -1034,7 +1045,7 @@ function TextDetail({
     searchParams,
 }) {
     const accent = getAccent("text");
-    const containerRef = React.useRef(null);
+    const containerRef = useRef(null);
     const { isFullscreen, enter, exit } = useFullscreen(containerRef);
     return (
         <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
@@ -1154,7 +1165,7 @@ function VocabularyDetail({
 }) {
     const accent = getAccent("vocabulary");
     const related = vocabularyModules.filter((item) => item._id !== selectedModule._id);
-    const containerRef = React.useRef(null);
+    const containerRef = useRef(null);
     const { isFullscreen, enter, exit } = useFullscreen(containerRef);
 
     return (
@@ -2271,22 +2282,34 @@ function ModuleListPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // The [type] route segment can literally be the text "null" if a caller
-    // upstream interpolated a missing value into the URL — treat that as "no
-    // type selected" instead of querying the API for a "null" module type.
+
+      const startTimeRef = useRef(Date.now());
+const attendanceLoggedRef = useRef(false);
+const moduleStartTimeRef = useRef(Date.now());
+
     const rawType = params?.type;
+
+    const typeValue = Array.isArray(rawType)
+        ? rawType[0]
+        : rawType;
+
     const type =
-        rawType && rawType !== "null" && rawType !== "undefined" ? rawType : null;
+        typeValue &&
+        typeValue !== "null" &&
+        typeValue !== "undefined"
+            ? String(typeValue).toLowerCase()
+            : null;
+
     const subtopicId = params?.subtopicId;
 
     const [selectedModule, setSelectedModule] = useState(null);
     const [loading, setLoading] = useState(true);
     const [modules, setModules] = useState([]);
-  const [activeTab, setActiveTab] = useState(type || "Video");
+
+    const [activeTab, setActiveTab] = useState(type || "video");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("default");
 
-    // Quiz / exercise flow state
     const [resultData, setResultData] = useState(null);
     const [isQuizActive, setIsQuizActive] = useState(false);
     const [showResults, setShowResults] = useState(false);
@@ -2297,71 +2320,151 @@ function ModuleListPageContent() {
     const [questionResults, setQuestionResults] = useState([]);
     const [showReview, setShowReview] = useState(false);
 
-    const startTimeRef = React.useRef(Date.now());
-    const attendanceLoggedRef = React.useRef(false);
-
-    useEffect(() => {
-        if (type) setActiveTab(type);
+    
+       useEffect(() => {
+        if (type) {
+           setActiveTab(type);
+        }
     }, [type]);
+
+
+        const logModuleActivity = useCallback(
+        async (module, activityType, extra = {}) => {
+            if (!module) return;
+
+            try {
+                await activityApi.logActivity({
+                    topic_id:
+                        module.topic_id?._id ||
+                        module.topic_id,
+
+                    sub_topic_id:
+                        module.sub_topic_id?._id ||
+                        module.sub_topic_id,
+
+                    module_id: module._id,
+
+                    module_type:
+                        module.module_type ||
+                        type,
+
+                    activity_type: activityType,
+
+                    ...extra,
+                });
+            } catch (error) {
+                console.error(
+                    "Failed to log activity:",
+                    error
+                );
+            }
+        },
+        [type]
+    );
+
+      const logModuleTime = useCallback(
+        async (module) => {
+            if (!module) return;
+
+            const elapsed = Math.floor(
+                (Date.now() -
+                    moduleStartTimeRef.current) /
+                    1000
+            );
+
+            if (elapsed <= 0) return;
+
+            try {
+                await activityApi.logActivity({
+                    topic_id:
+                        module.topic_id?._id ||
+                        module.topic_id,
+
+                    sub_topic_id:
+                        module.sub_topic_id?._id ||
+                        module.sub_topic_id,
+
+                    module_id: module._id,
+
+                    module_type:
+                        module.module_type ||
+                        type,
+
+                    activity_type: "module_time",
+
+                    time_spent_sec: elapsed,
+                });
+            } catch (error) {
+                console.error(
+                    "Failed to log module time:",
+                    error
+                );
+            }
+        },
+        [type]
+    );
 
     // Sync selectedModule with URL to allow breadcrumb / back-button navigation
     useEffect(() => {
         const lessonId = searchParams.get("lessonId");
-        if (!lessonId) {
-            setSelectedModule(null);
-        } else if (
-            modules.length > 0 &&
-            (!selectedModule || selectedModule._id !== lessonId)
-        ) {
-            const found = modules.find((m) => m._id === lessonId);
-            if (found) setSelectedModule(found);
-        }
-    }, [searchParams, modules, selectedModule]);
 
-    const logModuleActivity = async (module, activity_type, extra = {}) => {
-        if (!module) return;
-        try {
-            await activityApi.logActivity({
-                topic_id: module.topic_id?._id || module.topic_id,
-                sub_topic_id: module.sub_topic_id?._id || module.sub_topic_id,
-                module_id: module._id,
-                module_type: module.module_type || type,
-                activity_type,
-                ...extra,
+        if (!lessonId) {
+            setSelectedModule((prev) => {
+                return prev !== null ? null : prev;
             });
-        } catch (error) {
-            console.error("Failed to log activity:", error);
+
+            return;
         }
-    };
+
+        if (!modules.length) return;
+
+        const found = modules.find(
+            (module) => module?._id === lessonId
+        );
+
+        setSelectedModule((prev) => {
+            if (prev?._id === found?._id) {
+                return prev;
+            }
+
+            return found || null;
+        });
+    }, [searchParams, modules]);
+
+
 
     // Mark today's attendance the first time a module is opened in this visit
     useEffect(() => {
-        if (selectedModule && !attendanceLoggedRef.current) {
-            attendanceLoggedRef.current = true;
-            logModuleActivity(selectedModule, "attendance_marked");
+        if (
+            !selectedModule ||
+            attendanceLoggedRef.current
+        ) {
+            return;
         }
-    }, [selectedModule]);
 
-    // Time-on-module tracking — logs real elapsed seconds whenever the student
-    // switches to a different module or leaves the page, for every module
-    // type (video/audio/text/vocabulary/exercise alike). Distinct from the
-    // *_complete events above, which only exist for video/audio/exercise and
-    // don't all carry a duration — this is the one place all module types get
-    // a duration recorded, so the institute's "Time Spent" report reflects
-    // actual usage instead of only counting exercise attempts.
-    const moduleStartTimeRef = React.useRef(Date.now());
+        attendanceLoggedRef.current = true;
+
+        logModuleActivity(
+            selectedModule,
+            "attendance_marked"
+        );
+    }, [
+        selectedModule,
+        logModuleActivity,
+    ]);
+
+
+
+
     useEffect(() => {
-        moduleStartTimeRef.current = Date.now();
-        return () => {
-            if (!selectedModule) return;
-            const elapsed = Math.floor((Date.now() - moduleStartTimeRef.current) / 1000);
-            if (elapsed > 0) {
-                logModuleActivity(selectedModule, "module_time", {
-                    time_spent_sec: elapsed,
-                });
-            }
-        };
-    }, [selectedModule]);
+    moduleStartTimeRef.current = Date.now();
+
+    return () => {
+        if (selectedModule) {
+            logModuleTime(selectedModule);
+        }
+    };
+}, [selectedModule, logModuleTime]);
 
     // Fetch past attempts whenever an exercise module is opened
     useEffect(() => {
@@ -2375,58 +2478,92 @@ function ModuleListPageContent() {
             .catch((err) => console.error("Failed to load attempts:", err));
     }, [selectedModule, type]);
 
-    useEffect(() => {
-        const fetchModules = async () => {
-            if (!type) {
+useEffect(() => {
+    let cancelled = false;
+
+    const fetchModules = async () => {
+        if (!type || !subtopicId) {
+            if (!cancelled) {
                 setModules([]);
                 setLoading(false);
-                return;
             }
-            try {
-                setLoading(true);
-                const res = await moduleApi.getModulesBySubtopic(type, subtopicId);
-                const fetchedData = res?.data?.data || res?.data || [];
-                console.log(
-                    `[Module] GET /module/${type}/${subtopicId} -> ${fetchedData.length} item(s)`,
-                    fetchedData,
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const res = await moduleApi.getModulesBySubtopic(
+                type,
+                subtopicId
+            );
+
+            if (cancelled) return;
+
+            const fetchedData =
+                res?.data?.data ||
+                res?.data ||
+                [];
+
+            setModules(Array.isArray(fetchedData) ? fetchedData : []);
+        } catch (error) {
+            if (!cancelled) {
+                console.error(
+                    `[Module] GET /module/${type}/${subtopicId} failed:`,
+                    error
                 );
-                setModules(fetchedData);
-            } catch (error) {
-                console.error(`[Module] GET /module/${type}/${subtopicId} failed:`, error);
-            } finally {
+            }
+        } finally {
+            if (!cancelled) {
                 setLoading(false);
             }
-        };
+        }
+    };
 
-        fetchModules();
-    }, [type, subtopicId]);
+    fetchModules();
 
-    const handleModuleSelection = (item) => {
-        // Text/vocabulary lessons have no media-end signal, so treat navigating
-        // away (Previous/Next, related list, or back to lessons) as "done".
+    return () => {
+        cancelled = true;
+    };
+}, [type, subtopicId]);
+
+    const handleModuleSelection = useCallback(
+    (item) => {
         if (
             selectedModule &&
             item?._id !== selectedModule._id &&
-            (selectedModule.module_type === "text" ||
-                selectedModule.module_type === "vocabulary")
+            (
+                selectedModule.module_type === "text" ||
+                selectedModule.module_type === "vocabulary"
+            )
         ) {
             logModuleActivity(
                 selectedModule,
-                `${selectedModule.module_type}_complete`,
+                `${selectedModule.module_type}_complete`
             );
         }
 
-        const nextParams = new URLSearchParams(searchParams.toString());
+        const nextParams = new URLSearchParams(
+            searchParams.toString()
+        );
+
         if (item) {
             nextParams.set("lessonId", item._id);
-            nextParams.set("lessonName", item.title);
+            nextParams.set(
+                "lessonName",
+                item.title || ""
+            );
+
+            // Reset timers for the newly selected module
+            moduleStartTimeRef.current = Date.now();
+            startTimeRef.current = Date.now();
         } else {
             nextParams.delete("lessonId");
             nextParams.delete("lessonName");
         }
+
         router.push(`?${nextParams.toString()}`);
 
-        // reset quiz flow whenever the lesson changes
         setIsQuizActive(false);
         setShowResults(false);
         setShowReview(false);
@@ -2434,145 +2571,345 @@ function ModuleListPageContent() {
         setQuestionResults([]);
         setCurrentQuestionIndex(0);
         setUserAnswers({});
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
 
-    const handleSubmit = async () => {
-        const formattedAnswers = Object.keys(userAnswers).map((index) => ({
-            question_index: Number(index),
-            given_answer: answerToString(
-                selectedModule.questions[Number(index)],
-                userAnswers[index],
-            ),
-        }));
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    },
+    [
+        selectedModule,
+        logModuleActivity,
+        searchParams,
+        router,
+    ]
+);
 
-        const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const handleBack = useCallback(() => { handleModuleSelection(null); }, [handleModuleSelection]);
 
-        const payload = { answers: formattedAnswers, time_spent_sec: timeSpent };
+    
+
+      const handleSubmit = useCallback(async () => {
+        if (!selectedModule) return;
+
+        const formattedAnswers =
+            Object.keys(userAnswers).map(
+                (index) => ({
+                    question_index: Number(index),
+
+                    given_answer:
+                        answerToString(
+                            selectedModule.questions[
+                                Number(index)
+                            ],
+                            userAnswers[index]
+                        ),
+                })
+            );
+
+        const timeSpent = Math.floor(
+            (Date.now() -
+                startTimeRef.current) /
+                1000
+        );
+
+        const payload = {
+            answers: formattedAnswers,
+            time_spent_sec: timeSpent,
+        };
 
         try {
-            const response = await moduleApi.submitExercise(
-                selectedModule._id,
-                payload,
-            );
+            const response =
+                await moduleApi.submitExercise(
+                    selectedModule._id,
+                    payload
+                );
 
             const attempt =
                 response?.data?.data?.attempt ||
                 response?.data?.attempt ||
                 response?.attempt ||
                 response?.data;
+
             const results =
-                response?.data?.data?.question_results ||
-                response?.data?.question_results ||
+                response?.data?.data
+                    ?.question_results ||
+                response?.data
+                    ?.question_results ||
                 [];
 
-            if (attempt) {
-                setResultData({
-                    score: attempt.score,
-                    max_score: attempt.max_score,
-                    accuracy: attempt.accuracy,
-                    is_passed: attempt.is_passed,
-                });
-                setQuestionResults(results);
-                logModuleActivity(selectedModule, "exercise_complete", {
+            if (!attempt) {
+                console.error(
+                    "Attempt data not found.",
+                    response
+                );
+
+                toast.error(
+                    "Unable to load result."
+                );
+
+                return;
+            }
+
+            setResultData({
+                score: attempt.score,
+                max_score: attempt.max_score,
+                accuracy: attempt.accuracy,
+                is_passed: attempt.is_passed,
+            });
+
+            setQuestionResults(results);
+
+            logModuleActivity(
+                selectedModule,
+                "exercise_complete",
+                {
                     score: attempt.score,
                     max_score: attempt.max_score,
                     accuracy: attempt.accuracy,
                     time_spent_sec: timeSpent,
-                });
-                setAttempts((prev) => [attempt, ...prev]);
-                setIsQuizActive(false);
-                setShowResults(true);
-                setShowReview(false);
-            } else {
-                console.error("Attempt data not found.", response);
-                toast.error("Unable to load result.");
-            }
+                }
+            );
+
+            setAttempts((prev) => [
+                attempt,
+                ...prev,
+            ]);
+
+            setIsQuizActive(false);
+            setShowResults(true);
+            setShowReview(false);
         } catch (error) {
-            console.error("Submission failed:", error);
+            console.error(
+                "Submission failed:",
+                error
+            );
+
             toast.error(
-                error?.response?.data?.message || "Failed to submit answers.",
+                error?.response?.data?.message ||
+                    "Failed to submit answers."
             );
         }
-    };
+    }, [
+        selectedModule,
+        userAnswers,
+        logModuleActivity,
+    ]);
 
-    const filteredModules = useMemo(() => {
-        if (!Array.isArray(modules)) return [];
-        return modules
-            .filter((mod) => {
-                if (!mod) return false;
-                const actualType = mod.module_type || "";
-                const matchesTab =
-                    activeTab === "all" ||
-                    actualType === activeTab ||
-                    type === actualType;
-                const matchesSearch =
-                    mod.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    mod.description?.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesTab && matchesSearch;
-            })
-            .sort((a, b) => {
-                if (sortBy === "title" && a?.title && b?.title) {
-                    return a.title.localeCompare(b.title);
-                }
-                return 0;
-            });
-    }, [modules, activeTab, searchQuery, sortBy, type]);
+    const handleVideoComplete = useCallback(() => {
+    if (!selectedModule) return;
 
-    const byType = (t) =>
-        Array.isArray(modules)
-            ? modules.filter((item) => item && (item.module_type || type) === t)
-            : [];
-    const videoModules = useMemo(() => byType("video"), [modules, type]);
-    const audioModules = useMemo(() => byType("audio"), [modules, type]);
-    const textModules = useMemo(() => byType("text"), [modules, type]);
-    const vocabularyModules = useMemo(
-        () => byType("vocabulary"),
-        [modules, type],
+    logModuleActivity(
+        selectedModule,
+        "video_complete"
     );
+}, [
+    selectedModule,
+    logModuleActivity,
+]);
 
-    if (loading) {
-        return (
-            <div className="h-[70vh] flex items-center justify-center bg-slate-50">
-                <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
-            </div>
-        );
-    }
+const handleAudioComplete = useCallback(() => {
+    if (!selectedModule) return;
 
-    const currentModuleType = selectedModule?.module_type || type;
+    logModuleActivity(
+        selectedModule,
+        "audio_complete"
+    );
+}, [
+    selectedModule,
+    logModuleActivity,
+]);
 
-    const currentModuleList =
-        currentModuleType === "video"
-            ? videoModules
-            : currentModuleType === "audio"
-                ? audioModules
+       const filteredModules = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return modules
+        .filter((mod) => {
+            if (!mod) return false;
+
+            const actualType =
+                mod.module_type || type;
+
+            const matchesTab =
+                activeTab === "all" ||
+                actualType === activeTab;
+
+            const matchesSearch =
+                !query ||
+                mod.title
+                    ?.toLowerCase()
+                    .includes(query) ||
+                mod.description
+                    ?.toLowerCase()
+                    .includes(query);
+
+            return (
+                matchesTab &&
+                matchesSearch
+            );
+        })
+        .sort((a, b) => {
+            if (
+                sortBy === "title" &&
+                a?.title &&
+                b?.title
+            ) {
+                return a.title.localeCompare(
+                    b.title
+                );
+            }
+
+            return 0;
+        });
+}, [
+    modules,
+    activeTab,
+    searchQuery,
+    sortBy,
+    type,
+]);
+
+  
+const videoModules = useMemo(
+    () =>
+        modules.filter(
+            (item) =>
+                item &&
+                (item.module_type || type) === "video"
+        ),
+    [modules, type]
+);
+
+const audioModules = useMemo(
+    () =>
+        modules.filter(
+            (item) =>
+                item &&
+                (item.module_type || type) === "audio"
+        ),
+    [modules, type]
+);
+
+const exerciseModules = useMemo(
+    () =>
+        modules.filter(
+            (item) =>
+                item &&
+                (item.module_type || type) === "exercise"
+        ),
+    [modules, type]
+);
+
+const textModules = useMemo(
+    () =>
+        modules.filter(
+            (item) =>
+                item &&
+                (item.module_type || type) === "text"
+        ),
+    [modules, type]
+);
+
+const vocabularyModules = useMemo(
+    () =>
+        modules.filter(
+            (item) =>
+                item &&
+                (item.module_type || type) === "vocabulary"
+        ),
+    [modules, type]
+);
+
+/* -----------------------------------------
+   Current module type
+----------------------------------------- */
+
+const currentModuleType =
+    selectedModule?.module_type || type;
+
+/* -----------------------------------------
+   Current module list
+----------------------------------------- */
+
+const currentModuleList =
+    currentModuleType === "video"
+        ? videoModules
+        : currentModuleType === "audio"
+            ? audioModules
+            : currentModuleType === "exercise"
+                ? exerciseModules
                 : currentModuleType === "text"
                     ? textModules
                     : currentModuleType === "vocabulary"
                         ? vocabularyModules
                         : [];
 
-    const currentModuleIndex = currentModuleList.findIndex(
-        (item) => item._id === selectedModule?._id,
-    );
-    const previousModule =
-        currentModuleIndex > 0 ? currentModuleList[currentModuleIndex - 1] : null;
-    const nextModule =
-        currentModuleIndex >= 0 && currentModuleIndex < currentModuleList.length - 1
-            ? currentModuleList[currentModuleIndex + 1]
-            : null;
+/* -----------------------------------------
+   Current module index
+----------------------------------------- */
 
-    const sharedDetailProps = {
+const currentModuleIndex =
+    currentModuleList.findIndex(
+        (item) =>
+            item?._id === selectedModule?._id
+    );
+
+/* -----------------------------------------
+   Previous / Next
+----------------------------------------- */
+
+const previousModule =
+    currentModuleIndex > 0
+        ? currentModuleList[currentModuleIndex - 1]
+        : null;
+
+const nextModule =
+    currentModuleIndex >= 0 &&
+    currentModuleIndex <
+        currentModuleList.length - 1
+        ? currentModuleList[currentModuleIndex + 1]
+        : null;
+
+/* -----------------------------------------
+   Shared detail props
+----------------------------------------- */
+
+const sharedDetailProps = useMemo(
+    () => ({
         selectedModule,
         previousModule,
         nextModule,
         currentModuleIndex,
         currentModuleList,
         onNavigate: handleModuleSelection,
-        onBack: () => handleModuleSelection(null),
+        onBack: handleBack,
         router,
         searchParams,
-    };
+    }),
+    [
+        selectedModule,
+        previousModule,
+        nextModule,
+        currentModuleIndex,
+        currentModuleList,
+        handleModuleSelection,
+        handleBack,
+        router,
+        searchParams,
+    ]
+);
+
+/* -----------------------------------------
+   NOW conditional return is safe
+----------------------------------------- */
+
+if (loading) {
+    return (
+        <div className="h-[70vh] flex items-center justify-center bg-slate-50">
+            <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+        </div>
+    );
+}
 
     return (
         <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 text-slate-800 p-4 md:p-6 font-sans antialiased overflow-x-hidden">
@@ -2581,45 +2918,46 @@ function ModuleListPageContent() {
 
             <div className="max-w-[1700px] mx-auto space-y-8 relative z-10">
                 {selectedModule ? (
-                    currentModuleType === "video" ? (
-                        <VideoDetail
-                            {...sharedDetailProps}
-                            videoModules={videoModules}
-                            onComplete={() =>
-                                logModuleActivity(selectedModule, "video_complete")
-                            }
-                        />
-                    ) : currentModuleType === "audio" ? (
-                        <AudioDetail
-                            {...sharedDetailProps}
-                            audioModules={audioModules}
-                            onComplete={() =>
-                                logModuleActivity(selectedModule, "audio_complete")
-                            }
-                        />
+                   currentModuleType === "video" ? (
+<VideoDetail
+    {...sharedDetailProps}
+    videoModules={videoModules}
+    onComplete={handleVideoComplete}
+/>
+) : currentModuleType === "audio" ? (
+                      <AudioDetail
+    {...sharedDetailProps}
+    audioModules={audioModules}
+    onComplete={handleAudioComplete}
+/>
                     ) : currentModuleType === "exercise" ? (
-                        <ExerciseDetail
-                            selectedModule={selectedModule}
-                            isQuizActive={isQuizActive}
-                            setIsQuizActive={setIsQuizActive}
-                            showResults={showResults}
-                            resultData={resultData}
-                            currentQuestionIndex={currentQuestionIndex}
-                            setCurrentQuestionIndex={setCurrentQuestionIndex}
-                            userAnswers={userAnswers}
-                            setUserAnswers={setUserAnswers}
-                            onSubmit={handleSubmit}
-                            onStart={() =>
-                                logModuleActivity(selectedModule, "exercise_start")
-                            }
-                            onBack={() => handleModuleSelection(null)}
-                            router={router}
-                            attempts={attempts}
-                            onSelectAttempt={setSelectedAttempt}
-                            questionResults={questionResults}
-                            showReview={showReview}
-                            setShowReview={setShowReview}
-                        />
+                     <ExerciseDetail
+    selectedModule={selectedModule}
+    isQuizActive={isQuizActive}
+    setIsQuizActive={setIsQuizActive}
+    showResults={showResults}
+    resultData={resultData}
+    currentQuestionIndex={currentQuestionIndex}
+    setCurrentQuestionIndex={
+        setCurrentQuestionIndex
+    }
+    userAnswers={userAnswers}
+    setUserAnswers={setUserAnswers}
+    onSubmit={handleSubmit}
+    onStart={() =>
+        logModuleActivity(
+            selectedModule,
+            "exercise_start"
+        )
+    }
+    onBack={handleBack}
+    router={router}
+    attempts={attempts}
+    onSelectAttempt={setSelectedAttempt}
+    questionResults={questionResults}
+    showReview={showReview}
+    setShowReview={setShowReview}
+/>
                     ) : currentModuleType === "vocabulary" ? (
                         <VocabularyDetail
                             {...sharedDetailProps}
@@ -2723,7 +3061,13 @@ function ModuleListPageContent() {
 
 export default function ModuleListPage() {
     return (
-        <Suspense fallback={null}>
+        <Suspense
+            fallback={
+                <div className="h-[70vh] flex items-center justify-center bg-slate-50">
+                    <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                </div>
+            }
+        >
             <ModuleListPageContent />
         </Suspense>
     );
