@@ -65,6 +65,7 @@ export default function VideoPlayer({
 
   const [loadError, setLoadError] = useState(false);
 
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   /*
    * Reset when video changes.
    */
@@ -568,29 +569,43 @@ export default function VideoPlayer({
           </button>
 
           {/* Volume */}
-          <div className="flex items-center gap-1.5 group/vol">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="hover:text-orange-400 transition-colors cursor-pointer"
-            >
-              {muted || volume === 0 ? (
-                <VolumeX size={18} />
-              ) : (
-                <Volume2 size={18} />
-              )}
-            </button>
+      <div className="relative flex items-center gap-2">
+  {/* Volume button */}
+  <button
+    type="button"
+    onClick={() => setShowVolumeSlider((prev) => !prev)}
+    className="p-1 hover:text-orange-400 transition-colors cursor-pointer"
+    title="Volume"
+  >
+    {muted || volume === 0 ? (
+      <VolumeX size={18} />
+    ) : (
+      <Volume2 size={18} />
+    )}
+  </button>
 
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={muted ? 0 : volume}
-              onChange={changeVolume}
-              className="w-0 group-hover/vol:w-16 transition-all duration-200 accent-orange-500 cursor-pointer"
-            />
-          </div>
+  {/* Horizontal volume slider */}
+  {showVolumeSlider && (
+    <div
+      className="flex items-center gap-2"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={muted ? 0 : volume}
+        onChange={changeVolume}
+        className="w-20 sm:w-24 accent-orange-500 cursor-pointer"
+      />
+
+      <span className="text-[10px] text-white/80 w-8 text-right">
+        {Math.round((muted ? 0 : volume) * 100)}%
+      </span>
+    </div>
+  )}
+</div>
 
           {/* Time */}
           <span className="text-xs font-mono tabular-nums text-white/90">
