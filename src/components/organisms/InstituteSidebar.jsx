@@ -39,6 +39,16 @@ const menuItems = [
     bg: "from-orange-50 via-amber-50 to-yellow-50",
     text: "text-orange-700",
   },
+
+  {
+    title: "Student Learning Access",
+    href: "/institute-dashboard/student-learning-access/access-list",
+    icon: ClipboardList,
+    color: "from-teal-500 to-emerald-600",
+    border: "border-teal-500",
+    bg: "from-teal-50 to-emerald-50",
+    text: "text-teal-700",
+  },
   {
     title: "Practical Manual",
     href: "/institute-dashboard/practical-manual",

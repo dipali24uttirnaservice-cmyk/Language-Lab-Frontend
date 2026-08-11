@@ -758,11 +758,10 @@ function VideoDetail({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
-             <VideoPlayer
-  src={getPlayableVideoUrl(selectedModule.video) || undefined}
+           <VideoPlayer
+  src={selectedModule.video?.url?.trim() || undefined}
   poster={
-    selectedModule.video?.thumbnail_url?.trim() ||
-    undefined
+    selectedModule.video?.thumbnail_url?.trim() || undefined
   }
   onEnded={onComplete}
 />
@@ -957,16 +956,26 @@ const containerRef = useRef(null);
                                     </div>
                                 </div>
                                 {selectedModule.audio?.url ? (
-                                    <audio
-                                        key={selectedModule._id}
-                                        src={getPlayableAudioUrl(selectedModule.audio)}
-                                        controls
-                                        className="w-full sm:w-72 md:w-96 focus:outline-none"
-                                        onEnded={onComplete}
-                                        onError={() =>
-                                            toast.error("This audio failed to load.")
-                                        }
-                                    />
+                              <audio
+  key={selectedModule._id}
+  controls
+  preload="none"
+  className="w-full sm:w-72 md:w-96 focus:outline-none"
+  onEnded={onComplete}
+  onError={(e) => {
+    console.error("========== AUDIO ERROR ==========");
+    console.error("Audio URL:", selectedModule.audio?.url);
+    console.error("Audio element error:", e.currentTarget.error);
+    console.error("=================================");
+    toast.error("This audio failed to load.");
+  }}
+>
+  <source
+    src={selectedModule.audio?.url?.trim() || undefined}
+    type="audio/webm"
+  />
+  Your browser does not support audio playback.
+</audio>
                                 ) : (
                                     <p className="text-sm text-slate-400 italic">
                                         Audio not available.
