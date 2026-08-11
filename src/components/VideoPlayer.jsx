@@ -294,51 +294,39 @@ export default function VideoPlayer({
    *
    * Only API thumbnail_url is displayed.
    */
-  if (!started) {
-    return (
-      <div
-        ref={containerRef}
-        className={`relative w-full h-full bg-black overflow-hidden cursor-pointer ${className}`}
+ if (!started) {
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full bg-black overflow-hidden ${className}`}
+    >
+      {poster ? (
+        <img
+          src={poster}
+          alt="Video thumbnail"
+          className="absolute inset-0 w-full h-full object-contain"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-slate-900" />
+      )}
+
+      <div className="absolute inset-0 bg-black/25" />
+
+      <button
+        type="button"
         onClick={startVideo}
+        className="absolute inset-0 flex items-center justify-center"
       >
-        {poster?.trim() ? (
-          <img
-            src={poster}
-            alt="Video thumbnail"
-            className="absolute inset-0 w-full h-full object-cover"
-            onLoad={() => {
-              console.log("Thumbnail loaded:", poster);
-            }}
-            onError={() => {
-              console.error(
-                "Thumbnail failed to load:",
-                poster
-              );
-            }}
+        <div className="h-16 w-16 rounded-full bg-orange-500/95 hover:bg-orange-500 flex items-center justify-center shadow-xl transition-transform hover:scale-110">
+          <Play
+            className="text-white fill-white ml-1"
+            size={28}
           />
-        ) : (
-          <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
-            <span className="text-white/60 text-sm">
-              No thumbnail available
-            </span>
-          </div>
-        )}
-
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/20 hover:bg-black/30 transition-colors" />
-
-        {/* Play button */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-16 w-16 rounded-full bg-orange-500/90 hover:bg-orange-500 flex items-center justify-center shadow-xl transition-transform hover:scale-110">
-            <Play
-              className="text-white fill-white ml-1"
-              size={28}
-            />
-          </div>
         </div>
-      </div>
-    );
-  }
+      </button>
+    </div>
+  );
+}
 
   /*
    * ==========================================================
