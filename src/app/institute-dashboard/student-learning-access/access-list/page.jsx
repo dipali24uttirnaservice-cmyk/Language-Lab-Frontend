@@ -158,7 +158,7 @@ const initialConfiguredModules = [
 ];
 
 /* =========================================================
-   CHECKBOX COMPONENT
+   CHECKBOX & SELECT COMPONENTS
 ========================================================= */
 
 function Checkbox({ checked, indeterminate = false, onChange }) {
@@ -187,6 +187,32 @@ function Checkbox({ checked, indeterminate = false, onChange }) {
   );
 }
 
+function SelectField({ label, value, onChange, placeholder, options, disabled = false }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="h-12 w-full appearance-none rounded-xl border border-orange-200 bg-white px-4 pr-10 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
+        >
+          <option value="" disabled>
+            {placeholder}
+          </option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      </div>
+    </div>
+  );
+}
+
 /* =========================================================
    PARENT COMPONENT: MODULE MANAGEMENT DASHBOARD & FORM
 ========================================================= */
@@ -196,7 +222,7 @@ export default function LearningModuleApp() {
   const [configuredModules, setConfiguredModules] = useState(initialConfiguredModules);
   const [editingModuleId, setEditingModuleId] = useState(null);
 
-  // Filter states for list view matching your screenshot style
+  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
   const [filterTopic, setFilterTopic] = useState("");
@@ -212,8 +238,8 @@ export default function LearningModuleApp() {
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeSubtopicModal, setActiveSubtopicModal] = useState(null);
+  const [viewingModule, setViewingModule] = useState(null); // For Eye click summary card
 
-  // Handlers to open form for Create vs Edit
   const handleOpenCreateForm = () => {
     setEditingModuleId(null);
     setCourseId("");
@@ -241,10 +267,6 @@ export default function LearningModuleApp() {
       setConfiguredModules((prev) => prev.filter((m) => m.id !== id));
     }
   };
-
-  /* =======================================================
-     DERIVED DATA LOGIC FOR FORM & FILTER
-  ======================================================= */
 
   const selectedCourse = courses.find((course) => course.id === courseId);
   const availableTopics = selectedCourse?.topics || [];
@@ -301,13 +323,6 @@ export default function LearningModuleApp() {
     setSelectedSubtopics(availableSubtopics.map((sub) => sub.id));
   };
 
-  const totalSelectedLessons = useMemo(() => {
-    return availableSubtopics
-      .filter((sub) => selectedSubtopics.includes(sub.id))
-      .flatMap((sub) => sub.modules)
-      .reduce((acc, m) => acc + m.lessons, 0);
-  }, [availableSubtopics, selectedSubtopics]);
-
   const handleReviewForm = (event) => {
     event.preventDefault();
     if (!courseId) return alert("Please select a course.");
@@ -358,7 +373,6 @@ export default function LearningModuleApp() {
     }
   };
 
-  // Filtered list based on search, course, and topic
   const displayedModules = useMemo(() => {
     return configuredModules.filter((mod) => {
       const courseObj = courses.find((c) => c.id === mod.course_id);
@@ -381,12 +395,11 @@ export default function LearningModuleApp() {
   }, [configuredModules, searchQuery, filterCourse, filterTopic]);
 
   /* =======================================================
-     RENDER VIEW: LIST (Styled matching your screenshot)
-  ======================================================= */
+     RENDER VIEW: LIST
+  ================================================ ======= */
   if (view === "list") {
     return (
       <div className="min-h-screen bg-[#FFFDF9] px-8 py-8 font-sans">
-        {/* Header section matching screenshot */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-100/60 px-2.5 py-1 rounded-md">
@@ -409,7 +422,6 @@ export default function LearningModuleApp() {
           </button>
         </div>
 
-        {/* Filter Toolbar matching screenshot */}
         <div className="mb-6 rounded-2xl border border-orange-200/60 bg-white p-4 shadow-sm flex flex-col md:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -449,17 +461,15 @@ export default function LearningModuleApp() {
           </div>
         </div>
 
-        {/* Table matching screenshot style exactly */}
         <div className="rounded-2xl border border-orange-200/60 bg-white shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-orange-100 bg-orange-50/40 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                   <th className="py-4 px-6 w-16">Sr. No.</th>
-                   <th className="py-4 px-6">Course</th>
+                  <th className="py-4 px-6">Course</th>
                   <th className="py-4 px-6">Topic</th>
                   <th className="py-4 px-6">Department & Batch</th>
-                 
                   <th className="py-4 px-6 text-center">Student Count</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
@@ -481,10 +491,9 @@ export default function LearningModuleApp() {
                     return (
                       <tr key={mod.id} className="hover:bg-orange-50/20 transition-colors">
                         <td className="py-4 px-6 font-semibold text-slate-400">{index + 1}</td>
-                          <td className="py-4 px-6 text-slate-600 font-medium">{courseObj?.name || "-"}</td>
+                        <td className="py-4 px-6 text-slate-600 font-medium">{courseObj?.name || "-"}</td>
                         <td className="py-4 px-6 text-slate-600 font-medium">{topicObj?.name || "-"}</td>
                         <td className="py-4 px-6">
-                         
                           <div className="flex items-center gap-2 mt-1">
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md">
                               <Building2 size={11} /> {deptObj?.name}
@@ -494,7 +503,6 @@ export default function LearningModuleApp() {
                             </span>
                           </div>
                         </td>
-                      
                         <td className="py-4 px-6 text-center">
                           <span className="inline-flex items-center justify-center rounded-full bg-orange-50 border border-orange-200 px-3 py-1 text-xs font-bold text-orange-600">
                             {batchObj?.studentCount || 0} Students
@@ -504,13 +512,12 @@ export default function LearningModuleApp() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => alert(`Viewing details for module: ${courseObj?.name}`)}
+                              onClick={() => setViewingModule(mod)}
                               className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-2xs"
                               title="View Details"
                             >
                               <Eye size={16} />
                             </button>
-                          
                             <button
                               type="button"
                               onClick={() => handleOpenEditForm(mod)}
@@ -537,16 +544,98 @@ export default function LearningModuleApp() {
             </table>
           </div>
         </div>
+
+        {/* VIEW DETAILS MODAL (Summary Card) */}
+        {viewingModule && (() => {
+          const courseObj = courses.find((c) => c.id === viewingModule.course_id);
+          const topicObj = courseObj?.topics.find((t) => t.id === viewingModule.topic_id);
+          const subtopicsList = topicObj?.subtopics.filter((sub) => viewingModule.subtopic_ids.includes(sub.id)) || [];
+          const deptObj = departments.find((d) => d.id === viewingModule.department_id);
+          const batchObj = deptObj?.batches.find((b) => b.id === viewingModule.batch_id);
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+              <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn">
+                <div className="flex items-center justify-between border-b border-orange-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 border border-orange-200">
+                      <BookOpen size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base">Module Access Summary</h3>
+                      <p className="text-xs text-slate-400">Detailed overview of configured learning access</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewingModule(null)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-4 text-sm">
+                  <div className="rounded-2xl bg-orange-50/40 border border-orange-100 p-4 space-y-3">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase">Course</span>
+                      <p className="font-bold text-slate-800">{courseObj?.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase">Topic</span>
+                      <p className="font-semibold text-slate-700">{topicObj?.name}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Selected Subtopics</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {subtopicsList.map((sub) => (
+                        <span key={sub.id} className="rounded-lg bg-orange-100/60 border border-orange-200 px-2.5 py-1 text-xs font-semibold text-orange-800">
+                          {sub.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                      <span className="text-[11px] font-bold text-amber-800 uppercase flex items-center gap-1">
+                        <Building2 size={12} /> Department
+                      </span>
+                      <p className="font-semibold text-slate-800 mt-1 text-xs">{deptObj?.name}</p>
+                    </div>
+                    <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-3">
+                      <span className="text-[11px] font-bold text-orange-800 uppercase flex items-center gap-1">
+                        <GraduationCap size={12} /> Batch & Students
+                      </span>
+                      <p className="font-semibold text-slate-800 mt-1 text-xs">{batchObj?.name} ({batchObj?.studentCount} students)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setViewingModule(null)}
+                    className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
+                  >
+                    Close Summary
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
 
   /* =======================================================
-     RENDER VIEW: FORM (StudentLearningAccessPage)
-  ======================================================= */
+     RENDER VIEW: FORM
+  ================================================ ======= */
   return (
     <div className="min-h-screen bg-[#FFFDF9] pb-16 font-sans">
-      {/* Top Header */}
       <div className="backdrop-blur-md sticky top-0 z-30 shadow-xs bg-white/80">
         <div className="w-full px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3.5">
@@ -594,8 +683,6 @@ export default function LearningModuleApp() {
 
       <div className="w-full px-6 mt-6">
         <form onSubmit={handleReviewForm} className="space-y-6">
-
-          {/* ROW 1: COURSE & TOPIC SELECTION */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300">
               <div className="mb-4 flex items-center gap-3">
@@ -639,7 +726,6 @@ export default function LearningModuleApp() {
             </div>
           </div>
 
-          {/* ROW 2: SUBTOPIC LIST WITH CHECKBOXES */}
           {topicId && (
             <div className="overflow-hidden rounded-2xl border border-orange-200/60 bg-white shadow-sm transition-all animate-fadeIn">
               <div className="flex flex-col gap-3 border-b border-orange-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between bg-orange-50/30">
@@ -716,7 +802,6 @@ export default function LearningModuleApp() {
             </div>
           )}
 
-          {/* ROW 3: DEPARTMENT & BATCH SELECTION */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300 ${selectedSubtopics.length === 0 ? "opacity-55 pointer-events-none" : "animate-fadeIn"}`}>
               <div className="mb-4 flex items-center gap-3">
@@ -731,7 +816,6 @@ export default function LearningModuleApp() {
 
               <SelectField
                 label="Department"
-                icon={Building2}
                 value={departmentId}
                 onChange={(e) => handleDepartmentChange(e.target.value)}
                 placeholder={selectedSubtopics.length > 0 ? "Select Department" : "First select subtopics"}
@@ -746,220 +830,116 @@ export default function LearningModuleApp() {
                   <GraduationCap size={18} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Step 5: Select Batch / Year</h2>
-                  <p className="text-[11px] text-slate-400">
-                    Select target batch within {selectedDepartment?.name || "department"} 
-                    {selectedBatchId && ` (${availableBatches.find(b => b.id === selectedBatchId)?.studentCount} students)`}
-                  </p>
+                  <h2 className="font-bold text-slate-800 text-sm">Step 5: Batch Selection</h2>
+                  <p className="text-[11px] text-slate-400">Select target batch</p>
                 </div>
               </div>
 
               <SelectField
-                label="Batch / Year"
-                icon={GraduationCap}
+                label="Batch"
                 value={selectedBatchId}
                 onChange={(e) => setSelectedBatchId(e.target.value)}
-                placeholder={departmentId ? "Select Batch" : "First select a department"}
-                options={availableBatches.map((b) => ({ value: b.id, label: `${b.name} (${b.studentCount} Students)` }))}
+                placeholder={departmentId ? "Select Batch" : "First select department"}
+                options={availableBatches.map((b) => ({ value: b.id, label: `${b.name} (${b.studentCount} students)` }))}
                 disabled={!departmentId}
               />
             </div>
           </div>
 
-          {/* SUBMIT BUTTON FOOTER */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={() => setView("list")}
-              className="rounded-xl border border-orange-200 bg-white px-5 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-orange-50/50 shadow-xs"
+              className="rounded-xl border border-orange-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 hover:bg-orange-50 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:shadow-xl hover:from-orange-600 hover:to-amber-600 active:scale-95"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-amber-600 transition"
             >
-              <Save size={17} /> {editingModuleId ? "Update Module Access" : "Review & Create Module"}
+              <Save size={16} /> Save & Review Configuration
             </button>
           </div>
-
         </form>
       </div>
 
-      {/* SUBTOPIC / LESSON DETAILS MODAL POPUP */}
+      {/* SUBTOPIC LESSONS MODAL */}
       {activeSubtopicModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="w-full max-w-lg rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-orange-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-200">
-                  <BookOpen size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">{activeSubtopicModal.name}</h3>
-                  <p className="text-xs text-slate-500">Subtopic lesson modules overview</p>
-                </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base">{activeSubtopicModal.name}</h3>
+                <p className="text-xs text-slate-400">Included modules and lesson breakdown</p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveSubtopicModal(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 text-slate-400 hover:bg-orange-50 hover:text-slate-600 transition"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Included Lessons & Modules</p>
-              {activeSubtopicModal.modules.map((mod, idx) => (
-                <div key={mod.id || idx} className="flex items-center justify-between p-3 rounded-xl border border-orange-100 bg-orange-50/30">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-orange-200 shadow-2xs">
-                      {getModuleTypeIcon(mod.type)}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800">{mod.title}</h4>
-                      <span className="text-[10px] text-orange-600 font-semibold capitalize bg-orange-100/60 px-2 py-0.5 rounded-md">
-                        {mod.type}
-                      </span>
-                    </div>
+            <div className="mt-4 space-y-2.5 max-h-64 overflow-y-auto">
+              {activeSubtopicModal.modules.map((m) => (
+                <div key={m.id} className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/30 p-3">
+                  <div className="flex items-center gap-2.5">
+                    {getModuleTypeIcon(m.type)}
+                    <span className="text-xs font-semibold text-slate-800">{m.title}</span>
                   </div>
-                  <span className="text-xs font-bold text-slate-600 bg-white border border-orange-100 px-2.5 py-1 rounded-lg">
-                    {mod.lessons} Lessons
+                  <span className="text-[11px] font-bold text-orange-700 bg-orange-100/60 px-2 py-0.5 rounded-md">
+                    {m.lessons} Lessons
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-orange-100">
-              <span className="text-xs text-slate-500 font-medium">
-                Total Lessons: <strong className="text-slate-800">{activeSubtopicModal.modules.reduce((acc, m) => acc + m.lessons, 0)}</strong>
-              </span>
+            <div className="mt-6 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  toggleSubtopic(activeSubtopicModal.id);
-                  setActiveSubtopicModal(null);
-                }}
-                className={`rounded-xl px-5 py-2 text-xs font-semibold transition shadow-xs ${
-                  selectedSubtopics.includes(activeSubtopicModal.id)
-                    ? "bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100"
-                    : "bg-orange-600 text-white hover:bg-orange-700"
-                }`}
+                onClick={() => setActiveSubtopicModal(null)}
+                className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
               >
-                {selectedSubtopics.includes(activeSubtopicModal.id) ? "Deselect Subtopic" : "Select Subtopic"}
+                Done
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SUMMARY MODAL POPUP */}
+      {/* CONFIRMATION SUBMISSION MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="w-full max-w-lg rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-orange-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-200">
-                  <CheckCircle2 size={22} />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">Module Configuration Summary</h3>
-                  <p className="text-xs text-slate-500">Please review your setup before final submission</p>
-                </div>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 mb-4">
+              <CheckCircle2 size={24} />
+            </div>
+            <h3 className="font-extrabold text-slate-900 text-lg">Confirm Module Access Setup</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              You are about to configure learning resource access for the selected department and batch.
+            </p>
+
+            <div className="mt-6 flex gap-3 justify-center">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 text-slate-400 hover:bg-orange-50 hover:text-slate-600 transition"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="space-y-3 rounded-2xl bg-orange-50/40 border border-orange-100 p-4 text-xs">
-              <div className="flex justify-between py-1 border-b border-orange-100/60">
-                <span className="font-bold text-slate-500 uppercase tracking-wide">Course</span>
-                <span className="font-semibold text-slate-800 text-right">{selectedCourse?.name}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-orange-100/60">
-                <span className="font-bold text-slate-500 uppercase tracking-wide">Topic</span>
-                <span className="font-semibold text-slate-800 text-right">{selectedTopic?.name}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-orange-100/60">
-                <span className="font-bold text-slate-500 uppercase tracking-wide">Subtopics Selected</span>
-                <span className="font-semibold text-orange-700 text-right">{selectedSubtopics.length} Subtopics ({totalSelectedLessons} Lessons)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-orange-100/60">
-                <span className="font-bold text-slate-500 uppercase tracking-wide">Department</span>
-                <span className="font-semibold text-slate-800 text-right">{selectedDepartment?.name}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="font-bold text-slate-500 uppercase tracking-wide">Target Batch & Students</span>
-                <span className="font-semibold text-orange-800 text-right">
-                  {availableBatches.find(b => b.id === selectedBatchId)?.name} ({availableBatches.find(b => b.id === selectedBatchId)?.studentCount} Students)
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-xl border border-orange-200 bg-white px-5 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-orange-50/50 shadow-xs"
+                className="rounded-xl border border-orange-200 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-orange-50 transition"
               >
                 Back to Edit
               </button>
               <button
                 type="button"
                 onClick={handleConfirmSubmit}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-xs font-semibold text-white shadow-lg shadow-orange-200 transition hover:shadow-xl hover:from-orange-600 hover:to-amber-600 active:scale-95"
+                className="rounded-xl bg-orange-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
               >
-                <Save size={15} /> Confirm & Submit
+                Confirm & Save
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* =========================================================
-   SELECT FIELD COMPONENT
-========================================================= */
-
-function SelectField({ label, icon: Icon, value, onChange, placeholder, options, disabled = false }) {
-  return (
-    <div>
-      <label className="mb-2 block text-xs font-bold text-slate-700 uppercase tracking-wide">
-        {label}
-      </label>
-      <div className="relative">
-        {Icon && (
-          <Icon size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-orange-400 z-10" />
-        )}
-        <select
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          className={`h-11 w-full appearance-none rounded-xl border border-orange-200 bg-white text-sm text-slate-700 outline-none transition cursor-pointer ${
-            Icon ? "pl-10 pr-10" : "pl-4 pr-10"
-          } ${
-            disabled
-              ? "cursor-not-allowed bg-slate-50 text-slate-400"
-              : "hover:border-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-          }`}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={17} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-orange-400" />
-      </div>
     </div>
   );
 }
