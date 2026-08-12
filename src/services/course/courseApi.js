@@ -86,4 +86,34 @@ export const courseApi = {
   // institute's disk). Already fully offline-capable — no fallback needed.
   getCourseDownloadStatus: (courseId) =>
     api.get(`/institute/me/courses/${courseId}/download-status`),
+
+  // Whether this institute's LOCAL mirrored copy of a course is behind
+  // master's source content — i.e. whether "Update Data" should show. Reads
+  // both sides directly (not masterWithLocalFallback, which only ever
+  // returns one) and compares their timestamps, so "since when is this
+  // stale" lives on the two backends, never in browser storage — it stays
+  // correct across tabs, machines, and sessions, unlike a client-side cache.
+  // With no masterToken (plain institute login, no master access) there's
+  // nothing to compare against, so the local copy is treated as current.
+  getCourseSyncStatus: async (courseId) => {
+    if (!Cookies.get("masterToken")) return { isStale: false };
+
+    try {
+      const [masterRes, localRes] = await Promise.all([
+        masterApiInstance.get(`/institute/me/courses/${courseId}/last-updated`),
+        api.get(`/institute/me/courses/${courseId}/last-updated`),
+      ]);
+      const masterUpdated = masterRes.data?.data?.last_updated;
+      const localUpdated = localRes.data?.data?.last_updated;
+      const isStale =
+        !!masterUpdated && !!localUpdated &&
+        new Date(masterUpdated).getTime() > new Date(localUpdated).getTime();
+
+      return { isStale };
+    } catch (error) {
+      if (!isNetworkError(error)) throw error;
+      // Master unreachable — nothing to compare against, don't falsely flag.
+      return { isStale: false };
+    }
+  },
 };

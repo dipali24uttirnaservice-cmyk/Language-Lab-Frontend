@@ -8,8 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 import StatusModal from "@/components/molecules/StatusModal";
 import { courseApi } from "@/services/course/courseApi";
 
-const storageKey = (courseId) => `downloaded_course_${courseId}`;
-
 export default function SettingsPage() {
   const router = useRouter();
   const { user: institute } = useAuth();
@@ -18,7 +16,9 @@ export default function SettingsPage() {
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [courses, setCourses] = useState(null); // null = not fetched yet
   const [downloadingId, setDownloadingId] = useState(null);
-  const [downloadedIds, setDownloadedIds] = useState({});
+  // Whether the source content has changed since this institute's local copy
+  // was synced — courseId -> boolean, computed fresh from the backend each
+  // time (see courseApi.getCourseSyncStatus), never cached client-side.
   const [staleIds, setStaleIds] = useState({});
   // Video files finish caching to local disk in the background after the
   // course metadata download responds — this tracks that separately so the
@@ -52,40 +52,34 @@ export default function SettingsPage() {
     tick();
   };
 
+  // The list is always re-fetched fresh from the server on mount — never
+  // cached client-side — so it can't "go missing" after navigating away and
+  // back, and it's always correct no matter which browser/profile/session
+  // (including incognito) you're looking at it from.
+  useEffect(() => {
+    handleGetCourses();
+  }, []);
+
   useEffect(() => {
     if (!courses) return;
-
-    const next = {};
-    for (const course of courses) {
-      next[course._id] = !!localStorage.getItem(storageKey(course._id));
-    }
-    setDownloadedIds(next);
+    const downloaded = courses.filter((c) => c.is_downloaded);
 
     // Resume tracking video-caching progress for anything already
     // downloaded, in case some videos were still mid-download (or failed)
     // when this page was last closed.
-    for (const course of courses) {
-      if (next[course._id]) pollVideoProgress(course._id);
-    }
+    for (const course of downloaded) pollVideoProgress(course._id);
 
-    // For courses already pulled, check if the source content has changed
-    // since the last pull — if so, flag them as needing "Update Data".
+    // For courses already pulled, ask the backend whether the source
+    // content has changed since this institute's copy was synced — if so,
+    // flag them as needing "Update Data".
     const checkStale = async () => {
-      const downloaded = courses.filter((c) => next[c._id]);
       const results = await Promise.all(
         downloaded.map(async (course) => {
           try {
-            const saved = JSON.parse(localStorage.getItem(storageKey(course._id)));
-            const response = await courseApi.getCourseLastUpdated(course._id);
-            const latest = response.data?.data?.last_updated;
-
-            const isStale =
-              latest && saved?.last_updated &&
-              new Date(latest).getTime() > new Date(saved.last_updated).getTime();
-
-            return [course._id, !!isStale];
+            const { isStale } = await courseApi.getCourseSyncStatus(course._id);
+            return [course._id, isStale];
           } catch (error) {
-            console.error("Last Updated Check Error:", error);
+            console.error("Sync Status Check Error:", error);
             return [course._id, false];
           }
         }),
@@ -118,11 +112,14 @@ export default function SettingsPage() {
   const handleDownload = async (course) => {
     try {
       setDownloadingId(course._id);
-      const response = await courseApi.downloadCourse(course._id);
-      const pulledData = response.data?.data;
+      await courseApi.downloadCourse(course._id);
 
-      localStorage.setItem(storageKey(course._id), JSON.stringify(pulledData));
-      setDownloadedIds((prev) => ({ ...prev, [course._id]: true }));
+      // Reflect the now-downloaded state straight in the list rather than a
+      // separate client-tracked flag — `is_downloaded` here is exactly what
+      // the next getCourses() call from the server would say too.
+      setCourses((prev) =>
+        prev.map((c) => (c._id === course._id ? { ...c, is_downloaded: true } : c)),
+      );
       setStaleIds((prev) => ({ ...prev, [course._id]: false }));
       pollVideoProgress(course._id);
 
@@ -197,7 +194,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm divide-y divide-slate-100 overflow-hidden">
             {courses.map((course) => {
               const isDownloading = downloadingId === course._id;
-              const isDownloaded = !!downloadedIds[course._id];
+              const isDownloaded = !!course.is_downloaded;
               const isStale = isDownloaded && !!staleIds[course._id];
 
               return (
@@ -243,7 +240,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => handleDownload(course)}
-                    disabled={isDownloading}
+                    disabled={isDownloading || (isDownloaded && !isStale)}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all shadow-sm shrink-0 disabled:opacity-50 ${
                       isStale
                         ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
