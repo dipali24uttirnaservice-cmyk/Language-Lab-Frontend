@@ -14,6 +14,7 @@ import {
   FileText,
   RefreshCw,
   Send,
+  Users,
 } from "lucide-react";
 
 import {
@@ -43,6 +44,9 @@ export default function PracticalManualPage() {
   const [filterCourses, setFilterCourses] = useState([]);
   const [filterTopics, setFilterTopics] = useState([]);
   const [filterTopicsLoading, setFilterTopicsLoading] = useState(false);
+
+
+
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -195,6 +199,10 @@ export default function PracticalManualPage() {
   const filteredManuals = manuals.filter((item) =>
     item.title?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+const handleAssignManual = (id) => {
+  router.push(`/institute-dashboard/practical-manual/assign/${id}`);
+};
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
@@ -352,6 +360,14 @@ export default function PracticalManualPage() {
 
                       <td className="p-4 pr-6">
                         <div className="flex items-center justify-center gap-2">
+                       <button
+  type="button"
+  onClick={() => handleAssignManual(manual._id)}
+  className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
+  title="Assign Manual"
+>
+  <Users className="w-4 h-4" />
+</button>
                           <button
                             onClick={() =>
                               router.push(
@@ -457,6 +473,8 @@ export default function PracticalManualPage() {
           confirmText="Delete"
           cancelText="Cancel"
         />
+
+       
       </div>
     </div>
   );

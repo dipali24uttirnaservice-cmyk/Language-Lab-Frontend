@@ -1,945 +1,1028 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
-  ChevronDown,
-  Check,
   GraduationCap,
   Building2,
-  Layers3,
-  Save,
   Search,
-  CheckCircle2,
-  Sparkles,
-  RotateCcw,
-  BookMarked,
-  X,
-  PlayCircle,
-  Headphones,
-  FileText,
-  CheckSquare,
-  Plus,
-  Edit3,
-  Users,
-  ArrowLeft,
   Eye,
-  Send,
+  Edit3,
   Trash2,
+  Plus,
+  X,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-/* =========================================================
-   DUMMY COURSE & TOPIC DATA (Courses -> Topics -> Subtopics -> Modules)
-========================================================= */
+import StatusModal from "@/components/molecules/StatusModal";
+import ConfirmModal from "@/components/molecules/ConfirmModal";
 
-const courses = [
-  {
-    id: "course-1",
-    name: "Foundation English & Communication",
-    topics: [
-      {
-        id: "topic-1",
-        name: "English Grammar",
-        subtopics: [
-          {
-            id: "subtopic-1",
-            name: "Tenses",
-            modules: [
-              { id: "module-1", title: "Introduction to Tenses", type: "video", lessons: 4 },
-              { id: "module-2", title: "Tenses Explanation", type: "audio", lessons: 3 },
-              { id: "module-3", title: "Tenses Notes", type: "text", lessons: 5 },
-              { id: "module-4", title: "Tenses Practice", type: "exercise", lessons: 10 },
-            ],
-          },
-          {
-            id: "subtopic-2",
-            name: "Articles",
-            modules: [
-              { id: "module-5", title: "Introduction to Articles", type: "video", lessons: 3 },
-              { id: "module-6", title: "Articles Audio Lesson", type: "audio", lessons: 4 },
-              { id: "module-7", title: "Articles Notes", type: "text", lessons: 3 },
-              { id: "module-8", title: "Articles Practice", type: "exercise", lessons: 12 },
-            ],
-          },
-        ],
-      },
-      {
-        id: "topic-2",
-        name: "Communication Skills",
-        subtopics: [
-          {
-            id: "subtopic-4",
-            name: "Speaking Skills",
-            modules: [
-              { id: "module-13", title: "Introduction to Speaking", type: "video", lessons: 5 },
-              { id: "module-14", title: "Speaking Practice Audio", type: "audio", lessons: 6 },
-              { id: "module-15", title: "Speaking Exercise", type: "exercise", lessons: 10 },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-2",
-    name: "Advanced Professional English",
-    topics: [
-      {
-        id: "topic-3",
-        name: "Vocabulary",
-        subtopics: [
-          {
-            id: "subtopic-7",
-            name: "Business Vocabulary",
-            modules: [
-              { id: "module-21", title: "Business Words", type: "video", lessons: 8 },
-              { id: "module-22", title: "Business Vocabulary Practice", type: "exercise", lessons: 20 },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-];
+import { studentLearningAccessApi } from "@/services/studentLearningAccess/studentLearningAccessApi";
 
-/* =========================================================
-   DUMMY DEPARTMENT & BATCH DATA
-========================================================= */
+export default function StudentLearningAccessListPage() {
+  const router = useRouter();
 
-const departments = [
-  {
-    id: "dept-1",
-    name: "Computer Science",
-    batches: [
-      { id: "batch-1", name: "2026 - Batch A", studentCount: 64 },
-      { id: "batch-2", name: "2026 - Batch B", studentCount: 58 },
-      { id: "batch-3", name: "2025 - Batch A", studentCount: 50 },
-    ],
-  },
-  {
-    id: "dept-2",
-    name: "Information Technology",
-    batches: [
-      { id: "batch-4", name: "2026 - Batch A", studentCount: 60 },
-      { id: "batch-5", name: "2026 - Batch B", studentCount: 55 },
-    ],
-  },
-  {
-    id: "dept-3",
-    name: "Electronics",
-    batches: [
-      { id: "batch-6", name: "2026 - Batch A", studentCount: 45 },
-      { id: "batch-7", name: "2025 - Batch A", studentCount: 42 },
-    ],
-  },
-];
+  const [configuredModules, setConfiguredModules] = useState([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState("");
 
-/* =========================================================
-   INITIAL CONFIGURED MODULES (Mock Database List)
-========================================================= */
-
-const initialConfiguredModules = [
-  {
-    id: "mod-config-1",
-    course_id: "course-1",
-    topic_id: "topic-1",
-    subtopic_ids: ["subtopic-1", "subtopic-2"],
-    department_id: "dept-1",
-    batch_id: "batch-1",
-  },
-  {
-    id: "mod-config-2",
-    course_id: "course-2",
-    topic_id: "topic-3",
-    subtopic_ids: ["subtopic-7"],
-    department_id: "dept-2",
-    batch_id: "batch-4",
-  },
-];
-
-/* =========================================================
-   CHECKBOX & SELECT COMPONENTS
-========================================================= */
-
-function Checkbox({ checked, indeterminate = false, onChange }) {
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation();
-        onChange();
-      }}
-      className="flex-shrink-0 focus:outline-none transition-transform active:scale-95"
-      aria-label="checkbox"
-    >
-      {checked ? (
-        <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md shadow-orange-200 transition-all">
-          <Check size={13} strokeWidth={3} />
-        </span>
-      ) : indeterminate ? (
-        <span className="flex h-5 w-5 items-center justify-center rounded-lg border-2 border-orange-600 bg-orange-50 transition-all">
-          <span className="h-0.5 w-2.5 rounded-full bg-orange-600" />
-        </span>
-      ) : (
-        <span className="block h-5 w-5 rounded-lg border-2 border-amber-200 bg-white transition-all hover:border-orange-400 hover:bg-orange-50/30" />
-      )}
-    </button>
-  );
-}
-
-function SelectField({ label, value, onChange, placeholder, options, disabled = false }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">{label}</label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          className="h-12 w-full appearance-none rounded-xl border border-orange-200 bg-white px-4 pr-10 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer"
-        >
-          <option value="" disabled>
-            {placeholder}
-          </option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   PARENT COMPONENT: MODULE MANAGEMENT DASHBOARD & FORM
-========================================================= */
-
-export default function LearningModuleApp() {
-  const [view, setView] = useState("list"); // "list" | "form"
-  const [configuredModules, setConfiguredModules] = useState(initialConfiguredModules);
-  const [editingModuleId, setEditingModuleId] = useState(null);
-
-  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
   const [filterTopic, setFilterTopic] = useState("");
 
-  // Form states
-  const [courseId, setCourseId] = useState("");
-  const [topicId, setTopicId] = useState("");
-  const [selectedSubtopics, setSelectedSubtopics] = useState([]);
-  const [subtopicSearch, setSubtopicSearch] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
-  const [selectedBatchId, setSelectedBatchId] = useState("");
-  
-  // Modals
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeSubtopicModal, setActiveSubtopicModal] = useState(null);
-  const [viewingModule, setViewingModule] = useState(null); // For Eye click summary card
+  const [viewingModule, setViewingModule] = useState(null);
 
-  const handleOpenCreateForm = () => {
-    setEditingModuleId(null);
-    setCourseId("");
-    setTopicId("");
-    setSelectedSubtopics([]);
-    setSubtopicSearch("");
-    setDepartmentId("");
-    setSelectedBatchId("");
-    setView("form");
+  /* =========================================================
+     DELETE STATES
+  ========================================================= */
+
+  const [deletingId, setDeletingId] = useState(null);
+
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    id: null,
+  });
+
+  /* =========================================================
+     STATUS MODAL
+  ========================================================= */
+
+  const [statusData, setStatusData] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  /* =========================================================
+     PAGINATION
+  ========================================================= */
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  /* =========================================================
+     FETCH LIST API
+  ========================================================= */
+
+  const fetchList = useCallback(async () => {
+    setListLoading(true);
+    setListError("");
+
+    try {
+      const res = await studentLearningAccessApi.getAll();
+
+      const records = res?.data?.data?.records ?? [];
+
+      setConfiguredModules(
+        Array.isArray(records) ? records : []
+      );
+    } catch (err) {
+      setListError(
+        err?.response?.data?.message ||
+          "Failed to load learning access modules."
+      );
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
+  /* =========================================================
+     ADD
+  ========================================================= */
+
+  const handleAdd = () => {
+    router.push(
+      "/institute-dashboard/student-learning-access"
+    );
   };
 
-  const handleOpenEditForm = (mod) => {
-    setEditingModuleId(mod.id);
-    setCourseId(mod.course_id);
-    setTopicId(mod.topic_id);
-    setSelectedSubtopics(mod.subtopic_ids);
-    setSubtopicSearch("");
-    setDepartmentId(mod.department_id);
-    setSelectedBatchId(mod.batch_id);
-    setView("form");
+  /* =========================================================
+     EDIT
+  ========================================================= */
+
+  const handleEdit = (id) => {
+    const editUrl =
+      "/institute-dashboard/student-learning-access?id=" + id;
+
+    router.push(editUrl);
   };
+
+  /* =========================================================
+     DELETE - OPEN CONFIRM MODAL
+  ========================================================= */
 
   const handleDeleteModule = (id) => {
-    if (window.confirm("Are you sure you want to delete this module access?")) {
-      setConfiguredModules((prev) => prev.filter((m) => m.id !== id));
-    }
+    setDeleteModal({
+      open: true,
+      id,
+    });
   };
 
-  const selectedCourse = courses.find((course) => course.id === courseId);
-  const availableTopics = selectedCourse?.topics || [];
+  /* =========================================================
+     DELETE - CONFIRM
+  ========================================================= */
 
-  const selectedTopic = availableTopics.find((topic) => topic.id === topicId);
-  const availableSubtopics = selectedTopic?.subtopics || [];
+  const confirmDelete = async () => {
+    if (!deleteModal.id) return;
 
-  const filteredSubtopics = useMemo(() => {
-    return availableSubtopics.filter((sub) =>
-      sub.name.toLowerCase().includes(subtopicSearch.toLowerCase())
-    );
-  }, [availableSubtopics, subtopicSearch]);
+    const id = deleteModal.id;
 
-  const selectedDepartment = departments.find((dept) => dept.id === departmentId);
-  const availableBatches = selectedDepartment?.batches || [];
+    setDeletingId(id);
 
-  const handleCourseChange = (value) => {
-    setCourseId(value);
-    setTopicId("");
-    setSelectedSubtopics([]);
-    setSubtopicSearch("");
-  };
+    try {
+      await studentLearningAccessApi.remove(id);
 
-  const handleTopicChange = (value) => {
-    setTopicId(value);
-    setSelectedSubtopics([]);
-    setSubtopicSearch("");
-  };
-
-  const handleDepartmentChange = (value) => {
-    setDepartmentId(value);
-    setSelectedBatchId("");
-  };
-
-  const toggleSubtopic = (subtopicId) => {
-    if (selectedSubtopics.includes(subtopicId)) {
-      setSelectedSubtopics((prev) => prev.filter((id) => id !== subtopicId));
-      return;
-    }
-    setSelectedSubtopics((prev) => [...prev, subtopicId]);
-  };
-
-  const allSubtopicsSelected =
-    availableSubtopics.length > 0 &&
-    selectedSubtopics.length === availableSubtopics.length;
-  const someSubtopicsSelected =
-    selectedSubtopics.length > 0 && selectedSubtopics.length < availableSubtopics.length;
-
-  const toggleAllSubtopics = () => {
-    if (allSubtopicsSelected) {
-      setSelectedSubtopics([]);
-      return;
-    }
-    setSelectedSubtopics(availableSubtopics.map((sub) => sub.id));
-  };
-
-  const handleReviewForm = (event) => {
-    event.preventDefault();
-    if (!courseId) return alert("Please select a course.");
-    if (!topicId) return alert("Please select a topic.");
-    if (selectedSubtopics.length === 0) return alert("Please select at least one subtopic.");
-    if (!departmentId) return alert("Please select a department.");
-    if (!selectedBatchId) return alert("Please select a batch.");
-
-    setIsModalOpen(true);
-  };
-
-  const handleConfirmSubmit = () => {
-    const payload = {
-      id: editingModuleId || `mod-config-${Date.now()}`,
-      course_id: courseId,
-      topic_id: topicId,
-      subtopic_ids: selectedSubtopics,
-      department_id: departmentId,
-      batch_id: selectedBatchId,
-    };
-
-    if (editingModuleId) {
       setConfiguredModules((prev) =>
-        prev.map((item) => (item.id === editingModuleId ? payload : item))
+        prev.filter((module) => module._id !== id)
       );
-      alert("Learning module updated successfully!");
-    } else {
-      setConfiguredModules((prev) => [payload, ...prev]);
-      alert("Student learning access module configured successfully!");
-    }
 
-    setIsModalOpen(false);
-    setView("list");
+      setDeleteModal({
+        open: false,
+        id: null,
+      });
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Deleted Successfully",
+        message:
+          "Learning access module deleted successfully.",
+      });
+    } catch (err) {
+      console.error(
+        "Failed to delete learning access:",
+        err
+      );
+
+      setDeleteModal({
+        open: false,
+        id: null,
+      });
+
+      setStatusData({
+        open: true,
+        type: "error",
+        title: "Delete Failed",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to delete this module access.",
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
-  const getModuleTypeIcon = (type) => {
-    switch (type) {
-      case "video":
-        return <PlayCircle size={15} className="text-orange-500" />;
-      case "audio":
-        return <Headphones size={15} className="text-amber-500" />;
-      case "text":
-        return <FileText size={15} className="text-blue-500" />;
-      case "exercise":
-        return <CheckSquare size={15} className="text-emerald-500" />;
-      default:
-        return <BookOpen size={15} className="text-slate-500" />;
-    }
-  };
+  /* =========================================================
+     FILTER OPTIONS
+  ========================================================= */
+
+  const filterCourseOptions = useMemo(() => {
+    const seen = new Map();
+
+    configuredModules.forEach((mod) => {
+      if (mod.course_id && !seen.has(mod.course_id)) {
+        seen.set(
+          mod.course_id,
+          mod.course?.course_name || "Untitled Course"
+        );
+      }
+    });
+
+    return Array.from(
+      seen,
+      ([value, label]) => ({
+        value,
+        label,
+      })
+    );
+  }, [configuredModules]);
+
+  const filterTopicOptions = useMemo(() => {
+    const seen = new Map();
+
+    configuredModules.forEach((mod) => {
+      if (mod.topic_id && !seen.has(mod.topic_id)) {
+        seen.set(
+          mod.topic_id,
+          mod.topic?.title || "Untitled Topic"
+        );
+      }
+    });
+
+    return Array.from(
+      seen,
+      ([value, label]) => ({
+        value,
+        label,
+      })
+    );
+  }, [configuredModules]);
+
+  /* =========================================================
+     FILTERED LIST
+  ========================================================= */
 
   const displayedModules = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+
     return configuredModules.filter((mod) => {
-      const courseObj = courses.find((c) => c.id === mod.course_id);
-      const topicObj = courseObj?.topics.find((t) => t.id === mod.topic_id);
-      const deptObj = departments.find((d) => d.id === mod.department_id);
-      const batchObj = deptObj?.batches.find((b) => b.id === mod.batch_id);
+      const courseName =
+        mod.course?.course_name?.toLowerCase() || "";
+
+      const topicName =
+        mod.topic?.title?.toLowerCase() || "";
+
+      const departmentName =
+        mod.segment?.toLowerCase() || "";
+
+      const year =
+        String(mod.year || "").toLowerCase();
 
       const matchesSearch =
-        !searchQuery ||
-        courseObj?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        topicObj?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        deptObj?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        batchObj?.name.toLowerCase().includes(searchQuery.toLowerCase());
+        !query ||
+        courseName.includes(query) ||
+        topicName.includes(query) ||
+        departmentName.includes(query) ||
+        year.includes(query);
 
-      const matchesCourse = !filterCourse || mod.course_id === filterCourse;
-      const matchesTopic = !filterTopic || mod.topic_id === filterTopic;
+      const matchesCourse =
+        !filterCourse ||
+        mod.course_id === filterCourse;
 
-      return matchesSearch && matchesCourse && matchesTopic;
+      const matchesTopic =
+        !filterTopic ||
+        mod.topic_id === filterTopic;
+
+      return (
+        matchesSearch &&
+        matchesCourse &&
+        matchesTopic
+      );
     });
-  }, [configuredModules, searchQuery, filterCourse, filterTopic]);
+  }, [
+    configuredModules,
+    searchQuery,
+    filterCourse,
+    filterTopic,
+  ]);
 
-  /* =======================================================
-     RENDER VIEW: LIST
-  ================================================ ======= */
-  if (view === "list") {
-    return (
-      <div className="min-h-screen bg-[#FFFDF9] px-8 py-8 font-sans">
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-100/60 px-2.5 py-1 rounded-md">
-              Academic Resources
-            </span>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight mt-2 flex items-center gap-2">
-              Learning <span className="text-orange-600">Modules</span>
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Manage curriculum modules, departmental batch allocations, and student access efficiently.
-            </p>
-          </div>
+  /* =========================================================
+     RESET PAGE WHEN FILTER CHANGES
+  ========================================================= */
 
-          <button
-            type="button"
-            onClick={handleOpenCreateForm}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:shadow-xl hover:from-orange-600 hover:to-amber-600 active:scale-95 self-start md:self-auto"
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    filterCourse,
+    filterTopic,
+    itemsPerPage,
+  ]);
+
+  /* =========================================================
+     PAGINATION CALCULATIONS
+  ========================================================= */
+
+  const totalItems = displayedModules.length;
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalItems / itemsPerPage)
+  );
+
+  const paginatedModules = useMemo(() => {
+    const startIndex =
+      (currentPage - 1) * itemsPerPage;
+
+    const endIndex =
+      startIndex + itemsPerPage;
+
+    return displayedModules.slice(
+      startIndex,
+      endIndex
+    );
+  }, [
+    displayedModules,
+    currentPage,
+    itemsPerPage,
+  ]);
+
+  /* =========================================================
+     KEEP CURRENT PAGE VALID
+  ========================================================= */
+
+  useEffect(() => {
+    if (
+      currentPage > totalPages &&
+      totalPages > 0
+    ) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  /* =========================================================
+     PAGINATION HANDLERS
+  ========================================================= */
+
+  const handlePreviousPage = () => {
+    setCurrentPage((previous) =>
+      Math.max(previous - 1, 1)
+    );
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((previous) =>
+      Math.min(
+        previous + 1,
+        totalPages
+      )
+    );
+  };
+
+  const handlePageChange = (page) => {
+    if (
+      page >= 1 &&
+      page <= totalPages
+    ) {
+      setCurrentPage(page);
+    }
+  };
+
+  /* =========================================================
+     PAGE NUMBERS
+  ========================================================= */
+
+  const pageNumbers = useMemo(() => {
+    const pages = [];
+
+    if (totalPages <= 5) {
+      for (
+        let page = 1;
+        page <= totalPages;
+        page++
+      ) {
+        pages.push(page);
+      }
+
+      return pages;
+    }
+
+    if (currentPage <= 3) {
+      return [
+        1,
+        2,
+        3,
+        4,
+        "...",
+        totalPages,
+      ];
+    }
+
+    if (currentPage >= totalPages - 2) {
+      return [
+        1,
+        "...",
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "...",
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      "...",
+      totalPages,
+    ];
+  }, [currentPage, totalPages]);
+
+  /* =========================================================
+     PAGINATION INFO
+  ========================================================= */
+
+  const showingFrom =
+    totalItems === 0
+      ? 0
+      : (currentPage - 1) *
+          itemsPerPage +
+        1;
+
+  const showingTo = Math.min(
+    currentPage * itemsPerPage,
+    totalItems
+  );
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-6">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-orange-500">
+            Academic Resources
+          </p>
+
+          <h1 className="text-2xl font-extrabold text-slate-900">
+            Learning Modules
+          </h1>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Manage curriculum modules, departmental batch
+            allocations, and student access efficiently.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="flex items-center gap-2 self-start rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:from-orange-600 hover:to-amber-600 hover:shadow-xl active:scale-95 md:self-auto"
+        >
+          <Plus size={18} />
+          Add Module
+        </button>
+      </div>
+
+      {/* =====================================================
+          FILTERS
+      ===================================================== */}
+
+      <div className="mb-6 flex flex-col items-center gap-4 rounded-2xl border border-orange-200/60 bg-white p-4 shadow-sm md:flex-row">
+        {/* SEARCH */}
+
+        <div className="relative w-full flex-1">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+
+          <input
+            type="text"
+            placeholder="Search module by title, department or batch..."
+            value={searchQuery}
+            onChange={(event) =>
+              setSearchQuery(event.target.value)
+            }
+            className="h-12 w-full rounded-xl border border-orange-200 bg-white pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+          />
+        </div>
+
+        {/* COURSE FILTER */}
+
+        <div className="w-full md:w-64">
+          <select
+            value={filterCourse}
+            onChange={(event) =>
+              setFilterCourse(event.target.value)
+            }
+            className="h-12 w-full cursor-pointer rounded-xl border border-orange-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           >
-            <Plus size={18} /> Add Module
-          </button>
+            <option value="">
+              All Courses
+            </option>
+
+            {filterCourseOptions.map((course) => (
+              <option
+                key={course.value}
+                value={course.value}
+              >
+                {course.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="mb-6 rounded-2xl border border-orange-200/60 bg-white p-4 shadow-sm flex flex-col md:flex-row items-center gap-4">
-          <div className="relative flex-1 w-full">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search module by title, department or batch..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 w-full rounded-xl border border-orange-200 bg-white pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-            />
-          </div>
+        {/* TOPIC FILTER */}
 
-          <div className="w-full md:w-64">
-            <select
-              value={filterCourse}
-              onChange={(e) => setFilterCourse(e.target.value)}
-              className="h-12 w-full rounded-xl border border-orange-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 cursor-pointer"
-            >
-              <option value="">All Courses</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+        <div className="w-full md:w-64">
+          <select
+            value={filterTopic}
+            onChange={(event) =>
+              setFilterTopic(event.target.value)
+            }
+            className="h-12 w-full cursor-pointer rounded-xl border border-orange-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+          >
+            <option value="">
+              All Topics
+            </option>
 
-          <div className="w-full md:w-64">
-            <select
-              value={filterTopic}
-              onChange={(e) => setFilterTopic(e.target.value)}
-              className="h-12 w-full rounded-xl border border-orange-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 cursor-pointer"
-            >
-              <option value="">All Topics</option>
-              {courses.flatMap(c => c.topics).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
+            {filterTopicOptions.map((topic) => (
+              <option
+                key={topic.value}
+                value={topic.value}
+              >
+                {topic.label}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
 
-        <div className="rounded-2xl border border-orange-200/60 bg-white shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-orange-100 bg-orange-50/40 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                  <th className="py-4 px-6 w-16">Sr. No.</th>
-                  <th className="py-4 px-6">Course</th>
-                  <th className="py-4 px-6">Topic</th>
-                  <th className="py-4 px-6">Department & Batch</th>
-                  <th className="py-4 px-6 text-center">Student Count</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
+      {/* =====================================================
+          TABLE
+      ===================================================== */}
+
+      <div className="overflow-hidden rounded-2xl border border-orange-200/60 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-orange-100 bg-orange-50/40 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <th className="w-16 px-6 py-4">
+                  Sr. No.
+                </th>
+
+                <th className="px-6 py-4">
+                  Course
+                </th>
+
+                <th className="px-6 py-4">
+                  Topic
+                </th>
+
+                <th className="px-6 py-4">
+                  Department & Batch
+                </th>
+
+                <th className="px-6 py-4 text-center">
+                  Student Count
+                </th>
+
+                <th className="px-6 py-4 text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-orange-50 text-sm text-slate-700">
+              {/* LOADING */}
+
+              {listLoading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-xs text-slate-400"
+                  >
+                    <Loader2
+                      size={18}
+                      className="mr-2 inline animate-spin"
+                    />
+                    Loading learning modules...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-orange-50 text-sm text-slate-700">
-                {displayedModules.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-xs text-slate-400">
-                      No learning modules found matching your filters.
+              ) : listError ? (
+                /* ERROR */
+
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-xs text-rose-500"
+                  >
+                    {listError}
+                  </td>
+                </tr>
+              ) : paginatedModules.length === 0 ? (
+                /* EMPTY */
+
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-xs text-slate-400"
+                  >
+                    No learning modules found matching
+                    your filters.
+                  </td>
+                </tr>
+              ) : (
+                /* DATA */
+
+                paginatedModules.map((mod, index) => (
+                  <tr
+                    key={mod._id}
+                    className="transition-colors hover:bg-orange-50/20"
+                  >
+                    {/* SR NO */}
+
+                    <td className="px-6 py-4 font-semibold text-slate-400">
+                      {(currentPage - 1) *
+                        itemsPerPage +
+                        index +
+                        1}
+                    </td>
+
+                    {/* COURSE */}
+
+                    <td className="px-6 py-4 font-medium text-slate-600">
+                      {mod.course?.course_name || "-"}
+                    </td>
+
+                    {/* TOPIC */}
+
+                    <td className="px-6 py-4 font-medium text-slate-600">
+                      {mod.topic?.title || "-"}
+                    </td>
+
+                    {/* DEPARTMENT + BATCH */}
+
+                    <td className="px-6 py-4">
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                          <Building2 size={11} />
+
+                          {mod.segment || "-"}
+                        </span>
+
+                        <span className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-800">
+                          <GraduationCap size={11} />
+
+                          {mod.year || "-"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* STUDENT COUNT */}
+
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+                        {mod.student_count ?? 0}{" "}
+                        Students
+                      </span>
+                    </td>
+
+                    {/* ACTIONS */}
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* VIEW */}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setViewingModule(mod)
+                          }
+                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-2xs transition hover:bg-blue-100"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+
+                        {/* EDIT */}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleEdit(mod._id)
+                          }
+                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shadow-2xs transition hover:bg-amber-100"
+                          title="Edit Module"
+                        >
+                          <Edit3 size={15} />
+                        </button>
+
+                        {/* DELETE */}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteModule(mod._id)
+                          }
+                          disabled={
+                            deletingId === mod._id
+                          }
+                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shadow-2xs transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Delete Module"
+                        >
+                          {deletingId === mod._id ? (
+                            <Loader2
+                              size={15}
+                              className="animate-spin"
+                            />
+                          ) : (
+                            <Trash2 size={15} />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  displayedModules.map((mod, index) => {
-                    const courseObj = courses.find((c) => c.id === mod.course_id);
-                    const topicObj = courseObj?.topics.find((t) => t.id === mod.topic_id);
-                    const deptObj = departments.find((d) => d.id === mod.department_id);
-                    const batchObj = deptObj?.batches.find((b) => b.id === mod.batch_id);
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                    return (
-                      <tr key={mod.id} className="hover:bg-orange-50/20 transition-colors">
-                        <td className="py-4 px-6 font-semibold text-slate-400">{index + 1}</td>
-                        <td className="py-4 px-6 text-slate-600 font-medium">{courseObj?.name || "-"}</td>
-                        <td className="py-4 px-6 text-slate-600 font-medium">{topicObj?.name || "-"}</td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md">
-                              <Building2 size={11} /> {deptObj?.name}
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 px-2 py-0.5 rounded-md">
-                              <GraduationCap size={11} /> {batchObj?.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <span className="inline-flex items-center justify-center rounded-full bg-orange-50 border border-orange-200 px-3 py-1 text-xs font-bold text-orange-600">
-                            {batchObj?.studentCount || 0} Students
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setViewingModule(mod)}
-                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-2xs"
-                              title="View Details"
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditForm(mod)}
-                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs"
-                              title="Edit Module"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteModule(mod.id)}
-                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs"
-                              title="Delete Module"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+        {/* ===================================================
+            PAGINATION
+        =================================================== */}
+
+        {!listLoading &&
+          !listError &&
+          totalItems > 0 && (
+            <div className="flex flex-col gap-4 border-t border-orange-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              {/* LEFT */}
+
+              <div className="flex items-center gap-3">
+                <p className="text-xs font-medium text-slate-500">
+                  Showing{" "}
+                  <span className="font-bold text-slate-800">
+                    {showingFrom}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-bold text-slate-800">
+                    {showingTo}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-bold text-slate-800">
+                    {totalItems}
+                  </span>
+                </p>
+
+                <select
+                  value={itemsPerPage}
+                  onChange={(event) => {
+                    setItemsPerPage(
+                      Number(event.target.value)
                     );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  }}
+                  className="h-8 rounded-lg border border-orange-200 bg-white px-2 text-xs font-semibold text-slate-600 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value={5}>
+                    5 / page
+                  </option>
 
-        {/* VIEW DETAILS MODAL (Summary Card) */}
-        {viewingModule && (() => {
-          const courseObj = courses.find((c) => c.id === viewingModule.course_id);
-          const topicObj = courseObj?.topics.find((t) => t.id === viewingModule.topic_id);
-          const subtopicsList = topicObj?.subtopics.filter((sub) => viewingModule.subtopic_ids.includes(sub.id)) || [];
-          const deptObj = departments.find((d) => d.id === viewingModule.department_id);
-          const batchObj = deptObj?.batches.find((b) => b.id === viewingModule.batch_id);
+                  <option value={6}>
+                    6 / page
+                  </option>
 
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
-              <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn">
-                <div className="flex items-center justify-between border-b border-orange-100 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 border border-orange-200">
-                      <BookOpen size={20} />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">Module Access Summary</h3>
-                      <p className="text-xs text-slate-400">Detailed overview of configured learning access</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setViewingModule(null)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+                  <option value={10}>
+                    10 / page
+                  </option>
 
-                <div className="mt-5 space-y-4 text-sm">
-                  <div className="rounded-2xl bg-orange-50/40 border border-orange-100 p-4 space-y-3">
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase">Course</span>
-                      <p className="font-bold text-slate-800">{courseObj?.name}</p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase">Topic</span>
-                      <p className="font-semibold text-slate-700">{topicObj?.name}</p>
-                    </div>
-                  </div>
+                  <option value={20}>
+                    20 / page
+                  </option>
 
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase">Selected Subtopics</span>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {subtopicsList.map((sub) => (
-                        <span key={sub.id} className="rounded-lg bg-orange-100/60 border border-orange-200 px-2.5 py-1 text-xs font-semibold text-orange-800">
-                          {sub.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  <option value={50}>
+                    50 / page
+                  </option>
+                </select>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
-                      <span className="text-[11px] font-bold text-amber-800 uppercase flex items-center gap-1">
-                        <Building2 size={12} /> Department
+              {/* RIGHT */}
+
+              <div className="flex items-center justify-end gap-1">
+                {/* PREVIOUS */}
+
+                <button
+                  type="button"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-orange-200 bg-white text-slate-500 transition hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {/* PAGE NUMBERS */}
+
+                {pageNumbers.map(
+                  (page, index) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="flex h-9 w-9 items-center justify-center text-xs font-semibold text-slate-400"
+                      >
+                        ...
                       </span>
-                      <p className="font-semibold text-slate-800 mt-1 text-xs">{deptObj?.name}</p>
-                    </div>
-                    <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-3">
-                      <span className="text-[11px] font-bold text-orange-800 uppercase flex items-center gap-1">
-                        <GraduationCap size={12} /> Batch & Students
-                      </span>
-                      <p className="font-semibold text-slate-800 mt-1 text-xs">{batchObj?.name} ({batchObj?.studentCount} students)</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setViewingModule(null)}
-                    className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
-                  >
-                    Close Summary
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-      </div>
-    );
-  }
-
-  /* =======================================================
-     RENDER VIEW: FORM
-  ================================================ ======= */
-  return (
-    <div className="min-h-screen bg-[#FFFDF9] pb-16 font-sans">
-      <div className="backdrop-blur-md sticky top-0 z-30 shadow-xs bg-white/80">
-        <div className="w-full px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <button
-              type="button"
-              onClick={() => setView("list")}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-orange-200 bg-white text-slate-600 shadow-xs hover:bg-orange-50 transition"
-              aria-label="Back to List"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-extrabold text-slate-900 tracking-tight">
-                  {editingModuleId ? "Edit Student Learning Access" : "Create Student Learning Access"}
-                </h1>
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-200 px-2.5 py-0.5 text-xs font-semibold text-orange-600">
-                  <Sparkles size={11} /> StudentLearningAccessPage
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Configure curriculum content courses, topics, and target batches
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setCourseId("");
-                setTopicId("");
-                setSelectedSubtopics([]);
-                setSubtopicSearch("");
-                setDepartmentId("");
-                setSelectedBatchId("");
-              }}
-              className="flex items-center gap-1.5 rounded-xl border border-orange-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-orange-50/50 active:scale-95"
-            >
-              <RotateCcw size={13} className="text-orange-600" /> Reset Form
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full px-6 mt-6">
-        <form onSubmit={handleReviewForm} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-600 border border-orange-100">
-                  <BookMarked size={18} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Step 1: Course Selection</h2>
-                  <p className="text-[11px] text-slate-400">Select curriculum course</p>
-                </div>
-              </div>
-
-              <SelectField
-                label="Course"
-                value={courseId}
-                onChange={(e) => handleCourseChange(e.target.value)}
-                placeholder="Select Course"
-                options={courses.map((c) => ({ value: c.id, label: c.name }))}
-              />
-            </div>
-
-            <div className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300 ${!courseId ? "opacity-55 pointer-events-none" : "animate-fadeIn"}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-600 border border-orange-100">
-                  <Layers3 size={18} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Step 2: Core Topic</h2>
-                  <p className="text-[11px] text-slate-400">Select topic from the chosen course</p>
-                </div>
-              </div>
-
-              <SelectField
-                label="Topic Selection"
-                value={topicId}
-                onChange={(e) => handleTopicChange(e.target.value)}
-                placeholder={courseId ? "Select Topic" : "First select a course"}
-                options={availableTopics.map((t) => ({ value: t.id, label: t.name }))}
-                disabled={!courseId}
-              />
-            </div>
-          </div>
-
-          {topicId && (
-            <div className="overflow-hidden rounded-2xl border border-orange-200/60 bg-white shadow-sm transition-all animate-fadeIn">
-              <div className="flex flex-col gap-3 border-b border-orange-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between bg-orange-50/30">
-                <div>
-                  <h2 className="font-bold text-slate-800 text-base">Step 3: Subtopics</h2>
-                  <p className="text-xs text-slate-400">Click any subtopic row to view lessons, or use checkboxes</p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400" />
-                    <input
-                      type="text"
-                      placeholder="Search subtopics..."
-                      value={subtopicSearch}
-                      onChange={(e) => setSubtopicSearch(e.target.value)}
-                      className="h-9 w-48 rounded-xl border border-orange-200 bg-white pl-9 pr-3 text-xs text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                    />
-                  </div>
-                  <span className="rounded-xl bg-orange-100/70 border border-orange-200 px-3 py-1.5 text-xs font-bold text-orange-700">
-                    {selectedSubtopics.length} / {availableSubtopics.length} Selected
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-b border-orange-100/55 bg-orange-50/10 px-6 py-3">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={allSubtopicsSelected}
-                    indeterminate={someSubtopicsSelected}
-                    onChange={toggleAllSubtopics}
-                  />
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    Select All Subtopics
-                  </span>
-                </div>
-              </div>
-
-              <div className="divide-y divide-orange-50 max-h-80 overflow-y-auto">
-                {filteredSubtopics.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">No subtopics found matching your search.</div>
-                ) : (
-                  filteredSubtopics.map((subtopic) => {
-                    const checked = selectedSubtopics.includes(subtopic.id);
-                    const lessonCount = subtopic.modules.reduce((t, m) => t + m.lessons, 0);
-
-                    return (
-                      <div
-                        key={subtopic.id}
-                        onClick={() => setActiveSubtopicModal(subtopic)}
-                        className={`flex items-center gap-4 px-6 py-3.5 transition cursor-pointer ${
-                          checked ? "bg-orange-50/50" : "hover:bg-orange-50/20"
+                    ) : (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() =>
+                          handlePageChange(page)
+                        }
+                        className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-xs font-bold transition ${
+                          currentPage === page
+                            ? "bg-orange-500 text-white shadow-md shadow-orange-200"
+                            : "border border-orange-200 bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-600"
                         }`}
                       >
-                        <Checkbox checked={checked} onChange={() => toggleSubtopic(subtopic.id)} />
-
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-slate-800 hover:text-orange-600 transition-colors">
-                            {subtopic.name} <span className="text-[11px] font-normal text-slate-400 ml-1">(Click to view lessons)</span>
-                          </p>
-                          <p className="text-xs text-slate-400 mt-0.5">{subtopic.modules.length} learning modules available</p>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-orange-50 border border-orange-200 px-2.5 py-1 text-xs font-semibold text-orange-700">
-                            {lessonCount} Lessons
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
+                        {page}
+                      </button>
+                    )
                 )}
+
+                {/* NEXT */}
+
+                <button
+                  type="button"
+                  onClick={handleNextPage}
+                  disabled={
+                    currentPage === totalPages
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-orange-200 bg-white text-slate-500 transition hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Next Page"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300 ${selectedSubtopics.length === 0 ? "opacity-55 pointer-events-none" : "animate-fadeIn"}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-                  <Building2 size={18} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Step 4: Department Selection</h2>
-                  <p className="text-[11px] text-slate-400">Select target academic department</p>
-                </div>
-              </div>
-
-              <SelectField
-                label="Department"
-                value={departmentId}
-                onChange={(e) => handleDepartmentChange(e.target.value)}
-                placeholder={selectedSubtopics.length > 0 ? "Select Department" : "First select subtopics"}
-                options={departments.map((d) => ({ value: d.id, label: d.name }))}
-                disabled={selectedSubtopics.length === 0}
-              />
-            </div>
-
-            <div className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-300 ${!departmentId ? "opacity-55 pointer-events-none" : "animate-fadeIn"}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-                  <GraduationCap size={18} />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Step 5: Batch Selection</h2>
-                  <p className="text-[11px] text-slate-400">Select target batch</p>
-                </div>
-              </div>
-
-              <SelectField
-                label="Batch"
-                value={selectedBatchId}
-                onChange={(e) => setSelectedBatchId(e.target.value)}
-                placeholder={departmentId ? "Select Batch" : "First select department"}
-                options={availableBatches.map((b) => ({ value: b.id, label: `${b.name} (${b.studentCount} students)` }))}
-                disabled={!departmentId}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setView("list")}
-              className="rounded-xl border border-orange-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 hover:bg-orange-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-amber-600 transition"
-            >
-              <Save size={16} /> Save & Review Configuration
-            </button>
-          </div>
-        </form>
       </div>
 
-      {/* SUBTOPIC LESSONS MODAL */}
-      {activeSubtopicModal && (
+      {/* =====================================================
+          VIEW DETAILS MODAL
+      ===================================================== */}
+
+      {viewingModule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn">
+          <div className="w-full max-w-lg animate-fadeIn rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl">
+            {/* HEADER */}
+
             <div className="flex items-center justify-between border-b border-orange-100 pb-4">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base">{activeSubtopicModal.name}</h3>
-                <p className="text-xs text-slate-400">Included modules and lesson breakdown</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 text-orange-600">
+                  <BookOpen size={20} />
+                </div>
+
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Module Access Summary
+                  </h3>
+
+                  <p className="text-xs text-slate-400">
+                    Detailed overview of configured
+                    learning access
+                  </p>
+                </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => setActiveSubtopicModal(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition"
+                onClick={() =>
+                  setViewingModule(null)
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="mt-4 space-y-2.5 max-h-64 overflow-y-auto">
-              {activeSubtopicModal.modules.map((m) => (
-                <div key={m.id} className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/30 p-3">
-                  <div className="flex items-center gap-2.5">
-                    {getModuleTypeIcon(m.type)}
-                    <span className="text-xs font-semibold text-slate-800">{m.title}</span>
-                  </div>
-                  <span className="text-[11px] font-bold text-orange-700 bg-orange-100/60 px-2 py-0.5 rounded-md">
-                    {m.lessons} Lessons
+            {/* CONTENT */}
+
+            <div className="mt-5 space-y-4 text-sm">
+              <div className="space-y-3 rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400">
+                    Course
                   </span>
+
+                  <p className="font-bold text-slate-800">
+                    {viewingModule.course?.course_name ||
+                      "-"}
+                  </p>
                 </div>
-              ))}
+
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400">
+                    Topic
+                  </span>
+
+                  <p className="font-semibold text-slate-700">
+                    {viewingModule.topic?.title || "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* SUBTOPICS */}
+
+              <div>
+                <span className="text-[11px] font-bold uppercase text-slate-400">
+                  Selected Subtopics
+                </span>
+
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {viewingModule.subtopics?.length > 0 ? (
+                    viewingModule.subtopics.map(
+                      (subtopic) => (
+                        <span
+                          key={subtopic._id}
+                          className="rounded-lg border border-orange-200 bg-orange-100/60 px-2.5 py-1 text-xs font-semibold text-orange-800"
+                        >
+                          {subtopic.title}
+                        </span>
+                      )
+                    )
+                  ) : (
+                    <span className="text-xs text-slate-400">
+                      No subtopics selected
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* DEPARTMENT + BATCH */}
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase text-amber-800">
+                    <Building2 size={12} />
+                    Department
+                  </span>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-800">
+                    {viewingModule.segment || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-3">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase text-orange-800">
+                    <GraduationCap size={12} />
+                    Batch & Students
+                  </span>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-800">
+                    {viewingModule.year || "-"} (
+                    {viewingModule.student_count ?? 0}{" "}
+                    students)
+                  </p>
+                </div>
+              </div>
             </div>
+
+            {/* FOOTER */}
 
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveSubtopicModal(null)}
-                className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
+                onClick={() =>
+                  setViewingModule(null)
+                }
+                className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-orange-700"
               >
-                Done
+                Close Summary
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CONFIRMATION SUBMISSION MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-orange-100 animate-fadeIn text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 mb-4">
-              <CheckCircle2 size={24} />
-            </div>
-            <h3 className="font-extrabold text-slate-900 text-lg">Confirm Module Access Setup</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              You are about to configure learning resource access for the selected department and batch.
-            </p>
+      {/* =====================================================
+          CONFIRM DELETE MODAL
+      ===================================================== */}
 
-            <div className="mt-6 flex gap-3 justify-center">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-xl border border-orange-200 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-orange-50 transition"
-              >
-                Back to Edit
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmSubmit}
-                className="rounded-xl bg-orange-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 transition"
-              >
-                Confirm & Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() =>
+          setDeleteModal({
+            open: false,
+            id: null,
+          })
+        }
+        onConfirm={confirmDelete}
+        title="Delete Learning Access"
+        message="Are you sure you want to delete this module access?"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      {/* =====================================================
+          STATUS MODAL
+      ===================================================== */}
+
+      <StatusModal
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={() =>
+          setStatusData((previous) => ({
+            ...previous,
+            open: false,
+          }))
+        }
+      />
     </div>
   );
 }

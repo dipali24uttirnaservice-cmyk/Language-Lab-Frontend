@@ -45,12 +45,13 @@ export default function PracticalManualFormPage() {
   const [topics, setTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
 
-  const [statusData, setStatusData] = useState({
-    open: false,
-    type: "success",
-    title: "",
-    message: "",
-  });
+ const [statusData, setStatusData] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: "",
+  manualId: null,
+});
 
   const [questionList, setQuestionList] = useState([
     { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
@@ -133,89 +134,131 @@ export default function PracticalManualFormPage() {
     }
   }, [editingManualId]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setFormErrors({});
+  setFormErrors({});
 
-    const payload = {
-      title: formTitle,
-      course_id: formCourseId,
-      topic_id: formTopicId,
-      questions: questionList,
-    };
+  const payload = {
+    title: formTitle,
+    course_id: formCourseId,
+    topic_id: formTopicId,
+    questions: questionList,
+  };
 
-    try {
-      const schema = editingManualId
-        ? updatePracticalManualSchema
-        : createPracticalManualSchema;
+  try {
+    const schema = editingManualId
+      ? updatePracticalManualSchema
+      : createPracticalManualSchema;
 
-      await schema.validate(payload, {
-        abortEarly: false,
-      });
+    await schema.validate(payload, {
+      abortEarly: false,
+    });
 
-      setSubmitting(true);
+    setSubmitting(true);
 
-      const formData = new FormData();
+    const formData = new FormData();
 
-      formData.append("title", formTitle);
-      formData.append("course_id", formCourseId);
+    formData.append("title", formTitle);
+    formData.append("course_id", formCourseId);
 
-      if (formTopicId) {
-        formData.append("topic_id", formTopicId);
-      }
+    if (formTopicId) {
+      formData.append("topic_id", formTopicId);
+    }
 
-      formData.append("questions", JSON.stringify(questionList));
+    formData.append("questions", JSON.stringify(questionList));
 
-      if (editingManualId) {
-        await updatePracticalManual(editingManualId, formData);
+    let manualId = editingManualId;
 
-        setStatusData({
-          open: true,
-          type: "success",
-          title: "Success",
-          message: "Practical manual updated successfully.",
-        });
-      } else {
-        await practicalManual(formData);
+    if (editingManualId) {
+      // =========================
+      // UPDATE
+      // =========================
+      const response = await updatePracticalManual(
+        editingManualId,
+        formData
+      );
 
-        setStatusData({
-          open: true,
-          type: "success",
-          title: "Success",
-          message: "Practical manual created successfully.",
-        });
-      }
-    } catch (error) {
-      // Handle Yup Validation Errors
-      if (error.name === "ValidationError") {
-        const validationErrors = {};
+      console.log("Update manual response:", response);
 
-        error.inner.forEach((err) => {
-          if (err.path) {
-            validationErrors[err.path] = err.message;
-          }
-        });
-
-        setFormErrors(validationErrors);
-        return;
-      }
-
-      // Handle API Errors
-      console.error(error);
+      manualId =
+        editingManualId ||
+        response?.data?.data?._id ||
+        response?.data?._id ||
+        response?.data?.data?.id ||
+        response?.data?.id;
 
       setStatusData({
         open: true,
-        type: "error",
-        title: "Error",
-        message:
-          error?.response?.data?.message ||
-          "Something went wrong. Please try again.",
+        type: "success",
+        title: "Success",
+        message: "Practical manual updated successfully.",
+        manualId,
       });
-    } finally {
-      setSubmitting(false);
+    } else {
+      // =========================
+      // CREATE
+      // =========================
+      const response = await practicalManual(formData);
+
+      console.log("Create manual response:", response);
+
+      manualId =
+        response?.data?.data?._id ||
+        response?.data?._id ||
+        response?.data?.data?.id ||
+        response?.data?.id;
+
+      if (!manualId) {
+        throw new Error(
+          "Practical manual created, but manual ID was not returned by the server."
+        );
+      }
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Success",
+        message: "Practical manual created successfully.",
+        manualId,
+      });
     }
-  };
+  } catch (error) {
+    // =========================
+    // YUP VALIDATION ERROR
+    // =========================
+    if (error.name === "ValidationError") {
+      const validationErrors = {};
+
+      error.inner.forEach((err) => {
+        if (err.path) {
+          validationErrors[err.path] = err.message;
+        }
+      });
+
+      setFormErrors(validationErrors);
+      return;
+    }
+
+    // =========================
+    // API ERROR
+    // =========================
+    console.error(error);
+
+    setStatusData({
+      open: true,
+      type: "error",
+      title: "Error",
+      message:
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Something went wrong. Please try again.",
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -493,23 +536,26 @@ export default function PracticalManualFormPage() {
       </div>
 
       <StatusModal
-        open={statusData.open}
-        type={statusData.type}
-        title={statusData.title}
-        message={statusData.message}
-        onClose={() => {
-          const isSuccess = statusData.type === "success";
+  open={statusData.open}
+  type={statusData.type}
+  title={statusData.title}
+  message={statusData.message}
+  onClose={() => {
+    const isSuccess = statusData.type === "success";
+    const manualId = statusData.manualId;
 
-          setStatusData((prev) => ({
-            ...prev,
-            open: false,
-          }));
+    setStatusData((prev) => ({
+      ...prev,
+      open: false,
+    }));
 
-          if (isSuccess) {
-            router.push("/institute-dashboard/practical-manual");
-          }
-        }}
-      />
+    if (isSuccess && manualId) {
+      router.push(
+        `/institute-dashboard/practical-manual/assign/${manualId}`
+      );
+    }
+  }}
+/>
     </div>
   );
 }
