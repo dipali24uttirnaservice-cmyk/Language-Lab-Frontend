@@ -336,7 +336,7 @@ export default function VideoPlayer({
    *
    * ReactPlayer is mounted here.
    */
-  return (
+ return (
     <div
       ref={containerRef}
       className={`relative w-full h-full bg-black overflow-hidden ${className}`}
@@ -347,79 +347,85 @@ export default function VideoPlayer({
         }
       }}
     >
-      <ReactPlayer
-        ref={playerRef}
-        src={src.trim()}
-        playing={playing}
-        muted={muted}
-        volume={volume}
-        playbackRate={rate}
-        controls={false}
-        playsInline
-        width="100%"
-        height="100%"
-        style={{
-          objectFit: "contain",
-        }}
-        onPlay={() => {
-          setPlaying(true);
-          setIsLoading(false);
-        }}
-        onPause={() => {
-          setPlaying(false);
-        }}
-        onWaiting={() => {
-          setIsLoading(true);
-        }}
-        onPlaying={() => {
-          setIsLoading(false);
-        }}
-        onCanPlay={() => {
-          setIsLoading(false);
-        }}
-        onDurationChange={(e) => {
-          if (e?.target) {
-            setDuration(e.target.duration || 0);
-          }
-        }}
-        onTimeUpdate={(e) => {
-          if (!isSeeking && e?.target) {
-            setCurrentTime(
-              e.target.currentTime || 0
+      {/* Clickable wrapper for video play/pause */}
+      <div 
+        className="absolute inset-0 w-full h-full cursor-pointer"
+        onClick={togglePlay}
+      >
+        <ReactPlayer
+          ref={playerRef}
+          src={src.trim()}
+          playing={playing}
+          muted={muted}
+          volume={volume}
+          playbackRate={rate}
+          controls={false}
+          playsInline
+          width="100%"
+          height="100%"
+          style={{
+            objectFit: "contain",
+          }}
+          onPlay={() => {
+            setPlaying(true);
+            setIsLoading(false);
+          }}
+          onPause={() => {
+            setPlaying(false);
+          }}
+          onWaiting={() => {
+            setIsLoading(true);
+          }}
+          onPlaying={() => {
+            setIsLoading(false);
+          }}
+          onCanPlay={() => {
+            setIsLoading(false);
+          }}
+          onDurationChange={(e) => {
+            if (e?.target) {
+              setDuration(e.target.duration || 0);
+            }
+          }}
+          onTimeUpdate={(e) => {
+            if (!isSeeking && e?.target) {
+              setCurrentTime(
+                e.target.currentTime || 0
+              );
+            }
+          }}
+          onProgress={(e) => {
+            const bufferedRanges =
+              e?.target?.buffered;
+
+            if (
+              bufferedRanges &&
+              bufferedRanges.length
+            ) {
+              setBuffered(
+                bufferedRanges.end(
+                  bufferedRanges.length - 1
+                )
+              );
+            }
+          }}
+          onEnded={onEnded}
+          onError={(error) => {
+            if (error?.name === "AbortError") {
+              return;
+            }
+
+            console.error(
+              "Video playback error:",
+              error
             );
-          }
-        }}
-        onProgress={(e) => {
-          const bufferedRanges =
-            e?.target?.buffered;
 
-          if (
-            bufferedRanges &&
-            bufferedRanges.length
-          ) {
-            setBuffered(
-              bufferedRanges.end(
-                bufferedRanges.length - 1
-              )
-            );
-          }
-        }}
-        onEnded={onEnded}
-        onError={(error) => {
-          if (error?.name === "AbortError") {
-            return;
-          }
-
-          console.error(
-            "Video playback error:",
-            error
-          );
-
-          setIsLoading(false);
-          setLoadError(true);
-          setPlaying(false);
-        }}
-      />
+            setIsLoading(false);
+            setLoadError(true);
+            setPlaying(false);
+          }}
+        />
+      </div>
 
       {/* Loading */}
       {isLoading && !loadError && (
@@ -449,7 +455,7 @@ export default function VideoPlayer({
                 setDuration(0);
                 setBuffered(0);
               }}
-              className="mt-3 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold"
+              className="mt-3 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold cursor-pointer"
             >
               Try Again
             </button>
@@ -464,7 +470,7 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={togglePlay}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors cursor-pointer z-10"
+            className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/35 transition-colors cursor-pointer z-10"
           >
             <div className="h-16 w-16 rounded-full bg-orange-500/90 hover:bg-orange-500 flex items-center justify-center shadow-xl transition-transform hover:scale-110">
               <Play
@@ -475,8 +481,9 @@ export default function VideoPlayer({
           </button>
         )}
 
-      {/* Controls */}
+      {/* Controls - Stop event propagation so clicking buttons doesn't trigger video pause */}
       <div
+        onClick={(e) => e.stopPropagation()}
         className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pt-10 pb-3 transition-opacity duration-300 z-20 ${
           showControls
             ? "opacity-100"
@@ -569,43 +576,41 @@ export default function VideoPlayer({
           </button>
 
           {/* Volume */}
-      <div className="relative flex items-center gap-2">
-  {/* Volume button */}
-  <button
-    type="button"
-    onClick={() => setShowVolumeSlider((prev) => !prev)}
-    className="p-1 hover:text-orange-400 transition-colors cursor-pointer"
-    title="Volume"
-  >
-    {muted || volume === 0 ? (
-      <VolumeX size={18} />
-    ) : (
-      <Volume2 size={18} />
-    )}
-  </button>
+          <div className="relative flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowVolumeSlider((prev) => !prev)}
+              className="p-1 hover:text-orange-400 transition-colors cursor-pointer"
+              title="Volume"
+            >
+              {muted || volume === 0 ? (
+                <VolumeX size={18} />
+              ) : (
+                <Volume2 size={18} />
+              )}
+            </button>
 
-  {/* Horizontal volume slider */}
-  {showVolumeSlider && (
-    <div
-      className="flex items-center gap-2"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={muted ? 0 : volume}
-        onChange={changeVolume}
-        className="w-20 sm:w-24 accent-orange-500 cursor-pointer"
-      />
+            {showVolumeSlider && (
+              <div
+                className="flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={muted ? 0 : volume}
+                  onChange={changeVolume}
+                  className="w-20 sm:w-24 accent-orange-500 cursor-pointer"
+                />
 
-      <span className="text-[10px] text-white/80 w-8 text-right">
-        {Math.round((muted ? 0 : volume) * 100)}%
-      </span>
-    </div>
-  )}
-</div>
+                <span className="text-[10px] text-white/80 w-8 text-right">
+                  {Math.round((muted ? 0 : volume) * 100)}%
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Time */}
           <span className="text-xs font-mono tabular-nums text-white/90">
