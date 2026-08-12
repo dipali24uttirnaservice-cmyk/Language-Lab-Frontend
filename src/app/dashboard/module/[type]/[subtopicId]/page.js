@@ -1045,6 +1045,20 @@ function VideoCard({ item, type, onSelect }) {
    DETAIL VIEWS  (one selected module, per content type)
    ========================================================================= */
 
+    const getMediaUrl = (localUrl) => {
+  if (!localUrl) return undefined;
+
+  // If backend already returned a complete URL
+  if (localUrl.startsWith("http://") || localUrl.startsWith("https://")) {
+    return localUrl;
+  }
+
+  // local_url = /media/departmentId/video.mp4
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "");
+
+  return `${baseUrl}${localUrl}`;
+};
+
 function VideoDetail({
     selectedModule,
     videoModules,
@@ -1063,6 +1077,8 @@ function VideoDetail({
         (m) => m._id !== selectedModule._id,
     );
 
+   
+
     return (
         <div className="max-w-7xl mx-auto animate-fade-in space-y-8">
             <BackToLessonsButton onBack={onBack} />
@@ -1070,8 +1086,13 @@ function VideoDetail({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
-           <VideoPlayer
-  src={selectedModule.video?.url?.trim() || undefined}
+          <VideoPlayer
+  src={
+    selectedModule.video?.download_status === "completed" &&
+    selectedModule.video?.local_url
+      ? getMediaUrl(selectedModule.video.local_url)
+      : selectedModule.video?.url?.trim() || undefined
+  }
   poster={
     selectedModule.video?.thumbnail_url?.trim() || undefined
   }
@@ -1328,51 +1349,47 @@ function AudioDetail({
                   </div>
 
                   {/* Audio Player */}
-                  {selectedModule?.audio?.url ? (
-                    <div className="w-full sm:w-auto bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
-                      <audio
-                        key={selectedModule._id}
-                        controls
-                        preload="none"
-                        className="w-full sm:w-72 md:w-80 focus:outline-none"
-                        onEnded={onComplete}
-                        onError={(e) => {
-                          console.error(
-                            "========== AUDIO ERROR =========="
-                          );
-                          console.error(
-                            "Audio URL:",
-                            selectedModule.audio?.url
-                          );
-                          console.error(
-                            "Audio element error:",
-                            e.currentTarget.error
-                          );
-                          console.error(
-                            "================================="
-                          );
+     {selectedModule?.audio?.url ? (
+  <div className="w-full sm:w-auto bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
+    <audio
+      key={selectedModule._id}
+      controls
+      preload="none"
+      className="w-full sm:w-72 md:w-80 focus:outline-none"
+      onEnded={onComplete}
+      onError={(e) => {
+        const mediaUrl =
+          selectedModule.audio?.download_status === "completed" &&
+          selectedModule.audio?.local_url
+            ? getMediaUrl(selectedModule.audio.local_url)
+            : selectedModule.audio?.url?.trim();
 
-                          toast.error(
-                            "This audio failed to load."
-                          );
-                        }}
-                      >
-                        <source
-                          src={
-                            selectedModule.audio?.url?.trim() ||
-                            undefined
-                          }
-                          type="audio/webm"
-                        />
+        console.error("========== AUDIO ERROR ==========");
+        console.error("Audio URL:", mediaUrl);
+        console.error("Audio element error:", e.currentTarget.error);
+        console.error("=================================");
 
-                        Your browser does not support audio playback.
-                      </audio>
-                    </div>
-                  ) : (
-                    <p className="text-xs font-semibold text-slate-400 bg-white/60 px-4 py-2 rounded-lg border border-slate-200/60 text-center">
-                      Audio not available
-                    </p>
-                  )}
+        toast.error("This audio failed to load.");
+      }}
+    >
+      <source
+        src={
+          selectedModule.audio?.download_status === "completed" &&
+          selectedModule.audio?.local_url
+            ? getMediaUrl(selectedModule.audio.local_url)
+            : selectedModule.audio?.url?.trim() || undefined
+        }
+        type="audio/webm"
+      />
+
+      Your browser does not support audio playback.
+    </audio>
+  </div>
+) : (
+  <p className="text-xs font-semibold text-slate-400 bg-white/60 px-4 py-2 rounded-lg border border-slate-200/60 text-center">
+    Audio not available
+  </p>
+)}
                 </div>
               </div>
 
