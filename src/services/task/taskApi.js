@@ -18,4 +18,13 @@ export const taskApi = {
 
   gradeSubmission: (taskId, submissionId, data) =>
     api.put(`/task/${taskId}/submissions/${submissionId}`, data),
+
+  // Department (segment) + batch (year) combinations actually present among
+  // this institute's students, with live student counts — backs the
+  // Department/Batch selects on the Assign Task form. Same shape as
+  // practicalManualDepartments: [{ name, batches: [{ year, studentCount }] }].
+  getDepartments: () => api.get("/task/departments"),
+
+  // Assigns a task to one department (segment) + batch (year) pair.
+  assignTask: (id, payload) => api.put(`/task/${id}/assign`, payload),
 };
