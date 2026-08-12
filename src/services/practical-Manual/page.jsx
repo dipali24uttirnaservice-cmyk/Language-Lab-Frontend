@@ -27,3 +27,16 @@ export const getPracticalSubmissions = async (id) => {
 export const gradePracticalSubmission = async (id, submissionId, payload) => {
   return await api.put(`/practical/${id}/submissions/${submissionId}`, payload);
 };
+
+// Department (segment) + batch (year) combinations actually present among
+// this institute's students, with live student counts — backs the
+// Department/Batch selects on the Assign Practical Manual form. Same shape
+// as studentLearningAccessApi.getDepartments: [{ name, batches: [{ year, studentCount }] }].
+export const practicalManualDepartments = async () => {
+  return await api.get("/practical/departments");
+};
+
+// Assigns a practical manual to one department (segment) + batch (year) pair.
+export const practicalManualAssign = async (id, payload) => {
+  return await api.put(`/practical/${id}/assign`, payload);
+};

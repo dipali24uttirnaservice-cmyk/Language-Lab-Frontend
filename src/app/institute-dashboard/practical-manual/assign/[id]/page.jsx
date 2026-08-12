@@ -10,7 +10,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
+import {
+  practicalManualDetail,
+  practicalManualDepartments,
+  practicalManualAssign,
+} from "@/services/practical-Manual/page.jsx";
 
 export default function AssignManualPage() {
   const router = useRouter();
@@ -99,54 +103,27 @@ export default function AssignManualPage() {
   // =========================================================
 
   useEffect(() => {
-    /*
-      Replace this with your existing department API.
+    const fetchDepartments = async () => {
+      try {
+        const response = await practicalManualDepartments();
 
-      Example:
+        let data = response?.data ?? response;
 
-      const response = await departmentApi.getDepartments();
+        if (data?.data !== undefined) {
+          data = data.data;
+        }
 
-      let data = response?.data ?? response;
-
-      if (data?.data) {
-        data = data.data;
+        // [{ name, batches: [{ year, studentCount }] }] — segment (department)
+        // + year (batch) pairs actually present among this institute's
+        // students, from Student records. No department/batch has its own
+        // _id here since these aren't separate collections.
+        setDepartments(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Departments fetch error:", err);
       }
+    };
 
-      setDepartments(Array.isArray(data) ? data : []);
-    */
-
-    // Temporary data structure for UI testing.
-    // Remove this and connect your API.
-    setDepartments([
-      {
-        _id: "department-1",
-        name: "Computer Science",
-        batches: [
-          {
-            _id: "batch-1",
-            name: "2025 - 2026",
-          },
-          {
-            _id: "batch-2",
-            name: "2024 - 2025",
-          },
-        ],
-      },
-      {
-        _id: "department-2",
-        name: "Information Technology",
-        batches: [
-          {
-            _id: "batch-3",
-            name: "2025 - 2026",
-          },
-          {
-            _id: "batch-4",
-            name: "2024 - 2025",
-          },
-        ],
-      },
-    ]);
+    fetchDepartments();
   }, []);
 
   // =========================================================
@@ -155,9 +132,7 @@ export default function AssignManualPage() {
 
   const selectedDepartment = useMemo(() => {
     return departments.find(
-      (department) =>
-        String(department?._id || department?.id) ===
-        String(departmentId)
+      (department) => String(department?.name) === String(departmentId)
     );
   }, [departments, departmentId]);
 
@@ -166,14 +141,7 @@ export default function AssignManualPage() {
   // =========================================================
 
   const batches = useMemo(() => {
-    if (!selectedDepartment) return [];
-
-    return (
-      selectedDepartment?.batches ||
-      selectedDepartment?.batch ||
-      selectedDepartment?.batch_list ||
-      []
-    );
+    return selectedDepartment?.batches || [];
   }, [selectedDepartment]);
 
   // =========================================================
@@ -236,21 +204,13 @@ export default function AssignManualPage() {
     try {
       setAssigning(true);
 
-      const payload = {
-        manualId,
-        departmentId,
-        batchId,
-      };
-
-      console.log("Assign Practical Manual:", payload);
-
-      /*
-        CALL YOUR ASSIGN API HERE.
-
-        Example:
-
-        await practicalManualAssign(payload);
-      */
+      // departmentId holds the department name (Student.segment), batchId
+      // holds the batch/year of study (Student.year) as a string from the
+      // <select> — the backend's assignPracticalSchema expects a number.
+      await practicalManualAssign(manualId, {
+        segment: departmentId,
+        year: Number(batchId),
+      });
 
       router.push("/institute-dashboard/practical-manual");
     } catch (err) {
@@ -398,17 +358,10 @@ export default function AssignManualPage() {
                   <option value="">Select Department</option>
 
                   {departments.map((department) => {
-                    const id = department?._id || department?.id;
-
-                    const name =
-                      department?.name ||
-                      department?.department_name ||
-                      department?.departmentName ||
-                      department?.title ||
-                      "Unnamed Department";
+                    const name = department?.name || "Unnamed Department";
 
                     return (
-                      <option key={id} value={id}>
+                      <option key={name} value={name}>
                         {name}
                       </option>
                     );
@@ -445,22 +398,14 @@ export default function AssignManualPage() {
                         : "Select Batch"}
                   </option>
 
-                  {batches.map((batch) => {
-                    const id = batch?._id || batch?.id;
-
-                    const name =
-                      batch?.name ||
-                      batch?.batch_name ||
-                      batch?.batchName ||
-                      batch?.title ||
-                      "Unnamed Batch";
-
-                    return (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    );
-                  })}
+                  {batches.map((batch) => (
+                    <option key={batch.year} value={batch.year}>
+                      Year {batch.year}
+                      {batch.studentCount != null
+                        ? ` (${batch.studentCount} students)`
+                        : ""}
+                    </option>
+                  ))}
                 </select>
 
                 <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
