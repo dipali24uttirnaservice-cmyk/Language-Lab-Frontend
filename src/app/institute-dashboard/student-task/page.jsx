@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import StatusModal from "@/components/molecules/StatusModal";
-import AssignTaskModal from "./AssignTaskModal";
 import {
   Plus,
   Search,
@@ -17,7 +16,7 @@ import {
   Send,
   Calendar,
   AlertCircle,
-   Users,
+  Users,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
@@ -43,15 +42,6 @@ export default function StudentTaskPage() {
   const [filterCourses, setFilterCourses] = useState([]);
   const [filterTopics, setFilterTopics] = useState([]);
   const [filterTopicsLoading, setFilterTopicsLoading] = useState(false);
-
-  const [assignModal, setAssignModal] = useState({
-  open: false,
-  task: null,
-});
-
-const [assignLoading, setAssignLoading] = useState(false);
-
-const [departments, setDepartments] = useState([]);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -248,19 +238,9 @@ const [departments, setDepartments] = useState([]);
     item.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const openAssignModal = (task) => {
-  setAssignModal({
-    open: true,
-    task,
-  });
-};
-
-const closeAssignModal = () => {
-  setAssignModal({
-    open: false,
-    task: null,
-  });
-};
+  const handleAssignTask = (id) => {
+    router.push(`/institute-dashboard/student-task/assign/${id}`);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
@@ -430,14 +410,15 @@ const closeAssignModal = () => {
 
                       <td className="p-4 pr-6">
                         <div className="flex items-center justify-center gap-2">
-                        <button
-  onClick={() => openAssignModal(task)}
-  className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
-  title="Assign Task"
-  aria-label="Assign Task"
->
-  <Users className="w-4 h-4" />
-</button>
+                          <button
+                            onClick={() => handleAssignTask(task._id)}
+                            className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
+                            title="Assign Task"
+                            aria-label="Assign Task"
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
+                          
                           <button
                             onClick={() => router.push(`/institute-dashboard/student-task/view/${task._id}`)}
                             className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
@@ -538,24 +519,6 @@ const closeAssignModal = () => {
           confirmText="Delete"
           cancelText="Cancel"
         />
-        <AssignTaskModal
-  open={assignModal.open}
-  onClose={closeAssignModal}
-  task={assignModal.task}
-  departments={departments}
-  loading={assignLoading}
-  onSubmit={async ({
-    taskId,
-    departmentId,
-    batchId,
-  }) => {
-    console.log("Assign Task:", {
-      taskId,
-      departmentId,
-      batchId,
-    });
-  }}
-/>
       </div>
     </div>
   );

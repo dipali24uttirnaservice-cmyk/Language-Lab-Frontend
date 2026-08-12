@@ -207,7 +207,7 @@ export default function StudentTaskFormPage() {
     }
   }, [editingManualId]);
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormErrors({});
 
@@ -239,16 +239,15 @@ const handleSubmit = async (e) => {
 
       setSubmitting(true);
 
-      // Audio/video/document files are uploaded separately via the chunked
-      // upload endpoints (see ChunkedFileUpload below) — by the time we get
-      // here, taskMediaUrl already holds the resulting file URL, so /task
-      // always receives a plain JSON payload, never a multipart file.
+      let savedTaskId = editingManualId;
+
       if (editingManualId) {
         await taskApi.updateTask(editingManualId, payload);
       } else {
         const res = await taskApi.createTask(payload);
         const created = res.data?.data || res.data;
-        setCreatedTaskId(created?._id || null);
+        savedTaskId = created?._id || null;
+        setCreatedTaskId(savedTaskId);
       }
 
       // Turn off submitting loader first
@@ -256,14 +255,14 @@ const handleSubmit = async (e) => {
       
       // Give React one tick to breathe, then trigger the modal reliably
       setTimeout(() => {
-       setStatusData({
-  open: true,
-  type: "success",
-  title: "Success",
-  message: editingManualId
-    ? "Task updated successfully."
-    : "Task created successfully.",
-});
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Success",
+          message: editingManualId
+            ? "Task updated successfully."
+            : "Task created successfully.",
+        });
       }, 50);
 
     } catch (error) {
@@ -296,6 +295,7 @@ const handleSubmit = async (e) => {
       }, 50);
     }
   };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -466,12 +466,6 @@ const handleSubmit = async (e) => {
                 onChange={(e) => {
                   const nextType = e.target.value;
                   setTaskType(nextType);
-                  // A file uploaded for the previous type (e.g. an audio
-                  // .webm) is meaningless once you switch to video/document
-                  // — without this, editing a task and changing its type
-                  // silently carries the old media_url over, so the saved
-                  // task ends up with a type/file mismatch (see taskController
-                  // .update: it trusts media_url as-is for any media type).
                   if (nextType !== taskType) setTaskMediaUrl("");
                 }}
                 className="w-full px-4 py-3 bg-white border border-orange-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
@@ -623,57 +617,56 @@ const handleSubmit = async (e) => {
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
               type="button"
-              onClick={() =>  router.push("/institute-dashboard/student-task")}
+              onClick={() => router.push("/institute-dashboard/student-task")}
               className="px-5 py-2.5 rounded-xl border border-orange-300 text-orange-700 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
             >
               Cancel
             </button>
-          <motion.button
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.98 }}
-  type="submit"
-  disabled={submitting}
-  className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 border-b-2 border-orange-700 disabled:opacity-60 disabled:pointer-events-none active:scale-95 flex items-center gap-2 transition-all"
->
-  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-  {submitting
-    ? editingManualId
-      ? "Updating..."
-      : "Creating..."
-    : editingManualId
-    ? "Update Task"
-    : "Create Task"}
-</motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={submitting}
+              className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 border-b-2 border-orange-700 disabled:opacity-60 disabled:pointer-events-none active:scale-95 flex items-center gap-2 transition-all"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting
+                ? editingManualId
+                  ? "Updating..."
+                  : "Creating..."
+                : editingManualId
+                ? "Update Task"
+                : "Create Task"}
+            </motion.button>
           </div>
         </form>
       </motion.div>
 
       {/* Status Modal Component */}
-    <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() => {
-    const isSuccess = statusData.type === "success";
+      <StatusModal
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={() => {
+          const isSuccess = statusData.type === "success";
 
-    setStatusData((prev) => ({
-      ...prev,
-      open: false,
-    }));
+          setStatusData((prev) => ({
+            ...prev,
+            open: false,
+          }));
 
-    if (isSuccess) {
-  setTimeout(() => {
-    // Fresh task (not an edit) → send them straight to Add Question.
-    if (!editingManualId && createdTaskId) {
-      router.push(`/institute-dashboard/student-task/${createdTaskId}/add-question?mode=new`);
-    } else {
-      router.push("/institute-dashboard/student-task");
-    }
-  }, 100);
-}
-  }}
-/>
+          if (isSuccess) {
+            setTimeout(() => {
+              if (!editingManualId && createdTaskId) {
+                router.push(`/institute-dashboard/student-task/assign/${createdTaskId}`);
+              } else {
+                router.push("/institute-dashboard/student-task");
+              }
+            }, 100);
+          }
+        }}
+      />
     </div>
   );
 }
