@@ -474,50 +474,362 @@ function ExerciseRow({ item, onSelect }) {
     );
 }
 
+
 function AudioRow({ item, onSelect }) {
+    const [imgError, setImgError] = useState(false);
+
+    const thumbnail =
+        item?.audio?.thumbnail_url ||
+        item?.thumbnail ||
+        item?.cover_image ||
+        item?.image;
+
+    // Duration
+    let duration = "Audio Lesson";
+
+    if (item?.audio?.duration_sec) {
+        const totalSeconds = Number(item.audio.duration_sec);
+
+        if (!isNaN(totalSeconds)) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+
+            duration = `${minutes}:${seconds
+                .toString()
+                .padStart(2, "0")}`;
+        }
+    }
+
+    // Description
+    const description =
+        item?.description ||
+        "Enhance your vocabulary and listening comprehension with native audio exercises.";
+
+    const cleanDescription =
+        typeof description === "string"
+            ? description.replace(/<[^>]*>?/gm, "")
+            : "";
+
     return (
-        <WideRow
-            onClick={() => onSelect(item)}
-            iconBg="bg-gradient-to-br from-slate-900 to-slate-800 group-hover:from-orange-500 group-hover:to-orange-600"
-            icon={
-                <Headphones
-                    className="z-10 group-hover:scale-110 transition-transform text-orange-400 group-hover:text-white"
-                    size={22}
-                />
-            }
-            eyebrow="Audio Track"
-            eyebrowClass="bg-orange-50 text-orange-600 border-orange-100"
-            title={item.title}
-            middle={
-                item.audio?.speaker_name ? (
-                    <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
-                        <User size={10} /> {item.audio.speaker_name}
-                    </span>
+        <div
+            onClick={() => onSelect && onSelect(item)}
+            className="
+                group
+                relative
+                flex
+                h-[145px]
+                w-full
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-sm
+                transition-all
+                duration-300
+                hover:border-orange-300
+                hover:shadow-lg
+                hover:shadow-orange-500/10
+                active:scale-[0.99]
+                cursor-pointer
+
+                sm:h-[155px]
+                md:h-[165px]
+            "
+        >
+            {/* =========================
+                THUMBNAIL
+            ========================= */}
+
+            <div
+                className="
+                    relative
+                    h-full
+                    w-[95px]
+                    shrink-0
+                    overflow-hidden
+                    bg-slate-900
+
+                    sm:w-[125px]
+                    md:w-[145px]
+                    lg:w-[155px]
+                "
+            >
+                {thumbnail && !imgError ? (
+                    <img
+                        src={thumbnail}
+                        alt={item?.title || "Audio thumbnail"}
+                        onError={() => setImgError(true)}
+                        className="
+                            absolute
+                            inset-0
+                            h-full
+                            w-full
+                            object-cover
+                            transition-transform
+                            duration-500
+                            group-hover:scale-105
+                        "
+                    />
                 ) : (
                     <div
-                        className="text-xs text-slate-400 line-clamp-1 pr-4 prose prose-slate"
-                        dangerouslySetInnerHTML={{
-                            __html: sanitizeHtml(item.description || "No context description.",)
-                        }}
-                    />
-                )
-            }
-            right={
-                <>
-                    <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                        <Clock size={12} className="text-slate-400" />
-                        <span>
-                            {item.audio?.duration_sec
-                                ? `${Math.floor(item.audio.duration_sec / 60)}m`
-                                : "Listen"}
+                        className="
+                            absolute
+                            inset-0
+                            flex
+                            items-center
+                            justify-center
+                            bg-gradient-to-br
+                            from-slate-900
+                            via-slate-800
+                            to-orange-950
+                            text-orange-400
+                        "
+                    >
+                        <Headphones size={28} />
+                    </div>
+                )}
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/30" />
+
+                {/* Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                        className="
+                            flex
+                            h-9
+                            w-9
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-orange-500
+                            text-white
+                            shadow-lg
+                            shadow-orange-500/40
+                            transition-transform
+                            duration-300
+                            group-hover:scale-110
+
+                            sm:h-11
+                            sm:w-11
+                            md:h-12
+                            md:w-12
+                        "
+                    >
+                        <Play
+                            size={16}
+                            className="ml-0.5 fill-current"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* =========================
+                CONTENT
+            ========================= */}
+
+            <div
+                className="
+                    min-w-0
+                    flex-1
+                    overflow-hidden
+                    px-3
+                    py-3
+
+                    sm:px-4
+                    sm:py-3.5
+
+                    md:px-5
+                    md:py-4
+                "
+            >
+                {/* TOP BADGES */}
+                <div
+                    className="
+                        flex
+                        h-[22px]
+                        min-w-0
+                        items-start
+                        gap-1.5
+                        overflow-hidden
+
+                        sm:gap-2
+                    "
+                >
+                    {/* Duration */}
+                    <span
+                        className="
+                            inline-flex
+                            h-[21px]
+                            shrink-0
+                            items-center
+                            gap-1
+                            rounded-md
+                            border
+                            border-orange-200
+                            bg-orange-50
+                            px-1.5
+                            text-[9px]
+                            font-extrabold
+                            uppercase
+                            tracking-wide
+                            text-orange-600
+
+                            sm:px-2
+                            sm:text-[10px]
+                        "
+                    >
+                        <Clock size={10} />
+                        {duration}
+                    </span>
+
+                    {/* Language */}
+                    {item?.audio?.language && (
+                        <span
+                            className="
+                                inline-flex
+                                h-[21px]
+                                max-w-[110px]
+                                min-w-0
+                                shrink
+                                items-center
+                                gap-1
+                                overflow-hidden
+                                rounded-md
+                                border
+                                border-slate-200
+                                bg-slate-100
+                                px-1.5
+                                text-[9px]
+                                font-bold
+                                uppercase
+                                tracking-wide
+                                text-slate-600
+
+                                sm:max-w-[140px]
+                                sm:px-2
+                                sm:text-[10px]
+                            "
+                        >
+                            <Volume2
+                                size={9}
+                                className="shrink-0"
+                            />
+
+                            <span className="truncate">
+                                {item.audio.language}
+                            </span>
                         </span>
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-orange-500 group-hover:text-white group-hover:border-transparent transition-all shadow-sm">
-                        <Play className="fill-current ml-0.5" size={12} />
-                    </div>
-                </>
-            }
-        />
+                    )}
+
+                    {/* Category */}
+                    {item?.category && (
+                        <span
+                            className="
+                                hidden
+                                h-[21px]
+                                max-w-[120px]
+                                truncate
+                                items-center
+                                rounded-md
+                                bg-slate-100
+                                px-2
+                                text-[10px]
+                                font-semibold
+                                text-slate-500
+
+                                md:flex
+                            "
+                        >
+                            {item.category}
+                        </span>
+                    )}
+                </div>
+
+                {/* TITLE */}
+                <div
+                    className="
+                        mt-1
+                        h-[38px]
+                        overflow-hidden
+
+                        sm:h-[42px]
+                    "
+                >
+                    <h3
+                        className="
+                            line-clamp-2
+                            text-sm
+                            font-black
+                            leading-[19px]
+                            text-slate-900
+                            transition-colors
+                            duration-200
+                            group-hover:text-orange-600
+
+                            sm:text-base
+                            sm:leading-[21px]
+
+                            md:text-lg
+                            md:leading-[22px]
+                        "
+                    >
+                        {item?.title || "English Vocabulary Practice"}
+                    </h3>
+                </div>
+
+                {/* DESCRIPTION */}
+                <div
+                    className="
+                        hidden
+                        h-[18px]
+                        overflow-hidden
+
+                        sm:block
+                    "
+                >
+                    <p
+                        className="
+                            line-clamp-1
+                            text-xs
+                            leading-[18px]
+                            text-slate-500
+                        "
+                    >
+                        {cleanDescription}
+                    </p>
+                </div>
+
+                {/* SPEAKER */}
+                <div
+                    className="
+                        mt-1
+                        flex
+                        h-[18px]
+                        min-w-0
+                        items-center
+                        gap-1.5
+                        overflow-hidden
+                        text-[10px]
+                        font-semibold
+                        text-slate-600
+
+                        sm:mt-1.5
+                        sm:text-xs
+                    "
+                >
+                    <User
+                        size={11}
+                        className="shrink-0 text-orange-500"
+                    />
+
+                    <span className="truncate">
+                        {item?.audio?.speaker_name || "Audio Practice"}
+                    </span>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -859,187 +1171,300 @@ function VideoDetail({
     );
 }
 
+
 function AudioDetail({
-    selectedModule,
-    audioModules,
-    previousModule,
-    nextModule,
-    currentModuleIndex,
-    currentModuleList,
-    onNavigate,
-    onBack,
-    onComplete,
-    router,
-    searchParams,
+  selectedModule,
+  audioModules,
+  previousModule,
+  nextModule,
+  currentModuleIndex,
+  currentModuleList,
+  onNavigate,
+  onBack,
+  onComplete,
+  router,
+  searchParams,
 }) {
-    const accent = getAccent("audio");
-const containerRef = useRef(null);
-    const { isFullscreen, enter, exit } = useFullscreen(containerRef);
-    return (
-        <div className="max-w-7xl mx-auto animate-fade-in space-y-6">
-            <BackToLessonsButton onBack={onBack} />
+  const accent = getAccent("audio");
+  const containerRef = useRef(null);
+  const { isFullscreen, enter, exit } = useFullscreen(containerRef);
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-8 space-y-6">
-                    <div
-                        ref={containerRef}
-                        className={`bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6 ${isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none" : ""
-                            }`}
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+      {/* Top Header Navigation */}
+      <div className="flex items-center justify-between">
+        <BackToLessonsButton onBack={onBack} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Main Content Column */}
+        <div className="lg:col-span-8 space-y-6">
+          <div
+            ref={containerRef}
+            className={`bg-white border border-slate-200/80 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300 ${
+              isFullscreen
+                ? "h-screen w-screen overflow-y-auto rounded-none fixed inset-0 z-50 p-6 md:p-10 bg-white"
+                : ""
+            }`}
+          >
+            {/* =========================================================
+                DEFAULT AUDIO HERO
+                Actual thumbnails are intentionally NOT used.
+            ========================================================= */}
+            <div className="relative min-h-[220px] p-6 md:p-8 flex flex-col justify-between overflow-hidden border-b bg-gradient-to-br from-amber-50 via-orange-50/50 to-slate-100 text-slate-900 border-slate-200/80">
+              
+              {/* Default Decorative Glow */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none z-0" />
+
+              {/* Default Headphones Decoration */}
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none z-0 text-slate-900">
+                <Headphones size={180} />
+              </div>
+
+              {/* Content Box */}
+              <div className="relative z-20 space-y-4">
+                
+                {/* Top Row */}
+                <div className="flex items-center justify-between gap-4">
+                  
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-md ${accent.bg} ${accent.text} ${accent.border}`}
                     >
-                        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/40 space-y-6">
-                            <div>
-                                <div className="flex items-center justify-between mb-3 gap-3">
-                                    {/* Left Side - Badges */}
-                                    <div className="flex flex-wrap gap-2 items-center">
-                                        <span
-                                            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-sm flex items-center gap-1 ${accent.bg} ${accent.text} ${accent.border}`}
-                                        >
-                                            <Headphones size={12} />
-                                            {accent.label}
-                                        </span>
+                      <Headphones size={13} />
+                      {accent.label}
+                    </span>
 
-                                        {selectedModule.audio?.language && (
-                                            <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-                                                {selectedModule.audio.language}
-                                            </span>
-                                        )}
+                    {/* Language */}
+                    {selectedModule?.audio?.language && (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md shadow-sm bg-white/80 text-slate-700 border-slate-200">
+                        {selectedModule.audio.language}
+                      </span>
+                    )}
 
-                                        {selectedModule.audio?.speed && (
-                                            <span className="bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-                                                Speed: {selectedModule.audio.speed}
-                                            </span>
-                                        )}
-                                    </div>
+                    {/* Speed */}
+                    {selectedModule?.audio?.speed && (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md shadow-sm bg-white/80 text-slate-700 border-slate-200">
+                        Speed: {selectedModule.audio.speed}
+                      </span>
+                    )}
+                  </div>
 
-                                    {/* Right Side - Fullscreen */}
-                                    <div className="flex-shrink-0">
-                                        <button
-                                            onClick={isFullscreen ? exit : enter}
-                                            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
-                                            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-                                        >
-                                            {isFullscreen ? (
-                                                <Minimize2 size={18} strokeWidth={2.2} />
-                                            ) : (
-                                                <Maximize2 size={18} strokeWidth={2.2} />
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-                                    {selectedModule.title}
-                                </h1>
+                  {/* Fullscreen Toggle */}
+                  <button
+                    type="button"
+                    onClick={isFullscreen ? exit : enter}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 backdrop-blur-md transition-all active:scale-95 shadow-sm"
+                    title={
+                      isFullscreen
+                        ? "Exit Fullscreen"
+                        : "Enter Fullscreen"
+                    }
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 size={18} strokeWidth={2.2} />
+                    ) : (
+                      <Maximize2 size={18} strokeWidth={2.2} />
+                    )}
+                  </button>
+                </div>
 
-                                <div
-                                    className="text-sm text-slate-500 mt-2 prose prose-slate max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.description || "")
-                        }}
-                                />
-                            </div>
+                {/* Module Title */}
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight leading-snug text-slate-900">
+                  {selectedModule?.title}
+                </h1>
 
-                            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
-                                <div className="flex items-center gap-3">
-                                    <div className={`h-10 w-10 text-white rounded-lg flex items-center justify-center shadow-md ${accent.solid}`}>
-                                        <Volume2 size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                                            <User size={12} className="text-slate-400" />
-                                            {selectedModule.audio?.speaker_name || "Audio Resource Narration"}
-                                        </p>
-                                        <p className="text-[10px] text-slate-400 font-medium">
-                                            Duration:{" "}
-                                            {selectedModule.audio?.duration_sec
-                                                ? `${Math.floor(selectedModule.audio.duration_sec / 60)}m ${selectedModule.audio.duration_sec % 60}s`
-                                                : "Dynamic"}
-                                        </p>
-                                    </div>
-                                </div>
-                                {selectedModule.audio?.url ? (
-                              <audio
-  key={selectedModule._id}
-  controls
-  preload="none"
-  className="w-full sm:w-72 md:w-96 focus:outline-none"
-  onEnded={onComplete}
-  onError={(e) => {
-    console.error("========== AUDIO ERROR ==========");
-    console.error("Audio URL:", selectedModule.audio?.url);
-    console.error("Audio element error:", e.currentTarget.error);
-    console.error("=================================");
-    toast.error("This audio failed to load.");
-  }}
->
-  <source
-    src={selectedModule.audio?.url?.trim() || undefined}
-    type="audio/webm"
-  />
-  Your browser does not support audio playback.
-</audio>
-                                ) : (
-                                    <p className="text-sm text-slate-400 italic">
-                                        Audio not available.
-                                    </p>
-                                )}
-                            </div>
+                {/* Module Description */}
+                {selectedModule?.description && (
+                  <div
+                    className="text-sm md:text-base font-medium leading-relaxed max-w-3xl prose prose-slate text-slate-600 [&_*]:text-slate-600"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(
+                        selectedModule.description || ""
+                      ),
+                    }}
+                  />
+                )}
+              </div>
+            </div>
 
-                            <hr className="border-slate-100" />
-
-                            {selectedModule.audio?.transcript && (
-                                <div className="space-y-3">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                        <FileText size={14} /> Audio Lesson Transcript
-                                    </h3>
-                                    <div
-                                        className="bg-slate-50/50 border border-slate-100 text-slate-800 p-5 rounded-xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
-                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedModule.audio.transcript)
-                        }}
-                                    />
-                                </div>
-                            )}
-
-                            <PrevNextNav
-                                previousModule={previousModule}
-                                nextModule={nextModule}
-                                currentIndex={currentModuleIndex}
-                                total={currentModuleList.length}
-                                onNavigate={onNavigate}
-                                accent={accent}
-                            />
-
-                             <RelatedQueueList
-                        title="Related Audios Queue"
-                        icon={Headphones}
-                        items={audioModules}
-                        activeId={selectedModule._id}
-                        onSelect={onNavigate}
-                        accent={accent}
-                        getSubtitle={(item) =>
-                            item.audio?.duration_sec
-                                ? `${Math.floor(item.audio.duration_sec / 60)}m`
-                                : "Audio"
-                        }
-                    />
-                        </div>
-                        
+            {/* =========================================================
+                INNER CONTENT
+            ========================================================= */}
+            <div className="p-6 md:p-8 space-y-8">
+              
+              {/* Audio Player Card */}
+              <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-slate-50 border border-amber-500/20 rounded-2xl p-5 md:p-6 space-y-4 shadow-sm">
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  
+                  {/* Speaker + Duration */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-11 w-11 rounded-xl text-white flex items-center justify-center shadow-md ${accent.solid}`}
+                    >
+                      <Volume2 size={22} />
                     </div>
 
-                   
-                </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <User size={14} className="text-amber-600" />
+                        {selectedModule?.audio?.speaker_name ||
+                          "Audio Resource Narration"}
+                      </p>
 
-                <div className="lg:col-span-4">
-                    <LessonActionsPanel
-                        onPractice={() => router.push(buildPracticeUrl(selectedModule))}
-                        onExercise={() =>
-                            router.push(buildExerciseUrl(selectedModule, searchParams))
-                        }
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Duration:{" "}
+                        {selectedModule?.audio?.duration_sec
+                          ? `${Math.floor(
+                              selectedModule.audio.duration_sec / 60
+                            )}m ${
+                              selectedModule.audio.duration_sec % 60
+                            }s`
+                          : "Dynamic"}
+                      </p>
+                    </div>
+                  </div>
 
-                    />
+                  {/* Audio Player */}
+                  {selectedModule?.audio?.url ? (
+                    <div className="w-full sm:w-auto bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
+                      <audio
+                        key={selectedModule._id}
+                        controls
+                        preload="none"
+                        className="w-full sm:w-72 md:w-80 focus:outline-none"
+                        onEnded={onComplete}
+                        onError={(e) => {
+                          console.error(
+                            "========== AUDIO ERROR =========="
+                          );
+                          console.error(
+                            "Audio URL:",
+                            selectedModule.audio?.url
+                          );
+                          console.error(
+                            "Audio element error:",
+                            e.currentTarget.error
+                          );
+                          console.error(
+                            "================================="
+                          );
+
+                          toast.error(
+                            "This audio failed to load."
+                          );
+                        }}
+                      >
+                        <source
+                          src={
+                            selectedModule.audio?.url?.trim() ||
+                            undefined
+                          }
+                          type="audio/webm"
+                        />
+
+                        Your browser does not support audio playback.
+                      </audio>
+                    </div>
+                  ) : (
+                    <p className="text-xs font-semibold text-slate-400 bg-white/60 px-4 py-2 rounded-lg border border-slate-200/60 text-center">
+                      Audio not available
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              {/* =========================================================
+                  TRANSCRIPT
+              ========================================================= */}
+              {selectedModule?.audio?.transcript && (
+                <div className="space-y-4">
+                  
+                  <div className="flex items-center gap-2 text-slate-900 font-bold">
+                    <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                      <FileText size={16} />
+                    </div>
+
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                      Audio Lesson Transcript
+                    </h3>
+                  </div>
+
+                  <div
+                    className="bg-slate-50/80 border border-slate-200/80 text-slate-800 p-6 rounded-2xl text-sm md:text-base leading-relaxed prose prose-slate max-w-none shadow-sm"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(
+                        selectedModule.audio.transcript
+                      ),
+                    }}
+                  />
+                </div>
+              )}
+
+              <hr className="border-slate-100" />
+
+              {/* =========================================================
+                  PREVIOUS / NEXT NAVIGATION
+              ========================================================= */}
+              <PrevNextNav
+                previousModule={previousModule}
+                nextModule={nextModule}
+                currentIndex={currentModuleIndex}
+                total={currentModuleList.length}
+                onNavigate={onNavigate}
+                accent={accent}
+              />
+
+              {/* =========================================================
+                  RELATED AUDIO QUEUE
+              ========================================================= */}
+              <RelatedQueueList
+                title="Related Audios Queue"
+                icon={Headphones}
+                items={audioModules}
+                activeId={selectedModule?._id}
+                onSelect={onNavigate}
+                accent={accent}
+                getSubtitle={(item) =>
+                  item.audio?.duration_sec
+                    ? `${Math.floor(
+                        item.audio.duration_sec / 60
+                      )}m`
+                    : "Audio"
+                }
+              />
             </div>
+          </div>
         </div>
-    );
+
+        {/* =========================================================
+            RIGHT SIDEBAR
+        ========================================================= */}
+        <div className="lg:col-span-4 sticky top-6">
+          <LessonActionsPanel
+            onPractice={() =>
+              router.push(
+                buildPracticeUrl(selectedModule)
+              )
+            }
+            onExercise={() =>
+              router.push(
+                buildExerciseUrl(
+                  selectedModule,
+                  searchParams
+                )
+              )
+            }
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
+
+
 
 function TextDetail({
     selectedModule,
