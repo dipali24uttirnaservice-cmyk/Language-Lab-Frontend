@@ -44,6 +44,11 @@ const ID_RESOLVERS = {
     getTitle: (res, id) =>
       (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
   },
+  "course-content": {
+    fetch: () => courseApi.getCourses(),
+    getTitle: (res, id) =>
+      (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
+  },
 };
 
 export default function InstituteNavbar({

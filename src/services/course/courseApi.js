@@ -45,31 +45,64 @@ export const courseApi = {
 
   getModuleCount: (courseId) => api.get(`/module/course/${courseId}/count`),
 
-  // When online (and a masterToken exists — see masterWithLocalFallback):
-  // master's response is what the UI renders immediately, while this
-  // institute's own LOCAL backend is also told to pull+cache the same
-  // course/topic/subtopic/module tree (and its videos/audio to its own disk —
-  // see queueVideoDownloads/queueAudioDownloads) in the background, so it
-  // works as a standalone offline server afterward. The local pull forwards
-  // the master-issued token (masterToken cookie) as x-master-token, since
-  // that's what instituteController.downloadCourseData's fallback sync needs
-  // to call master's protected download route itself.
+  // When online (and a masterToken exists): master's download call lands
+  // first, then this institute's own LOCAL backend is told to pull+cache the
+  // same course/topic/subtopic/module tree (and its videos/audio to its own
+  // disk — see queueVideoDownloads/queueAudioDownloads), so it works as a
+  // standalone offline server afterward. The local pull forwards the
+  // master-issued token (masterToken cookie) as x-master-token, since that's
+  // what instituteController.downloadCourseData's fallback sync needs to
+  // call master's protected download route itself.
   // Otherwise (offline, or no masterToken this session): skips straight to
   // the local backend's already-cached response.
-  downloadCourse: (courseId) => {
+  //
+  // The local mirror is AWAITED (not fire-and-forget) and its outcome
+  // reported back as `{ localSyncError }` — callers (Settings' Download
+  // button, course-content's "start caching" retry) rely on knowing whether
+  // it actually succeeded before treating the course as locally available,
+  // e.g. querying /module/course/:id/count immediately afterward. Returning
+  // before the mirror lands is what causes that call to 404 with "course
+  // not found".
+  downloadCourse: async (courseId) => {
     const masterToken = Cookies.get("masterToken");
     const localHeaders = masterToken ? { "x-master-token": masterToken } : {};
     const localCall = () =>
       api.get(`/institute/me/courses/${courseId}/download`, { headers: localHeaders });
 
-    return masterWithLocalFallback(() => {
-      // Fire-and-forget: if this fails, the course still displays fine from
-      // master's response below — it just isn't cached locally yet.
-      localCall().catch((error) => {
-        console.error("Local course pull failed:", error);
-      });
-      return masterApiInstance.get(`/institute/me/courses/${courseId}/download`);
-    }, localCall);
+    let masterSucceeded = false;
+    if (masterToken) {
+      // A real error from master (not a network drop) means nothing
+      // downloaded at all — let that throw normally instead of falling
+      // through to also attempt the local call.
+      try {
+        await masterApiInstance.get(`/institute/me/courses/${courseId}/download`);
+        masterSucceeded = true;
+      } catch (error) {
+        if (!isNetworkError(error)) throw error;
+        console.warn("Master unreachable (offline?) — using local backend's cached copy.");
+      }
+    }
+
+    if (!masterSucceeded) {
+      // No masterToken, or master was unreachable — this local call IS the
+      // whole download (not a background mirror of an already-succeeded
+      // master download), so let a failure here throw and surface as a real
+      // "Download Failed", same as before.
+      return await localCall();
+    }
+
+    // Master already succeeded — this is just mirroring that data to the
+    // local backend, so a failure here doesn't mean the download failed,
+    // just that offline access won't work yet. Reported back, not thrown.
+    try {
+      await localCall();
+      return { localSyncError: null };
+    } catch (error) {
+      console.error("Local course pull failed:", error);
+      return {
+        localSyncError: error?.response?.data?.message || error.message || "Unknown error",
+      };
+    }
   },
 
   getCourseLastUpdated: (courseId) =>
@@ -98,22 +131,38 @@ export const courseApi = {
   getCourseSyncStatus: async (courseId) => {
     if (!Cookies.get("masterToken")) return { isStale: false };
 
-    try {
-      const [masterRes, localRes] = await Promise.all([
-        masterApiInstance.get(`/institute/me/courses/${courseId}/last-updated`),
-        api.get(`/institute/me/courses/${courseId}/last-updated`),
-      ]);
-      const masterUpdated = masterRes.data?.data?.last_updated;
-      const localUpdated = localRes.data?.data?.last_updated;
-      const isStale =
-        !!masterUpdated && !!localUpdated &&
-        new Date(masterUpdated).getTime() > new Date(localUpdated).getTime();
+    const [masterResult, localResult] = await Promise.allSettled([
+      masterApiInstance.get(`/institute/me/courses/${courseId}/last-updated`),
+      api.get(`/institute/me/courses/${courseId}/last-updated`),
+    ]);
 
-      return { isStale };
-    } catch (error) {
-      if (!isNetworkError(error)) throw error;
+    if (localResult.status === "rejected") {
+      const error = localResult.reason;
+      if (isNetworkError(error)) return { isStale: false }; // local server itself unreachable — nothing to conclude
+      // A 404 here specifically means the local backend has no Course doc
+      // for this course at all — e.g. an earlier download's local mirror
+      // silently failed (see downloadCourse above, before it started
+      // awaiting/reporting that). `is_downloaded` can be true (master says
+      // so) while this is still 404ing. That's not "can't tell" — it's
+      // definitely stale, so surface it as such and let "Update Data"
+      // re-trigger a real local sync instead of masking it forever behind a
+      // console error.
+      if (error.response?.status === 404) return { isStale: true };
+      throw error;
+    }
+
+    if (masterResult.status === "rejected") {
+      if (!isNetworkError(masterResult.reason)) throw masterResult.reason;
       // Master unreachable — nothing to compare against, don't falsely flag.
       return { isStale: false };
     }
+
+    const masterUpdated = masterResult.value.data?.data?.last_updated;
+    const localUpdated = localResult.value.data?.data?.last_updated;
+    const isStale =
+      !!masterUpdated && !!localUpdated &&
+      new Date(masterUpdated).getTime() > new Date(localUpdated).getTime();
+
+    return { isStale };
   },
 };

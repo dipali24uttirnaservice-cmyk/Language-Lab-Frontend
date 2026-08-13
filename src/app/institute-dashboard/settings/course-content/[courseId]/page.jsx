@@ -187,7 +187,16 @@ export default function CourseContentPage() {
     setTriggering(true);
     setTriggerError("");
     try {
-      await courseApi.downloadCourse(courseId);
+      // Awaits the local mirror itself now (see courseApi.downloadCourse) —
+      // previously this fired the local pull and moved straight on to
+      // fetchModuleCounts, which could race ahead of the mirror finishing
+      // and immediately re-hit the same "Course not found" 404 this button
+      // exists to fix. A failed mirror is now surfaced directly instead.
+      const { localSyncError } = await courseApi.downloadCourse(courseId);
+      if (localSyncError) {
+        setTriggerError(`Local sync failed: ${localSyncError}`);
+        return;
+      }
       await fetchModuleCounts();
       pollDownloadStatus();
     } catch (error) {
@@ -208,29 +217,26 @@ export default function CourseContentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
-  const toggleTopic = async (topic) => {
-    const topicId = topic._id;
-    setOpenTopics((prev) => ({ ...prev, [topicId]: !prev[topicId] }));
-
-    if (topicDetails[topicId]) return; // already loaded
-
+  // Shared with the auto-prefetch effect below — fetches a topic's subtopic
+  // list without touching openTopics, so topic rows can show their
+  // cached-progress color/percentage even before the user ever expands them.
+  const loadTopicDetail = async (topicId) => {
     setTopicDetails((prev) => ({ ...prev, [topicId]: { loading: true, subtopics: [] } }));
     try {
       const res = await topicApi.getTopicById(topicId);
       const subtopics = res.data?.data?.subtopics || [];
       setTopicDetails((prev) => ({ ...prev, [topicId]: { loading: false, subtopics } }));
+      return subtopics;
     } catch (error) {
       console.error("Get Topic Error:", error);
       setTopicDetails((prev) => ({ ...prev, [topicId]: { loading: false, subtopics: [], error: true } }));
+      return [];
     }
   };
 
-  const toggleSubtopic = async (subtopic) => {
-    const subtopicId = subtopic._id;
-    setOpenSubtopics((prev) => ({ ...prev, [subtopicId]: !prev[subtopicId] }));
-
-    if (subtopicDetails[subtopicId]) return; // already loaded
-
+  // Same idea for a subtopic's module counts — split out of toggleSubtopic
+  // so it can run silently in the background for every subtopic up front.
+  const loadSubtopicDetail = async (subtopicId) => {
     setSubtopicDetails((prev) => ({ ...prev, [subtopicId]: { loading: true, counts: null } }));
     try {
       const results = await Promise.all(
@@ -253,6 +259,78 @@ export default function CourseContentPage() {
       console.error("Get Subtopic Modules Error:", error);
       setSubtopicDetails((prev) => ({ ...prev, [subtopicId]: { loading: false, counts: null, error: true } }));
     }
+  };
+
+  const toggleTopic = (topic) => {
+    const topicId = topic._id;
+    setOpenTopics((prev) => ({ ...prev, [topicId]: !prev[topicId] }));
+    if (!topicDetails[topicId]) loadTopicDetail(topicId);
+  };
+
+  const toggleSubtopic = (subtopic) => {
+    const subtopicId = subtopic._id;
+    setOpenSubtopics((prev) => ({ ...prev, [subtopicId]: !prev[subtopicId] }));
+    if (!subtopicDetails[subtopicId]) loadSubtopicDetail(subtopicId);
+  };
+
+  // Silently prefetches every topic's subtopics, and every subtopic's module
+  // counts, right after the topic list loads — so the cached-progress
+  // background color + percentage on each row (below) is already there the
+  // first time this page renders, not just after the user expands each row.
+  useEffect(() => {
+    if (!topics || topics.length === 0) return;
+    (async () => {
+      for (const topic of topics) {
+        if (topicDetails[topic._id]) continue;
+        const subtopics = await loadTopicDetail(topic._id);
+        subtopics.forEach((st) => {
+          if (!subtopicDetails[st._id]) loadSubtopicDetail(st._id);
+        });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topics]);
+
+  // A subtopic's cached-video/audio completion, out of its own video+audio
+  // modules only (text/vocabulary/exercise are plain synced records, not
+  // separately cached files, so they don't factor into "% cached"). A
+  // subtopic with no video/audio at all reads as fully available (100%) —
+  // there's nothing blocking it from working offline.
+  const subtopicProgress = (subtopicId) => {
+    const counts = subtopicDetails[subtopicId]?.counts;
+    if (!counts) return null;
+    let total = 0;
+    let cached = 0;
+    MODULE_TYPES.filter((t) => t.cachable).forEach((t) => {
+      const c = counts[t.id];
+      if (!c) return;
+      total += c.total;
+      cached += c.modules.filter((m) => assetMap[m._id]?.status === "completed").length;
+    });
+    return total === 0 ? 100 : Math.round((cached / total) * 100);
+  };
+
+  // A topic's completion = average of its subtopics' progress, only counting
+  // subtopics whose detail has actually loaded — so a topic with some
+  // still-loading subtopics doesn't flash a misleadingly low/high number.
+  const topicProgress = (topicId) => {
+    const subtopics = topicDetails[topicId]?.subtopics || [];
+    if (subtopics.length === 0) return null;
+    const values = subtopics
+      .map((st) => subtopicProgress(st._id))
+      .filter((v) => v !== null);
+    if (values.length === 0) return null;
+    return Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
+  };
+
+  // Shared color mapping for the row background + percentage pill — emerald
+  // once everything cachable has finished downloading, amber while partway,
+  // slate before anything has started/loaded.
+  const progressTone = (pct) => {
+    if (pct === null) return { bg: "", pill: "bg-slate-100 text-slate-400" };
+    if (pct >= 100) return { bg: "bg-emerald-50/60", pill: "bg-emerald-100 text-emerald-700" };
+    if (pct > 0) return { bg: "bg-amber-50/60", pill: "bg-amber-100 text-amber-700" };
+    return { bg: "", pill: "bg-slate-100 text-slate-400" };
   };
 
   const totalSubtopics = (topics || []).reduce((sum, t) => sum + (t.subtopic_count || 0), 0);
@@ -429,6 +507,8 @@ export default function CourseContentPage() {
             {topics.map((topic, index) => {
               const isOpen = !!openTopics[topic._id];
               const detail = topicDetails[topic._id];
+              const pct = topicProgress(topic._id);
+              const tone = progressTone(pct);
 
               return (
                 <div
@@ -438,7 +518,7 @@ export default function CourseContentPage() {
                   <button
                     type="button"
                     onClick={() => toggleTopic(topic)}
-                    className="w-full flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50/60 transition-colors text-left"
+                    className={`w-full flex items-center justify-between gap-4 px-5 py-4 hover:brightness-[0.98] transition-colors text-left ${tone.bg}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-orange-100 text-orange-600 font-bold text-sm">
@@ -451,10 +531,15 @@ export default function CourseContentPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronDown
-                      size={18}
-                      className={`shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                    />
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${tone.pill}`}>
+                        {pct === null ? "…" : `${pct}% cached`}
+                      </span>
+                      <ChevronDown
+                        size={18}
+                        className={`text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    </div>
                   </button>
 
                   {isOpen && (
@@ -480,6 +565,8 @@ export default function CourseContentPage() {
                           index={sIndex}
                           isOpen={!!openSubtopics[subtopic._id]}
                           detail={subtopicDetails[subtopic._id]}
+                          progress={subtopicProgress(subtopic._id)}
+                          tone={progressTone(subtopicProgress(subtopic._id))}
                           onToggle={() => toggleSubtopic(subtopic)}
                           openTypePanels={openTypePanels}
                           onToggleType={(typeId) => {
@@ -515,19 +602,22 @@ function StatCard({ icon, label, value }) {
   );
 }
 
-function SubtopicRow({ subtopic, index, isOpen, detail, onToggle, openTypePanels, onToggleType, assetMap }) {
+function SubtopicRow({ subtopic, index, isOpen, detail, progress, tone, onToggle, openTypePanels, onToggleType, assetMap }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+        className={`w-full flex items-center justify-between gap-3 px-4 py-3 hover:brightness-[0.98] transition-colors text-left ${tone?.bg || ""}`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 text-xs font-bold">
             {index + 1}
           </div>
           <p className="font-semibold text-slate-700 text-sm truncate">{subtopic.title}</p>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${tone?.pill || "bg-slate-100 text-slate-400"}`}>
+            {progress === null ? "…" : `${progress}%`}
+          </span>
         </div>
         <ChevronRight
           size={16}

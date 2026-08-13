@@ -199,11 +199,10 @@ function ContentTypeTabs({ tabs, activeTab, onChange }) {
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
-              isActive
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${isActive
                 ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-md shadow-orange-500/10 -translate-y-0.5"
                 : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-slate-200 shadow-sm"
-            }`}
+              }`}
           >
             <Icon size={14} />
             {tab.label}
@@ -227,11 +226,10 @@ function PrevNextNav({
       <button
         disabled={!previousModule}
         onClick={() => previousModule && onNavigate(previousModule)}
-        className={`px-5 py-3 rounded-xl font-semibold transition ${
-          previousModule
+        className={`px-5 py-3 rounded-xl font-semibold transition ${previousModule
             ? "bg-slate-900 text-white hover:bg-slate-800"
             : "bg-slate-100 text-slate-400 cursor-not-allowed"
-        }`}
+          }`}
       >
         ← Previous
       </button>
@@ -243,11 +241,10 @@ function PrevNextNav({
       <button
         disabled={!nextModule}
         onClick={() => nextModule && onNavigate(nextModule)}
-        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${
-          nextModule
+        className={`px-5 py-3 rounded-xl font-semibold text-white transition ${nextModule
             ? `${accent.solid} ${accent.solidHover}`
             : "bg-slate-100 text-slate-400 cursor-not-allowed"
-        }`}
+          }`}
       >
         Next →
       </button>
@@ -351,18 +348,16 @@ function RelatedQueueList({
               <button
                 key={item._id}
                 onClick={() => onSelect(item)}
-                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${
-                  isActive
+                className={`w-full p-3 rounded-xl flex gap-3 text-left border transition ${isActive
                     ? `${accent.bg} ${accent.border}`
                     : "hover:bg-slate-50 border-transparent"
-                }`}
+                  }`}
               >
                 <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    isActive
+                  className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${isActive
                       ? `${accent.solid} text-white`
                       : "bg-slate-100 text-slate-500"
-                  }`}
+                    }`}
                 >
                   <Icon size={18} />
                 </div>
@@ -1084,7 +1079,7 @@ function VideoDetail({
             <VideoPlayer
               src={
                 selectedModule.video?.download_status === "completed" &&
-                selectedModule.video?.local_url
+                  selectedModule.video?.local_url
                   ? getMediaUrl(selectedModule.video.local_url)
                   : selectedModule.video?.url?.trim() || undefined
               }
@@ -1212,11 +1207,10 @@ function AudioDetail({
         <div className="lg:col-span-8 space-y-6">
           <div
             ref={containerRef}
-            className={`bg-white border border-slate-200/80 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300 ${
-              isFullscreen
+            className={`bg-white border border-slate-200/80 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300 ${isFullscreen
                 ? "h-screen w-screen overflow-y-auto rounded-none fixed inset-0 z-50 p-6 md:p-10 bg-white"
                 : ""
-            }`}
+              }`}
           >
             {/* =========================================================
                 DEFAULT AUDIO HERO
@@ -1319,8 +1313,8 @@ function AudioDetail({
                         Duration:{" "}
                         {selectedModule?.audio?.duration_sec
                           ? `${Math.floor(
-                              selectedModule.audio.duration_sec / 60,
-                            )}m ${selectedModule.audio.duration_sec % 60}s`
+                            selectedModule.audio.duration_sec / 60,
+                          )}m ${selectedModule.audio.duration_sec % 60}s`
                           : "Dynamic"}
                       </p>
                     </div>
@@ -1470,11 +1464,10 @@ function TextDetail({
         <div className="lg:col-span-8 space-y-6">
           <div
             ref={containerRef}
-            className={`bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6 ${
-              isFullscreen
+            className={`bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6 ${isFullscreen
                 ? "h-screen w-screen overflow-y-auto rounded-none"
                 : ""
-            }`}
+              }`}
           >
             <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-xl shadow-slate-200/50 space-y-6">
               <div className="flex items-start justify-between gap-4 mb-3">
@@ -1601,11 +1594,10 @@ function VocabularyDetail({
         <div className="lg:col-span-8 space-y-6">
           <div
             ref={containerRef}
-            className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm ${
-              isFullscreen
+            className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm ${isFullscreen
                 ? "h-screen w-screen overflow-y-auto rounded-none"
                 : ""
-            }`}
+              }`}
           >
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
               {/* Header */}
@@ -1705,8 +1697,7 @@ function VocabularyDetail({
                     onSelect={onNavigate}
                     accent={accent}
                     getSubtitle={(item) =>
-                      `${item.words?.length || 0} Words • ${
-                        item.questions?.length || 0
+                      `${item.words?.length || 0} Words • ${item.questions?.length || 0
                       } Questions`
                     }
                   />
@@ -1761,11 +1752,10 @@ function AttemptStrip({ attempts, onSelect }) {
               </span>
             </p>
             <span
-              className={`mt-3 inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                a.is_passed
+              className={`mt-3 inline-block px-3 py-1 rounded-full text-xs font-bold ${a.is_passed
                   ? "bg-emerald-50 text-emerald-700"
                   : "bg-orange-50 text-orange-700"
-              }`}
+                }`}
             >
               {a.is_passed ? "Passed" : "Failed"}
             </span>
@@ -1842,11 +1832,10 @@ function AttemptResultModal({ attempt, onClose }) {
           </div>
 
           <div
-            className={`text-center px-4 py-3 rounded-full text-sm font-bold ${
-              attempt.is_passed
+            className={`text-center px-4 py-3 rounded-full text-sm font-bold ${attempt.is_passed
                 ? "bg-green-100 text-green-700"
                 : "bg-orange-100 text-orange-700"
-            }`}
+              }`}
           >
             {attempt.is_passed
               ? "🎉 Passed Successfully"
@@ -2047,11 +2036,10 @@ function QuizResults({ resultData, onDone, onReview, hasReview }) {
 
         <div className="mt-8 flex justify-center">
           <div
-            className={`px-6 py-3 rounded-full text-sm font-bold ${
-              resultData?.is_passed
+            className={`px-6 py-3 rounded-full text-sm font-bold ${resultData?.is_passed
                 ? "bg-green-100 text-green-700"
                 : "bg-orange-100 text-orange-700"
-            }`}
+              }`}
           >
             {resultData?.is_passed
               ? "🎉 Passed Successfully"
@@ -2125,25 +2113,22 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
           return (
             <div
               key={i}
-              className={`rounded-3xl border p-6 space-y-5 transition-all shadow-sm ${
-                isCorrect
+              className={`rounded-3xl border p-6 space-y-5 transition-all shadow-sm ${isCorrect
                   ? "border-emerald-300 bg-emerald-50"
                   : "border-rose-300 bg-rose-50"
-              }`}
+                }`}
             >
               {/* Question Header Card info */}
               <div
-                className={`flex items-center justify-between border-b pb-4 ${
-                  isCorrect ? "border-emerald-200" : "border-rose-200"
-                }`}
+                className={`flex items-center justify-between border-b pb-4 ${isCorrect ? "border-emerald-200" : "border-rose-200"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`h-8 w-8 rounded-xl flex items-center justify-center font-black text-xs ${
-                      isCorrect
+                    className={`h-8 w-8 rounded-xl flex items-center justify-center font-black text-xs ${isCorrect
                         ? "bg-emerald-200 text-emerald-800"
                         : "bg-rose-200 text-rose-800"
-                    }`}
+                      }`}
                   >
                     {(r.question_index ?? i) + 1}
                   </span>
@@ -2158,11 +2143,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                 </div>
 
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${
-                    isCorrect
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${isCorrect
                       ? "bg-emerald-100 text-emerald-800 border-emerald-300"
                       : "bg-rose-100 text-rose-800 border-rose-300"
-                  }`}
+                    }`}
                 >
                   {isCorrect ? <Check size={14} /> : <X size={14} />}
                   {isCorrect ? "Correct" : "Incorrect"}
@@ -2235,11 +2219,10 @@ function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
         <button
           key={i}
           onClick={() => setAnswer({ value: opt })}
-          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-            answer?.value === opt
+          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${answer?.value === opt
               ? "border-orange-500 bg-orange-50"
               : "border-slate-200 hover:border-orange-300"
-          }`}
+            }`}
         >
           {opt}
         </button>
@@ -2347,13 +2330,12 @@ function MatchBuilder({ question, answer, setAnswer }) {
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                isActive
+              className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
                   ? "border-orange-500 bg-orange-50 text-orange-700"
                   : isPaired
                     ? "border-orange-300 bg-orange-50/60 text-orange-700"
                     : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-              }`}
+                }`}
             >
               {p.left}{" "}
               {isPaired && (
@@ -2369,11 +2351,10 @@ function MatchBuilder({ question, answer, setAnswer }) {
             key={item.id}
             onClick={() => pickRight(item.value)}
             disabled={usedRights.has(item.value)}
-            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-              usedRights.has(item.value)
+            className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
                 ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
                 : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-            }`}
+              }`}
           >
             {item.value}
           </button>
@@ -2513,9 +2494,9 @@ function ActiveQuiz({
   const timePct =
     selectedModule.time_limit_sec != null
       ? Math.max(
-          0,
-          Math.min(100, (timeLeft / selectedModule.time_limit_sec) * 100),
-        )
+        0,
+        Math.min(100, (timeLeft / selectedModule.time_limit_sec) * 100),
+      )
       : null;
 
   return (
@@ -2612,13 +2593,12 @@ function ActiveQuiz({
                 <button
                   key={i}
                   onClick={() => setCurrentQuestionIndex(i)}
-                  className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border-2 ${
-                    isCurrent
+                  className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border-2 ${isCurrent
                       ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
                       : answered
                         ? "bg-green-500 border-green-500 text-white shadow-sm shadow-green-200"
                         : "bg-yellow-400 border-yellow-400 text-white"
-                  }`}
+                    }`}
                 >
                   {i + 1}
                 </button>
