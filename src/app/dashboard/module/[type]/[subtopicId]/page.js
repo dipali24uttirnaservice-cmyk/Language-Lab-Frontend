@@ -1071,7 +1071,7 @@ function VideoDetail({
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-xl border border-slate-200">
            <VideoPlayer
-  src={selectedModule.video?.url?.trim() || undefined}
+  src={getPlayableVideoUrl(selectedModule.video) || undefined}
   poster={
     selectedModule.video?.thumbnail_url?.trim() || undefined
   }
@@ -1328,7 +1328,18 @@ function AudioDetail({
                   </div>
 
                   {/* Audio Player */}
-                  {selectedModule?.audio?.url ? (
+                  {(() => {
+                    // Prefer the locally-cached copy (this institute's own
+                    // backend, works offline) over the AWS URL — same
+                    // getPlayableVideoUrl fallback already used for video
+                    // playback/thumbnails elsewhere in this file; audio was
+                    // missed, always hitting the AWS URL directly even when
+                    // a local copy existed, which fails offline.
+                    const playableAudioUrl = getPlayableAudioUrl(
+                      selectedModule?.audio
+                    );
+
+                    return playableAudioUrl ? (
                     <div className="w-full sm:w-auto bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-slate-200/80 shadow-sm">
                       <audio
                         key={selectedModule._id}
@@ -1342,7 +1353,7 @@ function AudioDetail({
                           );
                           console.error(
                             "Audio URL:",
-                            selectedModule.audio?.url
+                            playableAudioUrl
                           );
                           console.error(
                             "Audio element error:",
@@ -1358,21 +1369,19 @@ function AudioDetail({
                         }}
                       >
                         <source
-                          src={
-                            selectedModule.audio?.url?.trim() ||
-                            undefined
-                          }
+                          src={playableAudioUrl}
                           type="audio/webm"
                         />
 
                         Your browser does not support audio playback.
                       </audio>
                     </div>
-                  ) : (
+                    ) : (
                     <p className="text-xs font-semibold text-slate-400 bg-white/60 px-4 py-2 rounded-lg border border-slate-200/60 text-center">
                       Audio not available
                     </p>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
 

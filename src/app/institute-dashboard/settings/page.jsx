@@ -239,8 +239,14 @@ export default function SettingsPage() {
 
                   <button
                     type="button"
-                    onClick={() => handleDownload(course)}
-                    disabled={isDownloading || (isDownloaded && !isStale)}
+                    onClick={() =>
+                      isDownloaded && !isStale
+                        ? router.push(
+                            `/institute-dashboard/settings/course-content/${course._id}?courseName=${encodeURIComponent(course.course_name)}&courseCode=${encodeURIComponent(course.course_code || "")}`,
+                          )
+                        : handleDownload(course)
+                    }
+                    disabled={isDownloading}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all shadow-sm shrink-0 disabled:opacity-50 ${
                       isStale
                         ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
