@@ -9,6 +9,7 @@ export const createStudentTaskSchema = yup.object({
   title: yup.string().required("Title is required"),
   course_id: yup.string().required("Course is required"),
   topic_id: yup.string().nullable(),
+  media_url: yup.string().nullable().optional(), // Added to support local/online file paths
 });
 
 export const updateStudentTaskSchema = createStudentTaskSchema;
