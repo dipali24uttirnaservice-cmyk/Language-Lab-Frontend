@@ -841,7 +841,7 @@ showSelection={showSelection}
       {/* Body */}
       <div className="p-6 space-y-5">
 
-        <button
+       {/* <button
           onClick={() => {
             setShowAddOptions(false);
             router.push(
@@ -867,7 +867,7 @@ showSelection={showSelection}
           <span className="text-2xl text-orange-500 group-hover:translate-x-1 transition">
             →
           </span>
-        </button>
+        </button> */}
 
         <button
           onClick={() => {
