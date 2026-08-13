@@ -329,6 +329,26 @@ export default function VideoPlayer({
   );
 }
 
+const getPlayableSrc = (value) => {
+  if (!value) return "";
+
+  const cleanValue = value.trim();
+
+  if (
+    cleanValue.startsWith("http://") ||
+    cleanValue.startsWith("https://") ||
+    cleanValue.startsWith("blob:")
+  ) {
+    return cleanValue;
+  }
+
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000";
+
+  return `${apiUrl.replace(/\/$/, "")}/${cleanValue.replace(/^\//, "")}`;
+};
+
   /*
    * ==========================================================
    * VIDEO STARTED
@@ -354,7 +374,7 @@ export default function VideoPlayer({
       >
         <ReactPlayer
           ref={playerRef}
-          src={src.trim()}
+         src={getPlayableSrc(src)}
           playing={playing}
           muted={muted}
           volume={volume}
@@ -410,20 +430,42 @@ export default function VideoPlayer({
             }
           }}
           onEnded={onEnded}
-          onError={(error) => {
-            if (error?.name === "AbortError") {
-              return;
-            }
+         onError={(error, data, hlsInstance, hlsGlobal) => {
+  console.error("========== VIDEO PLAYBACK ERROR ==========");
+  console.error("Source:", src);
+  console.error("Error object:", error);
+  console.error("Error name:", error?.name);
+  console.error("Error message:", error?.message);
+  console.error("Error code:", error?.code);
+  console.error("Error data:", data);
+  console.error("HLS instance:", hlsInstance);
+  console.error("HLS global:", hlsGlobal);
 
-            console.error(
-              "Video playback error:",
-              error
-            );
+  const internalPlayer = playerRef.current?.getInternalPlayer?.();
 
-            setIsLoading(false);
-            setLoadError(true);
-            setPlaying(false);
-          }}
+  if (internalPlayer) {
+    console.error("Internal player:", internalPlayer);
+
+    if (internalPlayer.error) {
+      console.error("Native video error:", {
+        code: internalPlayer.error.code,
+        message: internalPlayer.error.message,
+      });
+    }
+  }
+
+  // Ignore normal aborts
+  if (
+    error?.name === "AbortError" ||
+    error?.code === 20
+  ) {
+    return;
+  }
+
+  setIsLoading(false);
+  setLoadError(true);
+  setPlaying(false);
+}}
         />
       </div>
 

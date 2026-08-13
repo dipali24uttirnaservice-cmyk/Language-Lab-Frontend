@@ -137,4 +137,22 @@ export const masterPatchApi = (url, data = {}) => masterApi.patch(url, data);
 
 export const masterDeleteApi = (url) => masterApi.delete(url);
 export const masterApiInstance = masterApi;
+
+
+
+
+const getMediaUrl = (localUrl) => {
+  if (!localUrl) return undefined;
+
+  if (
+    localUrl.startsWith("http://") ||
+    localUrl.startsWith("https://")
+  ) {
+    return localUrl;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "");
+
+  return `${baseUrl}${localUrl}`;
+};
 export default api;
