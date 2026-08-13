@@ -87,12 +87,15 @@ function AddTaskQuestionPageContent() {
         }
       })
       .catch((err) => {
-        triggerModal(
-          "error",
-          "Failed to load task",
-          err?.response?.data?.message || err.message,
-          () => router.push(`/institute-dashboard/student-task/${id}`)
-        );
+       triggerModal(
+  "success",
+  "Questions Saved",
+  `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
+  () =>
+    router.push(
+      `/institute-dashboard/student-task/assign/${id}`
+    )
+);
       })
       .finally(() => setLoading(false));
   }, [id, router]);
@@ -166,44 +169,59 @@ function AddTaskQuestionPageContent() {
       }),
     );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const valid = questions.filter(
-      (q) => q.question_text.trim() && q.correct_answer.trim(),
-    );
-    // A deliberately empty list (all rows removed) clears the task's
-    // questions entirely — only block save when a row was left half-filled.
-    if (!valid.length && questions.length > 0) {
-      triggerModal(
-        "error",
-        "Incomplete Questions",
-        "Complete each question, or remove it, before saving"
-      );
-      return;
-    }
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setSaving(true);
-    try {
-      const formData = new FormData();
-      const toSave = isNewMode ? [...existingQuestions, ...valid] : valid;
-      formData.append("questions", JSON.stringify(toSave));
-      await taskApi.updateTask(id, formData);
-      triggerModal(
-        "success",
-        "Questions Saved",
-        `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
-        () => router.push(`/institute-dashboard/student-task`)
-      );
-    } catch (err) {
-      triggerModal(
-        "error",
-        "Failed",
-        err?.response?.data?.message || err.message
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+  const valid = questions.filter(
+    (q) => q.question_text.trim() && q.correct_answer.trim(),
+  );
+
+  // A deliberately empty list (all rows removed) clears the task's
+  // questions entirely — only block save when a row was left half-filled.
+  if (!valid.length && questions.length > 0) {
+    triggerModal(
+      "error",
+      "Incomplete Questions",
+      "Complete each question, or remove it, before saving"
+    );
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    const formData = new FormData();
+
+    const toSave = isNewMode
+      ? [...existingQuestions, ...valid]
+      : valid;
+
+    formData.append(
+      "questions",
+      JSON.stringify(toSave)
+    );
+
+    await taskApi.updateTask(id, formData);
+
+    triggerModal(
+      "success",
+      "Questions Saved",
+      `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
+      () =>
+        router.push(
+          `/institute-dashboard/student-task/assign/${id}`
+        )
+    );
+  } catch (err) {
+    triggerModal(
+      "error",
+      "Failed",
+      err?.response?.data?.message || err.message
+    );
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading) {
     return (
