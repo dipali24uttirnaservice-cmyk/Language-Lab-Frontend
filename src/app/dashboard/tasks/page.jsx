@@ -454,7 +454,6 @@ function TaskRow({ task, onSelect }) {
    TASK WORKSPACE — dedicated detail view, same shell language
    as the Practical Manual workspace (top bar + content card).
 ========================================================== */
-
 export function TaskWorkspace({ task, onBack, onSubmitted }) {
   const meta = TYPE_META[task.type] || TYPE_META.text;
   const TypeIcon = meta.Icon;
@@ -485,17 +484,16 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
     },
   ];
 
+  // Removed window.scrollTo to prevent page jumping on step change
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -543,18 +541,7 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
             />
             Back to Tasks
           </button>
-
-          <button
-            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-          >
-            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
-        </div>
-
-        {/* Step Progress Bar Indicator */}
-        <div className="flex items-center justify-center gap-4 px-2">
+            <div className="flex items-center justify-center gap-4 px-2">
           {steps.map((step, idx) => (
             <div key={step.id} className="flex items-center gap-2">
               <div
@@ -579,6 +566,18 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
             </div>
           ))}
         </div>
+
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        </div>
+
+        {/* Step Progress Bar Indicator */}
+      
 
         {/* Main Full-Width Workspace Card */}
         <div
@@ -692,19 +691,19 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
 
                 {["audio", "video", "document"].includes(task.type) &&
                   task.media_url && (
-                    <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60 w-full">
+                    <div className="bg-slate-900/5 rounded-3xl p-4 border border-slate-200/60 w-full flex justify-center items-center">
                       {task.type === "audio" && (
                         <audio
                           controls
                           src={resolveMediaUrl(task.media_url)}
-                          className="w-full"
+                          className="w-full max-w-xl"
                         />
                       )}
                       {task.type === "video" && (
                         <video
                           controls
                           src={resolveMediaUrl(task.media_url)}
-                          className="w-full rounded-2xl shadow-md max-h-[500px] object-cover"
+                          className="w-full max-h-[400px] h-auto object-contain rounded-2xl shadow-md bg-black"
                         />
                       )}
                       {task.type === "document" && (
@@ -767,7 +766,7 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-8 w-full">
+          <div className="flex items-center justify-between pt-6 border-t border-slate-100  w-full">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
