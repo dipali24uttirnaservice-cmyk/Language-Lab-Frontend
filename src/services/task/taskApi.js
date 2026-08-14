@@ -5,12 +5,15 @@ export const taskApi = {
 
   getTaskById: (id) => api.get(`/task/${id}`),
 
-  // Task media (audio/video/document) is uploaded separately via the
-  // chunked-upload endpoints; /task itself only ever receives JSON, with
-  // the resulting file URL passed as `media_url`.
-  createTask: (payload) => api.post("/task", payload),
+  // Task media (audio/video/document) now rides along in the same request
+  // as a `taskMedia` multipart field — the backend saves it to its own disk
+  // instead of AWS (see taskController.js) — so `payload` is a FormData
+  // built by the caller, not a plain JSON object.
+  createTask: (payload) =>
+    api.post("/task", payload, { headers: { "Content-Type": "multipart/form-data" } }),
 
-  updateTask: (id, payload) => api.put(`/task/${id}`, payload),
+  updateTask: (id, payload) =>
+    api.put(`/task/${id}`, payload, { headers: { "Content-Type": "multipart/form-data" } }),
 
   deleteTask: (id) => api.delete(`/task/${id}`),
 

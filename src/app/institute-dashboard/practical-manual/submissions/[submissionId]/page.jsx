@@ -16,6 +16,7 @@ import {
   getPracticalSubmissions,
   gradePracticalSubmission,
 } from "@/services/practical-Manual/page.jsx";
+import { resolveMediaUrl } from "@/utils/media";
 
 export default function PracticalSubmissionsPage() {
   const router = useRouter();
@@ -206,7 +207,7 @@ router.push(
           {isFileSolution ? (
             submission.attachment_url && (
               <a
-                href={submission.attachment_url}
+                href={resolveMediaUrl(submission.attachment_url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"

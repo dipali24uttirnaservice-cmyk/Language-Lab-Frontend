@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 // utils/media.js
 //
 // Locally-cached course videos (see Language-Lab-Backend's
@@ -47,3 +51,33 @@ export const getInstituteLogoUrl = (institute, fallback = "/collage-logo.png") =
   if (institute.local_logo_url) return resolveMediaUrl(institute.local_logo_url);
   return institute.logo || fallback;
 };
+
+// Same three-way preference as getInstituteLogoUrl (local copy → AWS-hosted
+// → bundled placeholder), but also recovers when the *preferred* one 404s —
+// e.g. the institute's DB record says the local download "completed" but the
+// file is actually missing from this server's disk (cleared uploads/,
+// redeployed backend, download row left stale), which otherwise leaves the
+// sidebar/navbar logo blank after a refresh since next/image has no
+// built-in onError fallback. Wire the returned `onError` to the <Image>.
+export function useInstituteLogoSrc(institute, fallback = "/collage-logo.png") {
+  const localSrc = institute?.local_logo_url ? resolveMediaUrl(institute.local_logo_url) : null;
+  const awsSrc = institute?.logo || null;
+  const chain = [localSrc, awsSrc, fallback].filter(Boolean);
+
+  const [src, setSrc] = useState(chain[0]);
+
+  // Re-sync when the institute (or its logo fields) actually changes —
+  // e.g. profile data finishes loading after being null on first render —
+  // rather than every render, so a previous onError fallback isn't undone.
+  useEffect(() => {
+    setSrc(chain[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSrc, awsSrc, fallback]);
+
+  const onError = () => {
+    const next = chain[chain.indexOf(src) + 1];
+    if (next) setSrc(next);
+  };
+
+  return { src, onError };
+}

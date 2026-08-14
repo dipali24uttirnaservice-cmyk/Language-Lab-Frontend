@@ -8,6 +8,7 @@ import {
 } from "@/services/practical-Manual/page.jsx";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { resolveMediaUrl } from "@/utils/media";
 
 function StudentAnswerSheetViewPageContent() {
   const router = useRouter();
@@ -158,7 +159,7 @@ function StudentAnswerSheetViewPageContent() {
                   (q.solution_type === "both" && answer?.answer_file_url) ? (
                     answer?.answer_file_url ? (
                       <a
-                        href={answer.answer_file_url}
+                        href={resolveMediaUrl(answer.answer_file_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-xs font-bold text-orange-600 hover:text-orange-700 bg-white px-4 py-2.5 rounded-xl border border-orange-200/80 shadow-sm hover:shadow transition-all"

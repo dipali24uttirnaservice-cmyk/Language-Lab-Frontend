@@ -31,6 +31,7 @@ import {
 
 import { studentTaskApi } from "@/services/task/studentTaskApi";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { resolveMediaUrl } from "@/utils/media";
 import {
   getMatchPairs,
   hasAnswer,
@@ -695,20 +696,20 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
                       {task.type === "audio" && (
                         <audio
                           controls
-                          src={task.media_url}
+                          src={resolveMediaUrl(task.media_url)}
                           className="w-full"
                         />
                       )}
                       {task.type === "video" && (
                         <video
                           controls
-                          src={task.media_url}
+                          src={resolveMediaUrl(task.media_url)}
                           className="w-full rounded-2xl shadow-md max-h-[500px] object-cover"
                         />
                       )}
                       {task.type === "document" && (
                         <a
-                          href={task.media_url}
+                          href={resolveMediaUrl(task.media_url)}
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center gap-3 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-5 py-3.5 rounded-2xl hover:bg-amber-100 transition-all shadow-sm"
