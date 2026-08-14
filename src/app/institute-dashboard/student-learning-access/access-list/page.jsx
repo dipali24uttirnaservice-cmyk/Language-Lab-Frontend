@@ -801,22 +801,45 @@ export default function StudentLearningAccessListPage() {
             </div>
 
             {/* FOOTER */}
+{/* FOOTER */}
 
-            <div className="mt-6 flex items-center justify-between pt-4 border-t border-orange-100">
-              <span className="text-xs text-slate-500 font-medium">
-                Total Lessons:{" "}
-                <strong className="text-slate-800">
-                  {subtopicLessons.length}
-                </strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewingModule(null)}
-                className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-orange-700"
-              >
-                Close Summary
-              </button>
-            </div>
+<div className="mt-6 flex items-center justify-between border-t border-orange-100 pt-4">
+  <span className="text-xs font-medium text-slate-500">
+    Total Lessons:{" "}
+    <strong className="text-slate-800">
+      {(viewingModule.subtopics ?? []).reduce(
+        (total, subtopic) => {
+          const modules = Array.isArray(subtopic?.modules)
+            ? subtopic.modules
+            : [];
+
+          return (
+            total +
+            modules.reduce(
+              (moduleTotal, module) =>
+                moduleTotal +
+                Number(
+                  module?.lessons ??
+                    module?.lessonCount ??
+                    0
+                ),
+              0
+            )
+          );
+        },
+        0
+      )}
+    </strong>
+  </span>
+
+  <button
+    type="button"
+    onClick={() => setViewingModule(null)}
+    className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-orange-700"
+  >
+    Close Summary
+  </button>
+</div>
           </div>
         </div>
       )}

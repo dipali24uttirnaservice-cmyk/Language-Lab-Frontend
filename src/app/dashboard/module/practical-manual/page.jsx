@@ -435,17 +435,19 @@ function StudentPracticalManualPageContent() {
       const detail = res.data?.data;
       const mySubmission = detail?.my_submission;
 
-      const answerByQuestionId = {};
-      (mySubmission?.answers || []).forEach((a) => {
-        answerByQuestionId[a.question_id] = a;
-      });
-      const prefilled = {};
-      const prefilledFileUrls = {};
-      const prefilledMode = {};
-      (detail?.questions || []).forEach((q, idx) => {
-        const existing = answerByQuestionId[q._id];
-        if (existing?.answer_html) prefilled[idx] = existing.answer_html;
-        if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
+  const answerByQuestionId = {};
+(mySubmission?.answers || []).forEach((a) => {
+  answerByQuestionId[a.question_id] = a;
+});
+
+const prefilled = {};
+const prefilledFileUrls = {};
+const prefilledMode = {};
+(detail?.questions || []).forEach((q, idx) => {
+  const existing = answerByQuestionId[q._id];
+  if (existing?.answer_html) prefilled[idx] = existing.answer_html;
+  // ⚠️ CHECK THIS: Does your backend return `answer_file_url` or `file_url` or `answer_file`?
+  if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
         if (q.solution_type === "both") {
           prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
         }
@@ -1013,26 +1015,27 @@ function StudentPracticalManualPageContent() {
                             </button>
                           </div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
-                            <UploadCloud size={28} className="text-slate-400" />
-                            <span className="text-sm font-bold text-slate-600">
-                              Click to upload your answer file
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              {existingFileUrls[current]
-                                ? "Uploading a new file replaces the previous one"
-                                : "PDF, image, or document"}
-                            </span>
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file)
-                                  setQuestionFiles((prev) => ({ ...prev, [current]: file }));
-                              }}
-                            />
-                          </label>
+                      <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
+  <UploadCloud size={28} className="text-slate-400" />
+  <span className="text-sm font-bold text-slate-600">
+    Click to upload your answer file
+  </span>
+  <span className="text-xs text-slate-400">
+    {existingFileUrls[current]
+      ? "Uploading a new file replaces the previous one"
+      : "PDF document only (max 10MB)"}
+  </span>
+  <input
+    type="file"
+    className="hidden"
+    accept="application/pdf"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file)
+        setQuestionFiles((prev) => ({ ...prev, [current]: file }));
+    }}
+  />
+</label>
                         )}
                       </div>
                     ) : (

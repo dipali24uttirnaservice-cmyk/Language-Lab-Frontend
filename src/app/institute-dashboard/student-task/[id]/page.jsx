@@ -659,8 +659,9 @@ export default function StudentTaskFormPage() {
           if (isSuccess) {
             setTimeout(() => {
               if (!editingManualId && createdTaskId) {
-                router.push(`/institute-dashboard/student-task/assign/${createdTaskId}`);
-              } else {
+  router.push(
+  `/institute-dashboard/student-task/${createdTaskId}/add-question?mode=new`
+);              } else {
                 router.push("/institute-dashboard/student-task");
               }
             }, 100);
