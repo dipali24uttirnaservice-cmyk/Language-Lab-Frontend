@@ -44,7 +44,10 @@ const topicName = searchParams.get("topicName");
 
   useEffect(() => {
   if (!courseId) {
+    // No standalone "no course selected" page anymore — bounce straight to
+    // the dashboard instead of leaving the student on a dead-end screen.
     setLoading(false);
+    router.replace("/dashboard");
     return;
   }
 
@@ -96,22 +99,8 @@ const fetchCourseProgress = async () => {
 
   if (!courseId) {
     return (
-      <div className="h-[70vh] flex flex-col items-center justify-center text-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
-          <BookOpen size={28} />
-        </div>
-        <div>
-          <h2 className="text-lg font-black text-slate-800">No course selected</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Pick a course from your Learning Journey to see its topics.
-          </p>
-        </div>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg hover:scale-105 transition-all"
-        >
-          Go to Dashboard
-        </button>
+      <div className="h-[70vh] flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
       </div>
     );
   }

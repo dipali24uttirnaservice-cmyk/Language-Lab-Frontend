@@ -108,18 +108,58 @@ const router = useRouter();
     }
   }, [pathname]);
 
-  const breadcrumbs = pathname
-  .split("/")
-  .filter(Boolean)
-  .map((item, index, arr) => {
-    const isResolvableId = MONGO_ID.test(item) && !!findResolverFor(arr, index);
-    return {
-      label: isResolvableId
-        ? resolvedTitle || "…"
-        : item.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      href: "/" + arr.slice(0, index + 1).join("/"),
-    };
-  });
+  const breadcrumbs =
+    // The create/update learning module page lives one level under
+    // "student-learning-access" but its natural parent in the UI is the
+    // Access List page (not reachable by trimming the URL), so its
+    // breadcrumb is built by hand instead of derived from path segments.
+    pathname === "/institute-dashboard/student-learning-access"
+      ? [
+          {
+            label: "Access List",
+            href: "/institute-dashboard/student-learning-access/access-list",
+          },
+          {
+            label: "Student Learning Access",
+            href: "/institute-dashboard/student-learning-access",
+          },
+        ]
+      : pathname
+          .split("/")
+          .filter(Boolean)
+          .map((item, index, arr) => {
+            const isResolvableId = MONGO_ID.test(item) && !!findResolverFor(arr, index);
+            return {
+              segment: item,
+              isResolvableId,
+              nextSegment: arr[index + 1],
+              label: isResolvableId
+                ? resolvedTitle || "…"
+                : item.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+              href: "/" + arr.slice(0, index + 1).join("/"),
+            };
+          })
+          // Drop the leading "Institute Dashboard" crumb — every institute
+          // route starts with it, so it added noise without any
+          // navigational value.
+          .slice(1)
+          // "assign"/"view"/"submissions" are just intermediate route
+          // segments for the practical-manual assign, detail-view, and
+          // submissions flows (.../practical-manual/assign/{id},
+          // .../practical-manual/view/{id}, .../practical-manual/submissions/{id})
+          // — none is a page of its own, so all are hidden from the trail
+          // while their hrefs still point deeper via the segments around
+          // them. Same for the resolved task-title crumb right before
+          // "add-question" (.../student-task/{id}/add-question) — the page
+          // itself repeats that task title under its own heading, so it's
+          // redundant in the trail.
+          .filter(
+            (crumb) =>
+              crumb.segment !== "assign" &&
+              crumb.segment !== "view" &&
+              crumb.segment !== "submissions" &&
+              !(crumb.isResolvableId && crumb.nextSegment === "add-question")
+          );
 
 
 

@@ -45,30 +45,37 @@ function LoadingScreen() {
   );
 }
 
-function EmptyState({ scopedToLesson = false,  onBack
- }) {
+function EmptyState({ scopedToLesson = false, onBack }) {
   return (
-    <div className="h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center max-w-sm">
-
-            <BackToLessonsButton onBack={onBack} />
-
-
-        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center">
-          <Award className="text-orange-400" size={28} />
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-orange-50/60 via-slate-50 to-slate-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="text-center max-w-sm rounded-3xl border border-orange-100 bg-white p-10 shadow-xl shadow-orange-100/40"
+      >
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-400 to-amber-500 shadow-lg shadow-orange-200">
+          <Award className="text-white" size={32} />
         </div>
 
-        <h3 className="text-lg font-bold text-slate-800">
-          No exercises found
+        <h3 className="text-xl font-black text-slate-900">
+          No Exercises Yet
         </h3>
 
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
           {scopedToLesson
-            ? "There is no exercise created for this lesson yet."
-            : "There are no exercises available for this topic yet."}
+            ? "Your instructor hasn't added any exercises for this lesson yet. Check back soon, or explore other lessons in the meantime."
+            : "There are no exercises available for this topic yet. Check back soon, or explore other lessons in the meantime."}
         </p>
 
-      </div>
+        <button
+          onClick={onBack}
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:from-orange-600 hover:to-amber-600 active:scale-95"
+        >
+          <ArrowLeft size={16} />
+          Back to Lessons
+        </button>
+      </motion.div>
     </div>
   );
 }
