@@ -112,22 +112,30 @@ export default function SettingsPage() {
   const handleDownload = async (course) => {
     try {
       setDownloadingId(course._id);
-      await courseApi.downloadCourse(course._id);
+      const { localSyncError } = await courseApi.downloadCourse(course._id);
 
       // Reflect the now-downloaded state straight in the list rather than a
       // separate client-tracked flag — `is_downloaded` here is exactly what
-      // the next getCourses() call from the server would say too.
+      // the next getCourses() call from the server would say too. Master did
+      // mark it downloaded even if the local mirror below failed, so this
+      // stays accurate either way.
       setCourses((prev) =>
         prev.map((c) => (c._id === course._id ? { ...c, is_downloaded: true } : c)),
       );
       setStaleIds((prev) => ({ ...prev, [course._id]: false }));
       pollVideoProgress(course._id);
 
+      // A failed local mirror means offline access/course-content browsing
+      // won't work for this course yet, even though it now shows
+      // "Downloaded" — surface that instead of a false "success", see
+      // courseApi.downloadCourse.
       setModal({
         open: true,
-        type: "success",
-        title: "Course Data Pulled",
-        message: `"${course.course_name}" is now downloaded. Videos are being cached locally in the background.`,
+        type: localSyncError ? "error" : "success",
+        title: localSyncError ? "Downloaded, but Local Sync Failed" : "Course Data Pulled",
+        message: localSyncError
+          ? `"${course.course_name}" is downloaded, but couldn't be mirrored to your local server: ${localSyncError}. Offline access won't work until this succeeds — try again.`
+          : `"${course.course_name}" is now downloaded. Videos are being cached locally in the background.`,
       });
     } catch (error) {
       console.error("Download Course Error:", error);
@@ -239,8 +247,14 @@ export default function SettingsPage() {
 
                   <button
                     type="button"
-                    onClick={() => handleDownload(course)}
-                    disabled={isDownloading || (isDownloaded && !isStale)}
+                    onClick={() =>
+                      isDownloaded && !isStale
+                        ? router.push(
+                            `/institute-dashboard/settings/course-content/${course._id}?courseName=${encodeURIComponent(course.course_name)}&courseCode=${encodeURIComponent(course.course_code || "")}`,
+                          )
+                        : handleDownload(course)
+                    }
+                    disabled={isDownloading}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all shadow-sm shrink-0 disabled:opacity-50 ${
                       isStale
                         ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"

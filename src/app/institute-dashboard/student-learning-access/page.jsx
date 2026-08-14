@@ -244,30 +244,22 @@ const isEditMode = Boolean(editId);
     selectedSubtopics.length > 0 &&
     selectedSubtopics.length < subtopics.length;
 
+  // Subtopics from getTopicsByCourse carry a server-computed lesson_count
+  // (one video/audio/text/exercise/vocabulary module document = one lesson —
+  // see studentLearningAccessController.js) — they never carry a `.modules`
+  // array up front (that's only fetched on-demand per subtopic when its row
+  // is clicked, via handleViewSubtopic). Summing a `.modules` array here
+  // always summed over undefined/[] and silently produced 0.
   const totalSelectedLessons = useMemo(() => {
     return subtopics
       .filter((subtopic) =>
         selectedSubtopics.includes(getId(subtopic))
       )
-      .reduce((total, subtopic) => {
-        const modules = Array.isArray(subtopic.modules)
-          ? subtopic.modules
-          : [];
-
-        return (
-          total +
-          modules.reduce(
-            (moduleTotal, module) =>
-              moduleTotal +
-              Number(
-                module.lessons ??
-                  module.lessonCount ??
-                  0
-              ),
-            0
-          )
-        );
-      }, 0);
+      .reduce(
+        (total, subtopic) =>
+          total + Number(subtopic.lesson_count ?? 0),
+        0
+      );
   }, [subtopics, selectedSubtopics]);
 
   /* =======================================================
@@ -1395,27 +1387,13 @@ const handleConfirmSubmit = async () => {
                           subtopicId
                         );
 
-                      const modules =
-                        Array.isArray(
-                          subtopic.modules
-                        )
-                          ? subtopic.modules
-                          : [];
-
-                      const lessonCount =
-                        modules.reduce(
-                          (
-                            total,
-                            module
-                          ) =>
-                            total +
-                            Number(
-                              module.lessons ??
-                                module.lessonCount ??
-                                0
-                            ),
-                          0
-                        );
+                      // subtopic.lesson_count comes straight from
+                      // getTopicsByCourse's aggregation — subtopic.modules
+                      // isn't populated until this row is clicked (see
+                      // handleViewSubtopic), so it can't be used here.
+                      const lessonCount = Number(
+                        subtopic.lesson_count ?? 0
+                      );
 
                       return (
                         <div
@@ -1460,7 +1438,7 @@ const handleConfirmSubmit = async () => {
 
                             <p className="mt-0.5 text-xs text-slate-400">
                               {
-                                modules.length
+                                lessonCount
                               }{" "}
                               learning modules
                               available
@@ -1771,11 +1749,13 @@ const handleConfirmSubmit = async () => {
                         </div>
                       </div>
 
+                      {/* Each module document IS one lesson (see
+                          getSubtopicModules/studentAccess.js comments) —
+                          there's no separate per-module lesson sub-count to
+                          show, unlike the old badge here which always read a
+                          field ("module.lessons") that never existed. */}
                       <span className="rounded-lg border border-orange-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                        {module?.lessons ??
-                          module?.lessonCount ??
-                          0}{" "}
-                        Lessons
+                        1 Lesson
                       </span>
                     </div>
                   )
@@ -1787,22 +1767,7 @@ const handleConfirmSubmit = async () => {
               <span className="text-xs font-medium text-slate-500">
                 Total Lessons:{" "}
                 <strong className="text-slate-800">
-                  {(
-                    activeSubtopicModal.modules ??
-                    []
-                  ).reduce(
-                    (
-                      total,
-                      module
-                    ) =>
-                      total +
-                      Number(
-                        module?.lessons ??
-                          module?.lessonCount ??
-                          0
-                      ),
-                    0
-                  )}
+                  {(activeSubtopicModal.modules ?? []).length}
                 </strong>
               </span>
 
