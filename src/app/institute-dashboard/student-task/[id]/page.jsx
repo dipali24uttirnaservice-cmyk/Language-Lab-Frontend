@@ -10,6 +10,7 @@ import {
   Info,
   Layers,
   UserCog,
+  FileText,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
@@ -22,16 +23,13 @@ import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
 import StatusModal from "@/components/molecules/StatusModal";
-import ChunkedFileUpload from "@/components/molecules/ChunkedFileUpload";
+import { resolveMediaUrl } from "@/utils/media";
 
-// The backend's /task route never registered a raw multer field for task
-// media — it only accepts these files via the chunked-upload endpoints
-// (/upload/chunk/*), each keyed by one of these fieldnames. The task itself
-// then stores the resulting URL under `media_url`, same as `link_url`.
-const MEDIA_FIELDNAMES = {
-  audio: "audioFile",
-  video: "videoFile",
-  document: "documentFile",
+// audio/video accept a narrower file-picker filter; document takes anything
+// (PDF, docx, etc.) so it's left unset.
+const MEDIA_ACCEPT = {
+  audio: "audio/*",
+  video: "video/*",
 };
 
 const SectionDivider = ({ icon: Icon, title }) => (
@@ -70,6 +68,7 @@ export default function StudentTaskFormPage() {
   const [taskTextContent, setTaskTextContent] = useState("");
   const [taskLinkUrl, setTaskLinkUrl] = useState("");
   const [taskMediaUrl, setTaskMediaUrl] = useState("");
+  const [taskMediaFile, setTaskMediaFile] = useState(null);
   const [taskTarget, setTaskTarget] = useState("all");
   const [studentIds, setStudentIds] = useState([]);
 
@@ -237,14 +236,44 @@ export default function StudentTaskFormPage() {
         await schema.validate(payload, { abortEarly: false });
       }
 
+      // Media types need either a newly picked file or (on update) the file
+      // the task already has — mirrors the backend's own check in
+      // taskController.js's create/update.
+      if (MEDIA_TYPES.includes(taskType) && !taskMediaFile && !taskMediaUrl) {
+        setFormErrors({ media: `Please upload a ${taskType} file.` });
+        return;
+      }
+
       setSubmitting(true);
+
+      // Sent as multipart (not JSON) so the media file, when picked, rides
+      // along in the same request — the backend saves it to its own disk
+      // instead of AWS (see taskController.js).
+      const formData = new FormData();
+      formData.append("title", formTitle);
+      formData.append("course_id", formCourseId);
+      if (formTopicId) formData.append("topic_id", formTopicId);
+      if (taskDueDate) formData.append("due_date", taskDueDate);
+      formData.append("description", taskDescription);
+      formData.append("instructions", taskInstructions);
+      formData.append("type", taskType);
+      formData.append("status", taskStatus);
+      if (taskType === "text") formData.append("text_content", taskTextContent);
+      if (taskType === "link") formData.append("link_url", taskLinkUrl);
+      if (MEDIA_TYPES.includes(taskType)) {
+        if (taskMediaFile) formData.append("taskMedia", taskMediaFile);
+        else if (taskMediaUrl) formData.append("media_url", taskMediaUrl);
+      }
+      formData.append("target", taskTarget);
+      formData.append("student_ids", JSON.stringify(studentIds));
+      formData.append("questions", JSON.stringify(questions));
 
       let savedTaskId = editingManualId;
 
       if (editingManualId) {
-        await taskApi.updateTask(editingManualId, payload);
+        await taskApi.updateTask(editingManualId, formData);
       } else {
-        const res = await taskApi.createTask(payload);
+        const res = await taskApi.createTask(formData);
         const created = res.data?.data || res.data;
         savedTaskId = created?._id || null;
         setCreatedTaskId(savedTaskId);
@@ -466,7 +495,10 @@ export default function StudentTaskFormPage() {
                 onChange={(e) => {
                   const nextType = e.target.value;
                   setTaskType(nextType);
-                  if (nextType !== taskType) setTaskMediaUrl("");
+                  if (nextType !== taskType) {
+                    setTaskMediaUrl("");
+                    setTaskMediaFile(null);
+                  }
                 }}
                 className="w-full px-4 py-3 bg-white border border-orange-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
               >
@@ -523,38 +555,45 @@ export default function StudentTaskFormPage() {
             </div>
           )}
 
-          {/* Conditional Input for Media / Document Types */}
+          {/* Conditional Input for Media / Document Types — the file rides
+              along as a `taskMedia` multipart field in the same Create/Update
+              request; the backend saves it to its own disk instead of AWS
+              (see taskController.js), so there's no separate upload step. */}
           {MEDIA_TYPES.includes(taskType) && (
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Upload {taskType} file
               </label>
-              <ChunkedFileUpload
-                fieldname={MEDIA_FIELDNAMES[taskType]}
-                accept={
-                  taskType === "audio"
-                    ? "audio/*"
-                    : taskType === "video"
-                    ? "video/*"
-                    : undefined
-                }
-                label={`Upload ${taskType} file`}
-                onUploaded={(uploaded) =>
-                  setTaskMediaUrl(uploaded?.cdnUrl || uploaded?.fullS3URL || "")
-                }
+              <input
+                type="file"
+                accept={MEDIA_ACCEPT[taskType]}
+                onChange={(e) => setTaskMediaFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-orange-600 hover:file:bg-orange-100"
               />
-              {taskMediaUrl && (
-                <p className="text-xs text-slate-500 truncate">
-                  Current file:{" "}
-                  <a
-                    href={taskMediaUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-orange-600 font-semibold hover:underline"
-                  >
-                    {taskMediaUrl}
-                  </a>
+              {formErrors.media && (
+                <p className="text-xs mt-1 text-red-600 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {formErrors.media}
                 </p>
+              )}
+              {taskMediaFile ? (
+                <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" /> {taskMediaFile.name}
+                </p>
+              ) : (
+                taskMediaUrl && (
+                  <p className="text-xs text-slate-500 truncate">
+                    Current file:{" "}
+                    <a
+                      href={resolveMediaUrl(taskMediaUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-orange-600 font-semibold hover:underline"
+                    >
+                      View uploaded file
+                    </a>{" "}
+                    (uploading a new file replaces this one)
+                  </p>
+                )
               )}
             </div>
           )}

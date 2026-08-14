@@ -27,6 +27,7 @@ import {
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
 import RichTextEditor from "@/components/molecules/RichTextEditor";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { resolveMediaUrl } from "@/utils/media";
 
 /* ==========================================================
    WIDE ROW — same list-item language as the Exercise/Text/Audio
@@ -446,8 +447,12 @@ const prefilledMode = {};
 (detail?.questions || []).forEach((q, idx) => {
   const existing = answerByQuestionId[q._id];
   if (existing?.answer_html) prefilled[idx] = existing.answer_html;
-  // ⚠️ CHECK THIS: Does your backend return `answer_file_url` or `file_url` or `answer_file`?
-  if (existing?.answer_file_url) prefilledFileUrls[idx] = existing.answer_file_url;
+  // Submission files now live on the backend's own disk (see
+  // practicalController.submitMine), so `answer_file_url` comes back as a
+  // relative "/media/practical-submissions/..." path — resolveMediaUrl turns
+  // it into an absolute URL; old AWS-hosted URLs (already absolute) pass
+  // through unchanged.
+  if (existing?.answer_file_url) prefilledFileUrls[idx] = resolveMediaUrl(existing.answer_file_url);
         if (q.solution_type === "both") {
           prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
         }
@@ -528,7 +533,7 @@ const prefilledMode = {};
         }
 
         if (existing?.answer_file_url) {
-          prefilledFileUrls[idx] = existing.answer_file_url;
+          prefilledFileUrls[idx] = resolveMediaUrl(existing.answer_file_url);
         }
 
         if (q.solution_type === "both") {
@@ -551,13 +556,21 @@ const prefilledMode = {};
 
     } catch (error) {
       console.error("Submit Practical Error:", error);
-      const message =
-        error?.response?.data?.message || "Failed to submit. Please try again.";
+
+      // No `response` means the request never reached the server (network
+      // dropped mid-upload, DNS failure, etc.) — don't show the last-seen
+      // server message (e.g. a stale "Failed to upload file to AWS") for
+      // what is really a connectivity problem.
+      const isNetworkError = !error?.response;
+      const message = isNetworkError
+        ? "No internet connection. Please check your network and try again."
+        : error?.response?.data?.message || "Failed to submit. Please try again.";
+
       setSubmitError(message);
-      
+
       triggerModal(
         "error",
-        "Submission Failed",
+        isNetworkError ? "No Internet Connection" : "Submission Failed",
         message
       );
     } finally {

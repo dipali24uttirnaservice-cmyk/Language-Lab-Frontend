@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { getInstituteLogoUrl } from "@/utils/media";
+import { useInstituteLogoSrc } from "@/utils/media";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -126,7 +126,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
   const instituteName = institute?.institute_name || "Institute";
-  const instituteLogo = getInstituteLogoUrl(institute);
+  const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
 
   return (
     <aside
@@ -169,6 +169,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                 fill
                 sizes="56px"
                 className="rounded-2xl object-cover"
+                onError={handleLogoError}
               />
             </div>
           </div>
@@ -297,6 +298,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               fill
               sizes="40px"
               className="rounded-full object-cover border border-white shadow-sm"
+              onError={handleLogoError}
             />
           </div>
         </div>
