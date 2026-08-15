@@ -169,6 +169,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                 fill
                 sizes="56px"
                 className="rounded-2xl object-cover"
+                unoptimized
                 onError={handleLogoError}
               />
             </div>
@@ -298,6 +299,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               fill
               sizes="40px"
               className="rounded-full object-cover border border-white shadow-sm"
+              unoptimized
               onError={handleLogoError}
             />
           </div>

@@ -261,6 +261,7 @@ const router = useRouter();
     fill
     sizes="40px"
     className="rounded-xl object-cover border border-slate-200"
+    unoptimized
     onError={handleLogoError}
   />
 
