@@ -1509,7 +1509,7 @@ const handleConfirmSubmit = async () => {
                   0
                     ? loadingDepartments
                       ? "Loading Departments..."
-                      : "Select Department"
+                      : "Select Department/Branch"
                     : "First select subtopics"
                 }
                 options={departments.map(
@@ -1580,7 +1580,7 @@ const handleConfirmSubmit = async () => {
                 }
                 placeholder={
                   departmentId
-                    ? "Select Batch / Year"
+                    ? "Select Year/Batch"
                     : "First select a department"
                 }
                 options={availableBatches.map(

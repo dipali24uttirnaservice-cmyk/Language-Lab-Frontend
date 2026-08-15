@@ -483,16 +483,12 @@ function AudioRow({ item, onSelect }) {
     item?.image;
 
   // Duration
-  let duration = "Audio Lesson";
+  let duration = null;
 
   if (item?.audio?.duration_sec) {
     const totalSeconds = Number(item.audio.duration_sec);
-
     if (!isNaN(totalSeconds)) {
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-
-      duration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+      duration = `${Math.floor(totalSeconds / 60)}m`;
     }
   }
 
@@ -506,311 +502,66 @@ function AudioRow({ item, onSelect }) {
       ? description.replace(/<[^>]*>?/gm, "")
       : "";
 
+  // Mirrors VideoCard's layout exactly (thumbnail-on-top card + footer
+  // button) so audio and video lessons read as one consistent grid.
   return (
     <div
       onClick={() => onSelect && onSelect(item)}
-      className="
-                group
-                relative
-                flex
-                h-[145px]
-                w-full
-                overflow-hidden
-                rounded-2xl
-                border
-                border-slate-200
-                bg-white
-                shadow-sm
-                transition-all
-                duration-300
-                hover:border-orange-300
-                hover:shadow-lg
-                hover:shadow-orange-500/10
-                active:scale-[0.99]
-                cursor-pointer
-
-                sm:h-[155px]
-                md:h-[165px]
-            "
+      className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
     >
-      {/* =========================
-                THUMBNAIL
-            ========================= */}
-
-      <div
-        className="
-                    relative
-                    h-full
-                    w-[95px]
-                    shrink-0
-                    overflow-hidden
-                    bg-slate-900
-
-                    sm:w-[125px]
-                    md:w-[145px]
-                    lg:w-[155px]
-                "
-      >
+      <div className="aspect-video w-full bg-slate-950 relative overflow-hidden border-b border-slate-100 flex items-center justify-center">
         {thumbnail && !imgError ? (
           <img
             src={thumbnail}
             alt={item?.title || "Audio thumbnail"}
             onError={() => setImgError(true)}
-            className="
-                            absolute
-                            inset-0
-                            h-full
-                            w-full
-                            object-cover
-                            transition-transform
-                            duration-500
-                            group-hover:scale-105
-                        "
+            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div
-            className="
-                            absolute
-                            inset-0
-                            flex
-                            items-center
-                            justify-center
-                            bg-gradient-to-br
-                            from-slate-900
-                            via-slate-800
-                            to-orange-950
-                            text-orange-400
-                        "
-          >
-            <Headphones size={28} />
+          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-orange-950 flex items-center justify-center">
+            <Headphones className="text-orange-400" size={28} />
           </div>
         )}
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/30" />
-
-        {/* Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="
-                            flex
-                            h-9
-                            w-9
-                            items-center
-                            justify-center
-                            rounded-full
-                            bg-orange-500
-                            text-white
-                            shadow-lg
-                            shadow-orange-500/40
-                            transition-transform
-                            duration-300
-                            group-hover:scale-110
-
-                            sm:h-11
-                            sm:w-11
-                            md:h-12
-                            md:w-12
-                        "
-          >
-            <Play size={16} className="ml-0.5 fill-current" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30">
+          <div className="h-12 w-12 rounded-full bg-white/90 text-slate-900 group-hover:bg-orange-500 group-hover:text-white flex items-center justify-center shadow-md transform transition-all duration-300 group-hover:scale-110">
+            <Play className="fill-current ml-0.5 transition-transform" size={20} />
           </div>
         </div>
-      </div>
 
-      {/* =========================
-                CONTENT
-            ========================= */}
-
-      <div
-        className="
-                    min-w-0
-                    flex-1
-                    overflow-hidden
-                    px-3
-                    py-3
-
-                    sm:px-4
-                    sm:py-3.5
-
-                    md:px-5
-                    md:py-4
-                "
-      >
-        {/* TOP BADGES */}
-        <div
-          className="
-                        flex
-                        h-[22px]
-                        min-w-0
-                        items-start
-                        gap-1.5
-                        overflow-hidden
-
-                        sm:gap-2
-                    "
-        >
-          {/* Duration */}
-          <span
-            className="
-                            inline-flex
-                            h-[21px]
-                            shrink-0
-                            items-center
-                            gap-1
-                            rounded-md
-                            border
-                            border-orange-200
-                            bg-orange-50
-                            px-1.5
-                            text-[9px]
-                            font-extrabold
-                            uppercase
-                            tracking-wide
-                            text-orange-600
-
-                            sm:px-2
-                            sm:text-[10px]
-                        "
-          >
-            <Clock size={10} />
+        {duration && (
+          <span className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-sm text-[10px] font-mono px-1.5 py-0.5 rounded font-bold text-white tracking-wide z-10">
             {duration}
           </span>
+        )}
 
-          {/* Language */}
-          {item?.audio?.language && (
-            <span
-              className="
-                                inline-flex
-                                h-[21px]
-                                max-w-[110px]
-                                min-w-0
-                                shrink
-                                items-center
-                                gap-1
-                                overflow-hidden
-                                rounded-md
-                                border
-                                border-slate-200
-                                bg-slate-100
-                                px-1.5
-                                text-[9px]
-                                font-bold
-                                uppercase
-                                tracking-wide
-                                text-slate-600
+        <span className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm border border-slate-200 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md text-slate-700 shadow-sm z-10">
+          {item.module_type || "audio"}
+        </span>
+      </div>
 
-                                sm:max-w-[140px]
-                                sm:px-2
-                                sm:text-[10px]
-                            "
-            >
-              <Volume2 size={9} className="shrink-0" />
-
-              <span className="truncate">{item.audio.language}</span>
-            </span>
-          )}
-
-          {/* Category */}
-          {item?.category && (
-            <span
-              className="
-                                hidden
-                                h-[21px]
-                                max-w-[120px]
-                                truncate
-                                items-center
-                                rounded-md
-                                bg-slate-100
-                                px-2
-                                text-[10px]
-                                font-semibold
-                                text-slate-500
-
-                                md:flex
-                            "
-            >
-              {item.category}
-            </span>
-          )}
-        </div>
-
-        {/* TITLE */}
-        <div
-          className="
-                        mt-1
-                        h-[38px]
-                        overflow-hidden
-
-                        sm:h-[42px]
-                    "
-        >
-          <h3
-            className="
-                            line-clamp-2
-                            text-sm
-                            font-black
-                            leading-[19px]
-                            text-slate-900
-                            transition-colors
-                            duration-200
-                            group-hover:text-orange-600
-
-                            sm:text-base
-                            sm:leading-[21px]
-
-                            md:text-lg
-                            md:leading-[22px]
-                        "
-          >
+      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+        <div className="space-y-1.5">
+          <h3 className="font-extrabold text-sm text-slate-900 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors duration-200">
             {item?.title || "English Vocabulary Practice"}
           </h3>
-        </div>
-
-        {/* DESCRIPTION */}
-        <div
-          className="
-                        hidden
-                        h-[18px]
-                        overflow-hidden
-
-                        sm:block
-                    "
-        >
-          <p
-            className="
-                            line-clamp-1
-                            text-xs
-                            leading-[18px]
-                            text-slate-500
-                        "
-          >
+          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
             {cleanDescription}
           </p>
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <User size={11} className="text-orange-500" />
+            {item?.audio?.speaker_name || "Audio Practice"}
+          </span>
         </div>
 
-        {/* SPEAKER */}
-        <div
-          className="
-                        mt-1
-                        flex
-                        h-[18px]
-                        min-w-0
-                        items-center
-                        gap-1.5
-                        overflow-hidden
-                        text-[10px]
-                        font-semibold
-                        text-slate-600
-
-                        sm:mt-1.5
-                        sm:text-xs
-                    "
-        >
-          <User size={11} className="shrink-0 text-orange-500" />
-
-          <span className="truncate">
-            {item?.audio?.speaker_name || "Audio Practice"}
+        <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <Clock size={14} />
+            Available Now
+          </span>
+          <span className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-black text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl shadow-md group-hover:shadow-orange-500/30 group-hover:scale-105 transition-all duration-300">
+            Start Lesson{" "}
+            <Play className="fill-current text-white/90" size={10} />
           </span>
         </div>
       </div>

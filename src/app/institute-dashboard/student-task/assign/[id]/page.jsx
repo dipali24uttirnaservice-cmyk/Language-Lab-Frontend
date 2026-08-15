@@ -273,7 +273,7 @@ export default function AssignTaskPage() {
                   disabled={assigning}
                   className="appearance-none w-full px-4 py-3.5 pr-11 rounded-2xl border border-orange-300 bg-white text-slate-700 text-sm font-medium outline-none transition-all focus:ring-4 focus:ring-orange-100 focus:border-orange-500 disabled:opacity-60 cursor-pointer shadow-sm"
                 >
-                  <option value="">Select Department</option>
+                  <option value="">Select Department/Branch</option>
 
                   {departments.map((department) => (
                     <option key={department.name} value={department.name}>
@@ -301,9 +301,9 @@ export default function AssignTaskPage() {
                 >
                   <option value="">
                     {!departmentId
-                      ? "Select Department First"
+                      ? "Select Department/Branch First"
                       : batches.length > 0
-                        ? "Select Batch"
+                        ? "Select Year/Batch"
                         : "No Batches Found"}
                   </option>
 
