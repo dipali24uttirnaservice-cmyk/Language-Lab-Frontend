@@ -20,8 +20,6 @@ import { logoutUser } from "@/services/auth/logoutApi";
 import { taskApi } from "@/services/task/taskApi";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
-import { subjectApi } from "@/services/subject/subjectApi";
-import { assessmentApi } from "@/services/assessment/assessmentApi";
 import { useInstituteLogoSrc } from "@/utils/media";
 
 const MONGO_ID = /^[a-f\d]{24}$/i;
@@ -51,14 +49,10 @@ const ID_RESOLVERS = {
     getTitle: (res, id) =>
       (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
   },
-  subject: {
-    fetch: (id) => subjectApi.subjectDetail(id),
-    getTitle: (res) => (res.data?.data || res.data)?.title,
-  },
-  assessment: {
-    fetch: (id) => assessmentApi.getAssessment(id),
-    getTitle: (res) => (res.data?.data || res.data)?.title,
-  },
+  // "subject" and "assessment" resolvers removed for now — their services
+  // (src/services/subject, src/services/assessment) aren't pushed to this
+  // branch yet, and the sidebar links to those routes are hidden too. Re-add
+  // both once that feature is pushed.
 };
 
 export default function InstituteNavbar({

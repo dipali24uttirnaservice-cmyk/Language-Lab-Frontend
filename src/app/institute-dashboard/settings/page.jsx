@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, BookOpen, Check, ClipboardList, Download, Inbox, RefreshCw, Settings as SettingsIcon } from "lucide-react";
+import { AlertCircle, BookOpen, Check, Download, Inbox, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import StatusModal from "@/components/molecules/StatusModal";
 import { courseApi } from "@/services/course/courseApi";
-import { subjectSyncApi } from "@/services/subject/subjectSyncApi";
+// subjectSyncApi (src/services/subject/subjectSyncApi) isn't pushed to this
+// branch yet — the "Sync Subjects" button below is disabled until it is.
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user: institute } = useAuth();
   const instituteName = institute?.institute_name || "Institute";
 
-  const [subjectsSyncing, setSubjectsSyncing] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [courses, setCourses] = useState(null); // null = not fetched yet
   const [downloadingId, setDownloadingId] = useState(null);
@@ -152,36 +152,10 @@ export default function SettingsPage() {
     }
   };
 
-  // Standalone Subjects/Assessments sync — not tied to any course, see
-  // subjectSyncApi.downloadSubjects / instituteController.downloadSubjectsData.
-  // Lets the institute pull the latest Subjects/Assessments (new ones and
-  // edits to existing ones) on demand, without re-downloading a whole course.
-  const handleSyncSubjects = async () => {
-    try {
-      setSubjectsSyncing(true);
-      const response = await subjectSyncApi.downloadSubjects();
-      const data = response.data?.data;
-
-      setModal({
-        open: true,
-        type: data?.sync_error ? "error" : "success",
-        title: data?.sync_error ? "Synced, but Master Pull Failed" : "Subjects Synced",
-        message: data?.sync_error
-          ? `Showing ${data.subjects_count} subject(s) / ${data.assessments_count} assessment(s) already saved locally — couldn't pull fresh data from master: ${data.sync_error}`
-          : `${data?.subjects_count ?? 0} subject(s) and ${data?.assessments_count ?? 0} assessment(s) are up to date.`,
-      });
-    } catch (error) {
-      console.error("Sync Subjects Error:", error);
-      setModal({
-        open: true,
-        type: "error",
-        title: "Sync Failed",
-        message: error?.response?.data?.message || "Something went wrong.",
-      });
-    } finally {
-      setSubjectsSyncing(false);
-    }
-  };
+  // "Sync Subjects" (standalone Subjects/Assessments sync via
+  // subjectSyncApi.downloadSubjects) is removed for now — that service isn't
+  // pushed to this branch yet. Restore this handler, its button below, and
+  // the subjectSyncApi import above once it is.
 
   return (
     <div className="relative min-h-screen bg-[#F4F7FC] p-4 md:p-8">
@@ -207,15 +181,8 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex items-center gap-3 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={handleSyncSubjects}
-              disabled={subjectsSyncing}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-white border border-slate-200 px-5 py-3 text-slate-600 font-bold transition-all hover:bg-slate-50 shadow-sm disabled:opacity-50"
-            >
-              <ClipboardList size={18} className={subjectsSyncing ? "animate-pulse" : ""} />
-              {subjectsSyncing ? "Syncing..." : "Sync Subjects"}
-            </button>
+            {/* "Sync Subjects" button removed until subjectSyncApi is
+                pushed to this branch — see note above. */}
 
             <button
               type="button"
