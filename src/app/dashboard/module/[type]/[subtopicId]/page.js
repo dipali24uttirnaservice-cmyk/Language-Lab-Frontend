@@ -264,6 +264,51 @@ function BackToLessonsButton({ onBack }) {
   );
 }
 
+// Shown instead of a blank grid whenever a content type (audio/video/text/
+// vocabulary/exercise) has no modules for this subtopic yet — same visual
+// language as the exercise page's "No Exercises Yet" card, but themed per
+// content type via TYPE_ACCENT/CONTENT_TYPES so it isn't always orange.
+function NoModulesEmptyState({ type, onBack }) {
+  const accent = getAccent(type);
+  const meta = CONTENT_TYPES.find((t) => t.id === type);
+  const Icon = meta?.icon || Award;
+  // CONTENT_TYPES already carries the right plural noun per type ("Videos",
+  // "Readings", "Vocab", …) — pluralizing accent.label ("Audio Lesson" →
+  // "Audio Lessons") would read fine for some types but badly for others
+  // ("Vocabulary" → "Vocabularys").
+  const pluralLabel = meta?.label || "Lessons";
+
+  return (
+    <div className="flex items-center justify-center px-6 py-20">
+      <div className="text-center max-w-sm rounded-3xl border border-slate-200 bg-white p-10 shadow-xl shadow-slate-100 animate-fade-in">
+        <div
+          className={`mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br ${accent.gradient} shadow-lg`}
+        >
+          <Icon className="text-white" size={32} />
+        </div>
+
+        <h3 className="text-xl font-black text-slate-900">
+          No {pluralLabel} Yet
+        </h3>
+
+        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+          Your instructor hasn&apos;t added any {pluralLabel.toLowerCase()}{" "}
+          content for this topic yet. Check back soon, or explore other
+          lessons in the meantime.
+        </p>
+
+        <button
+          onClick={onBack}
+          className={`mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r ${accent.gradient} px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95`}
+        >
+          <ArrowLeft size={16} />
+          Back to Lessons
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ActionCard({
   icon: Icon,
   iconClass,
@@ -3026,6 +3071,25 @@ function ModuleListPageContent() {
     ],
   );
 
+  // Shared by both the "Back to lessons" link and the empty-state card's
+  // button below — returns to the parent topic, carrying its query params.
+  const goToTopic = () => {
+    const params = new URLSearchParams();
+
+    const topicId = searchParams.get("topicId");
+    const courseId = searchParams.get("courseId");
+    const courseName = searchParams.get("courseName");
+    const routeType = searchParams.get("type");
+    const topicName = searchParams.get("topicName");
+
+    if (courseId) params.set("courseId", courseId);
+    if (courseName) params.set("courseName", courseName);
+    if (routeType) params.set("type", routeType);
+    if (topicName) params.set("topicName", topicName);
+
+    router.push(`/dashboard/topics/${topicId}?${params.toString()}`);
+  };
+
   /* -----------------------------------------
    NOW conditional return is safe
 ----------------------------------------- */
@@ -3094,27 +3158,13 @@ function ModuleListPageContent() {
           )
         ) : (
           <div className="space-y-6 animate-fade-in">
-            <BackToLessonsButton
-              onBack={() => {
-                const params = new URLSearchParams();
-
-                const topicId = searchParams.get("topicId");
-                const courseId = searchParams.get("courseId");
-                const courseName = searchParams.get("courseName");
-                const type = searchParams.get("type");
-                const topicName = searchParams.get("topicName");
-
-                if (courseId) params.set("courseId", courseId);
-                if (courseName) params.set("courseName", courseName);
-                if (type) params.set("type", type);
-                if (topicName) params.set("topicName", topicName);
-
-                router.push(
-                  `/dashboard/topics/${topicId}?${params.toString()}`,
-                );
-              }}
-            />
-            {filteredModules.length > 0 && (
+            <BackToLessonsButton onBack={goToTopic} />
+            {filteredModules.length === 0 ? (
+              <NoModulesEmptyState
+                type={activeTab !== "all" ? activeTab : type}
+                onBack={goToTopic}
+              />
+            ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredModules.map((item) => {
                   if (!item) return null;

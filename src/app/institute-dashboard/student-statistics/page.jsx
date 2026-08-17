@@ -92,14 +92,11 @@ function StudentStatisticsPageContent() {
       .getCourses()
       .then((res) => {
         const allCourses = res.data?.data?.courses || [];
-        // Only downloaded courses are assignable/relevant here.
         setCourses(allCourses.filter((course) => course.is_downloaded));
       })
       .catch((error) => console.error("Get Courses Error:", error));
   }, []);
 
-  // Coming from the dashboard's Recent Activity list (?studentId=...) — jump
-  // straight to that student's reports instead of making them search again.
   useEffect(() => {
     if (!studentIdParam || !students.length) return;
     if (selectedStudent?._id === studentIdParam) return;
@@ -162,24 +159,16 @@ function StudentStatisticsPageContent() {
   };
 
   return (
-    <div className="relative min-h-screen p-8 space-y-8 overflow-hidden font-sans">
-      {/* Background Theme Glow Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-100/60 via-orange-50/40 to-amber-200/50" />
-        <div className="absolute top-10 right-10 h-96 w-96 rounded-full bg-gradient-to-br from-amber-400/10 to-orange-500/10 blur-3xl" />
-        <div className="absolute bottom-10 left-10 h-96 w-96 rounded-full bg-gradient-to-br from-yellow-400/10 to-amber-500/10 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#ea580c_1px,transparent_1px),linear-gradient(to_bottom,#ea580c_1px,transparent_1px)] bg-[size:32px_32px]" />
-      </div>
-
+    <div className="relative min-h-screen p-6 md:p-8 space-y-6 font-sans">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div className="flex items-center gap-4">
           {activeTab !== "overview" && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveTab("overview")}
-              className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md hover:shadow-orange-500/25 transition-all"
+              className="p-2.5 rounded-xl bg-orange-600 text-white shadow-sm hover:bg-orange-700 transition-all"
               title="Back to Overview"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -202,14 +191,14 @@ function StudentStatisticsPageContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-2.5 rounded-2xl border border-orange-200/60 shadow-sm text-sm font-bold text-orange-800">
+        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">
           <Calendar className="w-4 h-4 text-orange-600" />
           <span>Real-time Analytics Active</span>
         </div>
       </div>
 
       {/* Student Picker */}
-      <div className="bg-white/90 backdrop-blur-md p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="relative flex-1 w-full sm:max-w-sm">
           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -220,10 +209,10 @@ function StudentStatisticsPageContent() {
               setSelectedStudent(null);
               setStudentQuery(e.target.value);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
           />
           {!selectedStudent && matchingStudents.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
               {matchingStudents.map((s) => (
                 <button
                   key={s._id}
@@ -245,7 +234,7 @@ function StudentStatisticsPageContent() {
         <select
           value={courseId}
           onChange={(e) => setCourseId(e.target.value)}
-          className="w-full sm:w-64 px-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+          className="w-full sm:w-64 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
         >
           <option value="">All courses</option>
           {courses.map((c) => (
@@ -256,7 +245,7 @@ function StudentStatisticsPageContent() {
 
       {/* Login Time / Last Activity / Activity History */}
       {selectedStudent && (
-        <div className="bg-white/90 backdrop-blur-md p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3 justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3 justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
               <LogIn className="w-3.5 h-3.5 text-orange-500" />
@@ -279,7 +268,7 @@ function StudentStatisticsPageContent() {
             onClick={() =>
               router.push(`/institute-dashboard/student-statistics/${selectedStudent._id}/activity-history`)
             }
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 rounded-xl shadow-sm hover:shadow-orange-500/25 transition-all"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 px-4 py-2 rounded-xl shadow-sm hover:bg-slate-800 transition-all"
           >
             <History className="w-3.5 h-3.5" /> View Activity History
           </motion.button>
@@ -287,11 +276,11 @@ function StudentStatisticsPageContent() {
       )}
 
       {!selectedStudent ? (
-        <div className="py-20 text-center bg-white/50 rounded-3xl border border-dashed border-slate-300">
+        <div className="py-20 text-center bg-white rounded-2xl border border-dashed border-slate-300">
           <p className="text-slate-400 text-sm font-semibold">Search and select a student above to load their reports.</p>
         </div>
       ) : loading ? (
-        <div className="py-20 flex items-center justify-center text-slate-400">
+        <div className="py-20 flex items-center justify-center text-slate-400 bg-white rounded-2xl border border-slate-200">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : (
@@ -304,13 +293,13 @@ function StudentStatisticsPageContent() {
               return (
                 <motion.div
                   key={key}
-                  whileHover={{ y: -4, scale: 1.01 }}
+                  whileHover={{ y: -2, scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveTab(key)}
-                  className={`relative bg-white/90 backdrop-blur-sm p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-xl group overflow-hidden ${
+                  className={`relative bg-white p-6 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md group overflow-hidden ${
                     activeTab === key
-                      ? `ring-4 bg-gradient-to-br ${meta.ring}`
-                      : `border-slate-200 ${meta.hover}`
+                      ? `ring-2 border-orange-500 bg-orange-50/20`
+                      : `border-slate-200 hover:border-slate-300`
                   }`}
                 >
                   <div className="relative z-10 flex items-center justify-between">
@@ -318,10 +307,10 @@ function StudentStatisticsPageContent() {
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{meta.label}</p>
                       <h3 className="text-3xl font-black text-slate-900 mt-1">{count}</h3>
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 mt-3 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-100">
-                        <Sparkles className="w-3 h-3" /> Inspect records →
+                        <Sparkles className="w-3 h-3 text-orange-500" /> Inspect records →
                       </span>
                     </div>
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.color} text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.color} text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
                       <Icon className="w-7 h-7" />
                     </div>
                   </div>
@@ -339,18 +328,15 @@ function StudentStatisticsPageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="bg-gradient-to-br from-white via-orange-50/60 to-amber-100/70 rounded-3xl p-8 shadow-xl relative overflow-hidden border border-orange-100 flex flex-col md:flex-row items-center justify-between gap-8"
+                className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-8"
               >
-                <div className="absolute -right-24 -bottom-24 w-80 h-80 bg-gradient-to-br from-orange-300/25 to-amber-400/25 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -left-16 -top-16 w-56 h-56 bg-gradient-to-br from-amber-200/30 to-orange-300/20 rounded-full blur-3xl pointer-events-none" />
-
                 <div className="space-y-3 relative z-10 max-w-xl">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl shadow-md shadow-orange-500/20">
+                  <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-xl">
                     <Layers className="w-4 h-4" /> {selectedStudent.full_name}
                   </div>
                   <h2 className="text-3xl font-black tracking-tight text-slate-900">
                     Overall completion:{" "}
-                    <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    <span className="text-orange-600">
                       {progress?.overall_completion_percentage ?? 0}%
                     </span>
                   </h2>
@@ -359,7 +345,7 @@ function StudentStatisticsPageContent() {
                       {Object.entries(progress.breakdown).map(([key, b]) => (
                         <div
                           key={key}
-                          className="bg-white/80 backdrop-blur-sm rounded-2xl px-3 py-2.5 border border-orange-100 shadow-sm"
+                          className="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-200/60 shadow-sm"
                         >
                           <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">{key}</p>
                           <p className="text-lg font-black text-slate-900">{b.completion_percentage}%</p>
@@ -374,7 +360,7 @@ function StudentStatisticsPageContent() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setActiveTab("topics")}
-                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black transition-all shadow-lg shadow-orange-500/25 shrink-0 relative z-10"
+                  className="px-6 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold transition-all shadow-sm shrink-0"
                 >
                   Explore Topic Details Now
                 </motion.button>
@@ -386,7 +372,7 @@ function StudentStatisticsPageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
               >
                 <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
@@ -401,7 +387,7 @@ function StudentStatisticsPageContent() {
                       placeholder="Filter this table..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
                     />
                   </div>
                 </div>
@@ -412,7 +398,6 @@ function StudentStatisticsPageContent() {
           </AnimatePresence>
         </>
       )}
-
     </div>
   );
 }
@@ -476,7 +461,7 @@ function ReportTable({ tab, rows }) {
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-slate-50/80 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+          <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
             {columns.map((col) => (
               <th key={col.key} className="py-4 px-6">{col.label}</th>
             ))}
@@ -485,7 +470,7 @@ function ReportTable({ tab, rows }) {
         <tbody className="divide-y divide-slate-100 text-sm font-medium">
           {rows.length > 0 ? (
             rows.map((row, i) => (
-              <tr key={row._id || row.topic_id || row.module_id || row.practical_id || row.task_id || i} className="hover:bg-orange-50/40 transition-colors">
+              <tr key={row._id || row.topic_id || row.module_id || row.practical_id || row.task_id || i} className="hover:bg-slate-50/65 transition-colors">
                 {columns.map((col) => (
                   <td key={col.key} className="py-4 px-6 text-slate-800">
                     {col.render ? col.render(row) : row[col.key] ?? "—"}

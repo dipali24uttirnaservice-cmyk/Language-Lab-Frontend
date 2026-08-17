@@ -1617,6 +1617,22 @@ const handleConfirmSubmit = async () => {
 
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  "/institute-dashboard/student-learning-access/access-list"
+                )
+              }
+              disabled={
+                submitting ||
+                loadingEdit
+              }
+              className="rounded-xl border border-orange-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-orange-50/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+
+            <button
               type="submit"
               disabled={
                 submitting ||
