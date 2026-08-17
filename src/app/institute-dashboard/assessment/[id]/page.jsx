@@ -1107,7 +1107,7 @@ export default function AssessmentFormPage() {
                     e.target.value
                   )
                 }
-                placeholder="0-59"
+                placeholder="Optional — untimed if blank"
                 className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
               />
 
@@ -1115,7 +1115,7 @@ export default function AssessmentFormPage() {
 
             {/* DURATION — SECONDS */}
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-1">
 
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Duration (Seconds)

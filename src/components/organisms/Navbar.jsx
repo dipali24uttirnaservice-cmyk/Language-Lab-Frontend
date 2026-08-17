@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,15 @@ export default function Navbar() {
   const [currentLang, setCurrentLang] = useState({ code: "EN", flag: "🇺🇸" });
   const institute = useFeaturedInstitute();
 
+  // The institute's logo is AWS/CDN-hosted, a host next/image's optimizer
+  // doesn't allow-list in production (see next.config.mjs) — without a
+  // fallback that 400s into a broken-image icon instead of the placeholder.
+  const [logoSrc, setLogoSrc] = useState(institute?.logo || DEFAULT_INSTITUTE_LOGO);
+
+  useEffect(() => {
+    setLogoSrc(institute?.logo || DEFAULT_INSTITUTE_LOGO);
+  }, [institute?.logo]);
+
   const languages = [
     { name: "English", code: "EN", flag: "🇺🇸" },
     { name: "Spanish", code: "ES", flag: "🇪🇸" },
@@ -35,12 +44,14 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-2.5">
             <div className="relative h-10 w-10 shrink-0">
               <Image
-                src={institute?.logo || DEFAULT_INSTITUTE_LOGO}
+                src={logoSrc}
                 alt={institute?.institute_name || "Institute logo"}
                 fill
                 sizes="40px"
                 priority
+                unoptimized
                 className="rounded-lg object-contain"
+                onError={() => setLogoSrc(DEFAULT_INSTITUTE_LOGO)}
               />
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tighter text-slate-900 cursor-pointer">

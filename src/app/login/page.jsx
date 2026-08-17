@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { instituteLogin } from "@/services/auth/loginApi";
 import { instituteLoginSchema } from "@/app/schemas/institute.schema";
 import { secureCookieOptions } from "@/utils/cookie";
+import { profileApi } from "@/services/institute/profileApi";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,6 +72,19 @@ export default function LoginPage() {
       Cookies.set("userData", JSON.stringify({ institute }), secureCookieOptions());
 
       login(institute);
+
+      // The login response's `institute` object is missing fields like
+      // logo/local_logo_url (only /institute/me returns the full record),
+      // so the sidebar/navbar logo stayed blank until a refresh re-fetched
+      // it. Fetch the full profile right away so it shows immediately.
+      profileApi
+        .getProfile()
+        .then((res) => {
+          if (res.data.success) login(res.data.data);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh institute profile:", error);
+        });
 
       router.replace("/institute-dashboard");
     } catch (error) {

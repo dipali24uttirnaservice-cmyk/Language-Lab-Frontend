@@ -104,6 +104,49 @@ export default function InstituteDashboard() {
   const recentActivity = dashboard?.recent_activity ?? [];
   const instituteName = dashboard?.institute_name || "Administrator";
 
+  // No dedicated report-export endpoint exists on the backend — build a CSV
+  // straight from the dashboard summary already loaded on this page and
+  // hand it to the browser as a download, rather than leaving the button
+  // inert.
+  const handleDownloadReport = () => {
+    const rows = [
+      ["Metric", "Value"],
+      ["Enrolled Students", enrolledStudents.total],
+      ["New Students This Week", enrolledStudents.new_this_week],
+      ["Enrolled Courses", coursesLicensed.total],
+      ["Licensed Courses", coursesLicensed.licensed_total],
+      ["Seats Used", licenseUsage.used_seats],
+      ["Total Seats", licenseUsage.total_seats],
+      ["Active Licenses", licenseUsage.active_licenses],
+      ["Completion Rate (%)", completionRate],
+      ["Active Students", statusBreakdown.active],
+      ["Inactive Students", statusBreakdown.inactive],
+      ["Suspended Students", statusBreakdown.suspended],
+      ["Students Online", loginStatus.online],
+      ["Students Offline", loginStatus.offline],
+      ["Assignments Completed", assignmentCompletion.completed],
+      ["Assignments Pending", assignmentCompletion.pending],
+    ];
+
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${instituteName.replace(/\s+/g, "_")}_dashboard_report_${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const statusData = [
     {
       name: "Active",
@@ -198,6 +241,8 @@ export default function InstituteDashboard() {
               </span>
             </div>
             <motion.button
+              type="button"
+              onClick={handleDownloadReport}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/10 transition duration-150"

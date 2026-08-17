@@ -32,7 +32,11 @@ export default function LearningModules({ courseId, courseName }) {
         // API → { success: true, data: { module_counts: { video, audio, text, vocabulary, exercise } } }
         const counts = res.data?.data?.module_counts || {};
         console.log(`[ModuleCount] GET /module/course/${courseId}/count ->`, counts);
-        setModuleCounts(counts);
+        // Merge instead of replacing — the Task/Practical Manual effect
+        // below sets its own counts independently (and can resolve first),
+        // so overwriting the whole object here was wiping those two out
+        // whenever this fetch finished last, leaving their badges blank.
+        setModuleCounts((prev) => ({ ...prev, ...counts }));
       } catch (err) {
         // A 401 here means the session was invalidated (e.g. the same
         // account logged in from another device) — the global axios
