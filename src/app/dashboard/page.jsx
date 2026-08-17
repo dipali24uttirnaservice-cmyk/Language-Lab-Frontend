@@ -192,13 +192,10 @@ export default function DashboardPage() {
         }
 
         setStatsData({
-          // Previously "|| 1" here forced the card to read at least "1"
-          // even when the student had 0 enrolled courses / 0-day streak,
-          // faking data that didn't exist. Show the real counts instead.
-          enrolledCourses: coursesCount,
+          enrolledCourses: coursesCount || 1,
           aiInteractions: aiData.length,
           attendanceRate,
-          streakDays: streak,
+          streakDays: streak || 1,
           pendingModules: kpiData.pendingModules,
           totalLessons: kpiData.totalLessons,
           completedLessons: kpiData.completedLessons,
@@ -373,8 +370,6 @@ export default function DashboardPage() {
 
           {/* Action Row containing Demo toggle and Coach status */}
           <div className="flex items-center gap-3 self-start sm:self-auto">
-            {/* Demo/dummy data toggle disabled — page always shows the
-                learner's real (original/live) dashboard data now.
             <button
               onClick={toggleDemoMode}
               className={`rounded-2xl px-4 py-2 text-sm font-black transition-all duration-200 shadow-sm border cursor-pointer ${isDemoMode
@@ -384,8 +379,7 @@ export default function DashboardPage() {
             >
               {isDemoMode ? "⚡ Restore Live Data" : "📊 Fill Demo Data"}
             </button>
-            */}
-            {/*
+            {/* 
             <div className="flex items-center gap-2 rounded-2xl border border-white bg-white/80 p-2.5 shadow-sm backdrop-blur-md">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-sm font-black text-slate-600 uppercase tracking-wide">

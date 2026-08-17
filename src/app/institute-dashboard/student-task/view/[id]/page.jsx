@@ -2,50 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  FileText,
-  Loader2,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  Award,
-  ArrowRight,
-  Mic,
-  SpellCheck,
-} from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Calendar, CheckCircle2, Award } from "lucide-react";
 import { taskApi } from "@/services/task/taskApi";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
-
-// Matches Task.questions[].question_type (Task.js model / taskValidation.js /
-// the add-question form's Q_TYPES) — used to label each question and to pick
-// how its options/answer are rendered below.
-const TYPE_LABELS = {
-  mcq: "MCQ",
-  fill_blank: "Fill Blank",
-  true_false: "True / False",
-  short_answer: "Short Answer",
-  match: "Match",
-  recorder: "Recorder",
-  spell_word: "Spell Word",
-};
-
-// "match" questions store their answer as "left:right|left:right" in
-// correct_answer — match_pairs (if present) is preferred since it keeps each
-// side unambiguous even when a word itself contains ":" or "|".
-const getMatchPairs = (q) => {
-  if (Array.isArray(q.match_pairs) && q.match_pairs.length > 0) {
-    return q.match_pairs.filter((p) => p?.left || p?.right);
-  }
-  if (!q.correct_answer) return [];
-  return q.correct_answer
-    .split("|")
-    .map((pair) => {
-      const [left, right] = pair.split(":");
-      return { left: (left || "").trim(), right: (right || "").trim() };
-    })
-    .filter((p) => p.left || p.right);
-};
 
 export default function ViewStudentTaskPage() {
   const router = useRouter();
@@ -225,199 +184,74 @@ export default function ViewStudentTaskPage() {
             </h3>
 
             <div className="space-y-4">
-              {task.questions.map((q, index) => {
-                const type = q.question_type || "mcq";
-
-                return (
-                  <div
-                    key={index}
-                    className="border border-orange-100/60 rounded-2xl p-5 md:p-6 bg-gradient-to-br from-slate-50/80 to-white space-y-4 shadow-sm hover:border-orange-200 transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="font-bold text-slate-900 text-sm md:text-base flex items-start gap-2">
-                        <span className="text-orange-600 font-black shrink-0">{index + 1}.</span>
-                        <span>{q.question_text}</span>
-                      </p>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 border border-slate-200/60 uppercase tracking-wide">
-                          {TYPE_LABELS[type] || type}
-                        </span>
-                        {q.marks !== undefined && (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl bg-orange-50 text-orange-600 border border-orange-200/50">
-                            <Award className="w-3.5 h-3.5" />
-                            {q.marks} {q.marks === 1 ? "Mark" : "Marks"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* MCQ — options with the correct one highlighted */}
-                    {type === "mcq" && q.options && q.options.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                        {q.options.map((option, optIdx) => {
-                          const isCorrect = option === q.correct_answer;
-                          return (
-                            <div
-                              key={optIdx}
-                              className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all ${
-                                isCorrect
-                                  ? "bg-green-50/80 border-green-200 text-green-800"
-                                  : "bg-white border-slate-200 text-slate-700"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <span
-                                  className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold ${
-                                    isCorrect
-                                      ? "bg-green-200 text-green-800"
-                                      : "bg-slate-100 text-slate-600"
-                                  }`}
-                                >
-                                  {String.fromCharCode(65 + optIdx)}
-                                </span>
-                                <span>{option}</span>
-                              </div>
-                              {isCorrect && (
-                                <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100/60 px-2 py-0.5 rounded-md">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> Correct
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* True / False — the two choices, correct one highlighted */}
-                    {type === "true_false" && (
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        {["True", "False"].map((choice) => {
-                          const isCorrect =
-                            choice.toLowerCase() ===
-                            String(q.correct_answer).trim().toLowerCase();
-                          return (
-                            <div
-                              key={choice}
-                              className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-bold transition-all ${
-                                isCorrect
-                                  ? "bg-green-50/80 border-green-200 text-green-800"
-                                  : "bg-white border-slate-200 text-slate-500"
-                              }`}
-                            >
-                              {isCorrect ? (
-                                <CheckCircle2 className="w-4 h-4" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-slate-300" />
-                              )}
-                              {choice}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Fill Blank / Short Answer — the expected text answer */}
-                    {(type === "fill_blank" || type === "short_answer") && (
-                      <div className="text-sm bg-green-50/80 p-3 rounded-xl border border-green-200 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                        <span className="font-bold text-slate-700">Answer:</span>
-                        <span className="text-green-700 font-semibold">
-                          {q.correct_answer}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Match — left/right pairs */}
-                    {type === "match" && (
-                      <div className="space-y-2 pt-1">
-                        {getMatchPairs(q).map((pair, pairIdx) => (
-                          <div
-                            key={pairIdx}
-                            className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700"
-                          >
-                            <span className="flex-1">{pair.left}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                            <span className="flex-1 text-right text-green-700 font-semibold">
-                              {pair.right}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Recorder — shuffled items to say/order, with the correct sequence */}
-                    {type === "recorder" && (
-                      <div className="space-y-2 pt-1">
-                        {q.options && q.options.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {q.options.map((option, optIdx) => (
-                              <span
-                                key={optIdx}
-                                className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700"
-                              >
-                                <Mic className="w-3.5 h-3.5 text-orange-400" />
-                                {option}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {q.correct_answer && (
-                          <div className="text-sm bg-green-50/80 p-3 rounded-xl border border-green-200 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                            <span className="font-bold text-slate-700">Correct Sequence:</span>
-                            <span className="text-green-700 font-semibold">
-                              {q.correct_answer}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Spell Word — candidate spellings with the correct one highlighted */}
-                    {type === "spell_word" && (
-                      <div className="space-y-2 pt-1">
-                        {q.options && q.options.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {q.options.map((option, optIdx) => {
-                              const isCorrect = option === q.correct_answer;
-                              return (
-                                <span
-                                  key={optIdx}
-                                  className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl border ${
-                                    isCorrect
-                                      ? "bg-green-50/80 border-green-200 text-green-800"
-                                      : "bg-white border-slate-200 text-slate-700"
-                                  }`}
-                                >
-                                  <SpellCheck className="w-3.5 h-3.5 text-orange-400" />
-                                  {option}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {q.correct_answer && (
-                          <div className="text-sm bg-green-50/80 p-3 rounded-xl border border-green-200 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                            <span className="font-bold text-slate-700">Correct Spelling:</span>
-                            <span className="text-green-700 font-semibold">
-                              {q.correct_answer}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Explanation, if provided */}
-                    {q.explanation && (
-                      <div
-                        className="text-sm text-slate-600 bg-white p-4 rounded-xl border border-slate-100 shadow-inner leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.explanation) }}
-                      />
+              {task.questions.map((q, index) => (
+                <div
+                  key={index}
+                  className="border border-orange-100/60 rounded-2xl p-5 md:p-6 bg-gradient-to-br from-slate-50/80 to-white space-y-4 shadow-sm hover:border-orange-200 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="font-bold text-slate-900 text-sm md:text-base flex items-start gap-2">
+                      <span className="text-orange-600 font-black shrink-0">{index + 1}.</span>
+                      <span>{q.question_text}</span>
+                    </p>
+                    {q.marks !== undefined && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-xl bg-orange-50 text-orange-600 border border-orange-200/50 shrink-0">
+                        <Award className="w-3.5 h-3.5" />
+                        {q.marks} {q.marks === 1 ? 'Mark' : 'Marks'}
+                      </span>
                     )}
                   </div>
-                );
-              })}
+
+                  {/* Options List */}
+                  {q.options && q.options.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                      {q.options.map((option, optIdx) => {
+                        const isCorrect = option === q.correct_answer;
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all ${
+                              isCorrect
+                                ? "bg-green-50/80 border-green-200 text-green-800"
+                                : "bg-white border-slate-200 text-slate-700"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold ${
+                                isCorrect ? "bg-green-200 text-green-800" : "bg-slate-100 text-slate-600"
+                              }`}>
+                                {String.fromCharCode(65 + optIdx)}
+                              </span>
+                              <span>{option}</span>
+                            </div>
+                            {isCorrect && (
+                              <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100/60 px-2 py-0.5 rounded-md">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Correct
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Fallback Answer View if options aren't structured */}
+                  {(!q.options || q.options.length === 0) && q.correct_answer && (
+                    <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+                      <span className="font-bold text-slate-700">Correct Answer:</span>
+                      <span className="text-green-600 font-semibold">{q.correct_answer}</span>
+                    </div>
+                  )}
+
+                  {/* Answer Key HTML if available */}
+                  {q.answer_key_html && (
+                    <div
+                      className="text-sm text-slate-600 bg-white p-4 rounded-xl border border-slate-100 shadow-inner leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.answer_key_html) }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -40,36 +40,35 @@ const menuItems = [
     icon: GraduationCap,
     color: "from-amber-400 to-orange-500",
     border: "border-orange-500",
-    bg: "from-orange-50 via-amber-50 to-yellow-50",
+    bg: "from-orange-50 to-amber-50",
     text: "text-orange-700",
   },
-
   {
     title: "Student Learning Access",
     href: "/institute-dashboard/student-learning-access/access-list",
-    icon: ClipboardList,
-    color: "from-teal-500 to-emerald-600",
-    border: "border-teal-500",
-    bg: "from-teal-50 to-emerald-50",
-    text: "text-teal-700",
+    icon: KeyRound,
+    color: "from-cyan-500 to-sky-600",
+    border: "border-cyan-500",
+    bg: "from-cyan-50 to-sky-50",
+    text: "text-cyan-700",
   },
   {
     title: "Practical Manual",
     href: "/institute-dashboard/practical-manual",
     icon: BookOpenCheck,
-    color: "from-amber-500 to-orange-600",
-    border: "border-orange-600",
-    bg: "from-amber-50 to-orange-50",
-    text: "text-orange-800",
+    color: "from-orange-500 to-red-500",
+    border: "border-orange-500",
+    bg: "from-orange-50 to-red-50",
+    text: "text-orange-700",
   },
   {
     title: "Task Management",
     href: "/institute-dashboard/student-task",
-    icon: ListChecks,
-    color: "from-cyan-500 to-blue-600",
-    border: "border-cyan-500",
-    bg: "from-cyan-50 to-blue-50",
-    text: "text-cyan-700",
+    icon: CheckSquare,
+    color: "from-green-500 to-emerald-600",
+    border: "border-green-500",
+    bg: "from-green-50 to-emerald-50",
+    text: "text-green-700",
   },
   {
     title: "Assessment",
@@ -104,16 +103,16 @@ const menuItems = [
     title: "Activity Log",
     href: "/institute-dashboard/activity-log",
     icon: Activity,
-    color: "from-sky-500 to-indigo-600",
+    color: "from-sky-500 to-blue-600",
     border: "border-sky-500",
-    bg: "from-sky-50 to-indigo-50",
+    bg: "from-sky-50 to-blue-50",
     text: "text-sky-700",
   },
   {
     title: "License & Subscription",
     href: "/institute-dashboard/license",
     icon: BadgeCheck,
-    color: "from-emerald-400 to-green-600",
+    color: "from-emerald-500 to-green-600",
     border: "border-emerald-500",
     bg: "from-emerald-50 to-green-50",
     text: "text-emerald-700",
@@ -122,19 +121,19 @@ const menuItems = [
     title: "Profile",
     href: "/institute-dashboard/profile",
     icon: Building2,
-    color: "from-sky-400 to-blue-500",
-    border: "border-sky-500",
-    bg: "from-sky-50 to-blue-50",
-    text: "text-sky-700",
+    color: "bg-indigo-500",
+    border: "border-indigo-500",
+    bg: "bg-indigo-50",
+    text: "text-indigo-700",
   },
   {
     title: "Settings",
     href: "/institute-dashboard/settings",
     icon: Settings,
-    color: "from-slate-500 to-slate-700",
-    border: "border-slate-500",
-    bg: "from-slate-50 to-slate-100",
-    text: "text-slate-700",
+    color: "from-orange-500 to-red-500",
+    border: "border-orange-500",
+    bg: "from-orange-50 to-red-50",
+    text: "text-orange-700",
   },
   {
     title: "Logout",
@@ -155,10 +154,13 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
   const groupWithActiveChild = menuItems.find((item) =>
     item.children?.some((child) => pathname === child.href),
   )?.title;
-  const [expandedGroup, setExpandedGroup] = useState(groupWithActiveChild ?? null);
+  const [expandedGroup, setExpandedGroup] = useState(
+    groupWithActiveChild ?? null,
+  );
 
   const instituteName = institute?.institute_name || "Institute";
-  const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
+  const { src: instituteLogo, onError: handleLogoError } =
+    useInstituteLogoSrc(institute);
 
   return (
     <aside
@@ -186,7 +188,9 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
       {/* Top Header Section */}
       <div className="relative z-10 shrink-0 pb-4">
-        <div className={`flex items-center ${isOpen ? "gap-3 px-2" : "justify-center"}`}>
+        <div
+          className={`flex items-center ${isOpen ? "gap-3 px-2" : "justify-center"}`}
+        >
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
@@ -201,7 +205,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
                 fill
                 sizes="56px"
                 className="rounded-2xl object-cover"
-                unoptimized
                 onError={handleLogoError}
               />
             </div>
@@ -238,7 +241,9 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
           );
 
           if (item.children) {
-            const groupActive = item.children.some((child) => pathname === child.href);
+            const groupActive = item.children.some(
+              (child) => pathname === child.href,
+            );
             const isExpanded = expandedGroup === item.title;
 
             return (
@@ -444,7 +449,6 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               fill
               sizes="40px"
               className="rounded-full object-cover border border-white shadow-sm"
-              unoptimized
               onError={handleLogoError}
             />
           </div>

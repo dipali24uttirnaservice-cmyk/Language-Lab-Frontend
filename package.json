@@ -2,13 +2,13 @@
   "name": "language-lab",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev -p 5002",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "analyze": "cross-env ANALYZE=true next build"
-  },
+ "scripts": {
+  "dev": "next dev --webpack -p 5002",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint",
+  "analyze": "cross-env ANALYZE=true next build"
+},
   "dependencies": {
     "@ai-sdk/openai": "^3.0.70",
     "@ai-sdk/react": "^3.0.204",

@@ -51,27 +51,6 @@ export default function StudentLogin() {
   const instituteId = watch("instituteId");
   const fieldsDisabled = !instituteId;
 
-  // One option per license code across every institute (same shape the
-  // dropdown below builds) — when there's exactly one in the whole system,
-  // there's nothing to choose, so skip the dropdown and select it directly.
-  const licenseOptions = institutes.flatMap((inst) =>
-    (inst.license_codes || []).map((code) => ({
-      instituteId: inst._id,
-      code,
-    })),
-  );
-  const onlyLicenseOption =
-    licenseOptions.length === 1 ? licenseOptions[0] : null;
-
-  useEffect(() => {
-    if (!onlyLicenseOption) return;
-    setValue("instituteId", onlyLicenseOption.instituteId, {
-      shouldValidate: true,
-    });
-    setValue("licenseCode", onlyLicenseOption.code, { shouldValidate: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onlyLicenseOption?.instituteId, onlyLicenseOption?.code]);
-
   useEffect(() => {
     const token = Cookies.get("token");
     const role = Cookies.get("role");
@@ -97,12 +76,7 @@ export default function StudentLogin() {
       .finally(() => setInstitutesLoading(false));
   }, []);
 
-  const onSubmit = async ({
-    instituteId,
-    licenseCode,
-    enrollmentNo,
-    password,
-  }) => {
+  const onSubmit = async ({ instituteId, licenseCode, enrollmentNo, password }) => {
     try {
       const response = await studentLogin({
         institute_id: instituteId,
@@ -137,16 +111,15 @@ export default function StudentLogin() {
         console.error(error);
       }
 
-      const seatsFull = backendMessage
-        ?.toLowerCase()
-        .includes("no free seats available");
+      const seatsFull = backendMessage?.toLowerCase().includes("no free seats available");
 
       setModal({
         open: true,
         type: "error",
         title: seatsFull ? "No Free Seats Available" : "Login Failed",
         message:
-          backendMessage || "Invalid institute, enrollment number, or password",
+          backendMessage ||
+          "Invalid institute, enrollment number, or password",
       });
     }
   };
@@ -226,63 +199,46 @@ export default function StudentLogin() {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               License Code
             </label>
-            {onlyLicenseOption ? (
-              // Only one license code exists at all — nothing to pick, so show
-              // it as a plain read-only value instead of a single-item dropdown.
-              <div
-                className="
-                  w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3
-                  text-slate-900 font-medium
-                "
-              >
-                {onlyLicenseOption.code}
-              </div>
-            ) : (
-              <select
-                value={
-                  watch("instituteId") && watch("licenseCode")
-                    ? `${watch("instituteId")}::${watch("licenseCode")}`
-                    : ""
+            <select
+              value={
+                watch("instituteId") && watch("licenseCode")
+                  ? `${watch("instituteId")}::${watch("licenseCode")}`
+                  : ""
+              }
+              onChange={(e) => {
+                const [selectedInstituteId, selectedLicenseCode] = e.target.value.split("::");
+                setValue("instituteId", selectedInstituteId || "", { shouldValidate: true });
+                setValue("licenseCode", selectedLicenseCode || "", { shouldValidate: true });
+              }}
+              disabled={institutesLoading}
+              className={`
+                w-full rounded-xl border bg-white px-4 py-3 text-slate-900
+                outline-none transition-all focus:ring-4 disabled:opacity-60
+                ${
+                  errors.instituteId || errors.licenseCode
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-100"
+                    : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
                 }
-                onChange={(e) => {
-                  const [selectedInstituteId, selectedLicenseCode] =
-                    e.target.value.split("::");
-                  setValue("instituteId", selectedInstituteId || "", {
-                    shouldValidate: true,
-                  });
-                  setValue("licenseCode", selectedLicenseCode || "", {
-                    shouldValidate: true,
-                  });
-                }}
-                disabled={institutesLoading}
-                className={`
-                  w-full rounded-xl border bg-white px-4 py-3 text-slate-900
-                  outline-none transition-all focus:ring-4 disabled:opacity-60
-                  ${
-                    errors.instituteId || errors.licenseCode
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-100"
-                      : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
-                  }
-                `}
-              >
-                <option value="" disabled>
-                  {institutesLoading
-                    ? "Loading institutes..."
-                    : "Select your license code"}
-                </option>
-                {licenseOptions.map(({ instituteId: instId, code }) => (
-                  // One option per license code, each carrying its own institute
-                  // id + code. Seats are checked against this exact license only
-                  // — a full license does not silently fall back to another one.
-                  <option
-                    key={`${instId}-${code}`}
-                    value={`${instId}::${code}`}
-                  >
+              `}
+            >
+              <option value="" disabled>
+                {institutesLoading
+                  ? "Loading institutes..."
+                  : "Select your license code"}
+              </option>
+              {institutes.flatMap((inst) => {
+                const codes = inst.license_codes || [];
+
+                // One option per license code, each carrying its own institute
+                // id + code. Seats are checked against this exact license only
+                // — a full license does not silently fall back to another one.
+                return codes.map((code) => (
+                  <option key={`${inst._id}-${code}`} value={`${inst._id}::${code}`}>
                     {code}
                   </option>
-                ))}
-              </select>
-            )}
+                ));
+              })}
+            </select>
             {(errors.instituteId || errors.licenseCode) && (
               <div className="mt-1 text-sm text-red-500 font-medium">
                 {errors.instituteId?.message || errors.licenseCode?.message}

@@ -9,10 +9,12 @@ import {
   ArrowLeft,
   Info,
   Layers,
+  UserCog,
   FileText,
 } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
+import { studentApi } from "@/services/student/studentApi";
 import {
   createStudentTaskSchema,
   updateStudentTaskSchema
@@ -67,17 +69,23 @@ export default function StudentTaskFormPage() {
   const [taskLinkUrl, setTaskLinkUrl] = useState("");
   const [taskMediaUrl, setTaskMediaUrl] = useState("");
   const [taskMediaFile, setTaskMediaFile] = useState(null);
-  // Assignment target is no longer configurable in the UI — every task
-  // targets all students enrolled in the course, matching the backend
-  // default. Kept as constants so the create/update payload shape (and the
-  // edit-mode load below) stay unchanged.
-  const taskTarget = "all";
-  const studentIds = [];
+  const [taskTarget, setTaskTarget] = useState("all");
+  const [studentIds, setStudentIds] = useState([]);
 
   // Data Lists & Dropdowns
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+
+  // Only students enrolled in the currently selected course can be targeted —
+  // "all" already means "all students on this course" server-side, so the
+  // "selected" picker must offer the same pool, not every institute student.
+  const students = formCourseId
+    ? allStudents.filter((s) =>
+        (s.purchased_courses || []).some((c) => (c._id || c) === formCourseId),
+      )
+    : [];
 
   // Status Modal State
   const [statusData, setStatusData] = useState({
@@ -103,6 +111,11 @@ export default function StudentTaskFormPage() {
         setCourses(allCourses.filter((course) => course.is_downloaded));
       })
       .catch((error) => console.error("Get Courses Error:", error));
+
+    studentApi
+      .getStudents()
+      .then((res) => setAllStudents(res.data?.data?.students || []))
+      .catch((error) => console.error("Get Students Error:", error));
   }, []);
 
   useEffect(() => {
@@ -124,6 +137,15 @@ export default function StudentTaskFormPage() {
   const handleCourseChange = (id) => {
     setFormCourseId(id);
     setFormTopicId("");
+    setStudentIds([]);
+  };
+
+  const toggleStudentSelection = (studentId) => {
+    setStudentIds((prev) =>
+      prev.includes(studentId)
+        ? prev.filter((id) => id !== studentId)
+        : [...prev, studentId]
+    );
   };
 
   useEffect(() => {
@@ -154,6 +176,14 @@ export default function StudentTaskFormPage() {
           setTaskTextContent(manual.text_content || "");
           setTaskLinkUrl(manual.link_url || "");
           setTaskMediaUrl(manual.media_url || "");
+          setTaskTarget(manual.target || "all");
+          // Backend returns student_ids populated (full_name, enrollment_no) —
+          // unwrap back to plain id strings, same as course_id/topic_id above.
+          setStudentIds(
+            (manual.student_ids || manual.selected_student_ids || []).map((s) =>
+              typeof s === "object" ? s._id : s
+            )
+          );
 
           setQuestions(
             manual.questions?.map((q) => ({
@@ -564,6 +594,60 @@ export default function StudentTaskFormPage() {
                     (uploading a new file replaces this one)
                   </p>
                 )
+              )}
+            </div>
+          )}
+
+          <div className="pt-2">
+            <SectionDivider icon={UserCog} title="Assignment Target" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Target</label>
+            <select
+              value={taskTarget}
+              onChange={(e) => setTaskTarget(e.target.value)}
+              className="w-full px-4 py-3 bg-white border border-orange-300 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+            >
+              <option value="all">All students enrolled in this course</option>
+              <option value="selected">Selected students</option>
+            </select>
+          </div>
+
+          {taskTarget === "selected" && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                Students ({studentIds.length} selected)
+              </label>
+              <div className="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-2xl p-2 space-y-1">
+                {students.length === 0 ? (
+                  <p className="text-xs text-slate-400 p-2">
+                    {formCourseId
+                      ? "No students are enrolled in this course yet."
+                      : "Select a course first."}
+                  </p>
+                ) : (
+                  students.map((s) => (
+                    <label
+                      key={s._id}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={studentIds.includes(s._id)}
+                        onChange={() => toggleStudentSelection(s._id)}
+                        className="accent-orange-500"
+                      />
+                      <span className="font-medium text-slate-700">{s.full_name}</span>
+                      <span className="text-xs text-slate-400">{s.enrollment_no}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+              {formErrors.student_ids && (
+                <p className="text-xs mt-1 text-red-600 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {formErrors.student_ids}
+                </p>
               )}
             </div>
           )}

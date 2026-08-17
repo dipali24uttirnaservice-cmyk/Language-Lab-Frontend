@@ -21,15 +21,12 @@ import {
   Play,
   RotateCcw,
   CheckCircle2,
-  XCircle,
   Clock,
   Sparkles,
   ChevronRight,
   Minimize2,
   Maximize2,
   ChevronLeft,
-  Lightbulb,
-  Star,
 } from "lucide-react";
 
 import { studentTaskApi } from "@/services/task/studentTaskApi";
@@ -732,44 +729,17 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
               <div className="space-y-6 animate-fadeIn w-full">
                 {submission?.status === "reviewed" ? (
                   <div className="space-y-6 w-full">
-                    <div className="relative overflow-hidden rounded-3xl border border-orange-200/70 bg-gradient-to-br from-orange-50 via-amber-50/60 to-white p-6 md:p-7 shadow-sm">
-                      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-orange-200/30 blur-3xl pointer-events-none" />
-
-                      <div className="relative flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
-                          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-md shadow-orange-500/30 shrink-0">
-                            <CheckCircle2 className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-extrabold text-orange-600 uppercase tracking-widest">
-                              Instructor Evaluation
-                            </p>
-                            <p className="text-base font-black text-slate-900">
-                              Task Reviewed
-                            </p>
-                          </div>
-                        </div>
-
-                        {submission.grade != null && (
-                          <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-orange-200 shadow-sm">
-                            <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
-                            <span className="text-lg font-black text-slate-900">
-                              {submission.grade}
-                            </span>
-                            <span className="text-xs font-bold text-slate-400 uppercase">
-                              Marks
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
+                    <div className="bg-orange-50/70 border border-orange-200 rounded-3xl p-6 space-y-3 shadow-sm">
+                      <p className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-orange-600" />
+                        Instructor Evaluation Completed
+                        {submission.grade != null &&
+                          ` — ${submission.grade} marks`}
+                      </p>
                       {submission.feedback && (
-                        <div className="relative mt-5 flex items-start gap-3 bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-orange-100/80 shadow-sm">
-                          <MessageSquare className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
-                          <p className="text-sm text-slate-700 leading-relaxed italic">
-                            "{submission.feedback}"
-                          </p>
-                        </div>
+                        <p className="text-sm text-orange-900 bg-white/60 p-4 rounded-2xl border border-orange-100/60 leading-relaxed">
+                          "{submission.feedback}"
+                        </p>
                       )}
                     </div>
 
@@ -1424,134 +1394,53 @@ function TaskQuestionsReview({ questions, answers }) {
     normalize(givenRaw) === normalize(currentQuestion.correct_answer);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-          <HelpCircle className="w-3.5 h-3.5 text-orange-500" /> Checkpoint
-          Review
+          <HelpCircle className="w-3.5 h-3.5" /> Checkpoint Review (
+          {currentReviewIndex + 1} of {totalQuestions})
         </p>
-
-        {/* Progress dots — mirrors the exercise/practice question trackers
-            used elsewhere so this reads as the same product pattern. */}
-        <div className="flex items-center gap-1.5">
-          {questions.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setCurrentReviewIndex(i)}
-              title={`Question ${i + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === currentReviewIndex
-                  ? "w-6 bg-orange-500"
-                  : answerByIndex[i] !== undefined
-                    ? normalize(answerByIndex[i]) ===
-                      normalize(questions[i].correct_answer)
-                      ? "w-2 bg-emerald-300 hover:bg-emerald-400"
-                      : "w-2 bg-rose-300 hover:bg-rose-400"
-                    : "w-2 bg-slate-200 hover:bg-slate-300"
-              }`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Review Active Card */}
-      <div
-        className={`rounded-3xl border p-5 md:p-6 space-y-5 shadow-sm animate-fadeIn transition-colors ${
-          isCorrect
-            ? "border-emerald-200 bg-emerald-50/60"
-            : "border-rose-200 bg-rose-50/60"
-        }`}
-      >
-        <div
-          className={`flex items-center justify-between gap-3 border-b pb-4 ${
-            isCorrect ? "border-emerald-200/70" : "border-rose-200/70"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span
-              className={`h-9 w-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                isCorrect
-                  ? "bg-emerald-200 text-emerald-800"
-                  : "bg-rose-200 text-rose-800"
-              }`}
-            >
-              {currentReviewIndex + 1}
-            </span>
-            <div>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-                Question {currentReviewIndex + 1} of {totalQuestions}
-              </span>
-              <span className="text-xs font-bold text-slate-600">
-                {currentQuestion.marks || 1}{" "}
-                {(currentQuestion.marks || 1) > 1 ? "Marks" : "Mark"}
-              </span>
-            </div>
-          </div>
-
+      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 shadow-sm animate-fadeIn">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-bold text-slate-800 leading-relaxed">
+            {currentReviewIndex + 1}. {currentQuestion.question_text}
+          </p>
           {givenRaw !== undefined && (
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border shrink-0 ${
+              className={`shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
                 isCorrect
-                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                  : "bg-rose-100 text-rose-800 border-rose-300"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
               }`}
             >
-              {isCorrect ? (
-                <CheckCircle2 size={14} />
-              ) : (
-                <XCircle size={14} />
-              )}
               {isCorrect ? "Correct" : "Incorrect"}
             </span>
           )}
         </div>
-
-        <p className="text-sm md:text-base font-bold text-slate-900 leading-snug">
-          {currentQuestion.question_text}
+        <p className="text-xs text-slate-500 mt-2">
+          Your answer:{" "}
+          <span className="font-semibold text-slate-700">
+            {prettifyAnswer(currentQuestion, givenRaw)}
+          </span>
         </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white border border-slate-200/80 p-4 space-y-1.5 shadow-sm">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-              Your Answer
-            </p>
-            <p className="text-sm font-bold text-slate-800">
-              {prettifyAnswer(currentQuestion, givenRaw)}
-            </p>
-          </div>
-
-          {!isCorrect && (
-            <div className="rounded-2xl bg-white border border-emerald-200 p-4 space-y-1.5 shadow-sm">
-              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">
-                Correct Answer
-              </p>
-              <p className="text-sm font-bold text-emerald-800">
-                {prettifyAnswer(
-                  currentQuestion,
-                  currentQuestion.correct_answer,
-                )}
-              </p>
-            </div>
-          )}
-        </div>
-
+        {!isCorrect && (
+          <p className="text-xs text-slate-500">
+            Correct answer:{" "}
+            <span className="font-semibold text-emerald-700">
+              {prettifyAnswer(currentQuestion, currentQuestion.correct_answer)}
+            </span>
+          </p>
+        )}
         {currentQuestion.explanation && (
-          <div className="flex items-start gap-3 text-xs text-amber-950 bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 shadow-sm">
-            <div className="h-7 w-7 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-              <Lightbulb size={15} />
-            </div>
-            <div className="space-y-1">
-              <span className="font-bold uppercase tracking-wider text-[10px] text-amber-700 block">
-                Explanation
-              </span>
-              <div
-                className="prose prose-sm text-slate-800 leading-relaxed [&_p]:m-0"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeHtml(currentQuestion.explanation),
-                }}
-              />
-            </div>
+          <div className="text-xs text-slate-500 bg-white/70 p-3 rounded-xl border border-slate-100 leading-relaxed">
+            <span className="font-bold text-slate-600">Explanation: </span>
+            <span
+              className="prose prose-sm max-w-none inline"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentQuestion.explanation) }}
+            />
           </div>
         )}
       </div>
@@ -1562,19 +1451,14 @@ function TaskQuestionsReview({ questions, answers }) {
           type="button"
           disabled={currentReviewIndex === 0}
           onClick={() => setCurrentReviewIndex((prev) => Math.max(0, prev - 1))}
-          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             currentReviewIndex === 0
               ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
-              : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm active:scale-95"
+              : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
           }`}
         >
-          <ChevronLeft size={14} />
-          Previous
+          Previous Question
         </button>
-
-        <span className="text-xs font-bold text-slate-400">
-          {currentReviewIndex + 1} / {totalQuestions}
-        </span>
 
         <button
           type="button"
@@ -1584,14 +1468,13 @@ function TaskQuestionsReview({ questions, answers }) {
               Math.min(totalQuestions - 1, prev + 1),
             )
           }
-          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
             currentReviewIndex === totalQuestions - 1
               ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
-              : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20 active:scale-95"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
           }`}
         >
-          Next
-          <ChevronRight size={14} />
+          Next Question
         </button>
       </div>
     </div>
