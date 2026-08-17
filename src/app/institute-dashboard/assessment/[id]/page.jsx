@@ -2,560 +2,1643 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter, useParams } from "next/navigation";
-import { AlertCircle, Loader2, ArrowLeft, Trash2 } from "lucide-react";
-
+import { useParams, useRouter } from "next/navigation";
 import {
-  practicalManual,
-  practicalManualDetail,
-  updatePracticalManual
-} from "@/services/practical-Manual/page.jsx";
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 
-import {
-  createPracticalManualSchema,
-  updatePracticalManualSchema
-} from "@/app/schemas/practicalManual.schema";
-import { courseApi } from "@/services/course/courseApi";
-import { topicApi } from "@/services/topic/topicApi";
-import RichTextEditor from "@/components/molecules/RichTextEditor";
+import { assessmentApi } from "@/services/assessment/assessmentApi";
+import { subjectApi } from "@/services/subject/subjectApi";
+
 import StatusModal from "@/components/molecules/StatusModal";
+
+// =====================================================
+// DEFAULT QUESTION
+// =====================================================
+
+const createEmptyQuestion = () => ({
+  question_text: "",
+  optionA: "",
+  optionB: "",
+  optionC: "",
+  optionD: "",
+  correct_answer: "",
+  explanation: "",
+  hint: "",
+  marks: 1,
+  negative_marks: 0,
+});
+
+// =====================================================
+// DEFAULT FORM
+// =====================================================
+
+const createDefaultForm = () => ({
+  subject_id: "",
+  title: "",
+  description: "",
+  order: 0,
+  difficulty: "easy",
+
+  max_attempts: 5,
+  total_marks: 0,
+  time_limit_sec: "",
+
+  shuffle_questions: true,
+  shuffle_options: true,
+  show_explanation: true,
+
+  // ================================================
+  // 0 = Hidden
+  // 1 = Show
+  // ================================================
+  exercise_type: 0,
+
+  // Mongoose schema field
+  // 0 = Hidden
+  // 1 = Show
+  userType: "0",
+});
+
+// =====================================================
+// PAGE
+// =====================================================
 
 export default function AssessmentFormPage() {
   const router = useRouter();
   const params = useParams();
 
-  // Handles standard [id] or optional catch-all [[...id]]
+  // =====================================================
+  // ROUTE / MODE
+  // =====================================================
+
   const routeId = params?.id;
 
-  const editingManualId =
-    routeId && routeId !== "create"
-      ? Array.isArray(routeId)
-        ? routeId[0]
-        : routeId
+  const normalizedRouteId = Array.isArray(routeId)
+    ? routeId[0]
+    : routeId;
+
+  /*
+    Create:
+      /assessment/new
+      /assessment/create
+
+    Update:
+      /assessment/:id
+  */
+
+  const assessmentId =
+    normalizedRouteId &&
+    normalizedRouteId !== "new" &&
+    normalizedRouteId !== "create"
+      ? normalizedRouteId
       : null;
 
-  const [submitting, setSubmitting] = useState(false);
+  const isEditMode = Boolean(assessmentId);
+
+  // =====================================================
+  // STATE
+  // =====================================================
+
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [formTitle, setFormTitle] = useState("");
-  const [formCourseId, setFormCourseId] = useState("");
-  const [formTopicId, setFormTopicId] = useState("");
+  // Subjects
+  const [subjects, setSubjects] = useState([]);
+  const [subjectsLoading, setSubjectsLoading] =
+    useState(false);
 
-  const [courses, setCourses] = useState([]);
-  const [topics, setTopics] = useState([]);
-  const [topicsLoading, setTopicsLoading] = useState(false);
+  // Form
+  const [form, setForm] = useState(
+    createDefaultForm()
+  );
 
- const [statusData, setStatusData] = useState({
-  open: false,
-  type: "success",
-  title: "",
-  message: "",
-  manualId: null,
-});
-
-  const [questionList, setQuestionList] = useState([
-    { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
+  // Questions
+  const [questions, setQuestions] = useState([
+    createEmptyQuestion(),
   ]);
 
+  // Validation
   const [formErrors, setFormErrors] = useState({});
 
-  // Course dropdown — same source as every other institute-dashboard form.
+  // Status modal
+  const [statusData, setStatusData] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  // =====================================================
+  // LOAD SUBJECTS
+  // =====================================================
+
   useEffect(() => {
-    courseApi
-      .getCourses()
-      .then((res) => {
-        const allCourses = res.data?.data?.courses || [];
-        setCourses(allCourses.filter((course) => course.is_downloaded));
-      })
-      .catch((error) => console.error("Get Courses Error:", error));
+    const fetchSubjects = async () => {
+      try {
+        setSubjectsLoading(true);
+
+        const response =
+          await subjectApi.subjectList();
+
+        console.log(
+          "Subject List Response:",
+          response
+        );
+
+        const responseData = response?.data;
+
+        const data =
+          responseData?.data ??
+          responseData;
+
+        let subjectData = [];
+
+        if (Array.isArray(data)) {
+          subjectData = data;
+        } else if (
+          Array.isArray(data?.subjects)
+        ) {
+          subjectData = data.subjects;
+        } else if (
+          Array.isArray(data?.data)
+        ) {
+          subjectData = data.data;
+        }
+
+        console.log(
+          "Normalized Subjects:",
+          subjectData
+        );
+
+        setSubjects(subjectData);
+      } catch (error) {
+        console.error(
+          "Get Subjects Error:",
+          error
+        );
+
+        setSubjects([]);
+
+        setStatusData({
+          open: true,
+          type: "error",
+          title: "Failed",
+          message:
+            error?.response?.data?.message ||
+            "Unable to fetch subjects.",
+        });
+      } finally {
+        setSubjectsLoading(false);
+      }
+    };
+
+    fetchSubjects();
   }, []);
 
-  // Topic dropdown depends on the chosen course. Only fetches — never clears
-  // formTopicId itself, so the edit-mode preload above isn't clobbered the
-  // moment this effect re-runs for the manual's existing course.
+  // =====================================================
+  // LOAD ASSESSMENT FOR UPDATE
+  // =====================================================
+
   useEffect(() => {
-    if (!formCourseId) {
-      setTopics([]);
+    if (!assessmentId) {
       return;
     }
-    setTopicsLoading(true);
-    topicApi
-      .getTopics(formCourseId)
-      .then((res) => setTopics(res.data?.data?.topics || res.data?.data || []))
-      .catch((error) => {
-        console.error("Get Topics Error:", error);
-        setTopics([]);
-      })
-      .finally(() => setTopicsLoading(false));
-  }, [formCourseId]);
 
-  // Explicit user-driven course change — clears the now-stale topic.
-  const handleCourseChange = (id) => {
-    setFormCourseId(id);
-    setFormTopicId("");
-  };
+    const fetchAssessment = async () => {
+      try {
+        setLoading(true);
 
-  // Fetch data if ID exists (Edit Mode)
-  useEffect(() => {
-    if (editingManualId) {
-      const fetchDetail = async () => {
-        try {
-          setLoading(true);
-          const response = await practicalManualDetail(editingManualId);
-          const data = response?.data || response;
-          const manual = data?.data || data;
+        console.log(
+          "Fetching Assessment ID:",
+          assessmentId
+        );
 
-          setFormTitle(manual.title || "");
-          setFormCourseId(
-            typeof manual.course_id === "object"
-              ? manual.course_id?._id || ""
-              : manual.course_id || ""
+        const response =
+          await assessmentApi.getAssessment(
+            assessmentId
           );
-          setFormTopicId(
-            typeof manual.topic_id === "object"
-              ? manual.topic_id?._id || ""
-              : manual.topic_id || ""
+
+        console.log(
+          "Assessment Detail Response:",
+          response
+        );
+
+        const responseData = response?.data;
+
+        const assessment =
+          responseData?.data ??
+          responseData;
+
+        if (!assessment) {
+          throw new Error(
+            "Assessment data not found."
           );
-          setQuestionList(
-            manual.questions?.map((q) => ({
-              question_text: q.question_text || "",
-              answer_key_html: q.answer_key_html || "",
-              answer_lines: q.answer_lines || 5,
-              solution_type: q.solution_type || "text"
-            })) || []
-          );
-        } catch (error) {
-          console.error("Error loading detail for edit", error);
-        } finally {
-          setLoading(false);
         }
-      };
-      fetchDetail();
-    }
-  }, [editingManualId]);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+        // =================================================
+        // SUBJECT
+        // =================================================
 
-  setFormErrors({});
+        let subjectId = "";
 
-  const payload = {
-    title: formTitle,
-    course_id: formCourseId,
-    topic_id: formTopicId,
-    questions: questionList,
+        if (
+          assessment?.subject_id &&
+          typeof assessment.subject_id ===
+            "object"
+        ) {
+          subjectId =
+            assessment.subject_id?._id || "";
+        } else {
+          subjectId =
+            assessment?.subject_id || "";
+        }
+
+        // =================================================
+        // EXERCISE TYPE
+        // =================================================
+
+        /*
+          Priority:
+
+          1. exercise_type
+          2. userType
+
+          Backend values:
+            0 = Hidden
+            1 = Show
+
+          Default:
+            0
+        */
+
+        const exerciseType =
+          Number(
+            assessment?.exercise_type ??
+              assessment?.userType ??
+              0
+          ) === 1
+            ? 1
+            : 0;
+
+        // =================================================
+        // FORM
+        // =================================================
+
+        setForm({
+          subject_id: subjectId,
+
+          title:
+            assessment?.title || "",
+
+          description:
+            assessment?.description || "",
+
+          order:
+            assessment?.order ?? 0,
+
+          difficulty:
+            assessment?.difficulty || "easy",
+
+          max_attempts:
+            assessment?.max_attempts ?? 5,
+
+          total_marks:
+            assessment?.total_marks ?? 0,
+
+          time_limit_sec:
+            assessment?.time_limit_sec ?? "",
+
+          shuffle_questions:
+            assessment?.shuffle_questions ??
+            true,
+
+          shuffle_options:
+            assessment?.shuffle_options ??
+            true,
+
+          show_explanation:
+            assessment?.show_explanation ??
+            true,
+
+          // 0 / 1
+          exercise_type: exerciseType,
+
+          // Schema field
+          userType: String(exerciseType),
+        });
+
+        // =================================================
+        // QUESTIONS
+        // =================================================
+
+        if (
+          Array.isArray(
+            assessment?.questions
+          ) &&
+          assessment.questions.length > 0
+        ) {
+          setQuestions(
+            assessment.questions.map(
+              (question) => ({
+                question_text:
+                  question?.question_text ||
+                  "",
+
+                optionA:
+                  question?.optionA || "",
+
+                optionB:
+                  question?.optionB || "",
+
+                optionC:
+                  question?.optionC || "",
+
+                optionD:
+                  question?.optionD || "",
+
+                correct_answer:
+                  question?.correct_answer ||
+                  "",
+
+                explanation:
+                  question?.explanation ||
+                  "",
+
+                hint:
+                  question?.hint || "",
+
+                marks:
+                  question?.marks ?? 1,
+
+                negative_marks:
+                  question?.negative_marks ??
+                  0,
+              })
+            )
+          );
+        } else {
+          setQuestions([
+            createEmptyQuestion(),
+          ]);
+        }
+      } catch (error) {
+        console.error(
+          "Get Assessment Detail Error:",
+          error
+        );
+
+        setStatusData({
+          open: true,
+          type: "error",
+          title: "Failed",
+          message:
+            error?.response?.data?.message ||
+            "Unable to fetch assessment.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssessment();
+  }, [assessmentId]);
+
+  // =====================================================
+  // FORM CHANGE
+  // =====================================================
+
+  const handleChange = (
+    field,
+    value
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
   };
 
-  try {
-    const schema = editingManualId
-      ? updatePracticalManualSchema
-      : createPracticalManualSchema;
+  // =====================================================
+  // QUESTION CHANGE
+  // =====================================================
 
-    await schema.validate(payload, {
-      abortEarly: false,
+  const handleQuestionChange = (
+    index,
+    field,
+    value
+  ) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+
+      return updated;
     });
 
-    setSubmitting(true);
+    setFormErrors((prev) => ({
+      ...prev,
+      [`questions.${index}.${field}`]:
+        "",
+    }));
+  };
 
-    const formData = new FormData();
+  // =====================================================
+  // ADD QUESTION
+  // =====================================================
 
-    formData.append("title", formTitle);
-    formData.append("course_id", formCourseId);
+  const addQuestion = () => {
+    setQuestions((prev) => [
+      ...prev,
+      createEmptyQuestion(),
+    ]);
+  };
 
-    if (formTopicId) {
-      formData.append("topic_id", formTopicId);
+  // =====================================================
+  // REMOVE QUESTION
+  // =====================================================
+
+  const removeQuestion = (index) => {
+    if (questions.length <= 1) {
+      return;
     }
 
-    formData.append("questions", JSON.stringify(questionList));
+    setQuestions((prev) =>
+      prev.filter(
+        (_, questionIndex) =>
+          questionIndex !== index
+      )
+    );
+  };
 
-    let manualId = editingManualId;
+  // =====================================================
+  // VALIDATION
+  // =====================================================
 
-    if (editingManualId) {
-      // =========================
-      // UPDATE
-      // =========================
-      const response = await updatePracticalManual(
-        editingManualId,
-        formData
-      );
+  const validateForm = () => {
+    const errors = {};
 
-      console.log("Update manual response:", response);
+    // Subject
+    if (!form.subject_id) {
+      errors.subject_id =
+        "Please select a subject.";
+    }
 
-      manualId =
-        editingManualId ||
-        response?.data?.data?._id ||
-        response?.data?._id ||
-        response?.data?.data?.id ||
-        response?.data?.id;
+    // Title
+    if (!form.title.trim()) {
+      errors.title =
+        "Assessment title is required.";
+    }
 
-      setStatusData({
-        open: true,
-        type: "success",
-        title: "Success",
-        message: "Practical manual updated successfully.",
-        manualId,
-      });
-    } else {
-      // =========================
-      // CREATE
-      // =========================
-      const response = await practicalManual(formData);
+    // Questions
+    if (!questions.length) {
+      errors.questions =
+        "At least one question is required.";
+    }
 
-      console.log("Create manual response:", response);
+    questions.forEach(
+      (question, index) => {
+        if (
+          !question.question_text?.trim()
+        ) {
+          errors[
+            `questions.${index}.question_text`
+          ] = "Question is required.";
+        }
 
-      manualId =
-        response?.data?.data?._id ||
-        response?.data?._id ||
-        response?.data?.data?.id ||
-        response?.data?.id;
+        if (!question.optionA?.trim()) {
+          errors[
+            `questions.${index}.optionA`
+          ] = "Option A is required.";
+        }
 
-      if (!manualId) {
-        throw new Error(
-          "Practical manual created, but manual ID was not returned by the server."
-        );
+        if (!question.optionB?.trim()) {
+          errors[
+            `questions.${index}.optionB`
+          ] = "Option B is required.";
+        }
+
+        if (!question.correct_answer?.trim()) {
+          errors[
+            `questions.${index}.correct_answer`
+          ] =
+            "Correct answer is required.";
+        }
+      }
+    );
+
+    setFormErrors(errors);
+
+    return Object.keys(errors).length === 0;
+  };
+
+  // =====================================================
+  // SUBMIT
+  // =====================================================
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setFormErrors({});
+
+    const isValid = validateForm();
+
+    if (!isValid) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      // =================================================
+      // EXERCISE TYPE
+      // =================================================
+
+      /*
+        UI:
+          Hidden = 0
+          Show   = 1
+
+        Always send Number.
+      */
+
+      const exerciseType =
+        Number(form.exercise_type) === 1
+          ? 1
+          : 0;
+
+      // =================================================
+      // PAYLOAD
+      // =================================================
+
+      const payload = {
+        subject_id:
+          form.subject_id,
+
+        title:
+          form.title.trim(),
+
+        description:
+          form.description.trim(),
+
+        order:
+          Number(form.order) || 0,
+
+        difficulty:
+          form.difficulty,
+
+        max_attempts:
+          Number(form.max_attempts) || 1,
+
+        total_marks:
+          Number(form.total_marks) || 0,
+
+        shuffle_questions:
+          Boolean(form.shuffle_questions),
+
+        shuffle_options:
+          Boolean(form.shuffle_options),
+
+        show_explanation:
+          Boolean(form.show_explanation),
+
+        // ===============================================
+        // IMPORTANT
+        // ===============================================
+
+        // Required by current API validation
+        exercise_type: exerciseType,
+
+        // Present in your Mongoose schema
+        userType: String(exerciseType),
+
+        // ===============================================
+        // QUESTIONS
+        // ===============================================
+
+        questions:
+          questions.map(
+            (question) => ({
+              question_text:
+                question.question_text
+                  ?.trim() || "",
+
+              optionA:
+                question.optionA
+                  ?.trim() || "",
+
+              optionB:
+                question.optionB
+                  ?.trim() || "",
+
+              optionC:
+                question.optionC
+                  ?.trim() || "",
+
+              optionD:
+                question.optionD
+                  ?.trim() || "",
+
+              correct_answer:
+                question.correct_answer
+                  ?.trim() || "",
+
+              explanation:
+                question.explanation
+                  ?.trim() || "",
+
+              hint:
+                question.hint
+                  ?.trim() || "",
+
+              marks:
+                Number(question.marks) || 1,
+
+              negative_marks:
+                Number(
+                  question.negative_marks
+                ) || 0,
+            })
+          ),
+      };
+
+      // =================================================
+      // TIME LIMIT
+      // =================================================
+
+      if (
+        form.time_limit_sec !== "" &&
+        form.time_limit_sec !== null &&
+        form.time_limit_sec !== undefined
+      ) {
+        payload.time_limit_sec =
+          Number(form.time_limit_sec);
       }
 
+      console.log(
+        "Assessment Payload:",
+        payload
+      );
+
+      // =================================================
+      // UPDATE
+      // =================================================
+
+      if (isEditMode) {
+        console.log(
+          "Updating Assessment:",
+          assessmentId
+        );
+
+        await assessmentApi.updateAssessment(
+          assessmentId,
+          payload
+        );
+
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Success",
+          message:
+            "Assessment updated successfully.",
+        });
+      }
+
+      // =================================================
+      // CREATE
+      // =================================================
+
+      else {
+        console.log(
+          "Creating New Assessment:",
+          payload
+        );
+
+        await assessmentApi.createAssessment(
+          payload
+        );
+
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Success",
+          message:
+            "Assessment created successfully.",
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Assessment Submit Error:",
+        error
+      );
+
+      console.error(
+        "Backend Error:",
+        error?.response?.data
+      );
+
       setStatusData({
         open: true,
-        type: "success",
-        title: "Success",
-        message: "Practical manual created successfully.",
-        manualId,
+        type: "error",
+        title: "Failed",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.",
       });
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error) {
-    // =========================
-    // YUP VALIDATION ERROR
-    // =========================
-    if (error.name === "ValidationError") {
-      const validationErrors = {};
+  };
 
-      error.inner.forEach((err) => {
-        if (err.path) {
-          validationErrors[err.path] = err.message;
-        }
-      });
+  // =====================================================
+  // STATUS MODAL CLOSE
+  // =====================================================
 
-      setFormErrors(validationErrors);
-      return;
-    }
-
-    // =========================
-    // API ERROR
-    // =========================
-    console.error(error);
-
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Error",
-      message:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Something went wrong. Please try again.",
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-      </div>
-    );
-  }
-
-  return (
-<div className="min-h-screen bg-slate-50/50 p-6 space-y-6 w-full">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="p-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <span className="text-xs font-bold tracking-wider text-orange-600 bg-orange-100 px-3 py-1 rounded-full uppercase">
-            Assessment Management
-          </span>
-          <h1 className="text-2xl font-black text-slate-900 mt-1">
-            {editingManualId ? "Update Assessment" : "Create Assessment"}
-          </h1>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-            <div className="md:col-span-12">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Title
-              </label>
-              <input
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm"
-                placeholder="Practical manual title"
-              />
-              {formErrors.title && (
-                <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                  <span className="!text-red-600">
-                    {formErrors.title}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="md:col-span-6">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Course
-              </label>
-              <select
-                value={formCourseId}
-                onChange={(e) => handleCourseChange(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm cursor-pointer"
-              >
-                <option value="" disabled>Select course</option>
-                {courses.map((c) => (
-                  <option key={c._id} value={c._id}>{c.course_name}</option>
-                ))}
-              </select>
-              {formErrors.course_id && (
-                <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                  <span className="!text-red-600">
-                    {formErrors.course_id}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="md:col-span-6">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Topic 
-              </label>
-              <select
-                value={formTopicId}
-                onChange={(e) => setFormTopicId(e.target.value)}
-                disabled={!formCourseId || topicsLoading}
-                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm cursor-pointer disabled:opacity-60"
-              >
-                <option value="">
-                  {!formCourseId
-                    ? "Select a course first"
-                    : topicsLoading
-                    ? "Loading topics..."
-                    : "No specific topic"}
-                </option>
-                {topics.map((t) => (
-                  <option key={t._id} value={t._id}>{t.title}</option>
-                ))}
-              </select>
-              {formErrors.topic_id && (
-                <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                  <span className="!text-red-600">
-                    {formErrors.topic_id}
-                  </span>
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 pt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-base font-black text-slate-900">Questions Setup</h3>
-              <button
-                type="button"
-                onClick={() =>
-                  setQuestionList([
-                    ...questionList,
-                    { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
-                  ])
-                }
-                className="px-4 py-2 rounded-xl bg-white text-orange-600 border border-orange-300 hover:bg-orange-50 active:scale-95 font-bold text-xs transition-all"
-              >
-                + Add Question
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {questionList.map((q, index) => (
-                <div key={index} className="bg-slate-50/75 rounded-2xl p-5 border border-slate-100 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-xs text-slate-500 uppercase">
-                      Question #{index + 1}
-                    </h4>
-                    {questionList.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQuestionList(questionList.filter((_, i) => i !== index));
-                        }}
-                        className="text-rose-500 hover:text-rose-600 font-bold text-xs"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      value={q.question_text}
-                      onChange={(e) => {
-                        const arr = [...questionList];
-                        arr[index].question_text = e.target.value;
-                        setQuestionList(arr);
-                      }}
-                      placeholder="Type question text..."
-                      className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                    />
-
-                    {formErrors[`questions[${index}].question_text`] && (
-                      <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                        <span className="!text-red-600">
-                          {formErrors[`questions[${index}].question_text`]}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                      Solution
-                    </label>
-
-                    <RichTextEditor
-                      value={q.answer_key_html}
-                      onChange={(html) => {
-                        const arr = [...questionList];
-                        arr[index].answer_key_html = html;
-                        setQuestionList(arr);
-                      }}
-                      placeholder="Model answer for this question…"
-                      minHeight={120}
-                    />
-
-                    {formErrors[`questions[${index}].answer_key_html`] && (
-                      <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                        <span className="!text-red-600">
-                          {formErrors[`questions[${index}].answer_key_html`]}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-4">
-                    <div className="max-w-40">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                        Solution Lines
-                      </label>
-
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        value={q.answer_lines}
-                        onChange={(e) => {
-                          const arr = [...questionList];
-                          arr[index].answer_lines = Number(e.target.value);
-                          setQuestionList(arr);
-                        }}
-                        className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                      />
-
-                      {formErrors[`questions[${index}].answer_lines`] && (
-                        <p className="text-xs mt-1.5 flex items-center gap-1 font-semibold">
-                          <AlertCircle className="w-3.5 h-3.5 !text-red-600" />
-                          <span className="!text-red-600">
-                            {formErrors[`questions[${index}].answer_lines`]}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="max-w-52">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                        Solution Type
-                      </label>
-
-                      <select
-                        value={q.solution_type || "text"}
-                        onChange={(e) => {
-                          const arr = [...questionList];
-                          arr[index].solution_type = e.target.value;
-                          setQuestionList(arr);
-                        }}
-                        className="w-full rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm text-gray-700 hover:border-orange-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-orange-200 focus:border-orange-500 cursor-pointer"
-                      >
-                        <option value="text">Paragraph / Text</option>
-                        <option value="file">File Upload</option>
-                        <option value="both">File Upload + Text</option>
-                      </select>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        {q.solution_type === "file"
-                          ? "Student uploads a file as the answer to this question."
-                          : q.solution_type === "both"
-                          ? "Student can choose to type a paragraph or upload a file for this question."
-                          : "Student types a paragraph answer to this question."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
-           <button
-  type="button"
-  onClick={() => router.push("/institute-dashboard/practical-manual")}
-  className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
->
-  Cancel
-</button>
-
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={submitting}
-              className="px-7 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-sm shadow-md shadow-orange-500/10 border-b-2 border-orange-700 disabled:opacity-50 disabled:pointer-events-none active:scale-95 flex items-center gap-2 transition-all"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {editingManualId ? "Update Manual" : "Create Manual"}
-            </motion.button>
-          </div>
-        </form>
-      </div>
-
-      <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() => {
-    const isSuccess = statusData.type === "success";
-    const manualId = statusData.manualId;
+  const handleStatusClose = () => {
+    const wasSuccess =
+      statusData.type === "success";
 
     setStatusData((prev) => ({
       ...prev,
       open: false,
     }));
 
-    if (isSuccess && manualId) {
+    if (wasSuccess) {
       router.push(
-        `/institute-dashboard/practical-manual/assign/${manualId}`
+        "/institute-dashboard/assessment"
       );
     }
-  }}
-/>
+  };
+
+  // =====================================================
+  // BACK
+  // =====================================================
+
+  const handleBack = () => {
+    router.push(
+      "/institute-dashboard/assessment"
+    );
+  };
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+
+          <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto" />
+
+          <p className="text-sm text-slate-400 mt-3">
+            Loading assessment...
+          </p>
+
+        </div>
+      </div>
+    );
+  }
+
+  // =====================================================
+  // RENDER
+  // =====================================================
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 p-6 space-y-6 w-full">
+
+      {/* ================================================= */}
+      {/* HEADER */}
+      {/* ================================================= */}
+
+      <div className="flex items-center gap-4">
+
+        <button
+          type="button"
+          onClick={handleBack}
+          className="p-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div>
+
+          <span className="text-xs font-bold tracking-wider text-orange-600 bg-orange-100 px-3 py-1 rounded-full uppercase">
+            Assessment Management
+          </span>
+
+          <h1 className="text-2xl font-black text-slate-900 mt-1">
+            {isEditMode
+              ? "Update Assessment"
+              : "Create Assessment"}
+          </h1>
+
+          <p className="text-sm text-slate-500 mt-1">
+            {isEditMode
+              ? "Update assessment details and questions."
+              : "Create a new assessment with questions."}
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* ================================================= */}
+      {/* FORM */}
+      {/* ================================================= */}
+
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+        >
+
+          {/* ================================================= */}
+          {/* BASIC INFORMATION */}
+          {/* ================================================= */}
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+            {/* SUBJECT */}
+
+            <div className="md:col-span-6">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Subject
+              </label>
+
+              <select
+                value={form.subject_id}
+                onChange={(e) =>
+                  handleChange(
+                    "subject_id",
+                    e.target.value
+                  )
+                }
+                disabled={subjectsLoading}
+                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm disabled:opacity-60"
+              >
+
+                <option value="">
+                  {subjectsLoading
+                    ? "Loading subjects..."
+                    : "Select subject"}
+                </option>
+
+                {subjects.map(
+                  (subject) => (
+                    <option
+                      key={subject?._id}
+                      value={subject?._id}
+                    >
+                      {subject?.title ||
+                        subject?.name ||
+                        "Unnamed Subject"}
+                    </option>
+                  )
+                )}
+
+              </select>
+
+              {formErrors.subject_id && (
+                <ErrorText
+                  message={
+                    formErrors.subject_id
+                  }
+                />
+              )}
+
+            </div>
+
+            {/* TITLE */}
+
+            <div className="md:col-span-6">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Assessment Title
+              </label>
+
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) =>
+                  handleChange(
+                    "title",
+                    e.target.value
+                  )
+                }
+                placeholder="Enter assessment title"
+                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm"
+              />
+
+              {formErrors.title && (
+                <ErrorText
+                  message={
+                    formErrors.title
+                  }
+                />
+              )}
+
+            </div>
+
+            {/* DESCRIPTION */}
+
+            <div className="md:col-span-12">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Description
+              </label>
+
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  handleChange(
+                    "description",
+                    e.target.value
+                  )
+                }
+                rows={3}
+                placeholder="Enter assessment description"
+                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-gray-700 outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500 text-sm resize-none"
+              />
+
+            </div>
+
+            {/* ORDER */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Order
+              </label>
+
+              <input
+                type="number"
+                min={0}
+                value={form.order}
+                onChange={(e) =>
+                  handleChange(
+                    "order",
+                    e.target.value
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              />
+
+            </div>
+
+            {/* DIFFICULTY */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Difficulty
+              </label>
+
+              <select
+                value={form.difficulty}
+                onChange={(e) =>
+                  handleChange(
+                    "difficulty",
+                    e.target.value
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              >
+
+                <option value="easy">
+                  Easy
+                </option>
+
+                <option value="medium">
+                  Medium
+                </option>
+
+                <option value="hard">
+                  Hard
+                </option>
+
+              </select>
+
+            </div>
+
+            {/* MAX ATTEMPTS */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Max Attempts
+              </label>
+
+              <input
+                type="number"
+                min={1}
+                value={form.max_attempts}
+                onChange={(e) =>
+                  handleChange(
+                    "max_attempts",
+                    e.target.value
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              />
+
+            </div>
+
+            {/* TOTAL MARKS */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Total Marks
+              </label>
+
+              <input
+                type="number"
+                min={0}
+                value={form.total_marks}
+                onChange={(e) =>
+                  handleChange(
+                    "total_marks",
+                    e.target.value
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              />
+
+            </div>
+
+            {/* TIME LIMIT */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Time Limit (Seconds)
+              </label>
+
+              <input
+                type="number"
+                min={0}
+                value={form.time_limit_sec}
+                onChange={(e) =>
+                  handleChange(
+                    "time_limit_sec",
+                    e.target.value
+                  )
+                }
+                placeholder="Optional"
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              />
+
+            </div>
+
+            {/* ================================================= */}
+            {/* EXERCISE TYPE */}
+            {/* ================================================= */}
+
+            <div className="md:col-span-3">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Exercise Type
+              </label>
+
+              <select
+                value={form.exercise_type}
+                onChange={(e) =>
+                  handleChange(
+                    "exercise_type",
+                    Number(e.target.value)
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              >
+
+                {/* Backend = 0 */}
+                <option value={0}>
+                  Hidden
+                </option>
+
+                {/* Backend = 1 */}
+                <option value={1}>
+                  Show
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+          {/* ================================================= */}
+          {/* OPTIONS */}
+          {/* ================================================= */}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 pt-5">
+
+            <CheckboxField
+              label="Shuffle Questions"
+              checked={
+                form.shuffle_questions
+              }
+              onChange={(value) =>
+                handleChange(
+                  "shuffle_questions",
+                  value
+                )
+              }
+            />
+
+            <CheckboxField
+              label="Shuffle Options"
+              checked={
+                form.shuffle_options
+              }
+              onChange={(value) =>
+                handleChange(
+                  "shuffle_options",
+                  value
+                )
+              }
+            />
+
+            <CheckboxField
+              label="Show Explanation"
+              checked={
+                form.show_explanation
+              }
+              onChange={(value) =>
+                handleChange(
+                  "show_explanation",
+                  value
+                )
+              }
+            />
+
+          </div>
+
+          {/* ================================================= */}
+          {/* QUESTIONS */}
+          {/* ================================================= */}
+
+          <div className="border-t border-slate-100 pt-6 space-y-4">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+              <div>
+
+                <h3 className="text-base font-black text-slate-900">
+                  Questions
+                </h3>
+
+                <p className="text-xs text-slate-400 mt-1">
+                  Add multiple choice questions
+                  for this assessment.
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="px-4 py-2 rounded-xl bg-white text-orange-600 border border-orange-300 hover:bg-orange-50 font-bold text-xs transition-colors"
+              >
+                + Add Question
+              </button>
+
+            </div>
+
+            {formErrors.questions && (
+              <ErrorText
+                message={
+                  formErrors.questions
+                }
+              />
+            )}
+
+            {/* QUESTION LIST */}
+
+            <div className="space-y-4">
+
+              {questions.map(
+                (question, index) => (
+
+                  <div
+                    key={index}
+                    className="bg-slate-50/75 rounded-2xl p-5 border border-slate-100 space-y-4"
+                  >
+
+                    {/* QUESTION HEADER */}
+
+                    <div className="flex justify-between items-center">
+
+                      <h4 className="font-bold text-xs text-slate-500 uppercase">
+                        Question #{index + 1}
+                      </h4>
+
+                      {questions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeQuestion(
+                              index
+                            )
+                          }
+                          className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          title="Remove Question"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+
+                    </div>
+
+                    {/* QUESTION TEXT */}
+
+                    <div>
+
+                      <input
+                        type="text"
+                        value={
+                          question.question_text
+                        }
+                        onChange={(e) =>
+                          handleQuestionChange(
+                            index,
+                            "question_text",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Question text"
+                        className="w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+                      />
+
+                      {formErrors[
+                        `questions.${index}.question_text`
+                      ] && (
+                        <ErrorText
+                          message={
+                            formErrors[
+                              `questions.${index}.question_text`
+                            ]
+                          }
+                        />
+                      )}
+
+                    </div>
+
+                    {/* OPTIONS */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                      {[
+                        ["optionA", "Option A"],
+                        ["optionB", "Option B"],
+                        ["optionC", "Option C"],
+                        ["optionD", "Option D"],
+                      ].map(
+                        ([field, label]) => (
+
+                          <div key={field}>
+
+                            <input
+                              type="text"
+                              value={
+                                question[field]
+                              }
+                              onChange={(e) =>
+                                handleQuestionChange(
+                                  index,
+                                  field,
+                                  e.target.value
+                                )
+                              }
+                              placeholder={label}
+                              className="w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+                            />
+
+                            {formErrors[
+                              `questions.${index}.${field}`
+                            ] && (
+                              <ErrorText
+                                message={
+                                  formErrors[
+                                    `questions.${index}.${field}`
+                                  ]
+                                }
+                              />
+                            )}
+
+                          </div>
+
+                        )
+                      )}
+
+                    </div>
+
+                    {/* CORRECT ANSWER */}
+
+                    <div>
+
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Correct Answer
+                      </label>
+
+                      <select
+                        value={
+                          question.correct_answer
+                        }
+                        onChange={(e) =>
+                          handleQuestionChange(
+                            index,
+                            "correct_answer",
+                            e.target.value
+                          )
+                        }
+                        className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500 bg-white"
+                      >
+
+                        <option value="">
+                          Select correct answer
+                        </option>
+
+                        {[
+                          "optionA",
+                          "optionB",
+                          "optionC",
+                          "optionD",
+                        ].map((field) => {
+
+                          const value =
+                            question[field];
+
+                          if (
+                            !value?.trim()
+                          ) {
+                            return null;
+                          }
+
+                          return (
+                            <option
+                              key={field}
+                              value={value}
+                            >
+                              {field.replace(
+                                "option",
+                                "Option "
+                              )}{" "}
+                              - {value}
+                            </option>
+                          );
+                        })}
+
+                      </select>
+
+                      {formErrors[
+                        `questions.${index}.correct_answer`
+                      ] && (
+                        <ErrorText
+                          message={
+                            formErrors[
+                              `questions.${index}.correct_answer`
+                            ]
+                          }
+                        />
+                      )}
+
+                    </div>
+
+                    {/* MARKS */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                      <div>
+
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Marks
+                        </label>
+
+                        <input
+                          type="number"
+                          min={0}
+                          value={
+                            question.marks
+                          }
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              index,
+                              "marks",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Marks"
+                          className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Negative Marks
+                        </label>
+
+                        <input
+                          type="number"
+                          min={0}
+                          value={
+                            question.negative_marks
+                          }
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              index,
+                              "negative_marks",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Negative Marks"
+                          className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    {/* EXPLANATION */}
+
+                    <div>
+
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Explanation
+                      </label>
+
+                      <textarea
+                        value={
+                          question.explanation
+                        }
+                        onChange={(e) =>
+                          handleQuestionChange(
+                            index,
+                            "explanation",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Explanation (optional)"
+                        rows={2}
+                        className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 resize-none"
+                      />
+
+                    </div>
+
+                    {/* HINT */}
+
+                    <div>
+
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Hint
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          question.hint
+                        }
+                        onChange={(e) =>
+                          handleQuestionChange(
+                            index,
+                            "hint",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Hint (optional)"
+                        className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200"
+                      />
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+
+          </div>
+
+          {/* ================================================= */}
+          {/* BUTTONS */}
+          {/* ================================================= */}
+
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-100 pt-5">
+
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={submitting}
+              className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 disabled:opacity-50 transition-all"
+            >
+              Cancel
+            </button>
+
+            <motion.button
+              type="submit"
+              whileHover={{
+                scale: submitting
+                  ? 1
+                  : 1.02,
+              }}
+              whileTap={{
+                scale: submitting
+                  ? 1
+                  : 0.98,
+              }}
+              disabled={submitting}
+              className="px-7 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-sm shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+
+              {submitting && (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              )}
+
+              {isEditMode
+                ? "Update Assessment"
+                : "Create Assessment"}
+
+            </motion.button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+      {/* ================================================= */}
+      {/* STATUS MODAL */}
+      {/* ================================================= */}
+
+      <StatusModal
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={handleStatusClose}
+      />
+
     </div>
+  );
+}
+
+// =====================================================
+// ERROR TEXT
+// =====================================================
+
+function ErrorText({ message }) {
+  return (
+    <p className="text-xs mt-1 flex items-center gap-1 font-semibold text-red-600">
+
+      <AlertCircle className="w-3.5 h-3.5" />
+
+      {message}
+
+    </p>
+  );
+}
+
+// =====================================================
+// CHECKBOX
+// =====================================================
+
+function CheckboxField({
+  label,
+  checked,
+  onChange,
+}) {
+  return (
+    <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
+
+      <input
+        type="checkbox"
+        checked={Boolean(checked)}
+        onChange={(e) =>
+          onChange(e.target.checked)
+        }
+        className="w-4 h-4 accent-orange-500"
+      />
+
+      <span className="text-sm font-bold text-slate-700">
+        {label}
+      </span>
+
+    </label>
   );
 }
