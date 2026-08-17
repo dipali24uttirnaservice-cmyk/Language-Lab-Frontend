@@ -313,14 +313,11 @@ export default function AssessmentViewPage() {
           />
 
           <SmallInfo
-            label="Time Limit"
+            label="Duration"
             value={
-              assessment.time_limit_sec !==
-                undefined &&
-              assessment.time_limit_sec !==
-                null &&
-              assessment.time_limit_sec !== ""
-                ? `${assessment.time_limit_sec} seconds`
+              assessment.duration?.minutes ||
+              assessment.duration?.seconds
+                ? `${assessment.duration.minutes || 0}m ${assessment.duration.seconds || 0}s`
                 : "No limit"
             }
             icon={

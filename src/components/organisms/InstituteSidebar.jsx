@@ -17,6 +17,9 @@ import {
   LogOut,
   BookOpenCheck,
   ClipboardList,
+  ListChecks,
+  ClipboardCheck,
+  Layers,
   Activity,
   KeyRound,
   CheckSquare,
@@ -73,7 +76,7 @@ const menuItems = [
   {
     title: "Assessment Management",
     href: "/institute-dashboard/assessment",
-    icon: FileSpreadsheet,
+    icon: ClipboardCheck,
     color: "from-violet-500 to-purple-600",
     border: "border-violet-500",
     bg: "from-violet-50 to-purple-50",
@@ -82,7 +85,7 @@ const menuItems = [
   {
     title: "Subject Management",
     href: "/institute-dashboard/subject",
-    icon: BookMarked,
+    icon: Layers,
     color: "from-pink-500 to-rose-600",
     border: "border-pink-500",
     bg: "from-pink-50 to-rose-50",

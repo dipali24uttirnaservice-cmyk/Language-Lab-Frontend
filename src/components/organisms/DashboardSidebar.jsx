@@ -19,6 +19,7 @@ import {
   FaHome,
   FaBookOpen,
   FaSignOutAlt,
+  FaClipboardList,
 } from "react-icons/fa";
 
 const menus = [
@@ -40,6 +41,15 @@ const menus = [
     bg: "from-orange-50 via-amber-50 to-yellow-50",
     text: "text-orange-700",
     dot: "bg-orange-500",
+  },
+  {
+    name: "Assessment",
+    href: "/dashboard/assessment",
+    icon: FaClipboardList,
+    color: "from-emerald-500 to-teal-600",
+    border: "border-emerald-500",
+    bg: "from-emerald-50 to-teal-50",
+    text: "text-emerald-700",
   },
   {
     name: "Student Profile",
@@ -232,7 +242,12 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           {menus.map((item) => {
             const Icon = item.icon;
 
-            const active = item.name === "Dashboard" ? pathname === "/dashboard" : pathname === item.href;
+            const active =
+              item.name === "Dashboard"
+                ? pathname === "/dashboard"
+                : item.name === "Assessment"
+                ? pathname.startsWith("/dashboard/assessment")
+                : pathname === item.href;
 
             // Icon box: ALWAYS colored (gradient bg + white icon).
             // Active state just adds a ring + slightly stronger shadow for emphasis.

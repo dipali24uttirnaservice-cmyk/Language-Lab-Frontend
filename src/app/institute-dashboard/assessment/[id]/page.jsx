@@ -45,7 +45,8 @@ const createDefaultForm = () => ({
 
   max_attempts: 5,
   total_marks: 0,
-  time_limit_sec: "",
+  duration_minutes: "",
+  duration_seconds: "",
 
   shuffle_questions: true,
   shuffle_options: true,
@@ -309,8 +310,11 @@ export default function AssessmentFormPage() {
           total_marks:
             assessment?.total_marks ?? 0,
 
-          time_limit_sec:
-            assessment?.time_limit_sec ?? "",
+          duration_minutes:
+            assessment?.duration?.minutes ?? "",
+
+          duration_seconds:
+            assessment?.duration?.seconds ?? "",
 
           shuffle_questions:
             assessment?.shuffle_questions ??
@@ -673,16 +677,21 @@ export default function AssessmentFormPage() {
       };
 
       // =================================================
-      // TIME LIMIT
+      // DURATION (minutes + seconds)
       // =================================================
 
       if (
-        form.time_limit_sec !== "" &&
-        form.time_limit_sec !== null &&
-        form.time_limit_sec !== undefined
+        (form.duration_minutes !== "" &&
+          form.duration_minutes !== null &&
+          form.duration_minutes !== undefined) ||
+        (form.duration_seconds !== "" &&
+          form.duration_seconds !== null &&
+          form.duration_seconds !== undefined)
       ) {
-        payload.time_limit_sec =
-          Number(form.time_limit_sec);
+        payload.duration = {
+          minutes: Number(form.duration_minutes) || 0,
+          seconds: Number(form.duration_seconds) || 0,
+        };
       }
 
       console.log(
@@ -1080,25 +1089,50 @@ export default function AssessmentFormPage() {
 
             </div>
 
-            {/* TIME LIMIT */}
+            {/* DURATION — MINUTES */}
 
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
 
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Time Limit (Seconds)
+                Duration (Minutes)
               </label>
 
               <input
                 type="number"
                 min={0}
-                value={form.time_limit_sec}
+                value={form.duration_minutes}
                 onChange={(e) =>
                   handleChange(
-                    "time_limit_sec",
+                    "duration_minutes",
                     e.target.value
                   )
                 }
-                placeholder="Optional"
+                placeholder="Optional — untimed if blank"
+                className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              />
+
+            </div>
+
+            {/* DURATION — SECONDS */}
+
+            <div className="md:col-span-1">
+
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Duration (Seconds)
+              </label>
+
+              <input
+                type="number"
+                min={0}
+                max={59}
+                value={form.duration_seconds}
+                onChange={(e) =>
+                  handleChange(
+                    "duration_seconds",
+                    e.target.value
+                  )
+                }
+                placeholder="0-59"
                 className="mt-2 w-full rounded-xl border border-orange-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
               />
 
