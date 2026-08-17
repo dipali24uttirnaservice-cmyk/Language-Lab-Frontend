@@ -1091,7 +1091,7 @@ export default function AssessmentFormPage() {
 
             {/* DURATION — MINUTES */}
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-4">
 
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Duration (Minutes)
@@ -1115,7 +1115,7 @@ export default function AssessmentFormPage() {
 
             {/* DURATION — SECONDS */}
 
-            <div className="md:col-span-1">
+            <div className="md:col-span-4">
 
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Duration (Seconds)
@@ -1142,7 +1142,7 @@ export default function AssessmentFormPage() {
             {/* EXERCISE TYPE */}
             {/* ================================================= */}
 
-            <div className="md:col-span-3">
+            <div className="md:col-span-4">
 
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Exercise Type
