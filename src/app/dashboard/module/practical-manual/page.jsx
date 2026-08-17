@@ -371,17 +371,28 @@ function StudentPracticalManualPageContent() {
   const getMode = (q, idx) =>
     q.solution_type === "both" ? answerMode[idx] || "text" : q.solution_type;
 
-  useEffect(() => {
+ const loadManuals = useCallback(async () => {
+  setListLoading(true);
+
+  try {
     const params = {};
+
     if (topicId) params.topicId = topicId;
     if (courseId) params.courseId = courseId;
 
-    studentPracticalApi
-      .getMine(params)
-      .then((res) => setManualsList(res.data?.data?.practicals || []))
-      .catch((error) => console.error("Get Practicals Error:", error))
-      .finally(() => setListLoading(false));
-  }, [topicId, courseId]);
+    const res = await studentPracticalApi.getMine(params);
+
+    setManualsList(res.data?.data?.practicals || []);
+  } catch (error) {
+    console.error("Get Practicals Error:", error);
+  } finally {
+    setListLoading(false);
+  }
+}, [topicId, courseId]);
+
+useEffect(() => {
+  loadManuals();
+}, [loadManuals]);
 
   const enterFullscreen = async () => {
     if (containerRef.current?.requestFullscreen) {
@@ -707,10 +718,13 @@ const prefilledMode = {};
               </div>
             </div>
             <button
-              onClick={() => {
-                setSelectedManual(null);
-                setSubmitted(false);
-              }}
+             onClick={async () => {
+  setSelectedManual(null);
+  setSubmitted(false);
+  setCurrent(0);
+
+  await loadManuals();
+}}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
             >
               Back to Manuals List
