@@ -2,8 +2,47 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  Mic,
+  SpellCheck,
+} from "lucide-react";
 import { taskApi } from "@/services/task/taskApi";
+
+// Matches Task.questions[].question_type (Task.js model / taskValidation.js /
+// the add-question form's Q_TYPES) — picks how each question's options and
+// the student's given answer are rendered below.
+const TYPE_LABELS = {
+  mcq: "MCQ",
+  fill_blank: "Fill Blank",
+  true_false: "True / False",
+  short_answer: "Short Answer",
+  match: "Match",
+  recorder: "Recorder",
+  spell_word: "Spell Word",
+};
+
+const normalize = (value) => String(value ?? "").trim().toLowerCase();
+const isAnswerCorrect = (given, correct) =>
+  given !== undefined && given !== null && given !== "" && normalize(given) === normalize(correct);
+
+// "match" answers (both the stored correct_answer and the student's
+// given_answer) are "left:right|left:right" strings — split back into pairs
+// for a readable side-by-side view.
+const parsePairs = (value) => {
+  if (!value) return [];
+  return String(value)
+    .split("|")
+    .map((pair) => {
+      const [left, right] = pair.split(":");
+      return { left: (left || "").trim(), right: (right || "").trim() };
+    })
+    .filter((p) => p.left || p.right);
+};
 
 function StudentTaskAnswerViewPageContent() {
   const router = useRouter();
@@ -122,40 +161,145 @@ function StudentTaskAnswerViewPageContent() {
                 (item) => item.question_index === index
               )?.given_answer;
 
+              const type = question.question_type || "mcq";
+              const correct = isAnswerCorrect(answer, question.correct_answer);
+              const answered = answer !== undefined && answer !== null && answer !== "";
+
               return (
                 <div
                   key={index}
                   className="rounded-2xl border border-slate-100 bg-slate-50 p-5 space-y-3"
                 >
-                  <p className="font-bold text-slate-800 text-sm">
-                    {index + 1}. {question.question_text}
-                  </p>
-
-                  {question.options?.length > 0 && (
-                    <div className="space-y-2">
-                      {question.options.map((option, i) => (
-                        <div
-                          key={i}
-                          className={`px-4 py-2 rounded-xl text-sm border ${
-                            option === answer
-                              ? "bg-orange-100 border-orange-300 text-orange-700 font-bold"
-                              : "bg-white border-slate-200 text-slate-600"
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="font-bold text-slate-800 text-sm">
+                      {index + 1}. {question.question_text}
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-200/70 text-slate-600 uppercase tracking-wide">
+                        {TYPE_LABELS[type] || type}
+                      </span>
+                      {answered && (
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl ${
+                            correct
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {option}
+                          {correct ? (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5" />
+                          )}
+                          {correct ? "Correct" : "Incorrect"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* MCQ / Recorder / Spell Word — option chips, the
+                      student's pick highlighted orange */}
+                  {["mcq", "recorder", "spell_word"].includes(type) &&
+                    question.options?.length > 0 && (
+                      <div className="space-y-2">
+                        {question.options.map((option, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm border ${
+                              normalize(option) === normalize(answer)
+                                ? "bg-orange-100 border-orange-300 text-orange-700 font-bold"
+                                : "bg-white border-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {type === "recorder" && (
+                              <Mic className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                            )}
+                            {type === "spell_word" && (
+                              <SpellCheck className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                            )}
+                            {option}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                  {/* True / False */}
+                  {type === "true_false" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {["True", "False"].map((choice) => (
+                        <div
+                          key={choice}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm border font-bold ${
+                            normalize(choice) === normalize(answer)
+                              ? "bg-orange-100 border-orange-300 text-orange-700"
+                              : "bg-white border-slate-200 text-slate-500"
+                          }`}
+                        >
+                          {choice}
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="bg-white rounded-xl p-4 border border-slate-200">
-                    <p className="text-xs font-bold text-slate-400 uppercase">
-                      Student Answer
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-700">
-                      {answer || "No answer submitted"}
-                    </p>
-                  </div>
+                  {/* Match — student's submitted pairs, wrong side flagged */}
+                  {type === "match" && (
+                    <div className="space-y-2">
+                      {parsePairs(answer).length > 0 ? (
+                        parsePairs(answer).map((pair, i) => {
+                          const expected = parsePairs(question.correct_answer).find(
+                            (p) => normalize(p.left) === normalize(pair.left)
+                          );
+                          const pairCorrect =
+                            expected && normalize(expected.right) === normalize(pair.right);
+                          return (
+                            <div
+                              key={i}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm border font-medium ${
+                                pairCorrect
+                                  ? "bg-green-50 border-green-200 text-green-800"
+                                  : "bg-red-50 border-red-200 text-red-700"
+                              }`}
+                            >
+                              <span className="flex-1">{pair.left}</span>
+                              <ArrowRight className="w-3.5 h-3.5 shrink-0 opacity-60" />
+                              <span className="flex-1 text-right">{pair.right}</span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-slate-400 italic px-1">
+                          No pairs submitted
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Match already shows both sides as pairs above — the raw
+                      "left:right|left:right" string here would just repeat
+                      that, less legibly. */}
+                  {type !== "match" && (
+                    <>
+                      <div className="bg-white rounded-xl p-4 border border-slate-200">
+                        <p className="text-xs font-bold text-slate-400 uppercase">
+                          Student Answer
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-700">
+                          {answered ? answer : "No answer submitted"}
+                        </p>
+                      </div>
+
+                      {answered && (
+                        <div className="bg-white rounded-xl p-4 border border-slate-200">
+                          <p className="text-xs font-bold text-slate-400 uppercase">
+                            Correct Answer
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-green-700">
+                            {question.correct_answer || "-"}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}

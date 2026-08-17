@@ -17,6 +17,7 @@ import {
   LogOut,
   BookOpenCheck,
   ClipboardList,
+  ListChecks,
   Activity,
 } from "lucide-react";
 
@@ -61,12 +62,17 @@ const menuItems = [
   {
     title: "Task Management",
     href: "/institute-dashboard/student-task",
-    icon: ClipboardList,
-    color: "from-teal-500 to-emerald-600",
-    border: "border-teal-500",
-    bg: "from-teal-50 to-emerald-50",
-    text: "text-teal-700",
+    icon: ListChecks,
+    color: "from-cyan-500 to-blue-600",
+    border: "border-cyan-500",
+    bg: "from-cyan-50 to-blue-50",
+    text: "text-cyan-700",
   },
+  // Assessment Management and Subject Management are hidden from the
+  // sidebar until their pages/services are pushed to this branch — the
+  // routes exist locally but not yet on test-dev, so linking to them here
+  // would 404. Re-add once src/app/institute-dashboard/{assessment,subject}
+  // and src/services/{assessment,subject} are pushed.
   {
     title: "Student Statistics",
     href: "/institute-dashboard/student-statistics",

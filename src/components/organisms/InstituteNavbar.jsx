@@ -20,6 +20,8 @@ import { logoutUser } from "@/services/auth/logoutApi";
 import { taskApi } from "@/services/task/taskApi";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
+import { subjectApi } from "@/services/subject/subjectApi";
+import { assessmentApi } from "@/services/assessment/assessmentApi";
 import { useInstituteLogoSrc } from "@/utils/media";
 
 const MONGO_ID = /^[a-f\d]{24}$/i;
@@ -48,6 +50,14 @@ const ID_RESOLVERS = {
     fetch: () => courseApi.getCourses(),
     getTitle: (res, id) =>
       (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
+  },
+  subject: {
+    fetch: (id) => subjectApi.subjectDetail(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+  assessment: {
+    fetch: (id) => assessmentApi.getAssessment(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
   },
 };
 
@@ -143,21 +153,24 @@ const router = useRouter();
           // route starts with it, so it added noise without any
           // navigational value.
           .slice(1)
-          // "assign"/"view"/"submissions" are just intermediate route
-          // segments for the practical-manual assign, detail-view, and
-          // submissions flows (.../practical-manual/assign/{id},
+          // "assign"/"view"/"submissions"/"course-content" are just
+          // intermediate route segments for the practical-manual assign,
+          // detail-view, and submissions flows (.../practical-manual/assign/{id},
           // .../practical-manual/view/{id}, .../practical-manual/submissions/{id})
-          // — none is a page of its own, so all are hidden from the trail
-          // while their hrefs still point deeper via the segments around
-          // them. Same for the resolved task-title crumb right before
-          // "add-question" (.../student-task/{id}/add-question) — the page
-          // itself repeats that task title under its own heading, so it's
-          // redundant in the trail.
+          // and the settings course-content detail page
+          // (.../settings/course-content/{courseId}) — none is a page of its
+          // own, so all are hidden from the trail while their hrefs still
+          // point deeper via the segments around them. Same for the resolved
+          // task-title crumb right before "add-question"
+          // (.../student-task/{id}/add-question) — the page itself repeats
+          // that task title under its own heading, so it's redundant in the
+          // trail.
           .filter(
             (crumb) =>
               crumb.segment !== "assign" &&
               crumb.segment !== "view" &&
               crumb.segment !== "submissions" &&
+              crumb.segment !== "course-content" &&
               !(crumb.isResolvableId && crumb.nextSegment === "add-question")
           );
 

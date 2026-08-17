@@ -41,6 +41,10 @@ const menus = [
     text: "text-orange-700",
     dot: "bg-orange-500",
   },
+  // Assessment is hidden until its page/service is pushed to this branch —
+  // the route exists locally but not yet on test-dev, so linking to it here
+  // would 404. Re-add once src/app/dashboard/assessment and
+  // src/services/assessment are pushed.
   {
     name: "Student Profile",
     href: "/dashboard/student-profile",
@@ -232,7 +236,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           {menus.map((item) => {
             const Icon = item.icon;
 
-            const active = item.name === "Dashboard" ? pathname === "/dashboard" : pathname === item.href;
+            const active =
+              item.name === "Dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href;
 
             // Icon box: ALWAYS colored (gradient bg + white icon).
             // Active state just adds a ring + slightly stronger shadow for emphasis.

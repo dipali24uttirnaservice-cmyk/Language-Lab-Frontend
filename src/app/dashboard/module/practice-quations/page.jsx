@@ -63,11 +63,15 @@ function QuestionDots({ total, current, answers }) {
   );
 }
 
+// Same visual language as the module list page's "No Audios/Videos/..."
+// empty state and the exercise page's "No Exercises Yet" card, so every
+// "instructor hasn't added content yet" screen in the student panel reads
+// as one consistent pattern instead of this page's old plain placeholder.
 function EmptyCard({ title, subtitle }) {
   const router = useRouter();
 
   return (
-    <div className="relative h-screen flex flex-col items-center justify-center bg-slate-50">
+    <div className="relative h-screen flex items-center justify-center bg-gradient-to-br from-orange-50/60 via-slate-50 to-slate-50 px-6">
       <button
         onClick={() => router.back()}
         className="absolute top-6 left-8 flex items-center gap-2 text-slate-500 hover:text-orange-600 font-semibold text-sm"
@@ -76,13 +80,32 @@ function EmptyCard({ title, subtitle }) {
         Back
       </button>
 
-      <div className="text-center max-w-sm">
-        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center">
-          <BookOpen className="text-orange-400" size={28} />
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="text-center max-w-sm rounded-3xl border border-orange-100 bg-white p-10 shadow-xl shadow-orange-100/40"
+      >
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-400 to-amber-500 shadow-lg shadow-orange-200">
+          <BookOpen className="text-white" size={32} />
         </div>
-        <h3 className="text-lg font-bold text-slate-800">{title}</h3>
-        {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
-      </div>
+
+        <h3 className="text-xl font-black text-slate-900">{title}</h3>
+
+        {subtitle && (
+          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+
+        <button
+          onClick={() => router.back()}
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:from-orange-600 hover:to-amber-600 active:scale-95"
+        >
+          <ArrowLeft size={16} />
+          Back to Lessons
+        </button>
+      </motion.div>
     </div>
   );
 }
@@ -515,11 +538,21 @@ function PracticeQuestionsPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
 
   if (!moduleData) {
-    return <EmptyCard title="No Practice Data Found" subtitle="Go back and select a lesson to practice." />;
+    return (
+      <EmptyCard
+        title="No Practice Data Found"
+        subtitle="Go back and select a lesson to practice."
+      />
+    );
   }
 
   if (!questions.length) {
-    return <EmptyCard title="No Questions Available" subtitle="This lesson has no practice questions yet." />;
+    return (
+      <EmptyCard
+        title="No Practice Questions Yet"
+        subtitle="Your instructor hasn't added any practice questions for this lesson yet. Check back soon, or explore other lessons in the meantime."
+      />
+    );
   }
 
   const question = questions[current];
