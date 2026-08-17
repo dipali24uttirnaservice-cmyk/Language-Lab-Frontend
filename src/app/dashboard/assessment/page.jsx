@@ -10,13 +10,31 @@ export default function AssessmentSubjectsPage() {
 
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [assessmentCounts, setAssessmentCounts] = useState({}); // subject_id -> count
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         const res = await studentAssessmentApi.getSubjects();
-        setSubjects(res.data?.data || []);
+        const list = res.data?.data || [];
+        setSubjects(list);
+
+        // Assessment count per subject isn't in the subject list response —
+        // fetch each subject's assessment list in parallel and show the
+        // count as a badge on its card.
+        const counts = await Promise.all(
+          list.map(async (subject) => {
+            try {
+              const testsRes = await studentAssessmentApi.getAssessments(subject._id);
+              return [subject._id, (testsRes.data?.data || []).length];
+            } catch (err) {
+              console.error(`Failed to load assessment count for subject ${subject._id}:`, err);
+              return [subject._id, null];
+            }
+          }),
+        );
+        setAssessmentCounts(Object.fromEntries(counts));
       } catch (err) {
         console.error("Failed to load subjects:", err);
         setSubjects([]);
@@ -52,7 +70,9 @@ export default function AssessmentSubjectsPage() {
           {subjects.map((subject) => (
             <button
               key={subject._id}
-              onClick={() => router.push(`/dashboard/assessment/${subject._id}`)}
+              onClick={() =>
+                router.push(`/dashboard/assessment/${subject._id}?subjectName=${encodeURIComponent(subject.title)}`)
+              }
               className="text-left bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition-all group"
             >
               <div className="flex items-start justify-between">
@@ -65,6 +85,15 @@ export default function AssessmentSubjectsPage() {
               {subject.description && (
                 <p className="text-sm text-slate-500 mt-1 line-clamp-2">{subject.description}</p>
               )}
+
+              <div className="mt-3">
+                {assessmentCounts[subject._id] === null ? null : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold">
+                    <ClipboardList size={12} />
+                    {assessmentCounts[subject._id] ?? "…"} {assessmentCounts[subject._id] === 1 ? "assessment" : "assessments"} available
+                  </span>
+                )}
+              </div>
             </button>
           ))}
         </div>

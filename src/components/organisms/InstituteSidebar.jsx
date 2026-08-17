@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Layers,
   Activity,
+  ChevronDown,
 } from "lucide-react";
 
 const menuItems = [
@@ -71,22 +72,24 @@ const menuItems = [
     text: "text-cyan-700",
   },
   {
-    title: "Assessment Management",
-    href: "/institute-dashboard/assessment",
+    title: "Assessment",
     icon: ClipboardCheck,
     color: "from-violet-500 to-purple-600",
     border: "border-violet-500",
     bg: "from-violet-50 to-purple-50",
     text: "text-violet-700",
-  },
-  {
-    title: "Subject Management",
-    href: "/institute-dashboard/subject",
-    icon: Layers,
-    color: "from-pink-500 to-rose-600",
-    border: "border-pink-500",
-    bg: "from-pink-50 to-rose-50",
-    text: "text-pink-700",
+    children: [
+      {
+        title: "Assessment Management",
+        href: "/institute-dashboard/assessment",
+        icon: ClipboardCheck,
+      },
+      {
+        title: "Subject Management",
+        href: "/institute-dashboard/subject",
+        icon: Layers,
+      },
+    ],
   },
   {
     title: "Student Statistics",
@@ -145,6 +148,14 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
   const pathname = usePathname();
   const { user: institute } = useAuth();
   const [hoveredMenu, setHoveredMenu] = useState(null);
+
+  // "Assessment" group (Assessment Management + Subject Management nested
+  // under it) — auto-expanded whenever the current route is one of its
+  // children, so a direct link/refresh into either page still shows it open.
+  const groupWithActiveChild = menuItems.find((item) =>
+    item.children?.some((child) => pathname === child.href),
+  )?.title;
+  const [expandedGroup, setExpandedGroup] = useState(groupWithActiveChild ?? null);
 
   const instituteName = institute?.institute_name || "Institute";
   const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
@@ -225,6 +236,119 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
               <Icon size={16} />
             </div>
           );
+
+          if (item.children) {
+            const groupActive = item.children.some((child) => pathname === child.href);
+            const isExpanded = expandedGroup === item.title;
+
+            return (
+              <div key={item.title} className="relative">
+                <motion.div
+                  className="relative"
+                  whileHover={{ x: isOpen ? 4 : 0, scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                  onMouseEnter={() => !isOpen && setHoveredMenu(item.title)}
+                  onMouseLeave={() => !isOpen && setHoveredMenu(null)}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isOpen
+                        ? setExpandedGroup(isExpanded ? null : item.title)
+                        : undefined
+                    }
+                    title={!isOpen ? item.title : undefined}
+                    aria-expanded={isExpanded}
+                    className={`relative flex items-center w-full rounded-xl transition-all overflow-hidden
+                    ${isOpen ? "px-3 py-3 gap-3" : "justify-center py-3"}`}
+                  >
+                    {groupActive && (
+                      <motion.div
+                        layoutId="activeInstituteSidebarGlow"
+                        className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg} border-2 ${item.border} shadow-lg`}
+                      />
+                    )}
+
+                    {iconBox}
+
+                    {isOpen && (
+                      <>
+                        <span
+                          className={`relative z-10 text-sm font-bold flex-1 text-left ${
+                            groupActive ? item.text : "text-slate-700"
+                          }`}
+                        >
+                          {item.title}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={`relative z-10 shrink-0 text-slate-400 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </>
+                    )}
+                  </button>
+
+                  {/* Collapsed sidebar: hover flyout listing both children,
+                      same tooltip position other items use but with real
+                      links instead of a plain label. */}
+                  <AnimatePresence>
+                    {!isOpen && hoveredMenu === item.title && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-lg bg-slate-800 text-white text-xs font-semibold shadow-lg z-50 overflow-hidden"
+                      >
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.title}
+                            href={child.href}
+                            className="block px-3 py-2 hover:bg-slate-700 transition-colors"
+                          >
+                            {child.title}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Expanded sidebar: nested child links under the group */}
+                <AnimatePresence>
+                  {isOpen && isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden pl-7"
+                    >
+                      <div className="mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          const childActive = pathname === child.href;
+                          return (
+                            <Link
+                              key={child.title}
+                              href={child.href}
+                              className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-bold transition-all
+                                ${childActive ? `${item.text} bg-gradient-to-r ${item.bg}` : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
+                            >
+                              <ChildIcon size={14} />
+                              {child.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
 
           if (item.action === "logout") {
             return (

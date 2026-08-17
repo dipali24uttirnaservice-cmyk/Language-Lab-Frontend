@@ -2484,6 +2484,12 @@ function ExerciseDetail({
   showReview,
   setShowReview,
 }) {
+  // Same fullscreen pattern already used by the video/audio/text module
+  // cards above (useFullscreen + a ref on the outer card) — just not wired
+  // up for the exercise "Challenge Activity" card until now.
+  const containerRef = useRef(null);
+  const { isFullscreen, enter, exit } = useFullscreen(containerRef);
+
   // StatusModal state management
   const [modalState, setModalState] = useState({
     open: false,
@@ -2519,7 +2525,46 @@ function ExerciseDetail({
 
       <BackToLessonsButton onBack={onBack} />
 
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl min-h-[calc(100vh-140px)]">
+      <div
+        ref={containerRef}
+        className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl min-h-[calc(100vh-140px)] transition-all duration-300 ${
+          isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none fixed inset-0 z-50" : ""
+        }`}
+      >
+        {/* Fullscreen puts containerRef itself into the browser's fullscreen
+            element, so only ITS descendants render — this header has to
+            live inside containerRef (not as a sibling before it) or it goes
+            invisible the same way the Swal popup did on the Assessment
+            page. Same Back / title-pill / exit-fullscreen row style as the
+            Assessment attempt page's header. */}
+        {isFullscreen && (
+          <div className="flex items-center justify-between gap-3 p-4 border-b border-slate-200 bg-white">
+            <button
+              type="button"
+              onClick={() => {
+                exit();
+                onBack?.();
+              }}
+              className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-semibold text-sm transition-colors shrink-0"
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
+
+            <div className="px-4 py-2 rounded-xl bg-emerald-100/60 border border-emerald-200/50 text-emerald-700 font-bold text-xs sm:text-sm truncate">
+              {selectedModule.title}
+            </div>
+
+            <button
+              type="button"
+              onClick={exit}
+              title="Exit Fullscreen"
+              className="w-9 h-9 flex shrink-0 items-center justify-center rounded-lg bg-[#F7941D] border border-[#E88C19] shadow-sm text-white hover:bg-[#E88C19] transition-colors"
+            >
+              <Minimize2 size={16} />
+            </button>
+          </div>
+        )}
+
         <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 p-6 text-white">
           <div className="absolute top-0 right-0 p-6 opacity-10">
             <Award size={100} />
@@ -2527,10 +2572,12 @@ function ExerciseDetail({
           <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
 
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-md mb-3">
-            <Award size={12} />
-            Challenge Activity
-          </span>
+          <div className="relative flex items-start justify-between gap-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-md mb-3">
+              <Award size={12} />
+              Challenge Activity
+            </span>
+          </div>
 
           <h2 className="relative text-2xl font-black tracking-tight">
             {selectedModule.title}
@@ -2547,6 +2594,7 @@ function ExerciseDetail({
               attempts={attempts}
               onSelectAttempt={onSelectAttempt}
               onStart={() => {
+                enter();
                 onStart?.();
                 setIsQuizActive(true);
               }}

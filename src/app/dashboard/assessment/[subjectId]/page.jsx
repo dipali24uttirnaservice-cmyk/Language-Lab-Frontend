@@ -88,15 +88,15 @@ export default function AssessmentListPage() {
             </ul>
           </div>
           <div class="bg-yellow-50 p-4 rounded-lg mb-4">
-            <h4 class="font-semibold text-yellow-800 mb-2">During the Test:</h4>
+            <h4 class="font-semibold text-yellow-800 mb-2">During the Assessment:</h4>
             <ul class="space-y-2 list-disc pl-5 text-yellow-700">
               <li>Click an option to select your answer</li>
               <li>You can change answers before final submission</li>
-              <li>Don't refresh the page during the test</li>
+              <li>Don't refresh the page during the assessment</li>
             </ul>
           </div>
           <div class="flex items-start mt-4">
-            <input type="checkbox" id="agreeTerms" class="w-5 h-5 mt-1 mr-2 cursor-pointer">
+            <input type="checkbox" id="agreeTerms" class="w-5 h-5 mt-1 mr-2 cursor-pointer accent-[#F7941D]">
             <label for="agreeTerms" class="text-gray-700 cursor-pointer">
               I confirm that I have read and understood all instructions
             </label>
@@ -104,8 +104,10 @@ export default function AssessmentListPage() {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: assessment.attempted === -1 ? "Resume Test" : "Start Test",
+      confirmButtonText: assessment.attempted === -1 ? "Resume Assessment" : "Start Assessment",
       cancelButtonText: "Cancel",
+      confirmButtonColor: "#F7941D",
+      cancelButtonColor: "#6b7280",
       didOpen: () => {
         const confirmBtn = Swal.getConfirmButton();
         const checkbox = Swal.getPopup().querySelector("#agreeTerms");
@@ -116,10 +118,15 @@ export default function AssessmentListPage() {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        router.push(`/dashboard/assessment/${subjectId}/${assessment._id}`);
+        router.push(`/dashboard/assessment/${subjectId}/${assessment._id}${assessmentQuery(assessment)}`);
       }
     });
   };
+
+  // Subject's real title for the breadcrumb (see DashboardNavbar's
+  // isAssessment branch) — subjectId in the URL is just a Mongo id, so the
+  // name rides along as a query param instead. No assessment-title crumb.
+  const assessmentQuery = () => `?subjectName=${encodeURIComponent(subject?.title || "")}`;
 
   const handleRetest = (assessment) => {
     if (assessment.attemptsCount >= assessment.max_attempts) {
@@ -134,7 +141,7 @@ export default function AssessmentListPage() {
   };
 
   const handleViewResult = (assessment) => {
-    router.push(`/dashboard/assessment/${subjectId}/${assessment._id}/result`);
+    router.push(`/dashboard/assessment/${subjectId}/${assessment._id}/result${assessmentQuery(assessment)}`);
   };
 
   return (
@@ -180,6 +187,20 @@ export default function AssessmentListPage() {
                 Questions: <span className="font-medium">{test.questions?.length ?? "N/A"}</span>
               </p>
               <p>
+                Total Marks:{" "}
+                <span className="font-medium">
+                  {test.total_marks || test.questions?.reduce((s, q) => s + (q.marks || 0), 0) || "N/A"}
+                </span>
+              </p>
+              <p>
+                Duration:{" "}
+                <span className="font-medium">
+                  {test.duration?.minutes || test.duration?.seconds
+                    ? `${test.duration.minutes || 0}m ${test.duration.seconds || 0}s`
+                    : "No limit"}
+                </span>
+              </p>
+              <p>
                 Attempts: <span className="font-medium">{test.attemptsCount}/{test.max_attempts}</span>
               </p>
 
@@ -195,7 +216,7 @@ export default function AssessmentListPage() {
                     onClick={(e) => { e.stopPropagation(); handleRetest(test); }}
                     className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow"
                   >
-                    Re-Test
+                    Retake
                   </button>
                 </div>
               )}

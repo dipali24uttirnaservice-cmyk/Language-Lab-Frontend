@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FaArrowRight, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import { FcAlarmClock } from "react-icons/fc";
+import { Maximize2, Minimize2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { studentAssessmentApi } from "@/services/assessment/studentAssessmentApi";
+import { useSidebar } from "@/context/SidebarContext";
 
 const OPTION_KEYS = ["optionA", "optionB", "optionC", "optionD"];
 
@@ -16,6 +18,70 @@ const OPTION_KEYS = ["optionA", "optionB", "optionC", "optionD"];
 export default function AssessmentAttemptPage() {
   const { subjectId, assessmentId } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setIsChromeHidden } = useSidebar();
+
+  // Fullscreen — targets document.documentElement (the whole page), NOT a
+  // page-local container. Native Fullscreen only renders descendants of
+  // whatever element is fullscreened; SweetAlert2 (Submit confirmation,
+  // "Incomplete Assessment!", etc.) mounts its popup on document.body via a
+  // portal, which sits OUTSIDE a page-local container — fullscreening just
+  // that container made every Swal popup invisible (rendered, but outside
+  // the fullscreen element's subtree so the browser never shows it).
+  // document.body is always a descendant of documentElement, so this keeps
+  // popups visible while still hiding the browser chrome.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const enterFullscreen = async () => {
+    const el = document.documentElement;
+    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!request) return;
+    try {
+      await request.call(el);
+    } catch {
+      // Auto-fullscreen blocked by browser policy — user can still hit the
+      // Maximize2 button themselves.
+    }
+  };
+
+  const exitFullscreenLocal = async () => {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!document.fullscreenElement || !exit) return;
+    try {
+      await exit.call(document);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    enterFullscreen();
+  }, []);
+
+  // Sidebar/navbar hidden state now tracks REAL fullscreen state, not just
+  // mount/unmount — so pressing Esc (or any other way the browser exits
+  // fullscreen on its own) brings the sidebar and breadcrumb back
+  // immediately, same as clicking the Minimize2 button does. Restored
+  // unconditionally on unmount too, in case the page navigates away while
+  // still fullscreen.
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fs = !!document.fullscreenElement;
+      setIsFullscreen(fs);
+      setIsChromeHidden(fs);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      setIsChromeHidden(false);
+      exitFullscreenLocal();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [loading, setLoading] = useState(true);
   const [assessment, setAssessment] = useState(null);
@@ -120,7 +186,7 @@ export default function AssessmentAttemptPage() {
     if (!auto && !allAnswered) {
       Swal.fire({
         icon: "warning",
-        title: "Incomplete Test!",
+        title: "Incomplete Assessment!",
         text: "You must answer all questions before submitting!",
         confirmButtonColor: "#f39c12",
       });
@@ -140,18 +206,20 @@ export default function AssessmentAttemptPage() {
         });
         await Swal.fire({
           icon: "success",
-          title: "Test Submitted!",
-          text: "Your test was submitted successfully!",
+          title: "Assessment Submitted!",
+          text: "Your assessment was submitted successfully!",
           confirmButtonColor: "#28a745",
         });
-        router.push(`/dashboard/assessment/${subjectId}/${assessmentId}/result`);
+        await exitFullscreenLocal();
+        const query = searchParams.toString();
+        router.push(`/dashboard/assessment/${subjectId}/${assessmentId}/result${query ? `?${query}` : ""}`);
       } catch (err) {
         hasSubmittedRef.current = false;
         setIsSubmitted(false);
         Swal.fire({
           icon: "error",
           title: "Submission Failed!",
-          text: err?.response?.data?.message || "Unable to submit the test. Please try again.",
+          text: err?.response?.data?.message || "Unable to submit the assessment. Please try again.",
         });
       }
     };
@@ -203,21 +271,45 @@ export default function AssessmentAttemptPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSubmitted]);
 
-  if (loading || !assessment) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-t-emerald-500 border-slate-200" />
-      </div>
-    );
-  }
-
-  const questions = assessment.questions || [];
+  const showLoading = loading || !assessment;
+  const questions = assessment?.questions || [];
   const question = questions[currentQuestion];
-  const totalDuration = (assessment.duration?.minutes || 0) * 60 + (assessment.duration?.seconds || 0) || 1;
+  const totalDuration = (assessment?.duration?.minutes || 0) * 60 + (assessment?.duration?.seconds || 0) || 1;
   const progressWidth = timeLeft !== null ? (timeLeft / totalDuration) * 100 : 100;
 
   return (
-    <div className="flex flex-col w-full max-w-7xl mx-auto p-2 sm:p-4">
+    <div className="flex flex-col w-full max-w-7xl mx-auto p-2 sm:p-4 bg-white min-h-[60vh]">
+      {/* Header — same Back / centered title-pill / fullscreen-toggle layout
+          as the working practical-manual page. */}
+      <div className="flex items-center justify-between mb-2 sm:mb-4 gap-3">
+        <button
+          type="button"
+          onClick={() => router.push(`/dashboard/assessment/${subjectId}`)}
+          className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-semibold text-sm transition-colors shrink-0"
+        >
+          <FaArrowLeft size={14} /> Back
+        </button>
+
+        <div className="px-4 py-2 rounded-xl bg-emerald-100/60 border border-emerald-200/50 text-emerald-700 font-bold text-xs sm:text-sm truncate">
+          {assessment?.title || "Assessment"}
+        </div>
+
+        <button
+          type="button"
+          onClick={isFullscreen ? exitFullscreenLocal : enterFullscreen}
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#F7941D] border border-[#E88C19] shadow-sm text-white hover:bg-[#E88C19] transition-colors shrink-0"
+        >
+          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+      </div>
+
+      {showLoading ? (
+        <div className="flex-1 flex items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-t-emerald-500 border-slate-200" />
+        </div>
+      ) : (
+        <>
       {timeLeft !== null && (
         <div className="w-full bg-gray-100 p-3 md:p-4 shadow-lg rounded-xl mb-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 px-2 sm:px-4">
@@ -361,6 +453,8 @@ export default function AssessmentAttemptPage() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

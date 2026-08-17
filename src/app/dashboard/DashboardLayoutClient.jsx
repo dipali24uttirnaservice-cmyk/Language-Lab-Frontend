@@ -10,11 +10,20 @@ import LogoutModal from "@/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
 import { activityApi } from "@/services/activity/activityApi";
 import { Toaster } from "react-hot-toast";
+import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 
 export default function DashboardLayoutClient({ children }) {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </SidebarProvider>
+  );
+}
+
+function DashboardLayoutInner({ children }) {
     const router = useRouter();
 const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { isSidebarOpen, setIsSidebarOpen, isChromeHidden } = useSidebar();
  const [role, setRole] = useState("");
 
 useEffect(() => {
@@ -113,20 +122,22 @@ const handleLogout = async () => {
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50">
 
-      {/* Fixed Sidebar */}
-      <div className="h-screen shrink-0">
-        <DashboardSidebar
-         isOpen={isSidebarOpen}
-          setShowLogoutModal={setShowLogoutModal}
-          />
-      </div>
+      {/* Fixed Sidebar — fully hidden (not just collapsed) in exam-mode */}
+      {!isChromeHidden && (
+        <div className="h-screen shrink-0">
+          <DashboardSidebar
+           isOpen={isSidebarOpen}
+            setShowLogoutModal={setShowLogoutModal}
+            />
+        </div>
+      )}
 
       {/* Right Side */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
-        {/* Fixed Navbar */}
+        {/* Fixed Navbar — same exam-mode hide */}
       {/* Fixed Sidebar */}
-{!showLogoutModal && (
+{!showLogoutModal && !isChromeHidden && (
   <Suspense fallback={<div className="h-16 shrink-0" />}>
     <DashboardNavbar
       isSidebarOpen={isSidebarOpen}
