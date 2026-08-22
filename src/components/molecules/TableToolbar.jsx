@@ -81,7 +81,7 @@ export default function TableToolbar({
   } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
 >
   <option value="" disabled>
-    Select Department
+    Department/Branch
   </option>
 
   {segmentOptions
@@ -110,7 +110,7 @@ export default function TableToolbar({
   } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
 >
   <option value="" disabled>
-    Select Year
+    Year/Batch
   </option>
 
   {yearOptions

@@ -4,36 +4,26 @@ import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 import Input from "@/components/atoms/Input";
 import AnimatedBackground from "@/components/organisms/RegisterBackground";
 import StatusModal from "@/components/molecules/StatusModal";
 
 import { studentLogin } from "@/services/auth/loginApi";
+import { publicInstituteApi } from "@/services/institute/publicInstituteApi";
 import { ArrowLeft } from "lucide-react";
 import { studentLoginSchema } from "@/app/schemas/student.schema";
 import { useAuth } from "@/context/AuthContext";
+import { secureCookieOptions } from "@/utils/cookie";
+
 export default function StudentLogin() {
   const router = useRouter();
-const { login } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const { login } = useAuth();
 
-  const [enrollmentNo, setEnrollmentNo] =
-    useState("");
-
-  const handleEnrollmentNoChange = async (value) => {
-    setEnrollmentNo(value);
-
-    if (errors.enrollmentNo) {
-      try {
-        await studentLoginSchema.validateAt("enrollmentNo", { enrollmentNo: value });
-        setErrors((prev) => ({ ...prev, enrollmentNo: "" }));
-      } catch (err) {
-        setErrors((prev) => ({ ...prev, enrollmentNo: err.message }));
-      }
-    }
-  };
+  const [institutes, setInstitutes] = useState([]);
+  const [institutesLoading, setInstitutesLoading] = useState(true);
 
   const [modal, setModal] = useState({
     open: false,
@@ -41,6 +31,46 @@ const { login } = useAuth();
     title: "",
     message: "",
   });
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(studentLoginSchema),
+    defaultValues: {
+      instituteId: "",
+      licenseCode: "",
+      enrollmentNo: "",
+      password: "",
+    },
+  });
+
+  const instituteId = watch("instituteId");
+  const fieldsDisabled = !instituteId;
+
+  // One option per license code across every institute (same shape the
+  // dropdown below builds) — when there's exactly one in the whole system,
+  // there's nothing to choose, so skip the dropdown and select it directly.
+  const licenseOptions = institutes.flatMap((inst) =>
+    (inst.license_codes || []).map((code) => ({
+      instituteId: inst._id,
+      code,
+    })),
+  );
+  const onlyLicenseOption =
+    licenseOptions.length === 1 ? licenseOptions[0] : null;
+
+  useEffect(() => {
+    if (!onlyLicenseOption) return;
+    setValue("instituteId", onlyLicenseOption.instituteId, {
+      shouldValidate: true,
+    });
+    setValue("licenseCode", onlyLicenseOption.code, { shouldValidate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlyLicenseOption?.instituteId, onlyLicenseOption?.code]);
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -53,68 +83,71 @@ const { login } = useAuth();
     }
   }, [router]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  // Populates the institute dropdown — only institutes with an active
+  // license are returned, so every option here is one a student could
+  // actually log into.
+  useEffect(() => {
+    publicInstituteApi
+      .getPublicList()
+      .then((res) => {
+        const list = res?.data?.data ?? [];
+        setInstitutes(Array.isArray(list) ? list : []);
+      })
+      .catch(() => setInstitutes([]))
+      .finally(() => setInstitutesLoading(false));
+  }, []);
 
+  const onSubmit = async ({
+    instituteId,
+    licenseCode,
+    enrollmentNo,
+    password,
+  }) => {
     try {
-      await studentLoginSchema.validate({ enrollmentNo }, { abortEarly: false });
-      setErrors({});
-    } catch (err) {
-      if (err.inner) {
-        const newErrors = {};
-        err.inner.forEach((error) => {
-          newErrors[error.path] = error.message;
-        });
-        setErrors(newErrors);
-      }
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response =
-        await studentLogin({
-          enrollment_no: enrollmentNo,
-        });
+      const response = await studentLogin({
+        institute_id: instituteId,
+        license_code: licenseCode,
+        enrollment_no: enrollmentNo,
+        password,
+      });
 
       const apiResponse = response.data;
 
-      const token =
-        apiResponse?.data?.token;
+      const token = apiResponse?.data?.token;
 
       if (!token) {
-        throw new Error(
-          "Token not found in response"
-        );
+        throw new Error("Token not found in response");
       }
-Cookies.set("role", "student", {
-  expires: 7,
-});
 
-Cookies.set("token", token, {
-  expires: 7,
-});
+      Cookies.set("role", "student", secureCookieOptions());
 
-// Store in AuthContext instead of cookie
-login(apiResponse.data.student);
+      Cookies.set("token", token, secureCookieOptions());
 
-router.push("/dashboard");
+      // Store in AuthContext instead of cookie
+      login(apiResponse.data.student);
 
+      router.push("/dashboard");
     } catch (error) {
-      console.error(error);
+      const backendMessage = error?.response?.data?.message;
+
+      // Only log unexpected failures (network errors, 5xx, no message from
+      // backend) — a 4xx like wrong password or no free seats is normal
+      // business logic, not a bug, so it shouldn't spam the console/dev overlay.
+      if (!backendMessage) {
+        console.error(error);
+      }
+
+      const seatsFull = backendMessage
+        ?.toLowerCase()
+        .includes("no free seats available");
 
       setModal({
         open: true,
         type: "error",
-        title: "Login Failed",
+        title: seatsFull ? "No Free Seats Available" : "Login Failed",
         message:
-          error?.response?.data
-            ?.message ||
-          "Invalid Enrollment Number",
+          backendMessage || "Invalid institute, enrollment number, or password",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -160,18 +193,18 @@ router.push("/dashboard");
             type="button"
             onClick={() => router.push("/")}
             className="
-      h-10 w-10
-      flex items-center justify-center
-      rounded-xl
-      border border-orange-200
-      bg-white
-      text-orange-500
-      shadow-sm
-      hover:bg-orange-50
-      hover:border-orange-300
-      hover:shadow-md
-      transition-all duration-300
-    "
+              h-10 w-10
+              flex items-center justify-center
+              rounded-xl
+              border border-orange-200
+              bg-white
+              text-orange-500
+              shadow-sm
+              hover:bg-orange-50
+              hover:border-orange-300
+              hover:shadow-md
+              transition-all duration-300
+            "
           >
             <ArrowLeft size={18} />
           </button>
@@ -181,35 +214,102 @@ router.push("/dashboard");
           </div>
         </div>
 
-
-        <h1 className="text-3xl font-black text-slate-900">
-          Student Login
-        </h1>
+        <h1 className="text-3xl font-black text-slate-900">Student Login</h1>
 
         <p className="mt-2 text-slate-500">
-          Enter your enrollment number
-          to continue.
+          Select your license code, then sign in with your enrollment number and
+          password.
         </p>
 
-        <form
-          onSubmit={handleLogin}
-          className="mt-8 space-y-5"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              License Code
+            </label>
+            {onlyLicenseOption ? (
+              // Only one license code exists at all — nothing to pick, so show
+              // it as a plain read-only value instead of a single-item dropdown.
+              <div
+                className="
+                  w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3
+                  text-slate-900 font-medium
+                "
+              >
+                {onlyLicenseOption.code}
+              </div>
+            ) : (
+              <select
+                value={
+                  watch("instituteId") && watch("licenseCode")
+                    ? `${watch("instituteId")}::${watch("licenseCode")}`
+                    : ""
+                }
+                onChange={(e) => {
+                  const [selectedInstituteId, selectedLicenseCode] =
+                    e.target.value.split("::");
+                  setValue("instituteId", selectedInstituteId || "", {
+                    shouldValidate: true,
+                  });
+                  setValue("licenseCode", selectedLicenseCode || "", {
+                    shouldValidate: true,
+                  });
+                }}
+                disabled={institutesLoading}
+                className={`
+                  w-full rounded-xl border bg-white px-4 py-3 text-slate-900
+                  outline-none transition-all focus:ring-4 disabled:opacity-60
+                  ${
+                    errors.instituteId || errors.licenseCode
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-100"
+                      : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
+                  }
+                `}
+              >
+                <option value="" disabled>
+                  {institutesLoading
+                    ? "Loading institutes..."
+                    : "Select your license code"}
+                </option>
+                {licenseOptions.map(({ instituteId: instId, code }) => (
+                  // One option per license code, each carrying its own institute
+                  // id + code. Seats are checked against this exact license only
+                  // — a full license does not silently fall back to another one.
+                  <option
+                    key={`${instId}-${code}`}
+                    value={`${instId}::${code}`}
+                  >
+                    {code}
+                  </option>
+                ))}
+              </select>
+            )}
+            {(errors.instituteId || errors.licenseCode) && (
+              <div className="mt-1 text-sm text-red-500 font-medium">
+                {errors.instituteId?.message || errors.licenseCode?.message}
+              </div>
+            )}
+          </div>
+
           <Input
             label="Enrollment Number"
             placeholder="EN2024001"
-            value={enrollmentNo}
-            onChange={(e) =>
-              handleEnrollmentNoChange(
-                e.target.value
-              )
-            }
-            error={errors.enrollmentNo}
+            disabled={fieldsDisabled}
+            error={errors.enrollmentNo?.message}
+            {...register("enrollmentNo")}
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            disabled={fieldsDisabled}
+            error={errors.password?.message}
+            {...register("password")}
           />
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="
               w-full
               rounded-2xl
@@ -223,9 +323,7 @@ router.push("/dashboard");
               disabled:opacity-50
             "
           >
-            {loading
-              ? "Signing In..."
-              : "Sign In"}
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
       </motion.div>
@@ -236,6 +334,7 @@ router.push("/dashboard");
         title={modal.title}
         message={modal.message}
         onClose={handleModalClose}
+        showIcon={false}
       />
     </main>
   );

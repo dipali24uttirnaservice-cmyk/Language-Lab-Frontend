@@ -1,42 +1,30 @@
 import * as Yup from "yup";
 
 export const studentLoginSchema = Yup.object({
-  enrollmentNo: Yup.string()
-    .trim()
-    .required("Enrollment Number is required"),
+  instituteId: Yup.string().required("Please select your institute"),
+  licenseCode: Yup.string().required("Please select your license code"),
+  enrollmentNo: Yup.string().trim().required("Enrollment Number is required"),
+  password: Yup.string().required("Password is required"),
 });
 
 export const studentFormSchemaAdd = Yup.object({
-  full_name: Yup.string()
-    .trim()
-    .required("Full Name is required"),
+  full_name: Yup.string().trim().required("Full Name is required"),
 
   email: Yup.string()
     .trim()
     .email("Please enter a valid email address")
     .required("Email is required"),
 
- password: Yup.string()
-  .trim()
-  .min(6, "Password must be at least 6 characters")
-  .notRequired(),
+  password: Yup.string()
+    .required("Password is required")
+    .min(6, "Password must be 6 characters")
+    .max(6, "Password must be 6 characters"),
 
-  phone: Yup.string()
-    .trim()
-    .matches(/^\+?\d{10,15}$/, "Please enter a valid phone number")
-    .required("Phone Number is required"),
+  roll_no: Yup.string().trim().required("Roll Number is required"),
 
-  roll_no: Yup.string()
-    .trim()
-    .required("Roll Number is required"),
+  enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  enrollment_no: Yup.string()
-    .trim()
-    .required("Enrollment Number is required"),
-
-  segment: Yup.string()
-    .trim()
-    .required("Segment is required"),
+  segment: Yup.string().trim().required("Segment is required"),
 
   year: Yup.string()
     .required("Year is required")
@@ -44,31 +32,31 @@ export const studentFormSchemaAdd = Yup.object({
 });
 
 export const studentFormSchemaEdit = Yup.object({
-  full_name: Yup.string()
-    .trim()
-    .required("Full Name is required"),
+  full_name: Yup.string().trim().required("Full Name is required"),
 
   email: Yup.string()
     .trim()
     .email("Please enter a valid email address")
     .required("Email is required"),
 
+  password: Yup.string()
+    .notRequired()
+    .test(
+      "password-length",
+      "Password must be 6 characters",
+      (value) => !value || value.length === 6,
+    ),
+
   phone: Yup.string()
     .trim()
-    .matches(/^\+?\d{10,15}$/, "Please enter a valid phone number")
+    .matches(/^\d{10}$/, "Phone Number must be exactly 10 digits")
     .required("Phone Number is required"),
 
-  roll_no: Yup.string()
-    .trim()
-    .required("Roll Number is required"),
+  roll_no: Yup.string().trim().required("Roll Number is required"),
 
-  enrollment_no: Yup.string()
-    .trim()
-    .required("Enrollment Number is required"),
+  enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  segment: Yup.string()
-    .trim()
-    .required("Segment is required"),
+  segment: Yup.string().trim().required("Segment is required"),
 
   year: Yup.string()
     .required("Year is required")

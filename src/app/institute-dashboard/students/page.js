@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import DataTable from "@/components/organisms/DataTable";
 import TableActions from "@/components/molecules/TableActions";
@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
 import { courseApi } from "@/services/course/courseApi";
-export default function StudentsPage() {
+function StudentsPageContent() {
 
   const searchParams = useSearchParams();
 
@@ -261,6 +261,10 @@ const columns = [
 
         <p className="text-xs text-slate-500">
           {row.enrollment_no}
+        </p>
+
+         <p className="text-xs text-slate-500">
+          {row.password}
         </p>
       </div>
     ),
@@ -837,7 +841,7 @@ showSelection={showSelection}
       {/* Body */}
       <div className="p-6 space-y-5">
 
-        <button
+       {/* <button
           onClick={() => {
             setShowAddOptions(false);
             router.push(
@@ -863,7 +867,7 @@ showSelection={showSelection}
           <span className="text-2xl text-orange-500 group-hover:translate-x-1 transition">
             →
           </span>
-        </button>
+        </button> */}
 
         <button
           onClick={() => {
@@ -912,5 +916,13 @@ showSelection={showSelection}
   </div>
 )}
     </div>
+  );
+}
+
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudentsPageContent />
+    </Suspense>
   );
 }

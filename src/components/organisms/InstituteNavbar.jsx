@@ -14,8 +14,46 @@ import {
    LogOut,
 } from "react-icons/fa";
 import Link from "next/link";
+import Image from "next/image";
 
 import { logoutUser } from "@/services/auth/logoutApi";
+import { taskApi } from "@/services/task/taskApi";
+import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
+import { courseApi } from "@/services/course/courseApi";
+import { useInstituteLogoSrc } from "@/utils/media";
+
+const MONGO_ID = /^[a-f\d]{24}$/i;
+
+// Maps a path segment to the API call that resolves a Mongo ID appearing
+// right after it into a human-readable title, and where on the response
+// that title lives — so the breadcrumb never shows a raw ObjectId for
+// these detail routes.
+const ID_RESOLVERS = {
+  "student-task": {
+    fetch: (id) => taskApi.getTaskById(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+  "practical-manual": {
+    fetch: (id) => practicalManualDetail(id),
+    getTitle: (res) => (res.data?.data || res.data)?.title,
+  },
+  // No get-course-by-id endpoint for the institute role — reuse the
+  // already-fetched "my courses" list and pick the matching one out of it.
+  "video-progress": {
+    fetch: () => courseApi.getCourses(),
+    getTitle: (res, id) =>
+      (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
+  },
+  "course-content": {
+    fetch: () => courseApi.getCourses(),
+    getTitle: (res, id) =>
+      (res.data?.data?.courses || []).find((c) => c._id === id)?.course_name,
+  },
+  // "subject" and "assessment" resolvers removed for now — their services
+  // (src/services/subject, src/services/assessment) aren't pushed to this
+  // branch yet, and the sidebar links to those routes are hidden too. Re-add
+  // both once that feature is pushed.
+};
 
 export default function InstituteNavbar({
  isSidebarOpen,
@@ -29,8 +67,7 @@ const router = useRouter();
   const { user: institute } = useAuth();
 
 
-  const instituteLogo =
-    institute?.logo || "/collage-logo.png";
+  const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
 
 
   const instituteName =
@@ -43,15 +80,93 @@ const router = useRouter();
       ?.toUpperCase() || "I";
 
 
-  const breadcrumbs = pathname
-  .split("/")
-  .filter(Boolean)
-  .map((item, index, arr) => ({
-    label: item
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase()),
-    href: "/" + arr.slice(0, index + 1).join("/"),
-  }));
+  // Resolves a Mongo ID segment to its item's real title, so the breadcrumb
+  // reads "Vocabulary Practice" instead of a raw ObjectId — keyed by
+  // pathname so it refetches on navigation. Covers both the direct
+  // /student-task/{id} route and sub-routes like /student-task/view/{id} or
+  // /student-task/submissions/{id} — anything where a resolver key
+  // (student-task, practical-manual, …) appears earlier in the path, not
+  // just immediately before the ID.
+  const findResolverFor = (segments, idIndex) => {
+    for (let i = idIndex - 1; i >= 0; i--) {
+      if (ID_RESOLVERS[segments[i]]) return ID_RESOLVERS[segments[i]];
+      if (MONGO_ID.test(segments[i])) return null; // hit a different ID first
+    }
+    return null;
+  };
+
+  const [resolvedTitle, setResolvedTitle] = useState(null);
+  useEffect(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    const idIndex = segments.findIndex((seg) => MONGO_ID.test(seg));
+    const resolver = idIndex >= 0 ? findResolverFor(segments, idIndex) : null;
+
+    if (resolver) {
+      const id = segments[idIndex];
+      resolver
+        .fetch(id)
+        .then((res) => setResolvedTitle(resolver.getTitle(res, id) || null))
+        .catch(() => setResolvedTitle(null));
+    } else {
+      setResolvedTitle(null);
+    }
+  }, [pathname]);
+
+  const breadcrumbs =
+    // The create/update learning module page lives one level under
+    // "student-learning-access" but its natural parent in the UI is the
+    // Access List page (not reachable by trimming the URL), so its
+    // breadcrumb is built by hand instead of derived from path segments.
+    pathname === "/institute-dashboard/student-learning-access"
+      ? [
+          {
+            label: "Access List",
+            href: "/institute-dashboard/student-learning-access/access-list",
+          },
+          {
+            label: "Student Learning Access",
+            href: "/institute-dashboard/student-learning-access",
+          },
+        ]
+      : pathname
+          .split("/")
+          .filter(Boolean)
+          .map((item, index, arr) => {
+            const isResolvableId = MONGO_ID.test(item) && !!findResolverFor(arr, index);
+            return {
+              segment: item,
+              isResolvableId,
+              nextSegment: arr[index + 1],
+              label: isResolvableId
+                ? resolvedTitle || "…"
+                : item.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+              href: "/" + arr.slice(0, index + 1).join("/"),
+            };
+          })
+          // Drop the leading "Institute Dashboard" crumb — every institute
+          // route starts with it, so it added noise without any
+          // navigational value.
+          .slice(1)
+          // "assign"/"view"/"submissions"/"course-content" are just
+          // intermediate route segments for the practical-manual assign,
+          // detail-view, and submissions flows (.../practical-manual/assign/{id},
+          // .../practical-manual/view/{id}, .../practical-manual/submissions/{id})
+          // and the settings course-content detail page
+          // (.../settings/course-content/{courseId}) — none is a page of its
+          // own, so all are hidden from the trail while their hrefs still
+          // point deeper via the segments around them. Same for the resolved
+          // task-title crumb right before "add-question"
+          // (.../student-task/{id}/add-question) — the page itself repeats
+          // that task title under its own heading, so it's redundant in the
+          // trail.
+          .filter(
+            (crumb) =>
+              crumb.segment !== "assign" &&
+              crumb.segment !== "view" &&
+              crumb.segment !== "submissions" &&
+              crumb.segment !== "course-content" &&
+              !(crumb.isResolvableId && crumb.nextSegment === "add-question")
+          );
 
 
 
@@ -84,6 +199,7 @@ const router = useRouter();
             onClick={() =>
               setIsOpen(!isSidebarOpen)
             }
+            aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
           >
             {isSidebarOpen ? (
@@ -128,6 +244,7 @@ const router = useRouter();
 <div className="relative z-10 flex items-center gap-4">        
           <motion.button
             whileHover={{ scale: 1.05 }}
+            aria-label="Notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500"
           >
             <FaBell className="text-sm" />
@@ -144,11 +261,15 @@ const router = useRouter();
             }
             className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all"
           >
-            <div className="relative">
-  <img
+            <div className="relative h-10 w-10">
+  <Image
     src={instituteLogo}
     alt={instituteName}
-    className="h-10 w-10 rounded-xl object-cover border border-slate-200"
+    fill
+    sizes="40px"
+    className="rounded-xl object-cover border border-slate-200"
+    unoptimized
+    onError={handleLogoError}
   />
 
   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
