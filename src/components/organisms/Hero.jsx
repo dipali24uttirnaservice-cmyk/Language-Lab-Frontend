@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { useFeaturedInstitute } from "@/hooks/useFeaturedInstitute";
 
-const INSTITUTE_PLACEHOLDER = "/institute-placeholder.svg";
+const DEFAULT_INSTITUTE_LOGO = "/collage-logo.png";
 
 const HERO_CAROUSEL_IMAGES = [
   "/mit/State-Level-Compition-Technofair-1.jpeg",
@@ -19,6 +19,15 @@ const HERO_CAROUSEL_IMAGES = [
 export default function Hero() {
   const institute = useFeaturedInstitute();
   const [slide, setSlide] = useState(0);
+
+  // The institute's logo is AWS/CDN-hosted, a host next/image's optimizer
+  // doesn't allow-list in production (see next.config.mjs) — without a
+  // fallback that 400s into a broken-image icon instead of the placeholder.
+  const [logoSrc, setLogoSrc] = useState(institute?.logo || DEFAULT_INSTITUTE_LOGO);
+
+  useEffect(() => {
+    setLogoSrc(institute?.logo || DEFAULT_INSTITUTE_LOGO);
+  }, [institute?.logo]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -52,11 +61,13 @@ export default function Hero() {
           <div className="mt-3 flex flex-col items-start justify-center max-w-md">
             <div className="relative h-44 w-44 shrink-0 drop-shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-transform duration-500 hover:scale-[1.03]">
               <Image
-                src={institute?.logo || INSTITUTE_PLACEHOLDER}
+                src={logoSrc}
                 alt={institute?.institute_name || "Institute"}
                 fill
                 sizes="176px"
+                unoptimized
                 className="object-contain"
+                onError={() => setLogoSrc(DEFAULT_INSTITUTE_LOGO)}
               />
             </div>
           </div>
