@@ -19,6 +19,7 @@ import {
   FaHome,
   FaBookOpen,
   FaSignOutAlt,
+  FaClipboardList,
 } from "react-icons/fa";
 
 const menus = [
@@ -41,10 +42,15 @@ const menus = [
     text: "text-orange-700",
     dot: "bg-orange-500",
   },
-  // Assessment is hidden until its page/service is pushed to this branch —
-  // the route exists locally but not yet on test-dev, so linking to it here
-  // would 404. Re-add once src/app/dashboard/assessment and
-  // src/services/assessment are pushed.
+  {
+    name: "Assessment",
+    href: "/dashboard/assessment",
+    icon: FaClipboardList,
+    color: "from-emerald-500 to-teal-600",
+    border: "border-emerald-500",
+    bg: "from-emerald-50 to-teal-50",
+    text: "text-emerald-700",
+  },
   {
     name: "Student Profile",
     href: "/dashboard/student-profile",
@@ -239,6 +245,8 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
             const active =
               item.name === "Dashboard"
                 ? pathname === "/dashboard"
+                : item.name === "Assessment"
+                ? pathname.startsWith("/dashboard/assessment")
                 : pathname === item.href;
 
             // Icon box: ALWAYS colored (gradient bg + white icon).

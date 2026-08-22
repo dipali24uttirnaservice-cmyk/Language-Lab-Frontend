@@ -102,6 +102,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   const type = cleanParam(searchParams.get("type"));
   const topicName = cleanParam(searchParams.get("topicName"));
   const subTopicName = cleanParam(searchParams.get("subTopicName"));
+  const subjectName = cleanParam(searchParams.get("subjectName"));
   const lessonName = cleanParam(searchParams.get("lessonName"));
 
   // ─── Mount guard (prevents hydration mismatch) ───────────────────────────
@@ -277,6 +278,23 @@ useEffect(() => {
         crumbs.push({
           label: decodeURIComponent(lessonName),
           href: null,
+        });
+      }
+    } else if (pathname.startsWith("/dashboard/assessment")) {
+      // /dashboard/assessment -> subject list -> assessment (take/result) —
+      // subjectId in the URL is a Mongo id (filtered out by the generic
+      // fallback below), so the subject's real title is threaded through as
+      // a subjectName query param instead, same pattern as courseName above.
+      // Deliberately stops at the subject — no assessment-title crumb.
+      crumbs.push({ label: "Assessment", href: "/dashboard/assessment" });
+
+      const segments = pathname.split("/").filter(Boolean); // ["dashboard","assessment", subjectId?, ...]
+      const subjectId = segments[2];
+
+      if (subjectId && subjectName) {
+        crumbs.push({
+          label: decodeURIComponent(subjectName),
+          href: `/dashboard/assessment/${subjectId}?subjectName=${encodeURIComponent(subjectName)}`,
         });
       }
     } else {
