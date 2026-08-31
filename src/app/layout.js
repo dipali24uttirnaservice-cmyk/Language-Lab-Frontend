@@ -4,8 +4,8 @@ import GlobalPopup from "@/components/organisms/GlobalPopup";
 
 export const metadata = {
   title: {
-    default: "Language Lab",
-    template: "%s | Language Lab",
+    default: "Uttirna DigiLabs",
+    template: "%s | Uttirna DigiLabs",
   },
   description:
     "Language Lab is a digital language-learning platform with courses, practice modules, and progress tracking for students and institutes.",

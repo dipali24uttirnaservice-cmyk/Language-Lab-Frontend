@@ -25,7 +25,6 @@ const stats = [
 export default function StatsSection() {
   return (
     <section className="relative py-32 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-100/50 to-orange-50/10">
-      
       {/* =========================================================================
           STRUCTURAL RADIANTS BACKDROP (MATCHES THE 3D GLASS ENVIRONMENT)
           ========================================================================= */}
@@ -39,7 +38,6 @@ export default function StatsSection() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        
         {/* Header Block */}
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-4xl font-black text-slate-900 tracking-tight sm:text-5xl">
@@ -49,7 +47,8 @@ export default function StatsSection() {
             </span>
           </h2>
           <p className="mt-4 text-lg font-medium text-slate-500">
-            Thousands of global students leverage LanguageLab to break down communication friction.
+            Thousands of global students leverage Uttirna DigiLabs to break down
+            communication friction.
           </p>
         </div>
 
@@ -64,7 +63,6 @@ export default function StatsSection() {
             />
           ))}
         </div>
-
       </div>
     </section>
   );

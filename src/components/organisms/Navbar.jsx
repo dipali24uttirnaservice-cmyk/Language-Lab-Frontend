@@ -44,7 +44,7 @@ export default function Navbar() {
               />
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tighter text-slate-900 cursor-pointer">
-              Language<span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">Lab</span>
+              Uttirna<span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">DigiLabs</span>
             </h2>
           </Link>
 
