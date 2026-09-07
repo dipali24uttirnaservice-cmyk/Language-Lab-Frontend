@@ -23,7 +23,9 @@ export default function Hero() {
   // The institute's logo is AWS/CDN-hosted, a host next/image's optimizer
   // doesn't allow-list in production (see next.config.mjs) — without a
   // fallback that 400s into a broken-image icon instead of the placeholder.
-  const [logoSrc, setLogoSrc] = useState(institute?.logo || DEFAULT_INSTITUTE_LOGO);
+  const [logoSrc, setLogoSrc] = useState(
+    institute?.logo || DEFAULT_INSTITUTE_LOGO,
+  );
 
   useEffect(() => {
     setLogoSrc(institute?.logo || DEFAULT_INSTITUTE_LOGO);

@@ -46,7 +46,11 @@ import {
   shuffledPool,
 } from "@/utils/questionAnswers";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
-import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
+import {
+  getPlayableVideoUrl,
+  getPlayableAudioUrl,
+  resolveMediaUrl,
+} from "@/utils/media";
 
 // next-video/react-player are heavy media deps — only load them when a
 // video-type lesson is actually rendered, not on every module page load.
@@ -1129,7 +1133,7 @@ function AudioDetail({
                           const mediaUrl =
                             selectedModule.audio?.download_status ===
                               "completed" && selectedModule.audio?.local_url
-                              ? getMediaUrl(selectedModule.audio.local_url)
+                              ? resolveMediaUrl(selectedModule.audio.local_url)
                               : selectedModule.audio?.url?.trim();
 
                           console.error("========== AUDIO ERROR ==========");
@@ -1147,7 +1151,7 @@ function AudioDetail({
                           src={
                             selectedModule.audio?.download_status ===
                               "completed" && selectedModule.audio?.local_url
-                              ? getMediaUrl(selectedModule.audio.local_url)
+                              ? resolveMediaUrl(selectedModule.audio.local_url)
                               : selectedModule.audio?.url?.trim() || undefined
                           }
                           type="audio/webm"
