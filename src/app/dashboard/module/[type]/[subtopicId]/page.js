@@ -46,11 +46,7 @@ import {
   shuffledPool,
 } from "@/utils/questionAnswers";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
-import {
-  getPlayableVideoUrl,
-  getPlayableAudioUrl,
-  resolveMediaUrl,
-} from "@/utils/media";
+import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
 
 // next-video/react-player are heavy media deps — only load them when a
 // video-type lesson is actually rendered, not on every module page load.
@@ -1130,11 +1126,9 @@ function AudioDetail({
                         className="w-full sm:w-72 md:w-80 focus:outline-none"
                         onEnded={onComplete}
                         onError={(e) => {
-                          const mediaUrl =
-                            selectedModule.audio?.download_status ===
-                              "completed" && selectedModule.audio?.local_url
-                              ? resolveMediaUrl(selectedModule.audio.local_url)
-                              : selectedModule.audio?.url?.trim();
+                          const mediaUrl = getPlayableAudioUrl(
+                            selectedModule.audio,
+                          );
 
                           console.error("========== AUDIO ERROR ==========");
                           console.error("Audio URL:", mediaUrl);
@@ -1147,15 +1141,17 @@ function AudioDetail({
                           toast.error("This audio failed to load.");
                         }}
                       >
-                        <source
-                          src={
-                            selectedModule.audio?.download_status ===
-                              "completed" && selectedModule.audio?.local_url
-                              ? resolveMediaUrl(selectedModule.audio.local_url)
-                              : selectedModule.audio?.url?.trim() || undefined
-                          }
-                          type="audio/webm"
-                        />
+                        {/*
+                          No `type` attribute — the actual file can be mp3/
+                          wav/m4a/etc. depending on how the institute recorded
+                          it. Declaring a fixed "audio/webm" here regardless
+                          of the real format made most browsers refuse to
+                          play anything that wasn't actually webm (silent
+                          failure into the onError toast above). Omitting
+                          `type` lets the browser sniff the real content type
+                          from the response instead.
+                        */}
+                        <source src={getPlayableAudioUrl(selectedModule.audio) || undefined} />
                         Your browser does not support audio playback.
                       </audio>
                     </div>
@@ -2626,7 +2622,6 @@ function ModuleListPageContent() {
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState([]);
 
-  const [activeTab, setActiveTab] = useState(type || "video");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
@@ -2639,12 +2634,6 @@ function ModuleListPageContent() {
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [questionResults, setQuestionResults] = useState([]);
   const [showReview, setShowReview] = useState(false);
-
-  useEffect(() => {
-    if (type) {
-      setActiveTab(type);
-    }
-  }, [type]);
 
   const logModuleActivity = useCallback(
     async (module, activityType, extra = {}) => {
@@ -2951,7 +2940,11 @@ function ModuleListPageContent() {
 
         const actualType = mod.module_type || type;
 
-        const matchesTab = activeTab === "all" || actualType === activeTab;
+        // modules is already scoped to this route's type by the
+        // /module/{type}?subtopic_id=... fetch below, so this only ever
+        // filters out a mismatched item (shouldn't happen) — there's no
+        // separate "all" tab in this UI.
+        const matchesTab = actualType === type;
 
         const matchesSearch =
           !query ||
@@ -2967,7 +2960,7 @@ function ModuleListPageContent() {
 
         return 0;
       });
-  }, [modules, activeTab, searchQuery, sortBy, type]);
+  }, [modules, searchQuery, sortBy, type]);
 
   const videoModules = useMemo(
     () =>
@@ -3162,12 +3155,33 @@ function ModuleListPageContent() {
           )
         ) : (
           <div className="space-y-6 animate-fade-in">
-            <BackToLessonsButton onBack={goToTopic} />
-            {filteredModules.length === 0 ? (
-              <NoModulesEmptyState
-                type={activeTab !== "all" ? activeTab : type}
-                onBack={goToTopic}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <BackToLessonsButton onBack={goToTopic} />
+              {/* Lets a student jump straight from e.g. the Video lessons of
+                  this subtopic to its Audio lessons without going back
+                  through the topic screen. Each content type is fetched via
+                  its own /module/{type}?subtopic_id=... call, so switching a
+                  tab navigates to that type's route (same subtopic) instead
+                  of just flipping local state. */}
+              <ContentTypeTabs
+                tabs={CONTENT_TYPES}
+                activeTab={type}
+                onChange={(nextType) => {
+                  if (nextType === type) return;
+                  const nextParams = new URLSearchParams(
+                    searchParams.toString(),
+                  );
+                  nextParams.set("type", nextType);
+                  nextParams.delete("lessonId");
+                  nextParams.delete("lessonName");
+                  router.push(
+                    `/dashboard/module/${nextType}/${subtopicId}?${nextParams.toString()}`,
+                  );
+                }}
               />
+            </div>
+            {filteredModules.length === 0 ? (
+              <NoModulesEmptyState type={type} onBack={goToTopic} />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredModules.map((item) => {
