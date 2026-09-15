@@ -25,6 +25,7 @@ import {
 
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi, moduleApi } from "@/services/topic/topicApi";
+import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
 
 // Single source of truth for the 5 content types every subtopic can hold —
 // order here drives the order they're rendered in everywhere below.
@@ -713,14 +714,9 @@ function SubtopicRow({ subtopic, index, isOpen, detail, progress, tone, onToggle
                 <div key={t.id} className={`rounded-xl border ${t.border} ${t.bg} divide-y divide-white/60 overflow-hidden`}>
                   {c.modules.map((m) =>
                     t.cachable ? (
-                      <VideoAssetRow key={m._id} title={m.title} asset={assetMap[m._id]} />
+                      <VideoAssetRow key={m._id} title={m.title} asset={assetMap[m._id]} moduleId={m._id} type={t.id} />
                     ) : (
-                      <div key={m._id} className="flex items-center justify-between gap-3 px-3 py-2">
-                        <p className="text-xs font-semibold text-slate-700 truncate">{m.title || "Untitled"}</p>
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 shrink-0">
-                          <CheckCircle2 size={12} /> Available offline
-                        </span>
-                      </div>
+                      <OfflineContentRow key={m._id} title={m.title} moduleId={m._id} type={t.id} />
                     ),
                   )}
                 </div>
@@ -732,10 +728,147 @@ function SubtopicRow({ subtopic, index, isOpen, detail, progress, tone, onToggle
   );
 }
 
+// Text/Vocabulary/Exercise rows — these sync with the course pull (no
+// separate file download), so they're always "Available offline". Exercise
+// rows are also expandable to preview the actual questions inline; Text and
+// Vocabulary stay a plain static row.
+function OfflineContentRow({ title, moduleId, type }) {
+  const [expanded, setExpanded] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  if (type !== "exercise") {
+    return (
+      <div className="flex items-center justify-between gap-3 px-3 py-2">
+        <p className="text-xs font-semibold text-slate-700 truncate">{title || "Untitled"}</p>
+        <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 shrink-0">
+          <CheckCircle2 size={12} /> Available offline
+        </span>
+      </div>
+    );
+  }
+
+  const handleToggle = async () => {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+
+    setExpanded(true);
+
+    if (preview || !moduleId) return;
+
+    try {
+      setLoadingPreview(true);
+      const res = await moduleApi.getModuleById("exercise", moduleId);
+      setPreview(res?.data?.data ?? res?.data ?? null);
+    } catch (error) {
+      console.error("Failed to load exercise preview:", error);
+      setPreview({ __error: true });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  return (
+    <div className="px-3 py-2">
+      <button type="button" onClick={handleToggle} className="flex w-full items-center justify-between gap-3 text-left">
+        <p className="text-xs font-semibold text-slate-700 truncate">{title || "Untitled"}</p>
+        <span className="flex items-center gap-2 shrink-0">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+            <CheckCircle2 size={12} /> Available offline
+          </span>
+          {expanded ? (
+            <ChevronUp size={13} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={13} className="text-slate-400" />
+          )}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="mt-2">
+          {loadingPreview ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-xs text-slate-400">
+              <Loader2 size={14} className="animate-spin" /> Loading preview...
+            </div>
+          ) : preview?.__error ? (
+            <p className="py-2 text-center text-xs text-rose-500">Failed to load preview.</p>
+          ) : !Array.isArray(preview?.questions) || preview.questions.length === 0 ? (
+            <p className="py-2 text-center text-xs text-slate-400">No questions in this exercise.</p>
+          ) : (
+            <div className="space-y-2">
+              {preview.questions.map((q, qIndex) => (
+                <div key={q?._id ?? qIndex} className="rounded-lg bg-white p-2.5">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-800">
+                      Q{qIndex + 1}. {q?.question_text ?? "Untitled question"}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-purple-100/60 px-2 py-0.5 text-[10px] font-semibold capitalize text-purple-600">
+                      {(q?.question_type || "question").replace(/_/g, " ")}
+                    </span>
+                  </div>
+
+                  {Array.isArray(q?.options) && q.options.length > 0 ? (
+                    <ul className="space-y-1 pl-1 text-[11px] text-slate-600">
+                      {q.options.map((opt, optIndex) => {
+                        const isCorrect =
+                          String(q?.correct_answer) === String(opt) || String(q?.correct_answer) === String(optIndex);
+
+                        return (
+                          <li key={optIndex} className={isCorrect ? "font-semibold text-emerald-600" : ""}>
+                            {isCorrect ? "✓ " : "• "}
+                            {opt}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : q?.correct_answer ? (
+                    <p className="text-[11px] text-emerald-600">✓ Answer: {String(q.correct_answer)}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // One video/audio file's live caching progress — mirrors the row style used
 // on the dedicated Video & Audio Download Progress page, just compact enough
-// to sit inside this nested list.
-function VideoAssetRow({ title, asset }) {
+// to sit inside this nested list. Also doubles as a play/preview row: click
+// to expand an inline player, fetching the actual video/audio URL on demand
+// (works whether the file has finished local caching or not — falls back to
+// the CDN URL via getPlayableVideoUrl/getPlayableAudioUrl either way).
+function VideoAssetRow({ title, asset, moduleId, type }) {
+  const [expanded, setExpanded] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  const handleToggle = async () => {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+
+    setExpanded(true);
+
+    if (preview || !moduleId || !type) return;
+
+    try {
+      setLoadingPreview(true);
+      const res = await moduleApi.getModuleById(type, moduleId);
+      setPreview(res?.data?.data ?? res?.data ?? null);
+    } catch (error) {
+      console.error("Failed to load lesson preview:", error);
+      setPreview({ __error: true });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
   // No asset record yet = this file was never queued for local caching
   // (see Settings → "Update Data" / "Start Caching Now"). Still rendered as
   // a 0% bar, same shape as every other row, instead of a bar-less line —
@@ -763,13 +896,24 @@ function VideoAssetRow({ title, asset }) {
 
   return (
     <div className="px-3 py-2.5">
-      <div className="flex items-center justify-between gap-3 mb-1.5">
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="flex w-full items-center justify-between gap-3 mb-1.5 text-left"
+      >
         <p className="text-xs font-semibold text-slate-700 truncate min-w-0">{title || asset?.title || "Untitled"}</p>
-        <span className={`flex items-center gap-1 text-[11px] font-bold shrink-0 ${statusMeta.color}`}>
-          <Icon size={12} className={statusMeta.spin ? "animate-spin" : ""} />
-          {statusMeta.label}
+        <span className="flex items-center gap-2 shrink-0">
+          <span className={`flex items-center gap-1 text-[11px] font-bold ${statusMeta.color}`}>
+            <Icon size={12} className={statusMeta.spin ? "animate-spin" : ""} />
+            {statusMeta.label}
+          </span>
+          {expanded ? (
+            <ChevronUp size={13} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={13} className="text-slate-400" />
+          )}
         </span>
-      </div>
+      </button>
       <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${statusMeta.bar}`}
@@ -785,6 +929,30 @@ function VideoAssetRow({ title, asset }) {
         <p className="mt-1 text-[10px] text-red-500 truncate" title={asset.error_message}>
           {asset.error_message}
         </p>
+      )}
+
+      {expanded && (
+        <div className="mt-2.5">
+          {loadingPreview ? (
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-400">
+              <Loader2 size={14} className="animate-spin" /> Loading preview...
+            </div>
+          ) : preview?.__error ? (
+            <p className="py-3 text-center text-xs text-rose-500">Failed to load preview.</p>
+          ) : type === "video" ? (
+            <video
+              controls
+              className="mx-auto aspect-video max-h-[45vh] w-full max-w-2xl rounded-lg bg-black"
+              src={getPlayableVideoUrl(preview?.video ?? preview?.content?.video)}
+            />
+          ) : type === "audio" ? (
+            <audio
+              controls
+              className="w-full"
+              src={getPlayableAudioUrl(preview?.audio ?? preview?.content?.audio)}
+            />
+          ) : null}
+        </div>
       )}
     </div>
   );
