@@ -24,8 +24,28 @@ export const instituteConfigLogin = async (payload) => {
 };
 
 // Used by the regular /login page, once this institute is already synced
-// locally (via /config) — just logs in against the local backend directly.
+// locally (via /config) — logs in against the local backend (the call the
+// caller awaits), and best-effort refreshes the "masterToken" cookie too.
+// Without this, masterToken was only ever set once during the one-time
+// /config wizard (instituteConfigLogin below) and never renewed on daily
+// logins — so once it expired, every master-dependent check (courseApi's
+// getCourseSyncStatus "Update Data" flag, course downloads' local mirror)
+// silently fell back to its no-master behavior forever, even though the
+// institute account is perfectly able to reach master. Fire-and-forget and
+// swallowed on failure (network error, or this institute genuinely has no
+// master account) so a slow/unreachable master never blocks or fails local
+// login itself — same offline-first spirit as courseApi's masterWithLocalFallback.
 export const instituteLogin = async (payload) => {
+  masterApiInstance
+    .post("/institute/login", payload)
+    .then((masterResponse) => {
+      const masterToken = masterResponse?.data?.data?.token;
+      if (masterToken) {
+        Cookies.set("masterToken", masterToken, secureCookieOptions());
+      }
+    })
+    .catch(() => {});
+
   return await api.post("/institute/login", payload);
 };
 

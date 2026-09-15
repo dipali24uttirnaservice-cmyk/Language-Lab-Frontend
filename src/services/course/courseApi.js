@@ -120,15 +120,34 @@ export const courseApi = {
   getCourseDownloadStatus: (courseId) =>
     api.get(`/institute/me/courses/${courseId}/download-status`),
 
-  // Whether this institute's LOCAL mirrored copy of a course is behind
-  // master's source content — i.e. whether "Update Data" should show. Reads
-  // both sides directly (not masterWithLocalFallback, which only ever
-  // returns one) and compares their timestamps, so "since when is this
-  // stale" lives on the two backends, never in browser storage — it stays
-  // correct across tabs, machines, and sessions, unlike a client-side cache.
-  // With no masterToken (plain institute login, no master access) there's
-  // nothing to compare against, so the local copy is treated as current.
+  // Whether this institute's LOCAL mirrored copy of a course is behind the
+  // source content — i.e. whether "Update Data" should show. Two deployment
+  // shapes need two different checks, so both are combined here:
+  //
+  // 1. Standalone (no separate master DB, or masterToken missing this
+  //    session): the local backend's own .../sync-status already compares
+  //    its live content against the snapshot stamped at the last successful
+  //    downloadCourseData (see instituteController.js) — no masterToken
+  //    needed.
+  // 2. Master+local split deployment (this frontend's normal case —
+  //    NEXT_PUBLIC_MASTER_API_URL is a different server/DB than
+  //    NEXT_PUBLIC_API_URL): a topic/subtopic/module added on MASTER never
+  //    shows up in the local backend's own DB until the course is
+  //    re-downloaded, so #1 alone stays "not stale" forever even after
+  //    content changes upstream — masterApi's own last-updated has to be
+  //    compared against local's directly.
+  //
+  // The old implementation only ever did #2, and silently fell back to
+  // "not stale" whenever masterToken was missing — breaking #1 entirely for
+  // standalone setups. This does both and flags stale if either says so.
   getCourseSyncStatus: async (courseId) => {
+    const localSyncStatus = await api
+      .get(`/institute/me/courses/${courseId}/sync-status`)
+      .then((res) => !!res.data?.data?.is_stale)
+      .catch(() => false);
+
+    if (localSyncStatus) return { isStale: true };
+
     if (!Cookies.get("masterToken")) return { isStale: false };
 
     const [masterResult, localResult] = await Promise.allSettled([
@@ -136,24 +155,9 @@ export const courseApi = {
       api.get(`/institute/me/courses/${courseId}/last-updated`),
     ]);
 
-    if (localResult.status === "rejected") {
-      const error = localResult.reason;
-      if (isNetworkError(error)) return { isStale: false }; // local server itself unreachable — nothing to conclude
-      // A 404 here specifically means the local backend has no Course doc
-      // for this course at all — e.g. an earlier download's local mirror
-      // silently failed (see downloadCourse above, before it started
-      // awaiting/reporting that). `is_downloaded` can be true (master says
-      // so) while this is still 404ing. That's not "can't tell" — it's
-      // definitely stale, so surface it as such and let "Update Data"
-      // re-trigger a real local sync instead of masking it forever behind a
-      // console error.
-      if (error.response?.status === 404) return { isStale: true };
-      throw error;
-    }
-
-    if (masterResult.status === "rejected") {
-      if (!isNetworkError(masterResult.reason)) throw masterResult.reason;
-      // Master unreachable — nothing to compare against, don't falsely flag.
+    if (masterResult.status === "rejected" || localResult.status === "rejected") {
+      // Either side unreachable/erroring — nothing reliable to compare,
+      // don't falsely flag (the #1 check above already covers what it can).
       return { isStale: false };
     }
 

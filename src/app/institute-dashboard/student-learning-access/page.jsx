@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import StatusModal from "@/components/molecules/StatusModal";
 
@@ -21,10 +22,15 @@ import {
   FileText,
   CheckSquare,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 import { courseApi } from "@/services/course/courseApi";
 import { studentLearningAccessApi } from "@/services/studentLearningAccess/studentLearningAccessApi";
+import { moduleApi } from "@/services/topic/topicApi";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -181,6 +187,12 @@ const isEditMode = Boolean(editId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeSubtopicModal, setActiveSubtopicModal] = useState(null);
   const [pageError, setPageError] = useState("");
+
+  // Expanded lesson preview inside the subtopic modal — keyed by module id
+  // so only one row's video/audio/text content is fetched & shown at a time.
+  const [expandedModuleId, setExpandedModuleId] = useState(null);
+  const [modulePreview, setModulePreview] = useState(null);
+  const [loadingModulePreview, setLoadingModulePreview] = useState(false);
 
     const [statusData, setStatusData] = useState({
   open: false,
@@ -776,6 +788,8 @@ const isEditMode = Boolean(editId);
   ) => {
     try {
       setLoadingSubtopics(true);
+      setExpandedModuleId(null);
+      setModulePreview(null);
 
       const subtopicId =
         getId(subtopic);
@@ -816,6 +830,66 @@ const isEditMode = Boolean(editId);
       );
     } finally {
       setLoadingSubtopics(false);
+    }
+  };
+
+  /* =======================================================
+     PREVIEW A LESSON'S AUDIO / VIDEO / TEXT CONTENT
+  ======================================================= */
+
+  const handleTogglePreview = async (
+    module
+  ) => {
+    const moduleId = String(
+      module?._id ??
+        module?.id ??
+        module?.module_id ??
+        ""
+    );
+
+    if (!moduleId) return;
+
+    // Collapse if the same row is already expanded.
+    if (expandedModuleId === moduleId) {
+      setExpandedModuleId(null);
+      setModulePreview(null);
+      return;
+    }
+
+    setExpandedModuleId(moduleId);
+    setModulePreview(null);
+
+    // Vocabulary lessons don't have a single-content payload to preview
+    // here — only expand the row, skip the fetch.
+    if (
+      !["video", "audio", "text", "exercise"].includes(
+        String(module?.type).toLowerCase()
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoadingModulePreview(true);
+
+      const res = await moduleApi.getModuleById(
+        module.type,
+        moduleId
+      );
+
+      const data =
+        res?.data?.data ?? res?.data ?? null;
+
+      setModulePreview(data);
+    } catch (error) {
+      console.error(
+        "Failed to load lesson preview:",
+        error
+      );
+
+      setModulePreview({ __error: true });
+    } finally {
+      setLoadingModulePreview(false);
     }
   };
 
@@ -1023,60 +1097,59 @@ const handleConfirmSubmit = async () => {
      MODULE ICON
   ======================================================= */
 
+  const MODULE_TYPE_STYLES = {
+    video: {
+      icon: PlayCircle,
+      iconClass: "text-orange-600",
+      badgeClass: "bg-orange-100/60 text-orange-600",
+    },
+    audio: {
+      icon: Headphones,
+      iconClass: "text-sky-600",
+      badgeClass: "bg-sky-100/60 text-sky-600",
+    },
+    text: {
+      icon: FileText,
+      iconClass: "text-emerald-600",
+      badgeClass: "bg-emerald-100/60 text-emerald-600",
+    },
+    exercise: {
+      icon: CheckSquare,
+      iconClass: "text-purple-600",
+      badgeClass: "bg-purple-100/60 text-purple-600",
+    },
+    vocabulary: {
+      icon: BookOpen,
+      iconClass: "text-amber-600",
+      badgeClass: "bg-amber-100/60 text-amber-600",
+    },
+  };
+
+  const getModuleTypeStyle = (
+    type
+  ) =>
+    MODULE_TYPE_STYLES[
+      String(type).toLowerCase()
+    ] || {
+      icon: BookOpen,
+      iconClass: "text-orange-600",
+      badgeClass: "bg-orange-100/60 text-orange-600",
+    };
+
   const getModuleTypeIcon = (
     type
   ) => {
-    switch (
-      String(type).toLowerCase()
-    ) {
-      case "video":
-        return (
-          <PlayCircle
-            size={16}
-            className="text-orange-600"
-          />
-        );
+    const {
+      icon: Icon,
+      iconClass,
+    } = getModuleTypeStyle(type);
 
-      case "audio":
-        return (
-          <Headphones
-            size={16}
-            className="text-orange-600"
-          />
-        );
-
-      case "text":
-        return (
-          <FileText
-            size={16}
-            className="text-orange-600"
-          />
-        );
-
-      case "exercise":
-        return (
-          <CheckSquare
-            size={16}
-            className="text-orange-600"
-          />
-        );
-
-      case "vocabulary":
-        return (
-          <BookOpen
-            size={16}
-            className="text-orange-600"
-          />
-        );
-
-      default:
-        return (
-          <BookOpen
-            size={16}
-            className="text-orange-600"
-          />
-        );
-    }
+    return (
+      <Icon
+        size={16}
+        className={iconClass}
+      />
+    );
   };
 
   /* =======================================================
@@ -1668,10 +1741,12 @@ const handleConfirmSubmit = async () => {
           SUBTOPIC LESSON MODAL
       ===================================================== */}
 
-      {activeSubtopicModal && (
+      {activeSubtopicModal &&
+        typeof document !== "undefined" &&
+        createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg space-y-5 rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-orange-100 pb-4">
+          <div className="flex h-[90vh] w-full max-w-5xl flex-col space-y-5 rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-orange-100 pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-200">
                   <BookOpen size={20} />
@@ -1694,18 +1769,20 @@ const handleConfirmSubmit = async () => {
 
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
                   setActiveSubtopicModal(
                     null
-                  )
-                }
+                  );
+                  setExpandedModuleId(null);
+                  setModulePreview(null);
+                }}
                 className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 text-slate-400 transition hover:bg-orange-50 hover:text-slate-600"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="max-h-72 space-y-2.5 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Included Lessons &
                 Modules
@@ -1733,53 +1810,270 @@ const handleConfirmSubmit = async () => {
                   (
                     module,
                     index
-                  ) => (
+                  ) => {
+                    const moduleId = String(
+                      module?._id ??
+                        module?.id ??
+                        module?.module_id ??
+                        "module"
+                    );
+
+                    const isExpanded =
+                      expandedModuleId ===
+                      moduleId;
+
+                    return (
                     <div
-                      key={`module-${String(
-                        module?._id ??
-                          module?.id ??
-                          module?.module_id ??
-                          "module"
-                      )}-${index}`}
-                      className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/30 p-3"
+                      key={`module-${moduleId}-${index}`}
+                      className="rounded-xl border border-orange-100 bg-orange-50/30"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-orange-200 bg-white">
-                          {getModuleTypeIcon(
-                            module?.type
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleTogglePreview(
+                            module
+                          )
+                        }
+                        className="flex w-full items-center justify-between p-3 text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-orange-200 bg-white">
+                            {getModuleTypeIcon(
+                              module?.type
+                            )}
+                          </div>
+
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800">
+                              {module?.title ??
+                                module?.name ??
+                                module?.module_name ??
+                                "Untitled Module"}
+                            </h4>
+
+                            <span
+                              className={`rounded-md px-2 py-0.5 text-[10px] font-semibold capitalize ${
+                                getModuleTypeStyle(
+                                  module?.type
+                                ).badgeClass
+                              }`}
+                            >
+                              {module?.type ||
+                                "module"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {/* Each module document IS one lesson (see
+                              getSubtopicModules/studentAccess.js comments) —
+                              there's no separate per-module lesson sub-count
+                              to show, unlike the old badge here which always
+                              read a field ("module.lessons") that never
+                              existed. */}
+                          <span className="rounded-lg border border-orange-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
+                            1 Lesson
+                          </span>
+
+                          {isExpanded ? (
+                            <ChevronUp
+                              size={16}
+                              className="text-slate-400"
+                            />
+                          ) : (
+                            <ChevronDown
+                              size={16}
+                              className="text-slate-400"
+                            />
                           )}
                         </div>
+                      </button>
 
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-800">
-                            {module?.title ??
-                              module?.name ??
-                              module?.module_name ??
-                              "Untitled Module"}
-                          </h4>
+                      {isExpanded && (
+                        <div className="border-t border-orange-100 p-3">
+                          {loadingModulePreview ? (
+                            <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-400">
+                              <Loader2
+                                size={14}
+                                className="animate-spin text-orange-500"
+                              />
+                              Loading preview...
+                            </div>
+                          ) : modulePreview?.__error ? (
+                            <p className="py-4 text-center text-xs text-rose-500">
+                              Failed to load
+                              preview.
+                            </p>
+                          ) : String(
+                              module?.type
+                            ).toLowerCase() ===
+                            "video" ? (
+                            <video
+                              controls
+                              className="mx-auto aspect-video max-h-[55vh] w-full max-w-3xl rounded-lg bg-black"
+                              src={getPlayableVideoUrl(
+                                modulePreview?.video ??
+                                  modulePreview?.content
+                                    ?.video
+                              )}
+                            />
+                          ) : String(
+                              module?.type
+                            ).toLowerCase() ===
+                            "audio" ? (
+                            <audio
+                              controls
+                              className="w-full"
+                              src={getPlayableAudioUrl(
+                                modulePreview?.audio ??
+                                  modulePreview?.content
+                                    ?.audio
+                              )}
+                            />
+                          ) : String(
+                              module?.type
+                            ).toLowerCase() ===
+                            "text" ? (
+                            <div
+                              className="max-h-64 overflow-y-auto rounded-lg bg-white p-3 text-xs leading-relaxed text-slate-700 [&_p]:mb-2 [&_h2]:mb-1 [&_h2]:mt-2 [&_h2]:font-bold"
+                              dangerouslySetInnerHTML={{
+                                __html: sanitizeHtml(
+                                  modulePreview
+                                    ?.content
+                                    ?.body ??
+                                    modulePreview?.body ??
+                                    ""
+                                ),
+                              }}
+                            />
+                          ) : String(
+                              module?.type
+                            ).toLowerCase() ===
+                            "exercise" ? (
+                            !Array.isArray(
+                              modulePreview?.questions
+                            ) ||
+                            modulePreview
+                              .questions
+                              .length === 0 ? (
+                              <p className="py-4 text-center text-xs text-slate-400">
+                                No questions
+                                in this
+                                exercise.
+                              </p>
+                            ) : (
+                              <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+                                {modulePreview.questions.map(
+                                  (
+                                    q,
+                                    qIndex
+                                  ) => (
+                                    <div
+                                      key={
+                                        q?._id ??
+                                        qIndex
+                                      }
+                                      className="rounded-lg bg-white p-2.5"
+                                    >
+                                      <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-800">
+                                          Q
+                                          {qIndex +
+                                            1}
+                                          .{" "}
+                                          {q?.question_text ??
+                                            "Untitled question"}
+                                        </span>
 
-                          <span className="rounded-md bg-orange-100/60 px-2 py-0.5 text-[10px] font-semibold capitalize text-orange-600">
-                            {module?.type ||
-                              "module"}
-                          </span>
+                                        <span className="rounded-md bg-purple-100/60 px-2 py-0.5 text-[10px] font-semibold capitalize text-purple-600">
+                                          {(
+                                            q?.question_type ||
+                                            "question"
+                                          ).replace(
+                                            /_/g,
+                                            " "
+                                          )}
+                                        </span>
+                                      </div>
+
+                                      {Array.isArray(
+                                        q?.options
+                                      ) &&
+                                      q.options
+                                        .length >
+                                        0 ? (
+                                        <ul className="space-y-1 pl-1 text-[11px] text-slate-600">
+                                          {q.options.map(
+                                            (
+                                              opt,
+                                              optIndex
+                                            ) => {
+                                              const isCorrect =
+                                                String(
+                                                  q?.correct_answer
+                                                ) ===
+                                                  String(
+                                                    opt
+                                                  ) ||
+                                                String(
+                                                  q?.correct_answer
+                                                ) ===
+                                                  String(
+                                                    optIndex
+                                                  );
+
+                                              return (
+                                                <li
+                                                  key={
+                                                    optIndex
+                                                  }
+                                                  className={
+                                                    isCorrect
+                                                      ? "font-semibold text-emerald-600"
+                                                      : ""
+                                                  }
+                                                >
+                                                  {isCorrect
+                                                    ? "✓ "
+                                                    : "• "}
+                                                  {
+                                                    opt
+                                                  }
+                                                </li>
+                                              );
+                                            }
+                                          )}
+                                        </ul>
+                                      ) : q?.correct_answer ? (
+                                        <p className="text-[11px] text-emerald-600">
+                                          ✓ Answer:{" "}
+                                          {String(
+                                            q.correct_answer
+                                          )}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )
+                          ) : (
+                            <p className="py-4 text-center text-xs text-slate-400">
+                              No inline
+                              preview for this
+                              lesson type.
+                            </p>
+                          )}
                         </div>
-                      </div>
-
-                      {/* Each module document IS one lesson (see
-                          getSubtopicModules/studentAccess.js comments) —
-                          there's no separate per-module lesson sub-count to
-                          show, unlike the old badge here which always read a
-                          field ("module.lessons") that never existed. */}
-                      <span className="rounded-lg border border-orange-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                        1 Lesson
-                      </span>
+                      )}
                     </div>
-                  )
+                    );
+                  }
                 )
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-orange-100 pt-3">
+            <div className="flex shrink-0 items-center justify-between border-t border-orange-100 pt-3">
               <span className="text-xs font-medium text-slate-500">
                 Total Lessons:{" "}
                 <strong className="text-slate-800">
@@ -1799,6 +2093,8 @@ const handleConfirmSubmit = async () => {
                   setActiveSubtopicModal(
                     null
                   );
+                  setExpandedModuleId(null);
+                  setModulePreview(null);
                 }}
                 className={`rounded-xl px-5 py-2 text-xs font-semibold shadow-sm transition ${
                   selectedSubtopics.includes(
@@ -1820,9 +2116,10 @@ const handleConfirmSubmit = async () => {
               </button>
             </div>
           </div>
-        
-         
-        </div>
+
+
+        </div>,
+        document.body,
       )}
 
       {/* =====================================================
