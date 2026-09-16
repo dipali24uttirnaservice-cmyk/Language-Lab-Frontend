@@ -147,12 +147,14 @@ const router = useRouter();
           // route starts with it, so it added noise without any
           // navigational value.
           .slice(1)
-          // "assign"/"view"/"submissions"/"course-content" are just
-          // intermediate route segments for the practical-manual assign,
-          // detail-view, and submissions flows (.../practical-manual/assign/{id},
-          // .../practical-manual/view/{id}, .../practical-manual/submissions/{id})
-          // and the settings course-content detail page
-          // (.../settings/course-content/{courseId}) — none is a page of its
+          // "assign"/"view"/"submissions"/"course-content"/"video-progress"
+          // are just intermediate route segments for the practical-manual
+          // assign, detail-view, and submissions flows
+          // (.../practical-manual/assign/{id}, .../practical-manual/view/{id},
+          // .../practical-manual/submissions/{id}) and the settings
+          // course-content/video-progress detail pages
+          // (.../settings/course-content/{courseId},
+          // .../settings/video-progress/{courseId}) — none is a page of its
           // own, so all are hidden from the trail while their hrefs still
           // point deeper via the segments around them. Same for the resolved
           // task-title crumb right before "add-question"
@@ -165,6 +167,7 @@ const router = useRouter();
               crumb.segment !== "view" &&
               crumb.segment !== "submissions" &&
               crumb.segment !== "course-content" &&
+              crumb.segment !== "video-progress" &&
               !(crumb.isResolvableId && crumb.nextSegment === "add-question")
           );
 

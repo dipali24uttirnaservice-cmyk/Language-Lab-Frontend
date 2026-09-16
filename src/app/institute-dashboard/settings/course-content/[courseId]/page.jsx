@@ -26,6 +26,7 @@ import {
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi, moduleApi } from "@/services/topic/topicApi";
 import { getPlayableVideoUrl, getPlayableAudioUrl } from "@/utils/media";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 // Single source of truth for the 5 content types every subtopic can hold —
 // order here drives the order they're rendered in everywhere below.
@@ -737,7 +738,10 @@ function OfflineContentRow({ title, moduleId, type }) {
   const [preview, setPreview] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  if (type !== "exercise") {
+  // Vocabulary has no single-content payload worth previewing inline here —
+  // stays a plain static row. Text and Exercise both expand to a fetched
+  // preview below.
+  if (type !== "exercise" && type !== "text") {
     return (
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <p className="text-xs font-semibold text-slate-700 truncate">{title || "Untitled"}</p>
@@ -760,10 +764,10 @@ function OfflineContentRow({ title, moduleId, type }) {
 
     try {
       setLoadingPreview(true);
-      const res = await moduleApi.getModuleById("exercise", moduleId);
+      const res = await moduleApi.getModuleById(type, moduleId);
       setPreview(res?.data?.data ?? res?.data ?? null);
     } catch (error) {
-      console.error("Failed to load exercise preview:", error);
+      console.error("Failed to load lesson preview:", error);
       setPreview({ __error: true });
     } finally {
       setLoadingPreview(false);
@@ -794,6 +798,13 @@ function OfflineContentRow({ title, moduleId, type }) {
             </div>
           ) : preview?.__error ? (
             <p className="py-2 text-center text-xs text-rose-500">Failed to load preview.</p>
+          ) : type === "text" ? (
+            <div
+              className="max-h-64 overflow-y-auto rounded-lg bg-white p-2.5 text-xs leading-relaxed text-slate-700 [&_p]:mb-2 [&_h2]:mb-1 [&_h2]:mt-2 [&_h2]:font-bold"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(preview?.content?.body ?? preview?.body ?? ""),
+              }}
+            />
           ) : !Array.isArray(preview?.questions) || preview.questions.length === 0 ? (
             <p className="py-2 text-center text-xs text-slate-400">No questions in this exercise.</p>
           ) : (
