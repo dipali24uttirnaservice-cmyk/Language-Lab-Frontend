@@ -124,7 +124,9 @@ export default function StudentViewModal({
     label="Purchased Courses"
     value={
       student.purchased_courses?.length
-        ? student.purchased_courses.join(", ")
+        ? student.purchased_courses
+            .map((course) => course.course_name)
+            .join(", ")
         : "No Courses Purchased"
     }
   />
