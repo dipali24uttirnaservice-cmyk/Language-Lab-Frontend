@@ -24,11 +24,11 @@ export const studentFormSchemaAdd = Yup.object({
 
   enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  segment: Yup.string().trim().required("Segment is required"),
+  segment: Yup.string().trim().required("Department/Branch is required"),
 
   year: Yup.string()
-    .required("Year is required")
-    .oneOf(["1", "2", "3", "4", "5", "6"], "Year must be between 1 and 6"),
+    .required("Batch is required")
+    .oneOf(["1", "2", "3", "4", "5", "6"], "Batch must be between 1 and 6"),
 });
 
 export const studentFormSchemaEdit = Yup.object({
@@ -56,9 +56,9 @@ export const studentFormSchemaEdit = Yup.object({
 
   enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  segment: Yup.string().trim().required("Segment is required"),
+  segment: Yup.string().trim().required("Department/Branch is required"),
 
   year: Yup.string()
-    .required("Year is required")
-    .oneOf(["1", "2", "3", "4", "5", "6"], "Year must be between 1 and 6"),
+    .required("Batch is required")
+    .oneOf(["1", "2", "3", "4", "5", "6"], "Batch must be between 1 and 6"),
 });

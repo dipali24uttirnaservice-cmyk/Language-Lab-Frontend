@@ -365,7 +365,7 @@ export default function ProfilePage() {
 
           <ReadOnlyCard
             icon="🏆"
-            label="Year"
+            label="Batch"
             value={profile?.year}
           />
 

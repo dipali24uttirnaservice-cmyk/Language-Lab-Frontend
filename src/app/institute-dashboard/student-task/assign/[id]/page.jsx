@@ -303,13 +303,13 @@ export default function AssignTaskPage() {
                     {!departmentId
                       ? "Select Department/Branch First"
                       : batches.length > 0
-                        ? "Select Year/Batch"
+                        ? "Select Batch"
                         : "No Batches Found"}
                   </option>
 
                   {batches.map((batch) => (
                     <option key={batch.year} value={batch.year}>
-                      Year {batch.year}
+                      Batch {batch.year}
                       {batch.studentCount != null
                         ? ` (${batch.studentCount} students)`
                         : ""}

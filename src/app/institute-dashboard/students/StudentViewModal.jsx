@@ -109,14 +109,14 @@ export default function StudentViewModal({
 
   <DetailRow
     icon={<GraduationCap size={16} />}
-    label="Segment"
+    label="Department/Branch"
     value={student.segment}
   />
 
   <DetailRow
     icon={<GraduationCap size={16} />}
-    label="Segment Year"
-    value={`Year ${student.year}`}
+    label="Batch"
+    value={`Batch ${student.year}`}
   />
 
   <DetailRow

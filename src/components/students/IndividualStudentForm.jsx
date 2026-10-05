@@ -408,7 +408,7 @@ await studentApi.createStudent(data);
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Segment</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Department/Branch</label>
                <select
   value={formData.segment}
   onChange={(e) =>
@@ -421,7 +421,7 @@ await studentApi.createStudent(data);
   }`}
 >
   <option value="">
-    Select Segment
+    Select Department/Branch
   </option>
 
   {segmentOptions.map((segment) => (
@@ -437,7 +437,7 @@ await studentApi.createStudent(data);
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">College Year</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Batch</label>
                  <select
   value={formData.year}
   onChange={(e) =>
@@ -450,7 +450,7 @@ await studentApi.createStudent(data);
   }`}
 >
   <option value="">
-    Select College Year
+    Select Batch
   </option>
 
   {yearOptions.map((year) => (
@@ -458,7 +458,7 @@ await studentApi.createStudent(data);
       key={year}
       value={year}
     >
-      Year {year}
+      Batch {year}
     </option>
   ))}
 </select>

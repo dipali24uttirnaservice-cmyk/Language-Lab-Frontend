@@ -998,14 +998,14 @@ const handleConfirmSubmit = async () => {
     }
 
     if (!payload.segment) {
-      throw new Error("Segment is required.");
+      throw new Error("Department/Branch is required.");
     }
 
     if (
       !Number.isFinite(payload.year) ||
       payload.year <= 0
     ) {
-      throw new Error("Year is required.");
+      throw new Error("Batch is required.");
     }
 
     // API call
@@ -1630,12 +1630,12 @@ const handleConfirmSubmit = async () => {
 
                 <div>
                   <h2 className="text-sm font-bold text-slate-800">
-                    Step 5: Select Batch / Year
+                    Step 5: Select Batch
                   </h2>
 
                   <p className="text-[11px] text-slate-400">
                     Select a single target
-                    year within{" "}
+                    batch within{" "}
                     {selectedDepartment?.name ||
                       "department"}
                   </p>
@@ -1643,7 +1643,7 @@ const handleConfirmSubmit = async () => {
               </div>
 
               <SelectField
-                label="Batch / Year"
+                label="Batch"
                 icon={GraduationCap}
                 value={selectedBatchId}
                 onChange={(e) =>
@@ -1653,7 +1653,7 @@ const handleConfirmSubmit = async () => {
                 }
                 placeholder={
                   departmentId
-                    ? "Select Year/Batch"
+                    ? "Select Batch"
                     : "First select a department"
                 }
                 options={availableBatches.map(
@@ -1664,7 +1664,7 @@ const handleConfirmSubmit = async () => {
                     value: String(
                       batch.year
                     ),
-                    label: `Year ${
+                    label: `Batch ${
                       batch.year
                     } (${
                       batch.studentCount ??
@@ -2187,7 +2187,7 @@ const handleConfirmSubmit = async () => {
               />
 
               <SummaryRow
-                label="Department / Segment"
+                label="Department/Branch"
                 value={
                   selectedDepartment?.name ||
                   departmentId ||
@@ -2196,10 +2196,10 @@ const handleConfirmSubmit = async () => {
               />
 
               <SummaryRow
-                label="Target Batch / Year"
+                label="Target Batch"
                 value={
                   selectedBatchId
-                    ? `Year ${selectedBatchId}`
+                    ? `Batch ${selectedBatchId}`
                     : "-"
                 }
                 valueClass="text-orange-800"

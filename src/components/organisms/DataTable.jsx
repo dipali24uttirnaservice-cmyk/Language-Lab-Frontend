@@ -65,9 +65,9 @@ const paginatedData = useMemo(() => {
   );
 }, [filteredData, currentPage]);
 
-  const allCurrentPageSelected =
-  paginatedData.length > 0 &&
-  paginatedData.every((student) =>
+  const allFilteredSelected =
+  filteredData.length > 0 &&
+  filteredData.every((student) =>
     selectedStudents?.includes(student._id)
   );
   return (
@@ -103,8 +103,8 @@ const paginatedData = useMemo(() => {
       <th className="p-4 w-12">
         <input
           type="checkbox"
-          checked={allCurrentPageSelected}
-          onChange={() => onSelectAll(paginatedData)}
+          checked={allFilteredSelected}
+          onChange={() => onSelectAll(filteredData)}
         />
       </th>
     )}
