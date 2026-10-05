@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, Plus, RotateCcw } from "lucide-react";
+import { Search, Plus, RotateCcw, GraduationCap } from "lucide-react";
 
 export default function TableToolbar({
   title,
@@ -14,6 +14,9 @@ export default function TableToolbar({
   setYear,
   segmentOptions = [],
   yearOptions = [],
+  showSelection = false,
+  filteredCount = 0,
+  onAssignAll,
 }) {
   const clearFilters = () => {
     setSearch("");
@@ -81,7 +84,7 @@ export default function TableToolbar({
   } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
 >
   <option value="" disabled>
-    Select Department
+    Department/Branch
   </option>
 
   {segmentOptions
@@ -110,7 +113,7 @@ export default function TableToolbar({
   } focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10`}
 >
   <option value="" disabled>
-    Select Year
+    Year/Batch
   </option>
 
   {yearOptions
@@ -138,6 +141,25 @@ export default function TableToolbar({
           </motion.button>
         </div>
       </div>
+
+      {showSelection && (
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+          <p className="text-sm font-semibold text-orange-700">
+            {filteredCount} student{filteredCount !== 1 ? "s" : ""} matched for this department &amp; year.
+          </p>
+
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onAssignAll}
+            disabled={filteredCount === 0}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+          >
+            <GraduationCap size={16} strokeWidth={2.5} />
+            Assign Course to All
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

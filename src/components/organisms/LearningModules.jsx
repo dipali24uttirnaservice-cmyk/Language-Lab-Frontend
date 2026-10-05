@@ -4,12 +4,16 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { courseApi } from "@/services/course/courseApi";
+import { studentTaskApi } from "@/services/task/studentTaskApi";
+import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
 import {
   Video,
   Headphones,
   FileText,
   ClipboardCheck,
   BookOpen,
+  FileSpreadsheet,
+  ListTodo,
   ChevronRight,
   Sparkles,
 } from "lucide-react";
@@ -27,14 +31,54 @@ export default function LearningModules({ courseId, courseName }) {
         const res = await courseApi.getModuleCount(courseId);
         // API → { success: true, data: { module_counts: { video, audio, text, vocabulary, exercise } } }
         const counts = res.data?.data?.module_counts || {};
-        setModuleCounts(counts);
+        console.log(`[ModuleCount] GET /module/course/${courseId}/count ->`, counts);
+        // Merge instead of replacing — the Task/Practical Manual effect
+        // below sets its own counts independently (and can resolve first),
+        // so overwriting the whole object here was wiping those two out
+        // whenever this fetch finished last, leaving their badges blank.
+        setModuleCounts((prev) => ({ ...prev, ...counts }));
       } catch (err) {
-        console.error("[ModuleCount] Failed:", err?.response?.status);
+        // A 401 here means the session was invalidated (e.g. the same
+        // account logged in from another device) — the global axios
+        // interceptor already surfaces that via the "Session Expired"
+        // popup, so logging it again here would just be noise.
+        if (err?.response?.status !== 401) {
+          console.error("[ModuleCount] Failed:", err?.response?.status);
+        }
       } finally {
         setCountsLoading(false);
       }
     };
     fetchCounts();
+  }, [courseId]);
+
+  // Tasks and Practical Manuals aren't ModuleType documents, so they're not
+  // part of getModuleCount — fetch their counts for this course separately.
+  useEffect(() => {
+    if (!courseId) return;
+    studentTaskApi
+      .getMine({ courseId })
+      .then((res) => {
+        const count = res.data?.data?.tasks?.length || 0;
+        setModuleCounts((prev) => ({ ...prev, task: count }));
+      })
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("[TaskCount] Failed:", err?.response?.status);
+        }
+      });
+
+    studentPracticalApi
+      .getMine({ courseId })
+      .then((res) => {
+        const count = res.data?.data?.practicals?.length || 0;
+        setModuleCounts((prev) => ({ ...prev, practical_manual: count }));
+      })
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("[PracticalCount] Failed:", err?.response?.status);
+        }
+      });
   }, [courseId]);
 
   // 3D Floating Network Mesh Canvas Background Animation
@@ -50,7 +94,7 @@ export default function LearningModules({ courseId, courseName }) {
 
     const particles = [];
     const particleCount = 45;
-    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899"];
+    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899","#06b6d4"];
 
     let mouse = { x: -1000, y: -1000 };
 
@@ -195,6 +239,22 @@ export default function LearningModules({ courseId, courseName }) {
       shadowColor: "rgba(236, 72, 153, 0.25)",
       description: "Learn new words",
     },
+    {
+    title: "Practical Manual",
+    type: "practical_manual", // Match this key with your backend API response
+    icon: FileSpreadsheet,
+    color: "from-cyan-500 to-teal-600",
+    shadowColor: "rgba(6, 182, 212, 0.25)",
+    description: "Access hands-on lab guides",
+  },
+    {
+      title: "Task",
+      type: "task",
+      icon: ListTodo,
+      color: "from-fuchsia-500 to-purple-600",
+      shadowColor: "rgba(217, 70, 239, 0.25)",
+      description: "Assignments from your institute",
+    },
   ];
 
   return (
@@ -243,7 +303,7 @@ export default function LearningModules({ courseId, courseName }) {
               transition: { staggerChildren: 0.08 }
             }
           }}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+         className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6"
         >
           {modules.map((module) => {
             const Icon = module.icon;
@@ -262,6 +322,11 @@ export default function LearningModules({ courseId, courseName }) {
                 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
+                  // Every module type — including Task and Practical Manual —
+                  // goes through Topic selection first, same as Video/Audio/
+                  // Text/Exercise/Vocabulary. Topic → SubTopic then special-
+                  // cases Task/Practical Manual to skip the SubTopic layer
+                  // (neither one has subtopics).
                   const params = new URLSearchParams();
                   if (courseId) params.set("courseId", courseId);
                   if (courseName) params.set("courseName", courseName);

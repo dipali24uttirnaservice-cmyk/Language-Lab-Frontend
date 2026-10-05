@@ -3,14 +3,33 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import DashboardStats from "@/components/organisms/DashboardStats";
 import RecentActivity from "@/components/organisms/RecentActivity";
-import SkillRadarChart from "@/components/organisms/SkillRadarChart";
-import WeeklyConsistency from "@/components/organisms/WeeklyConsistency";
-import RecommendationHub from "@/components/organisms/RecommendationHub";
-import AttendanceWidget from "@/components/organisms/AttendanceWidget";
 import OverallScoreGauge from "@/components/organisms/OverallScoreGauge";
+
+// These render recharts (a heavy dependency), so code-split them out of the
+// initial dashboard bundle instead of loading the charting library up front.
+const ChartSkeleton = () => (
+  <div className="h-64 w-full animate-pulse rounded-2xl bg-slate-100" />
+);
+const SkillRadarChart = dynamic(() => import("@/components/organisms/SkillRadarChart"), {
+  loading: ChartSkeleton,
+  ssr: false,
+});
+const WeeklyConsistency = dynamic(() => import("@/components/organisms/WeeklyConsistency"), {
+  loading: ChartSkeleton,
+  ssr: false,
+});
+const RecommendationHub = dynamic(() => import("@/components/organisms/RecommendationHub"), {
+  loading: ChartSkeleton,
+  ssr: false,
+});
+const AttendanceWidget = dynamic(() => import("@/components/organisms/AttendanceWidget"), {
+  loading: ChartSkeleton,
+  ssr: false,
+});
 
 import { progressApi } from "@/services/progress/progressApi";
 import { activityApi } from "@/services/activity/activityApi";
@@ -173,10 +192,13 @@ export default function DashboardPage() {
         }
 
         setStatsData({
-          enrolledCourses: coursesCount || 1,
+          // Previously "|| 1" here forced the card to read at least "1"
+          // even when the student had 0 enrolled courses / 0-day streak,
+          // faking data that didn't exist. Show the real counts instead.
+          enrolledCourses: coursesCount,
           aiInteractions: aiData.length,
           attendanceRate,
-          streakDays: streak || 1,
+          streakDays: streak,
           pendingModules: kpiData.pendingModules,
           totalLessons: kpiData.totalLessons,
           completedLessons: kpiData.completedLessons,
@@ -351,6 +373,8 @@ export default function DashboardPage() {
 
           {/* Action Row containing Demo toggle and Coach status */}
           <div className="flex items-center gap-3 self-start sm:self-auto">
+            {/* Demo/dummy data toggle disabled — page always shows the
+                learner's real (original/live) dashboard data now.
             <button
               onClick={toggleDemoMode}
               className={`rounded-2xl px-4 py-2 text-sm font-black transition-all duration-200 shadow-sm border cursor-pointer ${isDemoMode
@@ -360,7 +384,8 @@ export default function DashboardPage() {
             >
               {isDemoMode ? "⚡ Restore Live Data" : "📊 Fill Demo Data"}
             </button>
-            {/* 
+            */}
+            {/*
             <div className="flex items-center gap-2 rounded-2xl border border-white bg-white/80 p-2.5 shadow-sm backdrop-blur-md">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-sm font-black text-slate-600 uppercase tracking-wide">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -16,7 +16,7 @@ import { progressApi } from "@/services/progress/progressApi";
 import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-export default function TopicPage() {
+function TopicPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -44,7 +44,10 @@ const topicName = searchParams.get("topicName");
 
   useEffect(() => {
   if (!courseId) {
+    // No standalone "no course selected" page anymore — bounce straight to
+    // the dashboard instead of leaving the student on a dead-end screen.
     setLoading(false);
+    router.replace("/dashboard");
     return;
   }
 
@@ -55,9 +58,14 @@ const topicName = searchParams.get("topicName");
 const fetchTopics = async () => {
   try {
     const response = await topicApi.getTopics(courseId);
-    setTopics(response.data.data || []);
+    const fetchedTopics = response.data.data || [];
+    console.log(
+      `[topics] GET /topic?course_id=${courseId} -> ${fetchedTopics.length} topic(s)`,
+      response.data,
+    );
+    setTopics(fetchedTopics);
   } catch (error) {
-    console.error(error);
+    console.error(`[topics] GET /topic?course_id=${courseId} failed:`, error);
   } finally {
     setLoading(false);
   }
@@ -91,28 +99,14 @@ const fetchCourseProgress = async () => {
 
   if (!courseId) {
     return (
-      <div className="h-[70vh] flex flex-col items-center justify-center text-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
-          <BookOpen size={28} />
-        </div>
-        <div>
-          <h2 className="text-lg font-black text-slate-800">No course selected</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Pick a course from your Learning Journey to see its topics.
-          </p>
-        </div>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg hover:scale-105 transition-all"
-        >
-          Go to Dashboard
-        </button>
+      <div className="h-[70vh] flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
       </div>
     );
   }
 
 return (
-  <div className="relative min-h-screen overflow-hidden p-2">
+  <div className="relative min-h-screen overflow-hidden p-6">
 
 
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -479,4 +473,12 @@ return (
     </div>
   </div>
 );
+}
+
+export default function TopicPage() {
+  return (
+    <Suspense fallback={null}>
+      <TopicPageContent />
+    </Suspense>
+  );
 }

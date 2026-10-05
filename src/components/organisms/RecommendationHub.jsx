@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { FaBookOpen, FaMicrophone, FaBriefcase, FaGraduationCap, FaCheckCircle, FaChevronRight, FaRegClipboard } from "react-icons/fa";
+import { FaBookOpen, FaMicrophone, FaBriefcase, FaGraduationCap, FaCheckCircle, FaRegClipboard } from "react-icons/fa";
 
 const MODULE_TYPE_DETAILS = {
   audio: { label: "Speaking/Listening", color: "#f59e0b", icon: <FaMicrophone className="text-amber-500" /> },
@@ -72,15 +71,6 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
   // 2. Identify incomplete modules
   const incompleteModules = progress.filter((item) => !item.is_completed);
   const displayIncomplete = incompleteModules.slice(0, 3); // show first 3
-
-  // 3. Dynamic navigation link at bottom
-  let learnModuleUrl = "/dashboard/topics"; // fallback
-  let btnLabel = "Explore Course Curriculum";
-  if (incompleteModules.length > 0) {
-    const nextItem = incompleteModules[0];
-    learnModuleUrl = `/dashboard/module/${nextItem.module_type}/${nextItem.subtopic_id}`;
-    btnLabel = `Continue Learning`;
-  }
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -224,17 +214,6 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
           </div>
         </div>
 
-      </div>
-
-      {/* Button at the bottom for deep-link navigation */}
-      <div className="border-t border-slate-100 pt-4">
-        <Link
-          href={learnModuleUrl}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm transition-all duration-200 shadow-md shadow-indigo-600/10"
-        >
-          {btnLabel}
-          <FaChevronRight className="text-[11px]" />
-        </Link>
       </div>
 
     </motion.div>

@@ -1,12 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import BulkUploadStudent from "@/components/students/BulkUploadStudent";
 import IndividualStudentForm from "@/components/students/IndividualStudentForm";
 import { studentApi } from "@/services/student/studentApi";
 
-export default function AddStudentPage() {
+function AddStudentPageContent() {
   const params = useSearchParams();
 
   const type = params.get("type");
@@ -68,5 +68,13 @@ export default function AddStudentPage() {
         <BulkUploadStudent />
       )}
     </>
+  );
+}
+
+export default function AddStudentPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddStudentPageContent />
+    </Suspense>
   );
 }

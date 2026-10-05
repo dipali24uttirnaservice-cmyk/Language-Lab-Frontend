@@ -185,6 +185,9 @@ export default function ProfilePage() {
     {/* Profile Image */}
     <div className="-mt-16 relative w-fit mx-auto group/avatar">
       <div className="h-32 w-32 rounded-full p-1 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-400 shadow-2xl">
+        {/* photoPreview can be a blob: URL from URL.createObjectURL() before upload —
+            next/image can't optimize blob URLs, so a plain <img> is intentional here. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={
             photoPreview ||
@@ -349,21 +352,21 @@ export default function ProfilePage() {
           <ReadOnlyCard
             icon="🎓"
             label="Enrollment No"
-            value={profile.enrollment_no}
+            value={profile?.enrollment_no}
           />
 
           <ReadOnlyCard
             icon="🆔"
             label="Roll No"
-            value={profile.roll_no}
+            value={profile?.roll_no}
           />
 
-         
+
 
           <ReadOnlyCard
             icon="🏆"
             label="Year"
-            value={profile.year}
+            value={profile?.year}
           />
 
         </div>
