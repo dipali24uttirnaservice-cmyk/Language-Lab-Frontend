@@ -160,6 +160,12 @@ const handleSelectAll = (studentsOnPage) => {
   }
 };
 
+const handleAssignAll = () => {
+  const ids = filteredData.map((s) => s._id);
+  setSelectedStudents(ids);
+  openAssignModal(ids);
+};
+
 const openAssignModal = async (studentIds) => {
   try {
     const response = await courseApi.getCourses();
@@ -516,6 +522,7 @@ showSelection={showSelection}
     selectedStudents={selectedStudents}
   onSelectStudent={handleSelectStudent}
   onSelectAll={handleSelectAll}
+  onAssignAll={handleAssignAll}
 />
     <input
   id="studentExcelUpload"

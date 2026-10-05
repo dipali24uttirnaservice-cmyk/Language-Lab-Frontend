@@ -24,6 +24,7 @@ export default function DataTable({
   onSelectStudent,
   onSelectAll,
     showSelection,
+  onAssignAll,
 
 }){
 
@@ -86,6 +87,10 @@ const paginatedData = useMemo(() => {
 
   segmentOptions={segmentOptions}
   yearOptions={yearOptions}
+
+  showSelection={showSelection}
+  filteredCount={filteredData.length}
+  onAssignAll={onAssignAll}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
