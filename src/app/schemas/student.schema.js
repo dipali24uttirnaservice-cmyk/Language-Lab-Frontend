@@ -17,8 +17,8 @@ export const studentFormSchemaAdd = Yup.object({
 
   password: Yup.string()
     .required("Password is required")
-    .min(6, "Password must be 6 characters")
-    .max(6, "Password must be 6 characters"),
+    .min(6, "Password must be at least 6 characters")
+    .max(72, "Password must be at most 72 characters"),
 
   roll_no: Yup.string().trim().required("Roll Number is required"),
 
@@ -43,8 +43,8 @@ export const studentFormSchemaEdit = Yup.object({
     .notRequired()
     .test(
       "password-length",
-      "Password must be 6 characters",
-      (value) => !value || value.length === 6,
+      "Password must be between 6 and 72 characters",
+      (value) => !value || (value.length >= 6 && value.length <= 72),
     ),
 
   phone: Yup.string()

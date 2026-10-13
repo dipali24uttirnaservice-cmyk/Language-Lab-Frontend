@@ -43,7 +43,7 @@ export default function StudentLearningAccessListPage() {
 
   const [deleteModal, setDeleteModal] = useState({
     open: false,
-    id: null,
+    ids: null,
   });
 
   /* =========================================================
@@ -114,48 +114,52 @@ export default function StudentLearningAccessListPage() {
      DELETE - OPEN CONFIRM MODAL
   ========================================================= */
 
-  const handleDeleteModule = (id) => {
+  const handleDeleteModule = (group) => {
     setDeleteModal({
       open: true,
-      id,
+      ids: group.records.map((record) => record._id),
     });
   };
 
   /* =========================================================
      DELETE - CONFIRM
+     A group can back several batch records — remove all of them.
   ========================================================= */
 
   const confirmDelete = async () => {
-    if (!deleteModal.id) return;
+    const ids = deleteModal.ids;
 
-    const id = deleteModal.id;
+    if (!ids || ids.length === 0) return;
 
-    setDeletingId(id);
+    setDeletingId(ids[0]);
 
     try {
-      await studentLearningAccessApi.remove(id);
+      await Promise.all(ids.map((id) => studentLearningAccessApi.remove(id)));
 
       setConfiguredModules((prev) =>
-        prev.filter((module) => module._id !== id),
+        prev.filter((module) => !ids.includes(module._id)),
       );
 
       setDeleteModal({
         open: false,
-        id: null,
+        ids: null,
       });
 
       setStatusData({
         open: true,
         type: "success",
         title: "Deleted Successfully",
-        message: "Learning access module deleted successfully.",
+        message:
+          ids.length > 1
+            ? `Learning access removed for ${ids.length} batches.`
+            : "Learning access module deleted successfully.",
       });
     } catch (err) {
       console.error("Failed to delete learning access:", err);
 
       setDeleteModal({
         open: false,
-        id: null,
+        ids: null,
       });
 
       setStatusData({
@@ -171,6 +175,60 @@ export default function StudentLearningAccessListPage() {
       setDeletingId(null);
     }
   };
+
+  /* =========================================================
+     GROUP RECORDS BY MODULE
+     Each batch gets its own backend record (course_id + topic_id +
+     subtopic_ids + segment + year), but they should read as ONE row
+     here — "this module is assigned to batches 1, 2, 3" — so group
+     records that share everything except the batch/year together.
+  ========================================================= */
+
+  const groupKey = useCallback((mod) => {
+    const subtopicKey = Array.isArray(mod.subtopic_ids)
+      ? [...mod.subtopic_ids].map(String).sort().join(",")
+      : "";
+
+    return [mod.course_id, mod.topic_id, mod.segment, subtopicKey].join("|");
+  }, []);
+
+  const groupedModules = useMemo(() => {
+    const groups = new Map();
+
+    configuredModules.forEach((mod) => {
+      const key = groupKey(mod);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          course: mod.course,
+          topic: mod.topic,
+          segment: mod.segment,
+          records: [],
+        });
+      }
+
+      groups.get(key).records.push(mod);
+    });
+
+    return Array.from(groups.values()).map((group) => ({
+      ...group,
+      records: [...group.records].sort(
+        (a, b) => Number(a.year || 0) - Number(b.year || 0),
+      ),
+      totalStudentCount: group.records.reduce(
+        (sum, record) => sum + Number(record.student_count ?? 0),
+        0,
+      ),
+      latestCreatedAt: group.records.reduce(
+        (latest, record) =>
+          record.createdAt && record.createdAt > latest
+            ? record.createdAt
+            : latest,
+        "",
+      ),
+    }));
+  }, [configuredModules, groupKey]);
 
   /* =========================================================
      FILTER OPTIONS
@@ -213,29 +271,35 @@ export default function StudentLearningAccessListPage() {
   const displayedModules = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
 
-    return configuredModules.filter((mod) => {
-      const courseName = mod.course?.course_name?.toLowerCase() || "";
+    return groupedModules.filter((group) => {
+      const courseName = group.course?.course_name?.toLowerCase() || "";
 
-      const topicName = mod.topic?.title?.toLowerCase() || "";
+      const topicName = group.topic?.title?.toLowerCase() || "";
 
-      const departmentName = mod.segment?.toLowerCase() || "";
+      const departmentName = group.segment?.toLowerCase() || "";
 
-      const year = String(mod.year || "").toLowerCase();
+      const years = group.records
+        .map((record) => String(record.year || "").toLowerCase())
+        .join(" ");
 
       const matchesSearch =
         !query ||
         courseName.includes(query) ||
         topicName.includes(query) ||
         departmentName.includes(query) ||
-        year.includes(query);
+        years.includes(query);
 
-      const matchesCourse = !filterCourse || mod.course_id === filterCourse;
+      const matchesCourse =
+        !filterCourse ||
+        group.records.some((record) => record.course_id === filterCourse);
 
-      const matchesTopic = !filterTopic || mod.topic_id === filterTopic;
+      const matchesTopic =
+        !filterTopic ||
+        group.records.some((record) => record.topic_id === filterTopic);
 
       return matchesSearch && matchesCourse && matchesTopic;
     });
-  }, [configuredModules, searchQuery, filterCourse, filterTopic]);
+  }, [groupedModules, searchQuery, filterCourse, filterTopic]);
 
   /* =========================================================
      RESET PAGE WHEN FILTER CHANGES
@@ -356,11 +420,11 @@ export default function StudentLearningAccessListPage() {
           </p>
 
           <h1 className="text-2xl font-extrabold text-slate-900">
-            Learning Modules
+            Assigned Syllabus
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage curriculum modules, departmental batch allocations, and
+            Manage assigned syllabus, departmental batch allocations, and
             student access efficiently.
           </p>
         </div>
@@ -371,7 +435,7 @@ export default function StudentLearningAccessListPage() {
           className="flex items-center gap-2 self-start rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:from-orange-600 hover:to-amber-600 hover:shadow-xl active:scale-95 md:self-auto"
         >
           <Plus size={18} />
-          Add Module
+          Assign Syllabus
         </button>
       </div>
 
@@ -495,100 +559,111 @@ export default function StudentLearningAccessListPage() {
               ) : (
                 /* DATA */
 
-                paginatedModules.map((mod, index) => (
-                  <tr
-                    key={mod._id}
-                    className="transition-colors hover:bg-orange-50/20"
-                  >
-                    {/* SR NO */}
+                paginatedModules.map((group, index) => {
+                  const isDeletingGroup = group.records.some(
+                    (record) => record._id === deletingId,
+                  );
 
-                    <td className="px-6 py-4 font-semibold text-slate-400">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </td>
+                  return (
+                    <tr
+                      key={group.key}
+                      className="transition-colors hover:bg-orange-50/20"
+                    >
+                      {/* SR NO */}
 
-                    {/* COURSE */}
+                      <td className="px-6 py-4 font-semibold text-slate-400">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
 
-                    <td className="px-6 py-4 font-medium text-slate-600">
-                      {mod.course?.course_name || "-"}
-                    </td>
+                      {/* COURSE */}
 
-                    {/* TOPIC */}
+                      <td className="px-6 py-4 font-medium text-slate-600">
+                        {group.course?.course_name || "-"}
+                      </td>
 
-                    <td className="px-6 py-4 font-medium text-slate-600">
-                      {mod.topic?.title || "-"}
-                    </td>
+                      {/* TOPIC */}
 
-                    {/* DEPARTMENT + BATCH */}
+                      <td className="px-6 py-4 font-medium text-slate-600">
+                        {group.topic?.title || "-"}
+                      </td>
 
-                    <td className="px-6 py-4">
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                          <Building2 size={11} />
+                      {/* DEPARTMENT + BATCHES */}
 
-                          {mod.segment || "-"}
+                      <td className="px-6 py-4">
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                            <Building2 size={11} />
+
+                            {group.segment || "-"}
+                          </span>
+
+                          {group.records.map((record) => (
+                            <span
+                              key={record._id}
+                              className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-800"
+                            >
+                              <GraduationCap size={11} />
+
+                              Batch {record.year ?? "-"}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* STUDENT COUNT */}
+
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+                          {group.totalStudentCount} Students
                         </span>
+                      </td>
 
-                        <span className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-800">
-                          <GraduationCap size={11} />
+                      {/* ACTIONS */}
 
-                          {mod.year || "-"}
-                        </span>
-                      </div>
-                    </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* VIEW */}
 
-                    {/* STUDENT COUNT */}
+                          <button
+                            type="button"
+                            onClick={() => setViewingModule(group)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-2xs transition hover:bg-blue-100"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
 
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
-                        {mod.student_count ?? 0} Students
-                      </span>
-                    </td>
+                          {/* EDIT */}
 
-                    {/* ACTIONS */}
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(group.records[0]._id)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shadow-2xs transition hover:bg-amber-100"
+                            title="Edit Module"
+                          >
+                            <Edit3 size={15} />
+                          </button>
 
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* VIEW */}
+                          {/* DELETE */}
 
-                        <button
-                          type="button"
-                          onClick={() => setViewingModule(mod)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-2xs transition hover:bg-blue-100"
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </button>
-
-                        {/* EDIT */}
-
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(mod._id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shadow-2xs transition hover:bg-amber-100"
-                          title="Edit Module"
-                        >
-                          <Edit3 size={15} />
-                        </button>
-
-                        {/* DELETE */}
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteModule(mod._id)}
-                          disabled={deletingId === mod._id}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shadow-2xs transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Delete Module"
-                        >
-                          {deletingId === mod._id ? (
-                            <Loader2 size={15} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={15} />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteModule(group)}
+                            disabled={isDeletingGroup}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shadow-2xs transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Delete Module"
+                          >
+                            {isDeletingGroup ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={15} />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -755,8 +830,8 @@ export default function StudentLearningAccessListPage() {
                 </span>
 
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {viewingModule.subtopics?.length > 0 ? (
-                    viewingModule.subtopics.map((subtopic) => (
+                  {viewingModule.records[0]?.subtopics?.length > 0 ? (
+                    viewingModule.records[0].subtopics.map((subtopic) => (
                       <span
                         key={subtopic._id}
                         className="rounded-lg border border-orange-200 bg-orange-100/60 px-2.5 py-1 text-xs font-semibold text-orange-800"
@@ -772,7 +847,7 @@ export default function StudentLearningAccessListPage() {
                 </div>
               </div>
 
-              {/* DEPARTMENT + BATCH */}
+              {/* DEPARTMENT + BATCHES */}
 
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
@@ -789,13 +864,20 @@ export default function StudentLearningAccessListPage() {
                 <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-3">
                   <span className="flex items-center gap-1 text-[11px] font-bold uppercase text-orange-800">
                     <GraduationCap size={12} />
-                    Batch & Students
+                    Batches & Students
                   </span>
 
-                  <p className="mt-1 text-xs font-semibold text-slate-800">
-                    {viewingModule.year || "-"} (
-                    {viewingModule.student_count ?? 0} students)
-                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {viewingModule.records.map((record) => (
+                      <span
+                        key={record._id}
+                        className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-800"
+                      >
+                        Batch {record.year ?? "-"} (
+                        {record.student_count ?? 0})
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -807,7 +889,7 @@ export default function StudentLearningAccessListPage() {
   <span className="text-xs font-medium text-slate-500">
     Total Lessons:{" "}
     <strong className="text-slate-800">
-      {(viewingModule.subtopics ?? []).reduce(
+      {(viewingModule.records[0]?.subtopics ?? []).reduce(
         (total, subtopic) => {
           const modules = Array.isArray(subtopic?.modules)
             ? subtopic.modules
@@ -853,12 +935,16 @@ export default function StudentLearningAccessListPage() {
         onClose={() =>
           setDeleteModal({
             open: false,
-            id: null,
+            ids: null,
           })
         }
         onConfirm={confirmDelete}
         title="Delete Learning Access"
-        message="Are you sure you want to delete this module access?"
+        message={
+          deleteModal.ids?.length > 1
+            ? `Are you sure you want to delete this module access for all ${deleteModal.ids.length} assigned batches?`
+            : "Are you sure you want to delete this module access?"
+        }
         confirmText="Delete"
         cancelText="Cancel"
       />

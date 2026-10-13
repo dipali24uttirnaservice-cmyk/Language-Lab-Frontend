@@ -37,6 +37,8 @@ function StudentsPageContent() {
     message: "",
   });
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+  const [deleteBatchModal, setDeleteBatchModal] = useState(false);
+  const [deletingBatch, setDeletingBatch] = useState(false);
   const [showAddOptions, setShowAddOptions] = useState(false);
   const showSelection = Boolean(segment && year);
 
@@ -100,6 +102,14 @@ function StudentsPageContent() {
       return matchesSearch && matchesSegment && matchesYear;
     });
   }, [students, search, segment, year]);
+
+  // A batch is only safe to bulk-delete while no student in it has a course
+  // assigned yet — once learning access is configured for the batch, wiping
+  // the students would also strand that access.
+  const batchHasCourseAssigned = useMemo(
+    () => filteredData.some((s) => (s.purchased_courses?.length || 0) > 0),
+    [filteredData],
+  );
 
   const toggleCourse = (courseId) => {
     setSelectedCourses((prev) =>
@@ -226,6 +236,70 @@ function StudentsPageContent() {
     } finally {
       setDeleteModal({ open: false, id: null });
     }
+  };
+
+  const handleDeleteBatch = () => {
+    if (batchHasCourseAssigned || filteredData.length === 0) return;
+    setDeleteBatchModal(true);
+  };
+
+  const confirmDeleteBatch = async () => {
+    setDeletingBatch(true);
+
+    try {
+      await Promise.all(
+        filteredData.map((student) => studentApi.deleteStudent(student._id)),
+      );
+
+      setStatusData({
+        open: true,
+        type: "success",
+        title: "Batch Deleted",
+        message: `${filteredData.length} student(s) removed from this batch.`,
+      });
+
+      setSegment("");
+      setYear("");
+      loadStudents();
+    } catch (error) {
+      setStatusData({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to delete this batch.",
+      });
+    } finally {
+      setDeletingBatch(false);
+      setDeleteBatchModal(false);
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return;
+
+    const rows = filteredData.map((student) => ({
+      "Student Name": student.full_name || "",
+      "Roll No": student.roll_no || "",
+      "Enrollment No": student.enrollment_no || "",
+      Department: student.segment || "",
+      Batch: student.year || "",
+      Password: student.password || "",
+      Email: student.email || "",
+      Course: (student.purchased_courses || [])
+        .map((c) => c.course_name)
+        .filter(Boolean)
+        .join(", "),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+
+    const parts = ["students"];
+    if (segment) parts.push(segment);
+    if (year) parts.push(`batch-${year}`);
+
+    XLSX.writeFile(workbook, `${parts.join("_")}.xlsx`);
   };
 
   const columns = [
@@ -477,6 +551,9 @@ function StudentsPageContent() {
         onSelectStudent={handleSelectStudent}
         onSelectAll={handleSelectAll}
         onAssignAll={handleAssignAll}
+        canDeleteBatch={!batchHasCourseAssigned}
+        onDeleteBatch={handleDeleteBatch}
+        onExport={handleExportExcel}
       />
       <input
         id="studentExcelUpload"
@@ -554,6 +631,16 @@ function StudentsPageContent() {
         title="Delete Student"
         message="Are you sure you want to delete this student?"
         confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      <ConfirmModal
+        open={deleteBatchModal}
+        onClose={() => setDeleteBatchModal(false)}
+        onConfirm={confirmDeleteBatch}
+        title="Delete Batch"
+        message={`Are you sure you want to delete all ${filteredData.length} student(s) in ${segment || "this department"} - Batch ${year || "-"}? This cannot be undone.`}
+        confirmText={deletingBatch ? "Deleting..." : "Delete"}
         cancelText="Cancel"
       />
 

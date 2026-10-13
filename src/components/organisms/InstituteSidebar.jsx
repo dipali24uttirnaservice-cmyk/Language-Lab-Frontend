@@ -19,6 +19,7 @@ import {
   ClipboardList,
   ListChecks,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 
 const menuItems = [
@@ -117,6 +118,15 @@ const menuItems = [
     border: "border-slate-500",
     bg: "from-slate-50 to-slate-100",
     text: "text-slate-700",
+  },
+  {
+    title: "Danger Zone",
+    href: "/institute-dashboard/danger-zone",
+    icon: AlertTriangle,
+    color: "from-rose-500 to-red-600",
+    border: "border-rose-500",
+    bg: "from-rose-50 to-red-50",
+    text: "text-rose-700",
   },
   {
     title: "Logout",

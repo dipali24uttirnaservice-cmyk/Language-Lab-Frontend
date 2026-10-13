@@ -25,6 +25,9 @@ export default function DataTable({
   onSelectAll,
     showSelection,
   onAssignAll,
+  canDeleteBatch,
+  onDeleteBatch,
+  onExport,
 
 }){
 
@@ -91,6 +94,9 @@ const paginatedData = useMemo(() => {
   showSelection={showSelection}
   filteredCount={filteredData.length}
   onAssignAll={onAssignAll}
+  canDeleteBatch={canDeleteBatch}
+  onDeleteBatch={onDeleteBatch}
+  onExport={onExport}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

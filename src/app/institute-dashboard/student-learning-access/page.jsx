@@ -158,7 +158,12 @@ const isEditMode = Boolean(editId);
     and selectedBatchId stores year.
   */
   const [departmentId, setDepartmentId] = useState("");
-  const [selectedBatchId, setSelectedBatchId] = useState("");
+  const [selectedBatchIds, setSelectedBatchIds] = useState([]);
+
+  // In edit mode, the record being edited always maps to this one batch —
+  // tracked separately so submit knows which batch to UPDATE vs. which
+  // newly-ticked batches should become new CREATE'd records.
+  const [originalBatchId, setOriginalBatchId] = useState("");
 
   /* =======================================================
      API DATA
@@ -603,12 +608,17 @@ const isEditMode = Boolean(editId);
         record.batch_id ??
         "";
 
-      setSelectedBatchId(
+      const recordYearValue =
         recordYear !== null &&
-          recordYear !== undefined
+        recordYear !== undefined &&
+        recordYear !== ""
           ? String(recordYear)
-          : ""
+          : "";
+
+      setSelectedBatchIds(
+        recordYearValue ? [recordYearValue] : []
       );
+      setOriginalBatchId(recordYearValue);
     } catch (error) {
       console.error(
         "Failed to load edit data:",
@@ -717,10 +727,30 @@ const isEditMode = Boolean(editId);
 
     /*
       Whenever department changes,
-      reset year because available years
-      depend on department.
+      reset years because available
+      years depend on department.
     */
-    setSelectedBatchId("");
+    setSelectedBatchIds([]);
+  };
+
+  /* =======================================================
+     BATCH TOGGLE (multi-select)
+  ======================================================= */
+
+  const toggleBatch = (year) => {
+    const value = String(year || "");
+
+    if (!value) {
+      return;
+    }
+
+    setSelectedBatchIds((previous) => {
+      if (previous.includes(value)) {
+        return previous.filter((item) => item !== value);
+      }
+
+      return [...previous, value];
+    });
   };
 
   /* =======================================================
@@ -933,22 +963,19 @@ const isEditMode = Boolean(editId);
       return;
     }
 
-    if (!selectedBatchId) {
+    if (selectedBatchIds.length === 0) {
       alert(
-        "Please select a batch/year."
+        "Please select at least one batch/year."
       );
       return;
     }
 
-    const numericYear =
-      Number(selectedBatchId);
+    const hasInvalidYear = selectedBatchIds.some((batchId) => {
+      const numericYear = Number(batchId);
+      return !Number.isFinite(numericYear) || numericYear <= 0;
+    });
 
-    if (
-      !Number.isFinite(
-        numericYear
-      ) ||
-      numericYear <= 0
-    ) {
+    if (hasInvalidYear) {
       alert(
         "Please select a valid year."
       );
@@ -966,57 +993,95 @@ const handleConfirmSubmit = async () => {
   try {
     setSubmitting(true);
 
-    const payload = {
+    const basePayload = {
       course_id: courseId,
       topic_id: topicId,
       subtopic_ids: selectedSubtopics,
       segment: departmentId,
-      year: Number(selectedBatchId),
     };
 
-    console.log(
-      isEditMode
-        ? "UPDATE PAYLOAD SENT TO BACKEND:"
-        : "CREATE PAYLOAD SENT TO BACKEND:",
-      payload
-    );
-
     // Safety validation
-    if (!payload.course_id) {
+    if (!basePayload.course_id) {
       throw new Error("Course is required.");
     }
 
-    if (!payload.topic_id) {
+    if (!basePayload.topic_id) {
       throw new Error("Topic is required.");
     }
 
     if (
-      !Array.isArray(payload.subtopic_ids) ||
-      payload.subtopic_ids.length === 0
+      !Array.isArray(basePayload.subtopic_ids) ||
+      basePayload.subtopic_ids.length === 0
     ) {
       throw new Error("At least one subtopic is required.");
     }
 
-    if (!payload.segment) {
+    if (!basePayload.segment) {
       throw new Error("Department/Branch is required.");
     }
 
+    const numericYears = selectedBatchIds.map((batchId) =>
+      Number(batchId)
+    );
+
     if (
-      !Number.isFinite(payload.year) ||
-      payload.year <= 0
+      numericYears.length === 0 ||
+      numericYears.some(
+        (year) => !Number.isFinite(year) || year <= 0
+      )
     ) {
-      throw new Error("Batch is required.");
+      throw new Error("At least one valid batch is required.");
     }
 
-    // API call
+    console.log(
+      isEditMode
+        ? "UPDATE PAYLOAD SENT TO BACKEND:"
+        : "CREATE PAYLOADS SENT TO BACKEND:",
+      numericYears.map((year) => ({ ...basePayload, year }))
+    );
+
+    // API call — edit mode updates the batch the record originally
+    // targeted (or, if that was deselected, switches it to the first
+    // selected batch) and creates a new record for every OTHER newly
+    // ticked batch, so the same content can be assigned to more batches
+    // from the edit screen too. Create mode makes one record per batch.
+    let extraYearsCount = 0;
+
     if (isEditMode) {
-      await studentLearningAccessApi.update(
-        editId,
-        payload
+      const originalYear = Number(originalBatchId);
+
+      const updateYear = numericYears.includes(originalYear)
+        ? originalYear
+        : numericYears[0];
+
+      const extraYears = numericYears.filter(
+        (year) => year !== updateYear
       );
+      extraYearsCount = extraYears.length;
+
+      await studentLearningAccessApi.update(editId, {
+        ...basePayload,
+        year: updateYear,
+      });
+
+      if (extraYears.length > 0) {
+        await Promise.all(
+          extraYears.map((year) =>
+            studentLearningAccessApi.create({
+              ...basePayload,
+              year,
+            })
+          )
+        );
+      }
     } else {
-      await studentLearningAccessApi.create(
-        payload
+      await Promise.all(
+        numericYears.map((year) =>
+          studentLearningAccessApi.create({
+            ...basePayload,
+            year,
+          })
+        )
       );
     }
 
@@ -1036,7 +1101,13 @@ const handleConfirmSubmit = async () => {
         ? "Access Updated"
         : "Access Added",
       message: isEditMode
-        ? "Learning access updated successfully."
+        ? extraYearsCount > 0
+          ? `Learning access updated, and added to ${extraYearsCount} more batch${
+              extraYearsCount > 1 ? "es" : ""
+            }.`
+          : "Learning access updated successfully."
+        : numericYears.length > 1
+        ? `Learning access added successfully for ${numericYears.length} batches.`
         : "Learning access added successfully.",
     });
   } catch (error) {
@@ -1080,7 +1151,8 @@ const handleConfirmSubmit = async () => {
     setSelectedSubtopics([]);
     setSubtopicSearch("");
     setDepartmentId("");
-    setSelectedBatchId("");
+    setSelectedBatchIds([]);
+    setOriginalBatchId("");
     setIsModalOpen(false);
   setActiveSubtopicModal(null);
   setPageError("");
@@ -1178,8 +1250,8 @@ const handleConfirmSubmit = async () => {
 
             <h1 className="text-xl font-extrabold text-slate-900">
               {isEditMode
-                ? "Update Learning Module"
-                : "Create Learning Module"}
+                ? "Update Assigned Syllabus"
+                : "Assign Syllabus"}
             </h1>
 
             <p className="mt-1 text-xs text-slate-500">
@@ -1634,53 +1706,66 @@ const handleConfirmSubmit = async () => {
                   </h2>
 
                   <p className="text-[11px] text-slate-400">
-                    Select a single target
-                    batch within{" "}
+                    Select one or more target
+                    batches within{" "}
                     {selectedDepartment?.name ||
                       "department"}
                   </p>
                 </div>
               </div>
 
-              <SelectField
-                label="Batch"
-                icon={GraduationCap}
-                value={selectedBatchId}
-                onChange={(e) =>
-                  setSelectedBatchId(
-                    e.target.value
-                  )
-                }
-                placeholder={
-                  departmentId
-                    ? "Select Batch"
-                    : "First select a department"
-                }
-                options={availableBatches.map(
-                  (
-                    batch,
-                    index
-                  ) => ({
-                    value: String(
-                      batch.year
-                    ),
-                    label: `Batch ${
-                      batch.year
-                    } (${
-                      batch.studentCount ??
-                      0
-                    } Students)`,
-                    key: `batch-${String(
-                      departmentId
-                    )}-${String(
-                      batch.year
-                    )}-${index}`,
-                  })
-                )}
-                disabled={
-                  !departmentId
-                }
-              />
+              {!departmentId ? (
+                <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50/30 px-4 py-6 text-center text-xs text-slate-400">
+                  First select a department
+                </div>
+              ) : availableBatches.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50/30 px-4 py-6 text-center text-xs text-slate-400">
+                  No batches available
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {availableBatches.map((batch, index) => {
+                    const batchValue = String(batch.year);
+                    const checked = selectedBatchIds.includes(batchValue);
+
+                    return (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        key={`batch-${String(
+                          departmentId
+                        )}-${batchValue}-${index}`}
+                        onClick={() => toggleBatch(batchValue)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            toggleBatch(batchValue);
+                          }
+                        }}
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                          checked
+                            ? "border-orange-500 bg-orange-50/70"
+                            : "border-orange-200 bg-white hover:border-orange-300 hover:bg-orange-50/30"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onChange={() => toggleBatch(batchValue)}
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-800">
+                            Batch {batch.year}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {batch.studentCount ?? 0} Students
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -2196,10 +2281,16 @@ const handleConfirmSubmit = async () => {
               />
 
               <SummaryRow
-                label="Target Batch"
+                label={
+                  selectedBatchIds.length > 1
+                    ? "Target Batches"
+                    : "Target Batch"
+                }
                 value={
-                  selectedBatchId
-                    ? `Batch ${selectedBatchId}`
+                  selectedBatchIds.length > 0
+                    ? selectedBatchIds
+                        .map((batchId) => `Batch ${batchId}`)
+                        .join(", ")
                     : "-"
                 }
                 valueClass="text-orange-800"

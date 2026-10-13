@@ -1,7 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, Plus, RotateCcw, GraduationCap } from "lucide-react";
+import {
+  Search,
+  Plus,
+  RotateCcw,
+  GraduationCap,
+  Trash2,
+  Download,
+} from "lucide-react";
 
 export default function TableToolbar({
   title,
@@ -17,6 +24,9 @@ export default function TableToolbar({
   showSelection = false,
   filteredCount = 0,
   onAssignAll,
+  canDeleteBatch = false,
+  onDeleteBatch,
+  onExport,
 }) {
   const clearFilters = () => {
     setSearch("");
@@ -44,16 +54,29 @@ export default function TableToolbar({
           </p>
         </div>
 
-        {/* Primary CTA with the brand orange gradient */}
-        <motion.button
-          whileHover={{ scale: 1.02, y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onAdd}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition self-start sm:self-auto"
-        >
-          <Plus size={16} strokeWidth={3} />
-          Add Student
-        </motion.button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Export current filter view to Excel */}
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onExport}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm hover:bg-slate-50 transition"
+          >
+            <Download size={16} strokeWidth={3} />
+            Export
+          </motion.button>
+
+          {/* Primary CTA with the brand orange gradient */}
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onAdd}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition"
+          >
+            <Plus size={16} strokeWidth={3} />
+            Add Student
+          </motion.button>
+        </div>
       </div>
 
       {/* Filters System Grid */}
@@ -148,16 +171,34 @@ export default function TableToolbar({
             {filteredCount} student{filteredCount !== 1 ? "s" : ""} matched for this department/branch &amp; batch.
           </p>
 
-          <motion.button
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onAssignAll}
-            disabled={filteredCount === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
-          >
-            <GraduationCap size={16} strokeWidth={2.5} />
-            Assign All Student
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onAssignAll}
+              disabled={filteredCount === 0}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+            >
+              <GraduationCap size={16} strokeWidth={2.5} />
+              Assign All Student
+            </motion.button>
+
+            <motion.button
+              whileHover={canDeleteBatch ? { scale: 1.02, y: -1 } : {}}
+              whileTap={canDeleteBatch ? { scale: 0.98 } : {}}
+              onClick={onDeleteBatch}
+              disabled={filteredCount === 0 || !canDeleteBatch}
+              title={
+                canDeleteBatch
+                  ? "Delete every student in this batch"
+                  : "This batch already has a course assigned — remove that access before deleting the batch"
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-rose-600 shadow-sm hover:bg-rose-100 transition disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+            >
+              <Trash2 size={16} strokeWidth={2.5} />
+              Delete Batch
+            </motion.button>
+          </div>
         </div>
       )}
     </div>
