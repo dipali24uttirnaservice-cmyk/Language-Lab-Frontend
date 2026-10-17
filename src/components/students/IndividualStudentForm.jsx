@@ -408,7 +408,7 @@ await studentApi.createStudent(data);
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Department/Branch</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Branch</label>
                <select
   value={formData.segment}
   onChange={(e) =>
@@ -421,7 +421,7 @@ await studentApi.createStudent(data);
   }`}
 >
   <option value="">
-    Select Department/Branch
+    Select Branch
   </option>
 
   {segmentOptions.map((segment) => (

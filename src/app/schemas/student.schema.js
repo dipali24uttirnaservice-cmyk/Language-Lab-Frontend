@@ -24,7 +24,7 @@ export const studentFormSchemaAdd = Yup.object({
 
   enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  segment: Yup.string().trim().required("Department/Branch is required"),
+  segment: Yup.string().trim().required("Branch is required"),
 
   year: Yup.string()
     .required("Batch is required")
@@ -56,7 +56,7 @@ export const studentFormSchemaEdit = Yup.object({
 
   enrollment_no: Yup.string().trim().required("Enrollment Number is required"),
 
-  segment: Yup.string().trim().required("Department/Branch is required"),
+  segment: Yup.string().trim().required("Branch is required"),
 
   year: Yup.string()
     .required("Batch is required")

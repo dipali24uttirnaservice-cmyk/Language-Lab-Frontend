@@ -355,7 +355,7 @@ export default function AssignManualPage() {
                   disabled={assigning}
                   className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
                 >
-                  <option value="">Select Department/Branch</option>
+                  <option value="">Select Branch</option>
 
                   {departments.map((department) => {
                     const name = department?.name || "Unnamed Department";
@@ -392,7 +392,7 @@ export default function AssignManualPage() {
                 >
                   <option value="">
                     {!departmentId
-                      ? "Select Department/Branch First"
+                      ? "Select Branch First"
                       : batches.length === 0
                         ? "No Batch Available"
                         : "Select Batch"}

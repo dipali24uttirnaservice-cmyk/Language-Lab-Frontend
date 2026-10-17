@@ -332,7 +332,7 @@ function StudentsPageContent() {
     },
 
     {
-      title: "Department/Branch & Batch",
+      title: "Branch & Batch",
       key: "segment_year",
       render: (row) => (
         <div>

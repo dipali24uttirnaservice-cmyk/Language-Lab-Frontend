@@ -284,7 +284,7 @@ export default function DangerZonePage() {
                 <th className="w-16 px-6 py-4">Sr. No.</th>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">Roll No & Enrollment No</th>
-                <th className="px-6 py-4">Department/Branch & Batch</th>
+                <th className="px-6 py-4">Branch & Batch</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>

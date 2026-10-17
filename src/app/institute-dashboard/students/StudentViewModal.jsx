@@ -109,7 +109,7 @@ export default function StudentViewModal({
 
   <DetailRow
     icon={<GraduationCap size={16} />}
-    label="Department/Branch"
+    label="Branch"
     value={student.segment}
   />
 

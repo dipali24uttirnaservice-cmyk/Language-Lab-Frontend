@@ -1017,7 +1017,7 @@ const handleConfirmSubmit = async () => {
     }
 
     if (!basePayload.segment) {
-      throw new Error("Department/Branch is required.");
+      throw new Error("Branch is required.");
     }
 
     const numericYears = selectedBatchIds.map((batchId) =>
@@ -1654,7 +1654,7 @@ const handleConfirmSubmit = async () => {
                   0
                     ? loadingDepartments
                       ? "Loading Departments..."
-                      : "Select Department/Branch"
+                      : "Select Branch"
                     : "First select subtopics"
                 }
                 options={departments.map(
@@ -2272,7 +2272,7 @@ const handleConfirmSubmit = async () => {
               />
 
               <SummaryRow
-                label="Department/Branch"
+                label="Branch"
                 value={
                   selectedDepartment?.name ||
                   departmentId ||
