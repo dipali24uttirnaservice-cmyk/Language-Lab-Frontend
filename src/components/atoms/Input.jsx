@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Input({
@@ -8,21 +8,28 @@ export default function Input({
   type = "text",
   className = "",
   error,
+  id,
   ...props
 }) {
   const [showPassword, setShowPassword] = useState(false);
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
 
   const isPassword = type === "password";
 
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
+      <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-slate-700">
         {label}
       </label>
 
       <div className="relative">
         <input
           {...props}
+          id={inputId}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           type={
             isPassword
               ? showPassword
@@ -54,6 +61,8 @@ export default function Input({
             onClick={() =>
               setShowPassword(!showPassword)
             }
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
             className="
               absolute
               right-4
@@ -72,7 +81,11 @@ export default function Input({
           </button>
         )}
       </div>
-      {error && <div className="mt-1 text-sm text-red-500 font-medium">{error}</div>}
+      {error && (
+        <div id={errorId} role="alert" className="mt-1 text-sm text-red-500 font-medium">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

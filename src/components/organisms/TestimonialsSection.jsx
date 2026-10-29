@@ -24,9 +24,9 @@ const testimonials = [
     name: "Maria Garcia",
     role: "Professional",
     review:
-      "I used LanguageLab daily and recently landed an international job opportunity!",
+      "I used Uttirna DigiLabs daily and recently landed an international job opportunity!",
   },
-   {
+  {
     name: "Sarah Johnson",
     role: "English Learner",
     review:
@@ -42,9 +42,9 @@ const testimonials = [
     name: "Maria Garcia",
     role: "Professional",
     review:
-      "I used LanguageLab daily and recently landed an international job opportunity!",
+      "I used   Uttirna DigiLabs daily and recently landed an international job opportunity!",
   },
-   {
+  {
     name: "Sarah Johnson",
     role: "English Learner",
     review:
@@ -60,9 +60,9 @@ const testimonials = [
     name: "Maria Garcia",
     role: "Professional",
     review:
-      "I used LanguageLab daily and recently landed an international job opportunity!",
+      "I used Uttirna DigiLabs daily and recently landed an international job opportunity!",
   },
-   {
+  {
     name: "Sarah Johnson",
     role: "English Learner",
     review:
@@ -78,17 +78,15 @@ const testimonials = [
     name: "Maria Garcia",
     role: "Professional",
     review:
-      "I used LanguageLab daily and recently landed an international job opportunity!",
+      "I used Uttirna DigiLabs daily and recently landed an international job opportunity!",
   },
 ];
 
 export default function TestimonialsSection() {
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-slate-50">
-
       {/* ================= 3D BACKGROUND ================= */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-
         {/* Floating Orb 1 */}
         <motion.div
           animate={{ y: [0, -40, 0], x: [0, 25, 0], rotate: [0, 180, 360] }}
@@ -116,12 +114,10 @@ export default function TestimonialsSection() {
           transition={{ duration: 12, repeat: Infinity }}
           className="absolute top-1/3 left-1/3 w-[600px] h-[600px] bg-gradient-to-r from-white/30 via-amber-100/10 to-transparent blur-[120px]"
         />
-
       </div>
 
       {/* ================= CONTENT ================= */}
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-4xl font-extrabold text-slate-900">
@@ -159,7 +155,6 @@ export default function TestimonialsSection() {
             </SwiperSlide>
           ))}
         </Swiper>
-
       </div>
     </section>
   );

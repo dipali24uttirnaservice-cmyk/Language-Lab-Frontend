@@ -18,6 +18,7 @@ import {
 
 import { profileApi } from "@/services/institute/profileApi";
 import StatusModal from "@/components/molecules/StatusModal";
+import { useInstituteLogoSrc } from "@/utils/media";
 
 export default function InstituteProfilePage() {
   const [institute, setInstitute] = useState(null);
@@ -47,6 +48,11 @@ export default function InstituteProfilePage() {
   title: "",
   message: "",
 });
+
+  // Called unconditionally (before the loading/!institute early returns
+  // below) since it's a hook — falls back to the bundled placeholder until
+  // `institute` loads, same as before.
+  const { src: instituteLogoSrc, onError: handleLogoError } = useInstituteLogoSrc(institute);
 
 const formatAddress = (address) => {
   if (!address) return "-";
@@ -228,12 +234,13 @@ useEffect(() => {
                 <div className="absolute inset-0 bg-indigo-500/25 blur-xl rounded-3xl" />
                 <div className="relative w-32 h-32 rounded-3xl border-4 border-white bg-white shadow-xl overflow-hidden">
                   <Image
-                    src={institute?.logo || "/collage-logo.png"}
+                    src={instituteLogoSrc}
                     alt="Logo"
                     width={128}
                     height={128}
                     className="object-cover w-full h-full"
                     unoptimized
+                    onError={handleLogoError}
                   />
                 </div>
               </div>

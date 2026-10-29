@@ -24,6 +24,10 @@ export default function DataTable({
   onSelectStudent,
   onSelectAll,
     showSelection,
+  onAssignAll,
+  canDeleteBatch,
+  onDeleteBatch,
+  onExport,
 
 }){
 
@@ -64,9 +68,9 @@ const paginatedData = useMemo(() => {
   );
 }, [filteredData, currentPage]);
 
-  const allCurrentPageSelected =
-  paginatedData.length > 0 &&
-  paginatedData.every((student) =>
+  const allFilteredSelected =
+  filteredData.length > 0 &&
+  filteredData.every((student) =>
     selectedStudents?.includes(student._id)
   );
   return (
@@ -86,6 +90,13 @@ const paginatedData = useMemo(() => {
 
   segmentOptions={segmentOptions}
   yearOptions={yearOptions}
+
+  showSelection={showSelection}
+  filteredCount={filteredData.length}
+  onAssignAll={onAssignAll}
+  canDeleteBatch={canDeleteBatch}
+  onDeleteBatch={onDeleteBatch}
+  onExport={onExport}
 />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -98,8 +109,8 @@ const paginatedData = useMemo(() => {
       <th className="p-4 w-12">
         <input
           type="checkbox"
-          checked={allCurrentPageSelected}
-          onChange={() => onSelectAll(paginatedData)}
+          checked={allFilteredSelected}
+          onChange={() => onSelectAll(filteredData)}
         />
       </th>
     )}

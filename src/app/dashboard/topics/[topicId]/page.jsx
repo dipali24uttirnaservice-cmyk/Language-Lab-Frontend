@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import {
   useParams,
   useRouter,
@@ -17,7 +17,7 @@ import {
 import { topicApi } from "@/services/topic/topicApi";
 import { progressApi } from "@/services/progress/progressApi";
 import ProgressBar from "@/components/atoms/ProgressBar";
-export default function TopicDetailsPage() {
+function TopicDetailsPageContent() {
     const { topicId } = useParams();
 
   const router = useRouter();
@@ -46,10 +46,31 @@ console.log("Type:", type);
   const [topic, setTopic] = useState(null);
   const [subtopicProgress, setSubtopicProgress] = useState({});
 
+  // Task and Practical Manual are scoped to a Topic directly (course_id +
+  // optional topic_id) — they have no SubTopic layer, unlike Video/Audio/
+  // Text/Exercise/Vocabulary. So instead of listing subtopics, jump straight
+  // into that topic's tasks/practicals.
+  const isFlatTopicType = type === "task" || type === "practical_manual";
+
   useEffect(() => {
+    if (!isFlatTopicType) return;
+    const params = new URLSearchParams();
+    if (courseId) params.set("courseId", courseId);
+    if (courseName) params.set("courseName", courseName);
+    params.set("topicId", topicId);
+    if (topicName) params.set("topicName", topicName);
+    params.set("type", type);
+
+    const destination =
+      type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";
+    router.replace(`${destination}?${params.toString()}`);
+  }, [isFlatTopicType, type, topicId, courseId, courseName, topicName, router]);
+
+  useEffect(() => {
+    if (isFlatTopicType) return;
     fetchTopic();
     fetchProgress();
-  }, [topicId]);
+  }, [topicId, isFlatTopicType]);
 
   const fetchTopic = async () => {
     try {
@@ -88,7 +109,7 @@ console.log("Type:", type);
   return (
 
     
-   <div className="relative min-h-screen overflow-hidden p-2">
+   <div className="relative min-h-screen overflow-hidden p-6">
 {/* ================================================= */}
 {/* PREMIUM 3D ANIMATED BACKGROUND */}
 {/* ================================================= */}
@@ -493,5 +514,13 @@ params.set("subTopicName", subtopic.title);
   </div>
 
 </div>
+  );
+}
+
+export default function TopicDetailsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TopicDetailsPageContent />
+    </Suspense>
   );
 }

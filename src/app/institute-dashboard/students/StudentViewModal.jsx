@@ -109,14 +109,14 @@ export default function StudentViewModal({
 
   <DetailRow
     icon={<GraduationCap size={16} />}
-    label="Segment"
+    label="Branch"
     value={student.segment}
   />
 
   <DetailRow
     icon={<GraduationCap size={16} />}
-    label="Segment Year"
-    value={`Year ${student.year}`}
+    label="Batch"
+    value={`Batch ${student.year}`}
   />
 
   <DetailRow
@@ -124,7 +124,9 @@ export default function StudentViewModal({
     label="Purchased Courses"
     value={
       student.purchased_courses?.length
-        ? student.purchased_courses.join(", ")
+        ? student.purchased_courses
+            .map((course) => course.course_name)
+            .join(", ")
         : "No Courses Purchased"
     }
   />

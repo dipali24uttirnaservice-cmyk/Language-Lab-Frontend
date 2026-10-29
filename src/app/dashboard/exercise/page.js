@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
-import Swal from "sweetalert2";
+import StatusModal from "@/components/molecules/StatusModal";
 import {
   ChevronRight,
   Award,
@@ -25,6 +25,7 @@ import {
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMatchPairs, hasAnswer, answerToString, shuffledPool } from "@/utils/questionAnswers";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 /* =========================================================================
    SMALL SHARED PIECES
@@ -44,184 +45,42 @@ function LoadingScreen() {
   );
 }
 
-function EmptyState({ scopedToLesson = false,  onBack
- }) {
+function EmptyState({ scopedToLesson = false, onBack }) {
   return (
-    <div className="h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center max-w-sm">
-
-            <BackToLessonsButton onBack={onBack} />
-
-
-        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-orange-50 flex items-center justify-center">
-          <Award className="text-orange-400" size={28} />
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-orange-50/60 via-slate-50 to-slate-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="text-center max-w-sm rounded-3xl border border-orange-100 bg-white p-10 shadow-xl shadow-orange-100/40"
+      >
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-400 to-amber-500 shadow-lg shadow-orange-200">
+          <Award className="text-white" size={32} />
         </div>
 
-        <h3 className="text-lg font-bold text-slate-800">
-          No exercises found
+        <h3 className="text-xl font-black text-slate-900">
+          No Exercises Yet
         </h3>
 
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
           {scopedToLesson
-            ? "There is no exercise created for this lesson yet."
-            : "There are no exercises available for this topic yet."}
+            ? "Your instructor hasn't added any exercises for this lesson yet. Check back soon, or explore other lessons in the meantime."
+            : "There are no exercises available for this topic yet. Check back soon, or explore other lessons in the meantime."}
         </p>
 
-      </div>
-    </div>
-  );
-}
-
-function ProgressBar({ value }) {
-  return (
-    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-      <motion.div
-        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500"
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      />
-    </div>
-  );
-}
-
-function QuestionDots({ total, current, answers }) {
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {Array.from({ length: total }).map((_, i) => {
-        const isDone = answers[i] !== undefined;
-        const isCurrent = i === current;
-        return (
-          <div
-            key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${isCurrent
-              ? "w-6 bg-blue-500"
-              : isDone
-                ? "w-2 bg-green-500"
-                : "w-2 bg-yellow-400"
-              }`}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function QuestionNumberGrid({ total, current, answers, onSelect }) {
-  return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Questions</p>
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: total }).map((_, i) => {
-          const isDone = answers[i] !== undefined;
-          const isCurrent = i === current;
-          return (
-            <button
-              key={i}
-              onClick={() => onSelect(i)}
-              className={`w-9 h-9 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${isCurrent
-                ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-200"
-                : isDone
-                  ? "bg-green-500 border-green-500 text-white shadow-sm shadow-green-200"
-                  : "bg-yellow-400 border-yellow-400 text-white"
-                }`}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-4 pt-1">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Legend</p>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> Attempted</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Current</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Unattempted</span>
-      </div>
-    </div>
-  );
-}
-
-
-
-function AttemptHistory({ attempts }) {
-  const scrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [attempts]);
-
-  if (!attempts || attempts.length === 0) return null;
-
-  const scroll = (dir) => {
-    scrollRef.current?.scrollBy({
-      left: dir === 'left' ? -320 : 320,
-      behavior: 'smooth'
-    });
-  };
-
-  return (
-    <div className="mt-8 relative px-2">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <Clock size={15} className="text-orange-400" />
-          Previous Attempts
-        </h4>
-      </div>
-
-      <div className="relative group">
-        {/* Navigation Arrows: Only show if there are more than 4 items */}
-        {attempts.length > 4 && (
-          <>
-            <button
-              onClick={() => scroll("left")}
-              className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white shadow-lg border border-slate-100 transition-opacity ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </>
-        )}
-
-        <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
+        <button
+          onClick={onBack}
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:from-orange-600 hover:to-amber-600 active:scale-95"
         >
-          {attempts.map((attempt, i) => (
-            <motion.div
-              key={i}
-              className="flex-shrink-0 w-40 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-orange-200 transition-colors"
-            >
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Attempt {i + 1}</p>
-              <div className="text-xl font-black text-slate-900">{attempt.score}/{attempt.max_score}</div>
-              <div className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${attempt.is_passed ? "text-emerald-700 bg-emerald-50" : "text-orange-700 bg-orange-50"
-                }`}>
-                {attempt.is_passed ? "Passed" : "Failed"}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+          <ArrowLeft size={16} />
+          Back to Lessons
+        </button>
+      </motion.div>
     </div>
   );
 }
+
+
 
 /* =========================================================================
    SIDEBAR
@@ -387,6 +246,7 @@ function AttemptResultModal({ attempt, onClose }) {
           <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
           <button
             onClick={onClose}
+            aria-label="Close"
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer"
           >
             <X size={16} />
@@ -657,80 +517,155 @@ function prettifyAnswer(question, raw) {
   }
 }
 
+
+
+
+
+
+
+
+
 function ReviewScreen({ selectedModule, questionResults, onBack }) {
+  const [filter, setFilter] = useState("all"); // 'all' | 'correct' | 'incorrect'
+  const [activeCard, setActiveCard] = useState(null);
+
+  // Filter questions based on selection tab
+  const filteredResults = questionResults.filter((r) => {
+    if (filter === "correct") return r.is_correct;
+    if (filter === "incorrect") return !r.is_correct;
+    return true;
+  });
+
+  const correctCount = questionResults.filter((r) => r.is_correct).length;
+  const incorrectCount = questionResults.length - correctCount;
+
   return (
-    <div className="py-6 animate-fade-in space-y-4">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors"
-      >
-        <ArrowLeft size={16} /> Back to result
-      </button>
+    <div className="min-h-screen w-full bg-slate-50/50 py-8 px-4 sm:px-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Top Bar / Navigation & Filters Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-3xl shadow-sm">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors bg-slate-50 border border-slate-200/60 px-4 py-2.5 rounded-2xl shadow-sm"
+          >
+            <ArrowLeft size={16} /> Back to Result
+          </button>
 
-      <div className="space-y-4">
-        {questionResults.map((r, i) => {
-          const q = selectedModule.questions[r.question_index ?? i] || {};
-          return (
-            <div
-              key={i}
-              className={`rounded-2xl border p-5 space-y-3 ${r.is_correct
-                ? "border-green-500 bg-green-500 !text-white"
-                : "border-red-500 bg-red-500 !text-white"
-                }`}
+          {/* Quick Filters */}
+          <div className="flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 text-xs font-bold w-full sm:w-auto justify-center">
+            <button
+              onClick={() => setFilter("all")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+              }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black !text-white/80 uppercase tracking-wide">
-                  Question {(r.question_index ?? i) + 1} · {q.marks || 1} mark
-                  {(q.marks || 1) > 1 ? "s" : ""}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${r.is_correct
-                    ? "bg-white/20 !text-white"
-                    : "bg-white/20 !text-white"
-                    }`}
-                >
-                  {r.is_correct ? <Check size={11} /> : <X size={11} />}
-                  {r.is_correct ? "Correct" : "Incorrect"}
-                </span>
-              </div>
+              All ({questionResults.length})
+            </button>
+            <button
+              onClick={() => setFilter("correct")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "correct" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-emerald-700"
+              }`}
+            >
+              Correct ({correctCount})
+            </button>
+            <button
+              onClick={() => setFilter("incorrect")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
+                filter === "incorrect" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:text-red-700"
+              }`}
+            >
+              Incorrect ({incorrectCount})
+            </button>
+          </div>
+        </div>
 
-              <p className="font-bold !text-white">
-                {r.question_text || q.question_text}
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
-                    Your Answer
-                  </p>
-                  <p className="text-sm font-semibold !text-white">
-                    {prettifyAnswer(q, r.given_answer)}
-                  </p>
-                </div>
-                {!r.is_correct && (
-                  <div>
-                    <p className="text-[10px] font-black !text-white/80 uppercase mb-1">
-                      Correct Answer
-                    </p>
-                    <p className="text-sm font-semibold !text-white">
-                      {prettifyAnswer(q, r.correct_answer)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {r.explanation && (
-                <div className="flex items-start gap-2 text-xs !text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2">
-                  <Lightbulb size={13} className="shrink-0 mt-0.5" />
-                  <span
-                    className="prose prose-sm prose-invert [&_p]:m-0 [&_p]:!text-white"
-                    dangerouslySetInnerHTML={{ __html: r.explanation }}
-                  />
-                </div>
-              )}
+        {/* Review Cards List */}
+        <div className="space-y-4">
+          {filteredResults.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 font-bold text-sm">No questions found for this filter.</p>
             </div>
-          );
-        })}
+          ) : (
+            filteredResults.map((r, i) => {
+              const originalIndex = questionResults.indexOf(r);
+              const q = selectedModule.questions[r.question_index ?? originalIndex] || {};
+              const isSelected = activeCard === originalIndex;
+
+              return (
+                <div
+                  key={originalIndex}
+                  onClick={() => setActiveCard(isSelected ? null : originalIndex)}
+                  className={`group rounded-3xl border transition-all duration-300 p-6 sm:p-8 space-y-4 cursor-pointer ${
+                    r.is_correct
+                      ? "bg-emerald-100 border-emerald-400 hover:border-emerald-500 shadow-sm shadow-emerald-500/10"
+                      : "bg-red-100 border-red-400 hover:border-red-500 shadow-sm shadow-red-500/10"
+                  } ${isSelected ? "ring-2 ring-orange-400/50" : ""}`}
+                >
+                  {/* Header info */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-black uppercase tracking-widest ${r.is_correct ? "text-emerald-900" : "text-red-900"}`}>
+                      Question {(r.question_index ?? originalIndex) + 1} · {q.marks || 1} mark
+                      {(q.marks || 1) > 1 ? "s" : ""}
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide ${
+                        r.is_correct
+                          ? "bg-emerald-600 text-white border border-emerald-700 shadow-sm"
+                          : "bg-red-600 text-white border border-red-700 shadow-sm"
+                      }`}
+                    >
+                      {r.is_correct ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
+                      {r.is_correct ? "Correct" : "Incorrect"}
+                    </span>
+                  </div>
+
+                  {/* Question text */}
+                  <p className="font-bold text-slate-900 text-base sm:text-lg">
+                    {r.question_text || q.question_text}
+                  </p>
+
+                  {/* Answer Comparisons Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className={`p-4 rounded-2xl border bg-white ${r.is_correct ? "border-emerald-300" : "border-red-300"}`}>
+                      <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${r.is_correct ? "text-emerald-800" : "text-red-800"}`}>
+                        Your Answer
+                      </p>
+                      <p className="text-sm font-bold text-slate-800">
+                        {prettifyAnswer(q, r.given_answer)}
+                      </p>
+                    </div>
+
+                    {!r.is_correct && (
+                      <div className="p-4 rounded-2xl border bg-white border-emerald-300">
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-1">
+                          Correct Answer
+                        </p>
+                        <p className="text-sm font-bold text-emerald-950">
+                          {prettifyAnswer(q, r.correct_answer)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Explanation Block */}
+                  {r.explanation && (
+                    <div className="flex items-start gap-2.5 text-xs text-amber-900 bg-amber-50/90 border border-amber-200/80 rounded-2xl px-4 py-3.5">
+                      <Lightbulb size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                      <span
+                        className="prose prose-sm [&_p]:m-0 [&_p]:text-amber-900 font-medium"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.explanation) }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -1112,21 +1047,41 @@ function ActiveQuiz({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
-                {currentQuestionIndex + 1}
-              </span>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
-                Question {currentQuestionIndex + 1} of {total}
-              </p>
-            </div>
-            <span className="text-xs font-bold text-slate-500 shrink-0">
-              • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
-            </span>
+         <div className="flex items-center justify-between gap-4">
+  <div className="flex items-center gap-3 flex-wrap">
+    <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
+      {currentQuestionIndex + 1}
+    </span>
+    <div>
+      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
+        Question {currentQuestionIndex + 1} of {total}
+      </p>
+    </div>
+
+   {/* ADDED: Question Type Badge */}
+       
+  </div>
+   <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+            {q.question_type === "mcq"
+              ? "Multiple Choice"
+              : q.question_type === "true_false"
+              ? "True / False"
+              : q.question_type === "fill_blank"
+              ? "Fill in the Blank"
+              : q.question_type === "reorder"
+              ? "Reorder Sequence"
+              : q.question_type === "match"
+              ? "Match the Pairs"
+              : q.question_type === "short_answer"
+              ? "Short Answer"
+              : q.question_type}
           </div>
+  <span className="text-xs font-bold text-slate-500 shrink-0">
+    • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
+  </span>
+</div>
 
           <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
 
@@ -1203,7 +1158,6 @@ function ActiveQuiz({
           </div>
         </div>
       </div>
-
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
@@ -1244,6 +1198,7 @@ function ActiveQuiz({
   );
 }
 
+
 function ExerciseDetail({
   selectedModule,
   isQuizActive,
@@ -1264,32 +1219,63 @@ function ExerciseDetail({
   showReview,
   setShowReview,
 }) {
+  // StatusModal state management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "warning",
+    title: "",
+    message: "",
+    onClose: null,
+  });
+
+  const triggerModal = (type, title, message, onClose = null) => {
+    setModalState({
+      open: true,
+      type,
+      title,
+      message,
+      onClose: () => {
+        setModalState((prev) => ({ ...prev, open: false }));
+        if (onClose) onClose();
+      },
+    });
+  };
+
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-4 animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-3 animate-fade-in pb-8">
+      {/* Status Modal Component Integration */}
+      <StatusModal
+        open={modalState.open}
+        type={modalState.type}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={modalState.onClose}
+      />
+
       <BackToLessonsButton onBack={onBack} />
 
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl min-h-[calc(100vh-140px)]">
-        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 p-6 text-white">
-          <div className="absolute top-0 right-0 p-6 opacity-10">
-            <Award size={100} />
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-6 py-5 text-white">
+          <div className="absolute top-0 right-0 p-6 opacity-15 pointer-events-none">
+            <Award size={80} />
           </div>
-          <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-yellow-200/20 blur-3xl" />
+          <div className="absolute -top-8 -left-8 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+          <div className="absolute -bottom-10 right-10 h-24 w-24 rounded-full bg-yellow-200/25 blur-2xl" />
 
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-md mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-sm mb-2">
             <Award size={12} />
             Challenge Activity
           </span>
 
-          <h2 className="relative text-2xl font-black tracking-tight">
+          <h2 className="relative text-xl md:text-2xl font-black tracking-tight">
             {selectedModule.title}
           </h2>
-          <p className="relative mt-1 text-sm text-orange-50">
+          <p className="relative mt-0.5 text-xs md:text-sm text-orange-50">
             Complete the challenge to test your understanding.
           </p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4">
           {!isQuizActive && !showResults ? (
             <PreAssessment
               selectedModule={selectedModule}
@@ -1324,17 +1310,16 @@ function ExerciseDetail({
               setUserAnswers={setUserAnswers}
               onSubmit={onSubmit}
               onTimeUp={() => {
-                Swal.fire({
-                  icon: "warning",
-                  title: "Time's Up!",
-                  text: "You ran out of time for this exercise. Try again!",
-                  confirmButtonColor: "#f97316",
-                  confirmButtonText: "Okay",
-                  target: document.fullscreenElement || document.body,
-                });
-                setIsQuizActive(false);
-                setUserAnswers({});
-                setCurrentQuestionIndex(0);
+                triggerModal(
+                  "warning",
+                  "Time's Up!",
+                  "You ran out of time for this exercise. Try again!",
+                  () => {
+                    setIsQuizActive(false);
+                    setUserAnswers({});
+                    setCurrentQuestionIndex(0);
+                  }
+                );
               }}
             />
           )}
@@ -1353,7 +1338,7 @@ function ExerciseDetail({
    MAIN PAGE
    ========================================================================= */
 
-export default function ExercisePage() {
+function ExercisePageContent() {
   const searchParams = useSearchParams();
   const subTopicId = searchParams.get("subTopicId");
   const topicId = searchParams.get("topicId");
@@ -1375,34 +1360,50 @@ export default function ExercisePage() {
   const [showReview, setShowReview] = useState(false);
 
   const containerRef = useRef(null);
-const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-useEffect(() => {
-  const handleFullscreenChange = () => {
-    setIsFullscreen(!!document.fullscreenElement);
-  };
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
-  document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
-  return () => {
-    document.removeEventListener(
-      "fullscreenchange",
-      handleFullscreenChange
-    );
-  };
-}, []);
+    return () => {
+      document.removeEventListener(
+        "fullscreenchange",
+        handleFullscreenChange
+      );
+    };
+  }, []);
 
-const enterFullscreen = async () => {
+ const enterFullscreen = async () => {
   if (containerRef.current?.requestFullscreen) {
-    await containerRef.current.requestFullscreen();
+    try {
+      await containerRef.current.requestFullscreen();
+    } catch (err) {
+      // Safely catches the browser's automatic restriction error without spamming the console
+      console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+    }
   }
 };
 
-const exitFullscreen = async () => {
-  if (document.fullscreenElement) {
-    await document.exitFullscreen();
-  }
-};
+  const exitFullscreen = async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error("Exit fullscreen failed:", err);
+      }
+    }
+  };
+
+  // Automatically enter fullscreen on mount (once loading finishes or data is ready)
+  useEffect(() => {
+    if (!loading && selectedExercise && !isFullscreen) {
+      enterFullscreen();
+    }
+  }, [loading, selectedExercise]);
 
   useEffect(() => {
     fetchExercise();
@@ -1429,11 +1430,15 @@ const exitFullscreen = async () => {
         ? await moduleApi.getExercisesByContentModule(contentModuleId)
         : await moduleApi.getModulesBySubtopic("exercise", subTopicId);
       const data = res.data?.data || [];
+      console.log(
+        `[Exercise] ${contentModuleId ? `GET exercises for contentModule ${contentModuleId}` : `GET /module/exercise/${subTopicId}`} -> ${data.length} item(s)`,
+        data,
+      );
       setExercises(data);
       if (data.length) setSelectedExercise(data[0]);
       else setSelectedExercise(null);
     } catch (err) {
-      console.error(err);
+      console.error(`[Exercise] fetch failed:`, err);
     } finally {
       setLoading(false);
     }
@@ -1457,7 +1462,7 @@ const exitFullscreen = async () => {
       if (response?.data?.success) {
         const attempt = response.data.data.attempt;
         setResultData(attempt);
-        setQuestionResults(response.data.data.results || []);
+setQuestionResults(response.data.data.question_results || []);
         setIsQuizActive(false);
         setShowResults(true);
         toast.success("Submitted successfully!");
@@ -1484,44 +1489,51 @@ const exitFullscreen = async () => {
   };
 
   if (loading) return <LoadingScreen />;
-if (!selectedExercise) {
+  if (!selectedExercise) {
+    return (
+      <EmptyState
+        scopedToLesson={Boolean(contentModuleId)}
+        onBack={() => router.back()}
+      />
+    );
+  }
+
   return (
-    <EmptyState
-      scopedToLesson={Boolean(contentModuleId)}
-      onBack={() => router.back()}
-    />
-  );
-}
-  return (
- <div
+   <div
     ref={containerRef}
     className={`flex bg-slate-50 overflow-hidden ${
       isFullscreen ? "h-screen w-screen" : "h-screen"
-    }`}
-  >      <ExerciseSidebar
-        exercises={exercises}
-        selectedExercise={selectedExercise}
-        onSelect={setSelectedExercise}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        scopedToLesson={Boolean(contentModuleId)}
-      />
+    } w-full`}
+  > 
+    <ExerciseSidebar
+      exercises={exercises}
+      selectedExercise={selectedExercise}
+      onSelect={setSelectedExercise}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      scopedToLesson={Boolean(contentModuleId)}
+    />
 
-      
-      <div className="flex-1 overflow-y-auto w-full relative p-6 md:p-8">
-      <div className="sticky top-0 z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm">
-  <button
-    onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-    className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
-    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-  >
-    {isFullscreen ? (
-      <Minimize2 size={18} />
-    ) : (
-      <Maximize2 size={18} />
-    )}
-  </button>
-</div>
+    <div className="flex-1 w-full h-full relative flex flex-col p-6 md:p-8 overflow-hidden">
+      <div className="z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm shrink-0">
+        <button
+          onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        >
+          {isFullscreen ? (
+            <Minimize2 size={18} />
+          ) : (
+            <Maximize2 size={18} />
+          )}
+        </button>
+      </div>
+
+      {/* Added scrollbar-none and inline styles to hide scrollbars across different browsers */}
+      <div 
+        className="flex-1 overflow-y-auto min-h-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
         <ExerciseDetail
           selectedModule={selectedExercise}
           isQuizActive={isQuizActive}
@@ -1554,14 +1566,23 @@ if (!selectedExercise) {
           showReview={showReview}
           setShowReview={setShowReview}
         />
-        
-        {selectedAttempt && (
-          <AttemptResultModal
-            attempt={selectedAttempt}
-            onClose={() => setSelectedAttempt(null)}
-          />
-        )}
       </div>
+        
+      {selectedAttempt && (
+        <AttemptResultModal
+          attempt={selectedAttempt}
+          onClose={() => setSelectedAttempt(null)}
+        />
+      )}
     </div>
+  </div>
+  );
+}
+
+export default function ExercisePage() {
+  return (
+    <Suspense fallback={null}>
+      <ExercisePageContent />
+    </Suspense>
   );
 }
