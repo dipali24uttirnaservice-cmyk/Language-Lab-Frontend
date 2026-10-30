@@ -392,9 +392,8 @@ export default function InteractiveLearningPage() {
         open: true,
         type: "success",
         title: "Task Assigned",
-        message: `Task successfully assigned to ${assignData.department}${
-          assignData.batch ? ` (Year ${assignData.batch})` : ""
-        }.`,
+        message: `Task successfully assigned to ${assignData.department}${assignData.batch ? ` (Year ${assignData.batch})` : ""
+          }.`,
       });
       setShowAssignModal(false);
       fetchTasks();
@@ -562,8 +561,8 @@ export default function InteractiveLearningPage() {
               {filterTopicsLoading
                 ? "Loading topics..."
                 : !filterCourseId
-                ? "Select a Course First"
-                : "All Topics"}
+                  ? "Select a Course First"
+                  : "All Topics"}
             </option>
             {filterTopics.map((t) => (
               <option key={t._id} value={t._id}>
@@ -625,7 +624,7 @@ export default function InteractiveLearningPage() {
                   <th className="py-4 px-6">Paragraph Snippet</th>
                   <th className="py-4 px-6 text-center">Retries</th>
                   <th className="py-4 px-6 text-center">Assigned Scope</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
+                  <th className="py-4 px-6 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium">
@@ -713,54 +712,58 @@ export default function InteractiveLearningPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* View details */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/interactive-learning/assign/${task._id}`
+                              )
+                            }
+                            className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors cursor-pointer"
+                            title="Assign Task"
+                            aria-label="Assign Task"
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
+
                           <button
                             onClick={() => {
                               setSelectedTask(task);
                               setShowViewModal(true);
                             }}
-                            title="View Paragraph Details"
-                            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all cursor-pointer"
+                            className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                            title="View Task"
+                            aria-label="View Task"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          {/* Assign */}
                           <button
-                            onClick={() => handleOpenAssignModal(task)}
-                            title="Assign to Branch / Batch"
-                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
+                            onClick={() => handleOpenSubmissionsModal(task)}
+                            className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors cursor-pointer"
+                            title="View Submissions"
+                            aria-label="View Submissions"
                           >
                             <Send className="w-4 h-4" />
                           </button>
 
-                          {/* Submissions */}
-                          <button
-                            onClick={() => handleOpenSubmissionsModal(task)}
-                            title="View Student Submissions"
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-                          >
-                            <Users className="w-4 h-4" />
-                          </button>
-
-                          {/* Edit */}
                           <button
                             onClick={() => handleOpenEditModal(task)}
+                            className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
                             title="Edit Task"
-                            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all cursor-pointer"
+                            aria-label="Edit Task"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
 
-                          {/* Delete */}
                           <button
                             onClick={() =>
                               setDeleteModal({ open: true, id: task._id })
                             }
+                            className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                             title="Delete Task"
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                            aria-label="Delete Task"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -882,8 +885,8 @@ export default function InteractiveLearningPage() {
                         {formTopicsLoading
                           ? "Loading topics..."
                           : !formData.course_id
-                          ? "Choose Course First"
-                          : "Select Topic"}
+                            ? "Choose Course First"
+                            : "Select Topic"}
                       </option>
                       {formTopics.map((t) => (
                         <option key={t._id} value={t._id}>
@@ -931,11 +934,10 @@ export default function InteractiveLearningPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, paragraph: e.target.value })
                     }
-                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm focus:outline-none transition-all font-medium text-slate-800 leading-relaxed resize-none ${
-                      wordCount > 100
+                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm focus:outline-none transition-all font-medium text-slate-800 leading-relaxed resize-none ${wordCount > 100
                         ? "border-rose-400 focus:ring-2 focus:ring-rose-400/20 focus:border-rose-500 bg-rose-50/20"
                         : "border-slate-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                    }`}
+                      }`}
                   />
 
                   {/* Paragraph Stats Bar */}
@@ -944,13 +946,12 @@ export default function InteractiveLearningPage() {
                       <span className="text-slate-500">
                         Word Count:{" "}
                         <strong
-                          className={`font-black ${
-                            wordCount > 100
+                          className={`font-black ${wordCount > 100
                               ? "text-rose-600"
                               : wordCount > 85
-                              ? "text-amber-600"
-                              : "text-slate-700"
-                          }`}
+                                ? "text-amber-600"
+                                : "text-slate-700"
+                            }`}
                         >
                           {wordCount} / 100 words
                         </strong>
@@ -1066,10 +1067,10 @@ export default function InteractiveLearningPage() {
                     {formSubmitting
                       ? "Saving..."
                       : wordCount > 100
-                      ? "Word Limit Exceeded (Max 100)"
-                      : editingTask
-                      ? "Update Task"
-                      : "Save Reading Task"}
+                        ? "Word Limit Exceeded (Max 100)"
+                        : editingTask
+                          ? "Update Task"
+                          : "Save Reading Task"}
                   </button>
                 </div>
               </form>
@@ -1401,12 +1402,11 @@ export default function InteractiveLearningPage() {
                           {/* Accuracy Score */}
                           <td className="py-3 px-4 text-center">
                             <span
-                              className={`inline-block px-2.5 py-0.5 rounded-full font-extrabold text-xs ${
-                                (sub.accuracy_score || 0) >=
-                                (submissionsTask.min_accuracy || 75)
+                              className={`inline-block px-2.5 py-0.5 rounded-full font-extrabold text-xs ${(sub.accuracy_score || 0) >=
+                                  (submissionsTask.min_accuracy || 75)
                                   ? "bg-emerald-100 text-emerald-700"
                                   : "bg-red-100 text-red-700"
-                              }`}
+                                }`}
                             >
                               {sub.accuracy_score || 0}%
                             </span>

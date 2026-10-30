@@ -209,15 +209,21 @@ export default function CreateInteractiveTaskPage() {
 
     try {
       setSubmitting(true);
-      await interactiveLearningApi.createTask(formData);
+      const res = await interactiveLearningApi.createTask(formData);
+      const created = res.data?.data || res.data;
+      const createdId = created?._id || created?.task?._id;
 
       setStatusData({
         open: true,
         type: "success",
         title: "Task Created Successfully",
-        message: "Interactive paragraph reading task has been created.",
+        message: "Interactive paragraph reading task has been created. Proceeding to assign departments and batches...",
         onClose: () => {
-          router.push("/institute-dashboard/interactive-learning");
+          if (createdId) {
+            router.push(`/institute-dashboard/interactive-learning/assign/${createdId}`);
+          } else {
+            router.push("/institute-dashboard/interactive-learning");
+          }
         },
       });
     } catch (error) {
