@@ -17,7 +17,7 @@ export function middleware(request) {
       );
     }
 
-    if (token && role === "institute") {
+    if (token && (role === "institute" || role === "faculty")) {
       return NextResponse.redirect(
         new URL("/institute-dashboard", request.url)
       );
@@ -63,10 +63,32 @@ export function middleware(request) {
   if (
     pathname.startsWith("/institute-dashboard") &&
     role &&
-    role !== "institute"
+    role !== "institute" &&
+    role !== "faculty"
   ) {
     return NextResponse.redirect(
       new URL("/dashboard", request.url)
+    );
+  }
+
+  // ------------------------------------------
+  // RESTRICTED ROUTES FOR FACULTY
+  // ------------------------------------------
+  const facultyRestrictedPaths = [
+    "/institute-dashboard/teachers",
+    "/institute-dashboard/license",
+    "/institute-dashboard/danger-zone",
+    "/institute-dashboard/settings",
+    "/institute-dashboard/student-learning-access",
+    "/institute-dashboard/students/add",
+  ];
+
+  if (
+    role === "faculty" &&
+    facultyRestrictedPaths.some((p) => pathname.startsWith(p))
+  ) {
+    return NextResponse.redirect(
+      new URL("/institute-dashboard", request.url)
     );
   }
 

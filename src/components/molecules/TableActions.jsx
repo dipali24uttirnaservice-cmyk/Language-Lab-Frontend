@@ -12,19 +12,29 @@ export default function TableActions({
 }) {
   return (
     <div className="flex items-center justify-center gap-3">
-    
+      {onView && (
+        <ActionIcon
+          icon={Eye}
+          gradient="from-blue-500 to-indigo-600"
+          onClick={onView}
+        />
+      )}
 
-      <ActionIcon
-        icon={Pencil}
-        gradient="from-amber-400 to-orange-500"
-        onClick={onEdit}
-      />
+      {onEdit && (
+        <ActionIcon
+          icon={Pencil}
+          gradient="from-amber-400 to-orange-500"
+          onClick={onEdit}
+        />
+      )}
 
-      <ActionIcon
-        icon={Trash2}
-        gradient="from-rose-500 to-red-600"
-        onClick={onDelete}
-      />
+      {onDelete && (
+        <ActionIcon
+          icon={Trash2}
+          gradient="from-rose-500 to-red-600"
+          onClick={onDelete}
+        />
+      )}
     </div>
   );
 }

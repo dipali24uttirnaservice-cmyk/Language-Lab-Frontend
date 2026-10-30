@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import PricingCard from "@/components/molecules/PricingCard";
+import PricingCard from "@/app/components/molecules/PricingCard";
 
 const plans = [
   {
@@ -43,17 +43,17 @@ const plans = [
 export default function PricingSection() {
   return (
     <section className="relative py-32 overflow-hidden bg-gradient-to-br from-slate-100 via-orange-50/40 to-emerald-50/20">
-      
+
       {/* =========================================================================
           ADVANCED 3D GLASS ENVIRONMENT & BACKGROUND REFRACTION ENGINE
           ========================================================================= */}
       <div className="absolute inset-0 z-0 pointer-events-none select-none">
-        
+
         {/* Ambient Sky Horizon Glow Maps */}
         <div className="absolute top-0 right-0 w-full h-[700px] bg-gradient-to-bl from-amber-200/40 via-orange-100/20 to-transparent blur-[140px]" />
-        
+
         {/* Central Giant Glass Lens / Ring */}
-        <motion.div 
+        <motion.div
           animate={{ scale: [1, 1.015, 1], rotate: [0, 0.5, 0] }}
           transition={{ repeat: Infinity, duration: 14, ease: "easeInOut" }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[950px] flex items-center justify-center"
@@ -84,7 +84,7 @@ export default function PricingSection() {
           FOREGROUND CONTENT GRID LAYER
           ========================================================================= */}
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        
+
         {/* Section Title Header */}
         <div className="text-center max-w-2xl mx-auto mb-24">
           <h2 className="text-4xl font-black text-slate-900 tracking-tight sm:text-5xl">
@@ -99,22 +99,22 @@ export default function PricingSection() {
         </div>
 
         {/* 3-Column Pricing Layout Array with 3D Spatial Offset */}
-    
-<div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto items-stretch">
-  {plans.map((plan) => (
-    // Removed the inline style offset here
-    <div key={plan.title} className="relative h-full">
-      <PricingCard
-        title={plan.title}
-        price={plan.price}
-        description={plan.description}
-        features={plan.features}
-        // We no longer pass "popular" or set it to false for all
-        popular={false} 
-      />
-    </div>
-  ))}
-</div>
+
+        <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto items-stretch">
+          {plans.map((plan) => (
+            // Removed the inline style offset here
+            <div key={plan.title} className="relative h-full">
+              <PricingCard
+                title={plan.title}
+                price={plan.price}
+                description={plan.description}
+                features={plan.features}
+                // We no longer pass "popular" or set it to false for all
+                popular={false}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

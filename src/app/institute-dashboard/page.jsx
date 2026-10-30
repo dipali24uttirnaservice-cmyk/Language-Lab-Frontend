@@ -15,7 +15,7 @@ import { dashboardApi } from "@/services/institute/dashboardApi";
 
 // Code-split recharts (heavy dependency) out of the initial dashboard bundle.
 const MiniPieChart = dynamic(
-  () => import("@/components/organisms/MiniPieChart"),
+  () => import("@/app/components/organisms/MiniPieChart"),
   {
     ssr: false,
     loading: () => (
@@ -160,12 +160,12 @@ export default function InstituteDashboard() {
     },
     ...(statusBreakdown.suspended > 0
       ? [
-          {
-            name: "Suspended",
-            value: statusBreakdown.suspended,
-            color: STATUS_COLORS.suspended,
-          },
-        ]
+        {
+          name: "Suspended",
+          value: statusBreakdown.suspended,
+          color: STATUS_COLORS.suspended,
+        },
+      ]
       : []),
   ];
 

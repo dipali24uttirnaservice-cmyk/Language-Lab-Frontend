@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { moduleApi } from "@/services/topic/topicApi";
 import { activityApi } from "@/services/activity/activityApi";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   ChevronRight,
   Award,
@@ -542,7 +542,7 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
   return (
     <div className="min-h-screen w-full bg-slate-50/50 py-8 px-4 sm:px-8 animate-fade-in">
       <div className="max-w-4xl mx-auto space-y-6">
-        
+
         {/* Top Bar / Navigation & Filters Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-3xl shadow-sm">
           <button
@@ -556,25 +556,22 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
           <div className="flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 text-xs font-bold w-full sm:w-auto justify-center">
             <button
               onClick={() => setFilter("all")}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
-                filter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
-              }`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${filter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                }`}
             >
               All ({questionResults.length})
             </button>
             <button
               onClick={() => setFilter("correct")}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
-                filter === "correct" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-emerald-700"
-              }`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${filter === "correct" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-emerald-700"
+                }`}
             >
               Correct ({correctCount})
             </button>
             <button
               onClick={() => setFilter("incorrect")}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${
-                filter === "incorrect" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:text-red-700"
-              }`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl transition-all ${filter === "incorrect" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:text-red-700"
+                }`}
             >
               Incorrect ({incorrectCount})
             </button>
@@ -597,11 +594,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                 <div
                   key={originalIndex}
                   onClick={() => setActiveCard(isSelected ? null : originalIndex)}
-                  className={`group rounded-3xl border transition-all duration-300 p-6 sm:p-8 space-y-4 cursor-pointer ${
-                    r.is_correct
+                  className={`group rounded-3xl border transition-all duration-300 p-6 sm:p-8 space-y-4 cursor-pointer ${r.is_correct
                       ? "bg-emerald-100 border-emerald-400 hover:border-emerald-500 shadow-sm shadow-emerald-500/10"
                       : "bg-red-100 border-red-400 hover:border-red-500 shadow-sm shadow-red-500/10"
-                  } ${isSelected ? "ring-2 ring-orange-400/50" : ""}`}
+                    } ${isSelected ? "ring-2 ring-orange-400/50" : ""}`}
                 >
                   {/* Header info */}
                   <div className="flex items-center justify-between">
@@ -611,11 +607,10 @@ function ReviewScreen({ selectedModule, questionResults, onBack }) {
                     </span>
 
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide ${
-                        r.is_correct
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide ${r.is_correct
                           ? "bg-emerald-600 text-white border border-emerald-700 shadow-sm"
                           : "bg-red-600 text-white border border-red-700 shadow-sm"
-                      }`}
+                        }`}
                     >
                       {r.is_correct ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
                       {r.is_correct ? "Correct" : "Incorrect"}
@@ -863,15 +858,14 @@ function MatchBuilder({ question, answer, setAnswer }) {
 
               className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
 
-              ${
-                isActive
+              ${isActive
                   ? "border-orange-500 bg-orange-50 text-orange-700"
 
                   : isPaired
-                  ? `${color.border} ${color.bg} ${color.text}`
+                    ? `${color.border} ${color.bg} ${color.text}`
 
-                  : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-              }`}
+                    : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
+                }`}
             >
 
               {p.left}
@@ -909,15 +903,14 @@ function MatchBuilder({ question, answer, setAnswer }) {
 
               className={`w-full text-left p-3 rounded-xl border-2 text-sm font-semibold transition-all
 
-              ${
-                usedRights.has(item.value)
+              ${usedRights.has(item.value)
 
-                ? `${color?.border || "border-slate-100"}
+                  ? `${color?.border || "border-slate-100"}
                    ${color?.bg || "bg-slate-50"}
                    ${color?.text || "text-slate-300"}`
 
-                : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
-              }`}
+                  : "border-slate-200 bg-white text-slate-700 hover:border-orange-300"
+                }`}
             >
 
               {item.value}
@@ -1047,41 +1040,41 @@ function ActiveQuiz({
         </div>
       )}
 
-     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-5">
-         <div className="flex items-center justify-between gap-4">
-  <div className="flex items-center gap-3 flex-wrap">
-    <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
-      {currentQuestionIndex + 1}
-    </span>
-    <div>
-      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
-        Question {currentQuestionIndex + 1} of {total}
-      </p>
-    </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="h-10 w-10 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center shrink-0">
+                {currentQuestionIndex + 1}
+              </span>
+              <div>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">
+                  Question {currentQuestionIndex + 1} of {total}
+                </p>
+              </div>
 
-   {/* ADDED: Question Type Badge */}
-       
-  </div>
-   <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
-            {q.question_type === "mcq"
-              ? "Multiple Choice"
-              : q.question_type === "true_false"
-              ? "True / False"
-              : q.question_type === "fill_blank"
-              ? "Fill in the Blank"
-              : q.question_type === "reorder"
-              ? "Reorder Sequence"
-              : q.question_type === "match"
-              ? "Match the Pairs"
-              : q.question_type === "short_answer"
-              ? "Short Answer"
-              : q.question_type}
+              {/* ADDED: Question Type Badge */}
+
+            </div>
+            <div className="px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+              {q.question_type === "mcq"
+                ? "Multiple Choice"
+                : q.question_type === "true_false"
+                  ? "True / False"
+                  : q.question_type === "fill_blank"
+                    ? "Fill in the Blank"
+                    : q.question_type === "reorder"
+                      ? "Reorder Sequence"
+                      : q.question_type === "match"
+                        ? "Match the Pairs"
+                        : q.question_type === "short_answer"
+                          ? "Short Answer"
+                          : q.question_type}
+            </div>
+            <span className="text-xs font-bold text-slate-500 shrink-0">
+              • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
+            </span>
           </div>
-  <span className="text-xs font-bold text-slate-500 shrink-0">
-    • {q.marks || 1} Mark{(q.marks || 1) > 1 ? "s" : ""}
-  </span>
-</div>
 
           <p className="text-xl font-bold text-slate-800">{q.question_text}</p>
 
@@ -1377,16 +1370,16 @@ function ExercisePageContent() {
     };
   }, []);
 
- const enterFullscreen = async () => {
-  if (containerRef.current?.requestFullscreen) {
-    try {
-      await containerRef.current.requestFullscreen();
-    } catch (err) {
-      // Safely catches the browser's automatic restriction error without spamming the console
-      console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+  const enterFullscreen = async () => {
+    if (containerRef.current?.requestFullscreen) {
+      try {
+        await containerRef.current.requestFullscreen();
+      } catch (err) {
+        // Safely catches the browser's automatic restriction error without spamming the console
+        console.log("Auto-fullscreen blocked by browser policy. User interaction required.");
+      }
     }
-  }
-};
+  };
 
   const exitFullscreen = async () => {
     if (document.fullscreenElement) {
@@ -1462,7 +1455,7 @@ function ExercisePageContent() {
       if (response?.data?.success) {
         const attempt = response.data.data.attempt;
         setResultData(attempt);
-setQuestionResults(response.data.data.question_results || []);
+        setQuestionResults(response.data.data.question_results || []);
         setIsQuizActive(false);
         setShowResults(true);
         toast.success("Submitted successfully!");
@@ -1499,83 +1492,82 @@ setQuestionResults(response.data.data.question_results || []);
   }
 
   return (
-   <div
-    ref={containerRef}
-    className={`flex bg-slate-50 overflow-hidden ${
-      isFullscreen ? "h-screen w-screen" : "h-screen"
-    } w-full`}
-  > 
-    <ExerciseSidebar
-      exercises={exercises}
-      selectedExercise={selectedExercise}
-      onSelect={setSelectedExercise}
-      searchTerm={searchTerm}
-      setSearchTerm={setSearchTerm}
-      scopedToLesson={Boolean(contentModuleId)}
-    />
+    <div
+      ref={containerRef}
+      className={`flex bg-slate-50 overflow-hidden ${isFullscreen ? "h-screen w-screen" : "h-screen"
+        } w-full`}
+    >
+      <ExerciseSidebar
+        exercises={exercises}
+        selectedExercise={selectedExercise}
+        onSelect={setSelectedExercise}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        scopedToLesson={Boolean(contentModuleId)}
+      />
 
-    <div className="flex-1 w-full h-full relative flex flex-col p-6 md:p-8 overflow-hidden">
-      <div className="z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm shrink-0">
-        <button
-          onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
-          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-          aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+      <div className="flex-1 w-full h-full relative flex flex-col p-6 md:p-8 overflow-hidden">
+        <div className="z-20 flex justify-end pb-4 bg-slate-50/80 backdrop-blur-sm shrink-0">
+          <button
+            onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transition-all duration-300 hover:from-orange-600 hover:to-amber-600 hover:scale-105 active:scale-95"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize2 size={18} />
+            ) : (
+              <Maximize2 size={18} />
+            )}
+          </button>
+        </div>
+
+        {/* Added scrollbar-none and inline styles to hide scrollbars across different browsers */}
+        <div
+          className="flex-1 overflow-y-auto min-h-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {isFullscreen ? (
-            <Minimize2 size={18} />
-          ) : (
-            <Maximize2 size={18} />
-          )}
-        </button>
-      </div>
+          <ExerciseDetail
+            selectedModule={selectedExercise}
+            isQuizActive={isQuizActive}
+            setIsQuizActive={setIsQuizActive}
+            showResults={showResults}
+            resultData={resultData}
+            currentQuestionIndex={currentQuestionIndex}
+            setCurrentQuestionIndex={setCurrentQuestionIndex}
+            userAnswers={userAnswers}
+            setUserAnswers={setUserAnswers}
+            onSubmit={handleSubmit}
+            onStart={() => {
+              if (topicId && subTopicId) {
+                activityApi
+                  .logActivity({
+                    topic_id: topicId,
+                    sub_topic_id: subTopicId,
+                    module_id: selectedExercise._id,
+                    module_type: "exercise",
+                    activity_type: "exercise_start",
+                  })
+                  .catch((err) => console.error("Failed to log activity:", err));
+              }
+            }}
+            onBack={() => router.back()}
+            router={router}
+            attempts={attempts}
+            onSelectAttempt={(attempt) => setSelectedAttempt(attempt)}
+            questionResults={questionResults}
+            showReview={showReview}
+            setShowReview={setShowReview}
+          />
+        </div>
 
-      {/* Added scrollbar-none and inline styles to hide scrollbars across different browsers */}
-      <div 
-        className="flex-1 overflow-y-auto min-h-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <ExerciseDetail
-          selectedModule={selectedExercise}
-          isQuizActive={isQuizActive}
-          setIsQuizActive={setIsQuizActive}
-          showResults={showResults}
-          resultData={resultData}
-          currentQuestionIndex={currentQuestionIndex}
-          setCurrentQuestionIndex={setCurrentQuestionIndex}
-          userAnswers={userAnswers}
-          setUserAnswers={setUserAnswers}
-          onSubmit={handleSubmit}
-          onStart={() => {
-            if (topicId && subTopicId) {
-              activityApi
-                .logActivity({
-                  topic_id: topicId,
-                  sub_topic_id: subTopicId,
-                  module_id: selectedExercise._id,
-                  module_type: "exercise",
-                  activity_type: "exercise_start",
-                })
-                .catch((err) => console.error("Failed to log activity:", err));
-            }
-          }}
-          onBack={() => router.back()}
-          router={router}
-          attempts={attempts}
-          onSelectAttempt={(attempt) => setSelectedAttempt(attempt)}
-          questionResults={questionResults}
-          showReview={showReview}
-          setShowReview={setShowReview}
-        />
+        {selectedAttempt && (
+          <AttemptResultModal
+            attempt={selectedAttempt}
+            onClose={() => setSelectedAttempt(null)}
+          />
+        )}
       </div>
-        
-      {selectedAttempt && (
-        <AttemptResultModal
-          attempt={selectedAttempt}
-          onClose={() => setSelectedAttempt(null)}
-        />
-      )}
     </div>
-  </div>
   );
 }
 

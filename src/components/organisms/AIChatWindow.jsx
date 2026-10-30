@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FaPaperPlane, FaMicrophone, FaStop, FaRobot } from "react-icons/fa";
 import { motion } from "framer-motion";
-import ChatBubble from "@/components/molecules/ChatBubble";
+import ChatBubble from "@/app/components/molecules/ChatBubble";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
 export default function AIChatWindow() {
@@ -48,7 +48,7 @@ export default function AIChatWindow() {
     resetTranscript();
 
     const userMsg = { id: Date.now(), sender: "user", message: finalMessage };
-    
+
     setChatHistory(prev => ({
       ...prev,
       chats: {
@@ -59,10 +59,10 @@ export default function AIChatWindow() {
         }
       }
     }));
-    
+
     setMessage("");
     setIsTyping(true);
-    
+
     setTimeout(() => {
       const aiMsg = { id: Date.now() + 1, sender: "assistant", message: "I heard you! Let's continue practicing." };
       setChatHistory(prev => ({
@@ -85,7 +85,7 @@ export default function AIChatWindow() {
 
       {/* Header */}
       <div className="relative z-10 border-b border-white/20 px-8 py-6 flex items-center justify-between">
-         {/* ... (Same Header Code) ... */}
+        {/* ... (Same Header Code) ... */}
       </div>
 
       {/* Messages */}
@@ -113,14 +113,13 @@ export default function AIChatWindow() {
             className="flex-1 bg-transparent px-4 py-2 outline-none text-slate-900 font-medium"
             placeholder={listening ? "Speak now..." : "Ask your tutor..."}
           />
-          
+
           {/* Voice Toggle */}
           {browserSupportsSpeechRecognition && (
             <button
               onClick={() => listening ? SpeechRecognition.stopListening() : SpeechRecognition.startListening({ continuous: true })}
-              className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all ${
-                listening ? "bg-red-500 text-white animate-pulse" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
+              className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all ${listening ? "bg-red-500 text-white animate-pulse" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
             >
               {listening ? <FaStop /> : <FaMicrophone />}
             </button>

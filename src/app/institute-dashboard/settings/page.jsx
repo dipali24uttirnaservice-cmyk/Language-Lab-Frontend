@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, BookOpen, Check, Download, Inbox, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { courseApi } from "@/services/course/courseApi";
 // subjectSyncApi (src/services/subject/subjectSyncApi) isn't pushed to this
 // branch yet — the "Sync Subjects" button below is disabled until it is.
@@ -262,18 +262,17 @@ export default function SettingsPage() {
                     onClick={() =>
                       isDownloaded && !isStale
                         ? router.push(
-                            `/institute-dashboard/settings/course-content/${course._id}?courseName=${encodeURIComponent(course.course_name)}&courseCode=${encodeURIComponent(course.course_code || "")}`,
-                          )
+                          `/institute-dashboard/settings/course-content/${course._id}?courseName=${encodeURIComponent(course.course_name)}&courseCode=${encodeURIComponent(course.course_code || "")}`,
+                        )
                         : handleDownload(course)
                     }
                     disabled={isDownloading}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all shadow-sm shrink-0 disabled:opacity-50 ${
-                      isStale
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all shadow-sm shrink-0 disabled:opacity-50 ${isStale
                         ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
                         : isDownloaded
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                        : "bg-orange-500 text-white hover:bg-orange-600"
-                    }`}
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-orange-500 text-white hover:bg-orange-600"
+                      }`}
                   >
                     {isDownloading ? (
                       <>

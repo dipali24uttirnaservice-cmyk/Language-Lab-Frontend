@@ -56,26 +56,40 @@ const ID_RESOLVERS = {
 };
 
 export default function InstituteNavbar({
- isSidebarOpen,
+  isSidebarOpen,
   setIsOpen,
   showLogoutModal,
   setShowLogoutModal,
+  initialRole,
+  initialUser,
 }) {
-const router = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const { user: institute } = useAuth();
-
+  const { user: authUser, role: authRole } = useAuth();
+  const institute = authUser || initialUser;
+  const currentRole =
+    authRole ||
+    initialRole ||
+    (mounted ? Cookies.get("role") : null) ||
+    "institute";
+  const isFaculty = currentRole === "faculty";
 
   const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
-
 
   const instituteName =
     institute?.institute_name || "Institute";
 
+  const displayName = isFaculty
+    ? institute?.full_name || institute?.name || "Faculty Member"
+    : instituteName;
 
   const avatarLetter =
-    instituteName
+    displayName
       ?.charAt(0)
       ?.toUpperCase() || "I";
 
@@ -247,8 +261,10 @@ const router = useRouter();
 <div className="relative z-10 flex items-center gap-4">        
           <motion.button
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/institute-dashboard/notifications")}
             aria-label="Notifications"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer"
           >
             <FaBell className="text-sm" />
 
@@ -279,12 +295,18 @@ const router = useRouter();
 </div>
 
         <div className="hidden md:block">
-  <p className="text-sm font-bold text-black">
-    {instituteName}
+  <p
+    suppressHydrationWarning
+    className="text-sm font-bold text-black truncate max-w-[180px]"
+  >
+    {displayName}
   </p>
 
-  <p className="text-xs text-black/70">
-    Institute Admin
+  <p
+    suppressHydrationWarning
+    className="text-xs font-semibold text-orange-600"
+  >
+    {isFaculty ? "Faculty / Instructor" : "Institute Admin"}
   </p>
 </div>
           </div>

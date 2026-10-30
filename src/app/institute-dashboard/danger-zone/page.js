@@ -313,9 +313,8 @@ export default function DangerZonePage() {
                 filteredStudents.map((student, index) => (
                   <tr
                     key={student._id}
-                    className={`transition-colors hover:bg-rose-50/20 ${
-                      selectedIds.includes(student._id) ? "bg-rose-50/40" : ""
-                    }`}
+                    className={`transition-colors hover:bg-rose-50/20 ${selectedIds.includes(student._id) ? "bg-rose-50/40" : ""
+                      }`}
                   >
                     <td className="px-6 py-4">
                       <input

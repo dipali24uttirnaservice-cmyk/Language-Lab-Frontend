@@ -5,8 +5,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, X, Loader2, HelpCircle } from "lucide-react";
 
 import { taskApi } from "@/services/task/taskApi";
-import RichTextEditor from "@/components/molecules/RichTextEditor";
-import StatusModal from "@/components/molecules/StatusModal";
+import RichTextEditor from "@/app/components/molecules/RichTextEditor";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 // Matches Task.questions[].question_type exactly (Task.js model / taskValidation.js)
 const Q_TYPES = [
@@ -87,15 +87,15 @@ function AddTaskQuestionPageContent() {
         }
       })
       .catch((err) => {
-       triggerModal(
-  "success",
-  "Questions Saved",
-  `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
-  () =>
-    router.push(
-      `/institute-dashboard/student-task/assign/${id}`
-    )
-);
+        triggerModal(
+          "success",
+          "Questions Saved",
+          `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
+          () =>
+            router.push(
+              `/institute-dashboard/student-task/assign/${id}`
+            )
+        );
       })
       .finally(() => setLoading(false));
   }, [id, router]);
@@ -169,59 +169,59 @@ function AddTaskQuestionPageContent() {
       }),
     );
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const valid = questions.filter(
-    (q) => q.question_text.trim() && q.correct_answer.trim(),
-  );
-
-  // A deliberately empty list (all rows removed) clears the task's
-  // questions entirely — only block save when a row was left half-filled.
-  if (!valid.length && questions.length > 0) {
-    triggerModal(
-      "error",
-      "Incomplete Questions",
-      "Complete each question, or remove it, before saving"
-    );
-    return;
-  }
-
-  setSaving(true);
-
-  try {
-    const formData = new FormData();
-
-    const toSave = isNewMode
-      ? [...existingQuestions, ...valid]
-      : valid;
-
-    formData.append(
-      "questions",
-      JSON.stringify(toSave)
+    const valid = questions.filter(
+      (q) => q.question_text.trim() && q.correct_answer.trim(),
     );
 
-    await taskApi.updateTask(id, formData);
+    // A deliberately empty list (all rows removed) clears the task's
+    // questions entirely — only block save when a row was left half-filled.
+    if (!valid.length && questions.length > 0) {
+      triggerModal(
+        "error",
+        "Incomplete Questions",
+        "Complete each question, or remove it, before saving"
+      );
+      return;
+    }
 
-    triggerModal(
-      "success",
-      "Questions Saved",
-      `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
-      () =>
-        router.push(
-          `/institute-dashboard/student-task/assign/${id}`
-        )
-    );
-  } catch (err) {
-    triggerModal(
-      "error",
-      "Failed",
-      err?.response?.data?.message || err.message
-    );
-  } finally {
-    setSaving(false);
-  }
-};
+    setSaving(true);
+
+    try {
+      const formData = new FormData();
+
+      const toSave = isNewMode
+        ? [...existingQuestions, ...valid]
+        : valid;
+
+      formData.append(
+        "questions",
+        JSON.stringify(toSave)
+      );
+
+      await taskApi.updateTask(id, formData);
+
+      triggerModal(
+        "success",
+        "Questions Saved",
+        `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
+        () =>
+          router.push(
+            `/institute-dashboard/student-task/assign/${id}`
+          )
+      );
+    } catch (err) {
+      triggerModal(
+        "error",
+        "Failed",
+        err?.response?.data?.message || err.message
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -343,52 +343,52 @@ function AddTaskQuestionPageContent() {
               {["mcq", "fill_blank", "true_false", "recorder", "spell_word"].includes(
                 q.question_type,
               ) && (
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">
-                    Options
-                    {q.question_type === "recorder" && (
-                      <span className="font-normal text-slate-400">
-                        {" "}
-                        (shuffled items — enter the correct sequence below, comma-separated)
-                      </span>
-                    )}
-                    {q.question_type === "spell_word" && (
-                      <span className="font-normal text-slate-400"> (candidate spellings)</span>
-                    )}
-                  </label>
-                  <div className="space-y-2">
-                    {q.options.map((o, oi) => (
-                      <div key={oi} className="flex items-center gap-2">
-                        <span className="text-xs font-black text-slate-400 w-5 shrink-0">
-                          {String.fromCharCode(65 + oi)}.
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      Options
+                      {q.question_type === "recorder" && (
+                        <span className="font-normal text-slate-400">
+                          {" "}
+                          (shuffled items — enter the correct sequence below, comma-separated)
                         </span>
-                        <input
-                          className={inp}
-                          placeholder={`Option ${oi + 1}`}
-                          value={o}
-                          onChange={(e) => updOpt(i, oi, e.target.value)}
-                        />
-                        {q.options.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => removeOpt(i, oi)}
-                            className="text-red-400 hover:text-red-600 shrink-0"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                      {q.question_type === "spell_word" && (
+                        <span className="font-normal text-slate-400"> (candidate spellings)</span>
+                      )}
+                    </label>
+                    <div className="space-y-2">
+                      {q.options.map((o, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          <span className="text-xs font-black text-slate-400 w-5 shrink-0">
+                            {String.fromCharCode(65 + oi)}.
+                          </span>
+                          <input
+                            className={inp}
+                            placeholder={`Option ${oi + 1}`}
+                            value={o}
+                            onChange={(e) => updOpt(i, oi, e.target.value)}
+                          />
+                          {q.options.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => removeOpt(i, oi)}
+                              className="text-red-400 hover:text-red-600 shrink-0"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addOpt(i)}
+                      className="mt-2 text-xs text-orange-600 font-bold hover:underline"
+                    >
+                      + Add Option
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => addOpt(i)}
-                    className="mt-2 text-xs text-orange-600 font-bold hover:underline"
-                  >
-                    + Add Option
-                  </button>
-                </div>
-              )}
+                )}
 
               {/* Match Pairs */}
               {q.question_type === "match" && (

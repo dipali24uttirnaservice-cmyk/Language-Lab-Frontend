@@ -19,6 +19,7 @@ import {
   FaHome,
   FaBookOpen,
   FaSignOutAlt,
+  FaComments,
 } from "react-icons/fa";
 
 const menus = [
@@ -40,6 +41,16 @@ const menus = [
     bg: "from-orange-50 via-amber-50 to-yellow-50",
     text: "text-orange-700",
     dot: "bg-orange-500",
+  },
+  {
+    name: "Conversation Lab",
+    href: "/dashboard/conversation-lab",
+    icon: FaComments,
+    color: "from-[#800020] to-[#500014]",
+    border: "border-[#800020]",
+    bg: "from-rose-50 via-pink-50 to-rose-100/40",
+    text: "text-[#800020]",
+    dot: "bg-[#800020]",
   },
   // Assessment is hidden until its page/service is pushed to this branch —
   // the route exists locally but not yet on test-dev, so linking to it here
