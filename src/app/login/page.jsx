@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import Input from "@/components/atoms/Input";
-import AnimatedBackground from "@/components/organisms/AnimatedBackground";
-import StatusModal from "@/components/molecules/StatusModal";
+import Input from "@/app/components/atoms/Input";
+import AnimatedBackground from "@/app/components/organisms/AnimatedBackground";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { useAuth } from "@/context/AuthContext";
 
 import { instituteLogin } from "@/services/auth/loginApi";
@@ -46,7 +46,7 @@ export default function LoginPage() {
 
     if (!token) return;
 
-    if (role === "institute") {
+    if (role === "institute" || role === "faculty") {
       router.replace("/institute-dashboard");
     }
   }, [router]);
@@ -63,28 +63,39 @@ export default function LoginPage() {
         throw new Error("Token not found in response");
       }
 
-      Cookies.set("role", "institute", secureCookieOptions());
+      // Detect role returned from unified login (faculty or institute)
+      const role =
+        apiResponse?.data?.role ||
+        (apiResponse?.data?.faculty ? "faculty" : "institute");
+      const userObj =
+        apiResponse?.data?.faculty ||
+        apiResponse?.data?.institute ||
+        apiResponse?.data?.user;
+
+      Cookies.set("role", role, secureCookieOptions());
 
       Cookies.set("token", token, secureCookieOptions());
 
-      const institute = apiResponse?.data?.institute;
+      Cookies.set(
+        "userData",
+        JSON.stringify({ [role]: userObj, user: userObj, role }),
+        secureCookieOptions(),
+      );
 
-      Cookies.set("userData", JSON.stringify({ institute }), secureCookieOptions());
+      login(userObj, role);
 
-      login(institute);
-
-      // The login response's `institute` object is missing fields like
-      // logo/local_logo_url (only /institute/me returns the full record),
-      // so the sidebar/navbar logo stayed blank until a refresh re-fetched
-      // it. Fetch the full profile right away so it shows immediately.
-      profileApi
-        .getProfile()
-        .then((res) => {
-          if (res.data.success) login(res.data.data);
-        })
-        .catch((error) => {
-          console.error("Failed to refresh institute profile:", error);
-        });
+      // If logging in as an institute admin, fetch the full institute profile
+      // so logos and campus details are refreshed immediately.
+      if (role === "institute") {
+        profileApi
+          .getProfile()
+          .then((res) => {
+            if (res.data.success) login(res.data.data, "institute");
+          })
+          .catch((error) => {
+            console.error("Failed to refresh institute profile:", error);
+          });
+      }
 
       router.replace("/institute-dashboard");
     } catch (error) {
@@ -133,11 +144,11 @@ export default function LoginPage() {
         className="relative z-10 w-full max-w-md rounded-[32px] border border-white/60 bg-white/40 backdrop-blur-2xl p-10 shadow-[0_20px_80px_rgba(249,115,22,0.15)]"
       >
 
-    <div className="flex items-center gap-3 mb-6">
-  <button
-    type="button"
-    onClick={() => router.push("/")}
-    className="
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="
       h-10 w-10
       flex items-center justify-center
       rounded-xl
@@ -150,22 +161,21 @@ export default function LoginPage() {
       hover:shadow-md
       transition-all duration-300
     "
-  >
-    <ArrowLeft size={18} />
-  </button>
+          >
+            <ArrowLeft size={18} />
+          </button>
 
-  <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-     🏫 Institute Management Hub
-  </div>
-</div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+            🏫 Institute & Faculty Portal
+          </div>
+        </div>
 
         <h2 className="text-3xl font-black text-slate-900">
-         Institute Login
+          Staff & Faculty Login
         </h2>
 
         <p className="mt-2 text-slate-500">
-          Continue your English
-          learning journey.
+          Sign in to your institute or faculty teaching portal.
         </p>
 
         <form
@@ -205,12 +215,12 @@ export default function LoginPage() {
       </motion.div>
 
       <StatusModal
-  open={modal.open}
-  type={modal.type}
-  title={modal.title}
-  message={modal.message}
-  onClose={handleModalClose}
-/>
+        open={modal.open}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onClose={handleModalClose}
+      />
     </main>
 
 

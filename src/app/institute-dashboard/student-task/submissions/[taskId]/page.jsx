@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { taskApi } from "@/services/task/taskApi";
 
 export default function StudentTaskSubmissionsPage() {
@@ -97,17 +97,17 @@ export default function StudentTaskSubmissionsPage() {
               No submissions yet.
             </div>
           ) : (
-           submissions.map((sub) => (
-  <TaskSubmissionRow
-    key={sub._id}
-    taskId={id}
-    submission={sub}
-    questions={task?.questions || []}
-    onGrade={(marks, feedback) =>
-      handleGradeSubmission(sub._id, marks, feedback)
-    }
-  />
-))
+            submissions.map((sub) => (
+              <TaskSubmissionRow
+                key={sub._id}
+                taskId={id}
+                submission={sub}
+                questions={task?.questions || []}
+                onGrade={(marks, feedback) =>
+                  handleGradeSubmission(sub._id, marks, feedback)
+                }
+              />
+            ))
           )}
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function StudentTaskSubmissionsPage() {
 }
 
 function TaskSubmissionRow({ taskId, submission, questions, onGrade }) {
-    const [marks, setMarks] = useState(submission.grade ?? submission.marks ?? "");
+  const [marks, setMarks] = useState(submission.grade ?? submission.marks ?? "");
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -173,17 +173,17 @@ function TaskSubmissionRow({ taskId, submission, questions, onGrade }) {
               <span className="font-semibold text-slate-500 uppercase">{submission.status}</span>
             </p>
           </div>
-         <button
-  type="button"
-  onClick={() =>
-    router.push(
-      `/institute-dashboard/student-task/submissions/${taskId}/view?submissionId=${submission._id}`
-    )
-  }
-  className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
->
-  View answers
-</button>
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/institute-dashboard/student-task/submissions/${taskId}/view?submissionId=${submission._id}`
+              )
+            }
+            className="text-xs font-bold text-orange-600 hover:underline shrink-0 self-start sm:self-auto bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100"
+          >
+            View answers
+          </button>
         </div>
 
         {expanded && (

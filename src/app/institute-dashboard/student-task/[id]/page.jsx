@@ -19,8 +19,8 @@ import {
 } from "@/app/schemas/studentTask.schema";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
-import RichTextEditor from "@/components/molecules/RichTextEditor";
-import StatusModal from "@/components/molecules/StatusModal";
+import RichTextEditor from "@/app/components/molecules/RichTextEditor";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { resolveMediaUrl } from "@/utils/media";
 
 // audio/video accept a narrower file-picker filter; document takes anything
@@ -251,7 +251,7 @@ export default function StudentTaskFormPage() {
 
       // Turn off submitting loader first
       setSubmitting(false);
-      
+
       // Give React one tick to breathe, then trigger the modal reliably
       setTimeout(() => {
         setStatusData({
@@ -279,7 +279,7 @@ export default function StudentTaskFormPage() {
       }
 
       console.error("API Error during submit:", error);
-      
+
       // Also wrap error state update in a timeout for consistency
       setTimeout(() => {
         setStatusData({
@@ -342,7 +342,7 @@ export default function StudentTaskFormPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <SectionDivider icon={Info} title="Basic Info" />
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Course Selector */}
             <div className="space-y-1.5">
@@ -382,8 +382,8 @@ export default function StudentTaskFormPage() {
                   {!formCourseId
                     ? "Select a course first"
                     : topicsLoading
-                    ? "Loading topics..."
-                    : "No specific topic"}
+                      ? "Loading topics..."
+                      : "No specific topic"}
                 </option>
                 {topics.map((t) => (
                   <option key={t._id} value={t._id}>{t.title}</option>
@@ -590,8 +590,8 @@ export default function StudentTaskFormPage() {
                   ? "Updating..."
                   : "Creating..."
                 : editingManualId
-                ? "Update Task"
-                : "Create Task"}
+                  ? "Update Task"
+                  : "Create Task"}
             </motion.button>
           </div>
         </form>
@@ -614,9 +614,10 @@ export default function StudentTaskFormPage() {
           if (isSuccess) {
             setTimeout(() => {
               if (!editingManualId && createdTaskId) {
-  router.push(
-  `/institute-dashboard/student-task/${createdTaskId}/add-question?mode=new`
-);              } else {
+                router.push(
+                  `/institute-dashboard/student-task/${createdTaskId}/add-question?mode=new`
+                );
+              } else {
                 router.push("/institute-dashboard/student-task");
               }
             }, 100);

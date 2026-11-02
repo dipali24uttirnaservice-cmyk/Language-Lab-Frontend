@@ -17,8 +17,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import StatusModal from "@/components/molecules/StatusModal";
-import ConfirmModal from "@/components/molecules/ConfirmModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
+import ConfirmModal from "@/app/components/molecules/ConfirmModal";
 
 import { studentLearningAccessApi } from "@/services/studentLearningAccess/studentLearningAccessApi";
 
@@ -81,7 +81,7 @@ export default function StudentLearningAccessListPage() {
     } catch (err) {
       setListError(
         err?.response?.data?.message ||
-          "Failed to load learning access modules.",
+        "Failed to load learning access modules.",
       );
     } finally {
       setListLoading(false);
@@ -735,11 +735,10 @@ export default function StudentLearningAccessListPage() {
                     key={page}
                     type="button"
                     onClick={() => handlePageChange(page)}
-                    className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-xs font-bold transition ${
-                      currentPage === page
+                    className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-xs font-bold transition ${currentPage === page
                         ? "bg-orange-500 text-white shadow-md shadow-orange-200"
                         : "border border-orange-200 bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-600"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
@@ -883,45 +882,45 @@ export default function StudentLearningAccessListPage() {
             </div>
 
             {/* FOOTER */}
-{/* FOOTER */}
+            {/* FOOTER */}
 
-<div className="mt-6 flex items-center justify-between border-t border-orange-100 pt-4">
-  <span className="text-xs font-medium text-slate-500">
-    Total Lessons:{" "}
-    <strong className="text-slate-800">
-      {(viewingModule.records[0]?.subtopics ?? []).reduce(
-        (total, subtopic) => {
-          const modules = Array.isArray(subtopic?.modules)
-            ? subtopic.modules
-            : [];
+            <div className="mt-6 flex items-center justify-between border-t border-orange-100 pt-4">
+              <span className="text-xs font-medium text-slate-500">
+                Total Lessons:{" "}
+                <strong className="text-slate-800">
+                  {(viewingModule.records[0]?.subtopics ?? []).reduce(
+                    (total, subtopic) => {
+                      const modules = Array.isArray(subtopic?.modules)
+                        ? subtopic.modules
+                        : [];
 
-          return (
-            total +
-            modules.reduce(
-              (moduleTotal, module) =>
-                moduleTotal +
-                Number(
-                  module?.lessons ??
-                    module?.lessonCount ??
+                      return (
+                        total +
+                        modules.reduce(
+                          (moduleTotal, module) =>
+                            moduleTotal +
+                            Number(
+                              module?.lessons ??
+                              module?.lessonCount ??
+                              0
+                            ),
+                          0
+                        )
+                      );
+                    },
                     0
-                ),
-              0
-            )
-          );
-        },
-        0
-      )}
-    </strong>
-  </span>
+                  )}
+                </strong>
+              </span>
 
-  <button
-    type="button"
-    onClick={() => setViewingModule(null)}
-    className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-orange-700"
-  >
-    Close Summary
-  </button>
-</div>
+              <button
+                type="button"
+                onClick={() => setViewingModule(null)}
+                className="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-orange-700"
+              >
+                Close Summary
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { courseApi } from "@/services/course/courseApi";
 import { studentTaskApi } from "@/services/task/studentTaskApi";
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
+import { interactiveLearningApi } from "@/services/interactiveLearning/interactiveLearningApi";
 import {
   Video,
   Headphones,
@@ -16,6 +17,7 @@ import {
   ListTodo,
   ChevronRight,
   Sparkles,
+  AudioWaveform,
 } from "lucide-react";
 
 export default function LearningModules({ courseId, courseName }) {
@@ -77,6 +79,18 @@ export default function LearningModules({ courseId, courseName }) {
       .catch((err) => {
         if (err?.response?.status !== 401) {
           console.error("[PracticalCount] Failed:", err?.response?.status);
+        }
+      });
+
+    interactiveLearningApi
+      .getStudentTasks(courseId)
+      .then((res) => {
+        const count = res.data?.data?.tasks?.length || 0;
+        setModuleCounts((prev) => ({ ...prev, interactive_learning: count }));
+      })
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("[InteractiveLearningCount] Failed:", err?.response?.status);
         }
       });
   }, [courseId]);
@@ -254,6 +268,14 @@ export default function LearningModules({ courseId, courseName }) {
       color: "from-fuchsia-500 to-purple-600",
       shadowColor: "rgba(217, 70, 239, 0.25)",
       description: "Assignments from your institute",
+    },
+    {
+      title: "Interactive Learning",
+      type: "interactive_learning",
+      icon: AudioWaveform,
+      color: "from-cyan-500 to-blue-600",
+      shadowColor: "rgba(6, 182, 212, 0.25)",
+      description: "Interactive learning activities",
     },
   ];
 

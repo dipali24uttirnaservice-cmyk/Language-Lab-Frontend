@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   ArrowLeft,
   BookOpen,
@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 import { studentPracticalApi } from "@/services/practical-Manual/studentPracticalApi";
-import RichTextEditor from "@/components/molecules/RichTextEditor";
+import RichTextEditor from "@/app/components/molecules/RichTextEditor";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
 import { resolveMediaUrl } from "@/utils/media";
 
@@ -47,9 +47,8 @@ function WideRow({
   return (
     <div
       onClick={disabled ? undefined : onClick}
-      className={`group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 ${
-        disabled ? "opacity-60" : "cursor-pointer"
-      }`}
+      className={`group relative bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 flex items-center gap-4 ${disabled ? "opacity-60" : "cursor-pointer"
+        }`}
     >
       <div
         className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md relative overflow-hidden transition-all duration-300 ${iconBg}`}
@@ -132,13 +131,12 @@ function PracticalRow({ manual, onSelect, disabled }) {
             </span>
           </div>
           <div
-            className={`h-10 w-10 rounded-xl border flex items-center justify-center text-white transition-all duration-300 shadow-sm group-hover:scale-105 ${
-              status === "reviewed"
+            className={`h-10 w-10 rounded-xl border flex items-center justify-center text-white transition-all duration-300 shadow-sm group-hover:scale-105 ${status === "reviewed"
                 ? "bg-cyan-500 border-cyan-600"
                 : status === "submitted"
                   ? "bg-emerald-500 border-emerald-600"
                   : "bg-rose-500 border-rose-600"
-            }`}
+              }`}
           >
             {status ? (
               <RotateCcw
@@ -184,13 +182,12 @@ function QuestionDots({ total, current, answers }) {
         return (
           <div
             key={i}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              isCurrent
+            className={`h-2 rounded-full transition-all duration-300 ${isCurrent
                 ? "w-6 bg-orange-500"
                 : hasAnswered
                   ? "w-2 bg-emerald-400"
                   : "w-2 bg-slate-200"
-            }`}
+              }`}
           />
         );
       })}
@@ -264,25 +261,22 @@ function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
                 onClick={() => setCurrent(index)}
                 whileHover={{ x: isActive ? 0 : 3 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${
-                  isActive
+                className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${isActive
                     ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-lg shadow-orange-200"
                     : "bg-white hover:bg-orange-50/60 border-slate-100 hover:border-orange-100"
-                }`}
+                  }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span
-                    className={`text-[9px] font-black uppercase tracking-wider ${
-                      isActive ? "text-orange-100" : "text-orange-500"
-                    }`}
+                    className={`text-[9px] font-black uppercase tracking-wider ${isActive ? "text-orange-100" : "text-orange-500"
+                      }`}
                   >
                     Question {String(index + 1).padStart(2, "0")}
                   </span>
                   {hasAnswered && (
                     <div
-                      className={`p-1 rounded-full ${
-                        isActive ? "bg-white/20" : "bg-slate-100"
-                      }`}
+                      className={`p-1 rounded-full ${isActive ? "bg-white/20" : "bg-slate-100"
+                        }`}
                     >
                       <CheckCircle2
                         size={13}
@@ -292,9 +286,8 @@ function Sidebar({ manuals, current, answers, setCurrent, search, setSearch }) {
                   )}
                 </div>
                 <div
-                  className={`text-sm truncate font-semibold ${
-                    isActive ? "text-white" : "text-slate-700"
-                  }`}
+                  className={`text-sm truncate font-semibold ${isActive ? "text-white" : "text-slate-700"
+                    }`}
                 >
                   {item.question_text}
                 </div>
@@ -344,55 +337,55 @@ function StudentPracticalManualPageContent() {
   const [submitError, setSubmitError] = useState("");
 
 
-   // StatusModal state management
-      const [modalState, setModalState] = useState({
-          open: false,
-          type: "warning",
-          title: "",
-          message: "",
-          onClose: null,
-      });
-  
-      const triggerModal = (type, title, message, onClose = null) => {
-          setModalState({
-              open: true,
-              type,
-              title,
-              message,
-              onClose: () => {
-                  setModalState((prev) => ({ ...prev, open: false }));
-                  if (onClose) onClose();
-              },
-          });
-      };
-  
+  // StatusModal state management
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "warning",
+    title: "",
+    message: "",
+    onClose: null,
+  });
+
+  const triggerModal = (type, title, message, onClose = null) => {
+    setModalState({
+      open: true,
+      type,
+      title,
+      message,
+      onClose: () => {
+        setModalState((prev) => ({ ...prev, open: false }));
+        if (onClose) onClose();
+      },
+    });
+  };
+
   // Effective answer format for a question — "both" questions defer to the
   // student's picked mode (default "text") instead of a fixed type.
   const getMode = (q, idx) =>
     q.solution_type === "both" ? answerMode[idx] || "text" : q.solution_type;
 
- const loadManuals = useCallback(async () => {
-  setListLoading(true);
+  const loadManuals = useCallback(async () => {
+    setListLoading(true);
 
-  try {
-    const params = {};
+    try {
+      const params = {};
 
-    if (topicId) params.topicId = topicId;
-    if (courseId) params.courseId = courseId;
+      if (topicId) params.topicId = topicId;
+      if (courseId) params.courseId = courseId;
 
-    const res = await studentPracticalApi.getMine(params);
+      const res = await studentPracticalApi.getMine(params);
 
-    setManualsList(res.data?.data?.practicals || []);
-  } catch (error) {
-    console.error("Get Practicals Error:", error);
-  } finally {
-    setListLoading(false);
-  }
-}, [topicId, courseId]);
+      setManualsList(res.data?.data?.practicals || []);
+    } catch (error) {
+      console.error("Get Practicals Error:", error);
+    } finally {
+      setListLoading(false);
+    }
+  }, [topicId, courseId]);
 
-useEffect(() => {
-  loadManuals();
-}, [loadManuals]);
+  useEffect(() => {
+    loadManuals();
+  }, [loadManuals]);
 
   const enterFullscreen = async () => {
     if (containerRef.current?.requestFullscreen) {
@@ -447,23 +440,23 @@ useEffect(() => {
       const detail = res.data?.data;
       const mySubmission = detail?.my_submission;
 
-  const answerByQuestionId = {};
-(mySubmission?.answers || []).forEach((a) => {
-  answerByQuestionId[a.question_id] = a;
-});
+      const answerByQuestionId = {};
+      (mySubmission?.answers || []).forEach((a) => {
+        answerByQuestionId[a.question_id] = a;
+      });
 
-const prefilled = {};
-const prefilledFileUrls = {};
-const prefilledMode = {};
-(detail?.questions || []).forEach((q, idx) => {
-  const existing = answerByQuestionId[q._id];
-  if (existing?.answer_html) prefilled[idx] = existing.answer_html;
-  // Submission files now live on the backend's own disk (see
-  // practicalController.submitMine), so `answer_file_url` comes back as a
-  // relative "/media/practical-submissions/..." path — resolveMediaUrl turns
-  // it into an absolute URL; old AWS-hosted URLs (already absolute) pass
-  // through unchanged.
-  if (existing?.answer_file_url) prefilledFileUrls[idx] = resolveMediaUrl(existing.answer_file_url);
+      const prefilled = {};
+      const prefilledFileUrls = {};
+      const prefilledMode = {};
+      (detail?.questions || []).forEach((q, idx) => {
+        const existing = answerByQuestionId[q._id];
+        if (existing?.answer_html) prefilled[idx] = existing.answer_html;
+        // Submission files now live on the backend's own disk (see
+        // practicalController.submitMine), so `answer_file_url` comes back as a
+        // relative "/media/practical-submissions/..." path — resolveMediaUrl turns
+        // it into an absolute URL; old AWS-hosted URLs (already absolute) pass
+        // through unchanged.
+        if (existing?.answer_file_url) prefilledFileUrls[idx] = resolveMediaUrl(existing.answer_file_url);
         if (q.solution_type === "both") {
           prefilledMode[idx] = existing?.answer_file_url ? "file" : "text";
         }
@@ -477,7 +470,7 @@ const prefilledMode = {};
       setAnswerMode(prefilledMode);
       setSubmitted(
         mySubmission?.status === "submitted" ||
-          mySubmission?.status === "reviewed",
+        mySubmission?.status === "reviewed",
       );
       setSubmitError("");
     } catch (error) {
@@ -558,7 +551,7 @@ const prefilledMode = {};
       setAnswerMode(prefilledMode);
 
       setSubmitted(true);
-      
+
       triggerModal(
         "success",
         "Submitted!",
@@ -600,13 +593,13 @@ const prefilledMode = {};
       >
 
         {/* Status Modal Component Integration */}
-            <StatusModal
-              open={modalState.open}
-              type={modalState.type}
-              title={modalState.title}
-              message={modalState.message}
-              onClose={modalState.onClose}
-            />
+        <StatusModal
+          open={modalState.open}
+          type={modalState.type}
+          title={modalState.title}
+          message={modalState.message}
+          onClose={modalState.onClose}
+        />
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
             <button
@@ -718,13 +711,13 @@ const prefilledMode = {};
               </div>
             </div>
             <button
-             onClick={async () => {
-  setSelectedManual(null);
-  setSubmitted(false);
-  setCurrent(0);
+              onClick={async () => {
+                setSelectedManual(null);
+                setSubmitted(false);
+                setCurrent(0);
 
-  await loadManuals();
-}}
+                await loadManuals();
+              }}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs shadow-md hover:shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition shrink-0"
             >
               Back to Manuals List
@@ -783,11 +776,10 @@ const prefilledMode = {};
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
-                          hasAnswer
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${hasAnswer
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                             : "bg-rose-50 text-rose-700 border-rose-200"
-                        }`}
+                          }`}
                       >
                         {hasAnswer ? "Answered" : "Not Answered"}
                       </span>
@@ -981,11 +973,10 @@ const prefilledMode = {};
                           onClick={() =>
                             setAnswerMode((prev) => ({ ...prev, [current]: mode }))
                           }
-                          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                            getMode(currentQuestion, current) === mode
+                          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${getMode(currentQuestion, current) === mode
                               ? "bg-orange-500 text-white shadow-md"
                               : "text-slate-500 hover:text-orange-600"
-                          }`}
+                            }`}
                         >
                           {mode === "file" ? "Upload File" : "Type Answer"}
                         </button>
@@ -1042,27 +1033,27 @@ const prefilledMode = {};
                             </button>
                           </div>
                         ) : (
-                      <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
-  <UploadCloud size={28} className="text-slate-400" />
-  <span className="text-sm font-bold text-slate-600">
-    Click to upload your answer file
-  </span>
-  <span className="text-xs text-slate-400">
-    {existingFileUrls[current]
-      ? "Uploading a new file replaces the previous one"
-      : "PDF document only (max 10MB)"}
-  </span>
-  <input
-    type="file"
-    className="hidden"
-    accept="application/pdf"
-    onChange={(e) => {
-      const file = e.target.files?.[0];
-      if (file)
-        setQuestionFiles((prev) => ({ ...prev, [current]: file }));
-    }}
-  />
-</label>
+                          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-orange-400 hover:bg-orange-50/40 transition-all">
+                            <UploadCloud size={28} className="text-slate-400" />
+                            <span className="text-sm font-bold text-slate-600">
+                              Click to upload your answer file
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {existingFileUrls[current]
+                                ? "Uploading a new file replaces the previous one"
+                                : "PDF document only (max 10MB)"}
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="application/pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file)
+                                  setQuestionFiles((prev) => ({ ...prev, [current]: file }));
+                              }}
+                            />
+                          </label>
                         )}
                       </div>
                     ) : (

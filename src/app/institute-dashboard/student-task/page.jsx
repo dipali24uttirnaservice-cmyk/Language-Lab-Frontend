@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   Plus,
   Search,
@@ -22,8 +22,8 @@ import {
 import { taskApi } from "@/services/task/taskApi";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
-import ConfirmModal from "@/components/molecules/ConfirmModal";
-import Pagination from "@/components/molecules/Pagination";
+import ConfirmModal from "@/app/components/molecules/ConfirmModal";
+import Pagination from "@/app/components/molecules/Pagination";
 
 export default function StudentTaskPage() {
   const router = useRouter();
@@ -60,7 +60,7 @@ export default function StudentTaskPage() {
   const [submissionsTask, setSubmissionsTask] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  
+
   const [deleteModal, setDeleteModal] = useState({
     open: false,
     id: null,
@@ -376,11 +376,10 @@ export default function StudentTaskPage() {
                           {task.due_date ? new Date(task.due_date).toLocaleDateString() : "-"}
                         </div>
                         <div className="mt-1">
-                          <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-md uppercase ${
-                            task.status === "published" 
-                              ? "bg-green-50 text-green-600" 
+                          <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-md uppercase ${task.status === "published"
+                              ? "bg-green-50 text-green-600"
                               : "bg-amber-50 text-amber-600"
-                          }`}>
+                            }`}>
                             {task.status || "Draft"}
                           </span>
                         </div>
@@ -418,7 +417,7 @@ export default function StudentTaskPage() {
                           >
                             <Users className="w-4 h-4" />
                           </button>
-                          
+
                           <button
                             onClick={() => router.push(`/institute-dashboard/student-task/view/${task._id}`)}
                             className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"

@@ -1,6 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import GlobalPopup from "@/components/organisms/GlobalPopup";
+import GlobalPopup from "@/app/components/organisms/GlobalPopup";
 
 export const metadata = {
   title: {
@@ -16,12 +16,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body suppressHydrationWarning>
         <AuthProvider>
           {children}
           <GlobalPopup /> {/* <-- Place it here so it renders globally */}
-        </AuthProvider>      
+        </AuthProvider>
       </body>
     </html>
   );

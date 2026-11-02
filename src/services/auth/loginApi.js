@@ -36,17 +36,25 @@ export const instituteConfigLogin = async (payload) => {
 // master account) so a slow/unreachable master never blocks or fails local
 // login itself — same offline-first spirit as courseApi's masterWithLocalFallback.
 export const instituteLogin = async (payload) => {
-  masterApiInstance
-    .post("/institute/login", payload)
-    .then((masterResponse) => {
-      const masterToken = masterResponse?.data?.data?.token;
-      if (masterToken) {
-        Cookies.set("masterToken", masterToken, secureCookieOptions());
-      }
-    })
-    .catch(() => {});
+  const response = await api.post("/institute/login", payload);
 
-  return await api.post("/institute/login", payload);
+  // If local login confirmed this is an institute administrator (not faculty),
+  // refresh the masterToken in the background for cloud syncing.
+  // We skip this for faculty since faculty accounts exist only on the local
+  // institute server and attempting master login will predictably 401.
+  if (response?.data?.data?.role === "institute") {
+    masterApiInstance
+      .post("/institute/login", payload)
+      .then((masterResponse) => {
+        const masterToken = masterResponse?.data?.data?.token;
+        if (masterToken) {
+          Cookies.set("masterToken", masterToken, secureCookieOptions());
+        }
+      })
+      .catch(() => {});
+  }
+
+  return response;
 };
 
 // Code-verify/OTP steps go straight to master — these are just the /config

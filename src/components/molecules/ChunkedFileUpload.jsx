@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { UploadCloud, X, RotateCcw } from "lucide-react";
-import ProgressBar from "@/components/atoms/ProgressBar";
+import ProgressBar from "@/app/components/atoms/ProgressBar";
 
 export default function ChunkedFileUpload({
   accept,
@@ -37,7 +37,7 @@ export default function ChunkedFileUpload({
 
       setProgress(100);
       setStatus("done");
-      
+
       // Pass back the local URL
       onUploaded?.({
         cdnUrl: data.fileUrl,

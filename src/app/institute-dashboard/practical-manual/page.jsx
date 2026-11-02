@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   Plus,
   Search,
@@ -24,8 +24,8 @@ import {
 } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
-import ConfirmModal from "@/components/molecules/ConfirmModal";
-import Pagination from "@/components/molecules/Pagination";
+import ConfirmModal from "@/app/components/molecules/ConfirmModal";
+import Pagination from "@/app/components/molecules/Pagination";
 
 export default function PracticalManualPage() {
   const router = useRouter();
@@ -200,9 +200,9 @@ export default function PracticalManualPage() {
     item.title?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-const handleAssignManual = (id) => {
-  router.push(`/institute-dashboard/practical-manual/assign/${id}`);
-};
+  const handleAssignManual = (id) => {
+    router.push(`/institute-dashboard/practical-manual/assign/${id}`);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
@@ -360,14 +360,14 @@ const handleAssignManual = (id) => {
 
                       <td className="p-4 pr-6">
                         <div className="flex items-center justify-center gap-2">
-                       <button
-  type="button"
-  onClick={() => handleAssignManual(manual._id)}
-  className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
-  title="Assign Manual"
->
-  <Users className="w-4 h-4" />
-</button>
+                          <button
+                            type="button"
+                            onClick={() => handleAssignManual(manual._id)}
+                            className="p-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
+                            title="Assign Manual"
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() =>
                               router.push(
@@ -474,7 +474,7 @@ const handleAssignManual = (id) => {
           cancelText="Cancel"
         />
 
-       
+
       </div>
     </div>
   );

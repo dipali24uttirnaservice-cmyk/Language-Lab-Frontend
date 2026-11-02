@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   ArrowLeft,
   CheckSquare,
@@ -472,11 +472,11 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
     { id: "overview", title: "Overview & Instructions" },
     ...(task.type && (task.text_content || task.link_url || task.media_url)
       ? [
-          {
-            id: "content",
-            title: "Task Material",
-          },
-        ]
+        {
+          id: "content",
+          title: "Task Material",
+        },
+      ]
       : []),
     {
       id: "submission",
@@ -524,11 +524,10 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
   return (
     <div
       ref={containerRef}
-      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30 overflow-y-auto flex flex-col transition-all duration-300 ${
-        isFullscreen
+      className={`bg-gradient-to-br from-slate-50 via-slate-100 to-orange-50/30 overflow-y-auto flex flex-col transition-all duration-300 ${isFullscreen
           ? "h-screen w-screen p-3 md:p-6 bg-white"
           : "min-h-screen p-4 md:p-8"
-      }`}
+        }`}
     >
       {/* Expanded container wrapper to allow full-width card scaling */}
       <div className="w-full mx-auto space-y-6 flex-1 flex flex-col">
@@ -544,31 +543,30 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
             />
             Back to Tasks
           </button>
-            <div className="flex items-center justify-center gap-4 px-2">
-          {steps.map((step, idx) => (
-            <div key={step.id} className="flex items-center gap-2">
-              <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  idx === currentStep
-                    ? "bg-orange-500 text-white shadow-md shadow-orange-500/30 ring-4 ring-orange-100"
-                    : idx < currentStep
-                      ? "bg-orange-100 text-orange-700"
-                      : "bg-slate-200 text-slate-500"
-                }`}
-              >
-                {idx + 1}
+          <div className="flex items-center justify-center gap-4 px-2">
+            {steps.map((step, idx) => (
+              <div key={step.id} className="flex items-center gap-2">
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${idx === currentStep
+                      ? "bg-orange-500 text-white shadow-md shadow-orange-500/30 ring-4 ring-orange-100"
+                      : idx < currentStep
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-slate-200 text-slate-500"
+                    }`}
+                >
+                  {idx + 1}
+                </div>
+                <span
+                  className={`text-xs font-semibold hidden md:inline ${idx === currentStep ? "text-slate-900" : "text-slate-400"}`}
+                >
+                  {step.title}
+                </span>
+                {idx < steps.length - 1 && (
+                  <div className="h-[2px] w-12 md:w-24 bg-slate-200 mx-2" />
+                )}
               </div>
-              <span
-                className={`text-xs font-semibold hidden md:inline ${idx === currentStep ? "text-slate-900" : "text-slate-400"}`}
-              >
-                {step.title}
-              </span>
-              {idx < steps.length - 1 && (
-                <div className="h-[2px] w-12 md:w-24 bg-slate-200 mx-2" />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
           <button
             onClick={isFullscreen ? exitFullscreen : enterFullscreen}
@@ -580,15 +578,14 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
         </div>
 
         {/* Step Progress Bar Indicator */}
-      
+
 
         {/* Main Full-Width Workspace Card */}
         <div
-          className={`relative w-full overflow-hidden border border-orange-100/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(249,115,22,0.08)] transition-all flex flex-col justify-between ${
-            isFullscreen
+          className={`relative w-full overflow-hidden border border-orange-100/80 bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(249,115,22,0.08)] transition-all flex flex-col justify-between ${isFullscreen
               ? "flex-1 rounded-3xl p-6 md:p-12 overflow-y-auto"
               : "rounded-[2.5rem] p-6 md:p-12"
-          }`}
+            }`}
         >
           {/* Ambient Background Glows */}
           <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl pointer-events-none" />
@@ -800,11 +797,10 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
-                currentStep === 0
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all ${currentStep === 0
                   ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
                   : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
-              }`}
+                }`}
             >
               <ChevronLeft size={16} />
               Previous
@@ -813,11 +809,10 @@ export function TaskWorkspace({ task, onBack, onSubmitted }) {
             <button
               onClick={handleNext}
               disabled={currentStep === steps.length - 1}
-              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all ${
-                currentStep === steps.length - 1
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all ${currentStep === steps.length - 1
                   ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
                   : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20"
-              }`}
+                }`}
             >
               Next
               <ChevronRight size={16} />
@@ -1024,11 +1019,10 @@ function SubmissionForm({ task, submission, onSubmitted }) {
               onClick={() =>
                 setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
               }
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                currentQuestionIndex === 0
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${currentQuestionIndex === 0
                   ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
                   : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm"
-              }`}
+                }`}
             >
               Previous Question
             </button>
@@ -1130,11 +1124,10 @@ function ChoiceOptions({ question, answer, setAnswer, grid = false }) {
           type="button"
           key={i}
           onClick={() => setAnswer({ value: opt })}
-          className={`w-full text-left p-3.5 rounded-xl border-2 text-sm font-semibold transition-all ${
-            answer?.value === opt
+          className={`w-full text-left p-3.5 rounded-xl border-2 text-sm font-semibold transition-all ${answer?.value === opt
               ? "border-emerald-500 bg-emerald-50 text-emerald-700"
               : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
-          }`}
+            }`}
         >
           {opt}
         </button>
@@ -1265,13 +1258,12 @@ function MatchBuilder({ question, answer, setAnswer }) {
               key={p.left}
               onClick={() => pickLeft(p.left)}
               disabled={isPaired}
-              className={`w-full text-left p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
-                isActive
+              className={`w-full text-left p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${isActive
                   ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                   : isPaired
                     ? `${color.border} ${color.bg} ${color.text}`
                     : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
-              }`}
+                }`}
             >
               {p.left}
               {isPaired && <span className="ml-2">→ {pairs[p.left]}</span>}
@@ -1290,11 +1282,10 @@ function MatchBuilder({ question, answer, setAnswer }) {
               key={item.id}
               onClick={() => pickRight(item.value)}
               disabled={usedRights.has(item.value)}
-              className={`w-full text-left p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
-                usedRights.has(item.value)
+              className={`w-full text-left p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${usedRights.has(item.value)
                   ? `${color?.border || "border-slate-100"} ${color?.bg || "bg-slate-50"} ${color?.text || "text-slate-300"}`
                   : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"
-              }`}
+                }`}
             >
               {item.value}
             </button>
@@ -1440,8 +1431,7 @@ function TaskQuestionsReview({ questions, answers }) {
               type="button"
               onClick={() => setCurrentReviewIndex(i)}
               title={`Question ${i + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === currentReviewIndex
+              className={`h-2 rounded-full transition-all duration-300 ${i === currentReviewIndex
                   ? "w-6 bg-orange-500"
                   : answerByIndex[i] !== undefined
                     ? normalize(answerByIndex[i]) ===
@@ -1449,7 +1439,7 @@ function TaskQuestionsReview({ questions, answers }) {
                       ? "w-2 bg-emerald-300 hover:bg-emerald-400"
                       : "w-2 bg-rose-300 hover:bg-rose-400"
                     : "w-2 bg-slate-200 hover:bg-slate-300"
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -1457,24 +1447,21 @@ function TaskQuestionsReview({ questions, answers }) {
 
       {/* Review Active Card */}
       <div
-        className={`rounded-3xl border p-5 md:p-6 space-y-5 shadow-sm animate-fadeIn transition-colors ${
-          isCorrect
+        className={`rounded-3xl border p-5 md:p-6 space-y-5 shadow-sm animate-fadeIn transition-colors ${isCorrect
             ? "border-emerald-200 bg-emerald-50/60"
             : "border-rose-200 bg-rose-50/60"
-        }`}
+          }`}
       >
         <div
-          className={`flex items-center justify-between gap-3 border-b pb-4 ${
-            isCorrect ? "border-emerald-200/70" : "border-rose-200/70"
-          }`}
+          className={`flex items-center justify-between gap-3 border-b pb-4 ${isCorrect ? "border-emerald-200/70" : "border-rose-200/70"
+            }`}
         >
           <div className="flex items-center gap-3">
             <span
-              className={`h-9 w-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                isCorrect
+              className={`h-9 w-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${isCorrect
                   ? "bg-emerald-200 text-emerald-800"
                   : "bg-rose-200 text-rose-800"
-              }`}
+                }`}
             >
               {currentReviewIndex + 1}
             </span>
@@ -1491,11 +1478,10 @@ function TaskQuestionsReview({ questions, answers }) {
 
           {givenRaw !== undefined && (
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border shrink-0 ${
-                isCorrect
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide border shrink-0 ${isCorrect
                   ? "bg-emerald-100 text-emerald-800 border-emerald-300"
                   : "bg-rose-100 text-rose-800 border-rose-300"
-              }`}
+                }`}
             >
               {isCorrect ? (
                 <CheckCircle2 size={14} />
@@ -1562,11 +1548,10 @@ function TaskQuestionsReview({ questions, answers }) {
           type="button"
           disabled={currentReviewIndex === 0}
           onClick={() => setCurrentReviewIndex((prev) => Math.max(0, prev - 1))}
-          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            currentReviewIndex === 0
+          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${currentReviewIndex === 0
               ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
               : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm active:scale-95"
-          }`}
+            }`}
         >
           <ChevronLeft size={14} />
           Previous
@@ -1584,11 +1569,10 @@ function TaskQuestionsReview({ questions, answers }) {
               Math.min(totalQuestions - 1, prev + 1),
             )
           }
-          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            currentReviewIndex === totalQuestions - 1
+          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${currentReviewIndex === totalQuestions - 1
               ? "opacity-40 cursor-not-allowed bg-slate-100 text-slate-400"
               : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20 active:scale-95"
-          }`}
+            }`}
         >
           Next
           <ChevronRight size={14} />

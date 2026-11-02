@@ -67,15 +67,17 @@ export default function TableToolbar({
           </motion.button>
 
           {/* Primary CTA with the brand orange gradient */}
-          <motion.button
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onAdd}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition"
-          >
-            <Plus size={16} strokeWidth={3} />
-            Add Student
-          </motion.button>
+          {onAdd && (
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onAdd}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 hover:opacity-95 transition"
+            >
+              <Plus size={16} strokeWidth={3} />
+              Add Student
+            </motion.button>
+          )}
         </div>
       </div>
 

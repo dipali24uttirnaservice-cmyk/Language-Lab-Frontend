@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { KeyRound, ShieldCheck } from "lucide-react";
 
-import Input from "@/components/atoms/Input";
-import AnimatedBackground from "@/components/organisms/AnimatedBackground";
-import StatusModal from "@/components/molecules/StatusModal";
+import Input from "@/app/components/atoms/Input";
+import AnimatedBackground from "@/app/components/organisms/AnimatedBackground";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 import { sendInstituteOtp, verifyInstituteOtp } from "@/services/auth/loginApi";
 
