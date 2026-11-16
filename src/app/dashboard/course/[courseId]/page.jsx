@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import LearningModules from "@/components/organisms/LearningModules";
+import LearningModules from "@/app/components/organisms/LearningModules";
 
 function CoursePageContent() {
   const { courseId } = useParams();

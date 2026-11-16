@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { FaBell, FaBars, FaChevronRight, FaHome, FaBookReader } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 
-import LogoutModal from "@/components/molecules/LogoutModal";
+import LogoutModal from "@/app/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
 import { studentApi } from "@/services/student/studentApi";
 import { getStudentProfile } from "@/services/student/studentProfileApi";
@@ -110,20 +110,20 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   }, []);
 
   // ─── Auto-close sidebar on content pages ─────────────────────────────────
-useEffect(() => {
-  const autoClose =
-    pathname.startsWith("/dashboard/video") ||
-    pathname.startsWith("/dashboard/audio") ||
-    pathname.startsWith("/dashboard/text") ||
-    pathname.startsWith("/dashboard/exercise") ||
-    pathname.startsWith("/dashboard/vocabulary") ||
-    pathname.startsWith("/dashboard/module") || // covers /dashboard/module/{type}/{subtopicId} lesson pages
-    pathname.startsWith("/dashboard/topics");
+  useEffect(() => {
+    const autoClose =
+      pathname.startsWith("/dashboard/video") ||
+      pathname.startsWith("/dashboard/audio") ||
+      pathname.startsWith("/dashboard/text") ||
+      pathname.startsWith("/dashboard/exercise") ||
+      pathname.startsWith("/dashboard/vocabulary") ||
+      pathname.startsWith("/dashboard/module") || // covers /dashboard/module/{type}/{subtopicId} lesson pages
+      pathname.startsWith("/dashboard/topics");
 
-  if (autoClose) {
-    setIsOpen(false);
-  }
-}, [pathname, setIsOpen]);
+    if (autoClose) {
+      setIsOpen(false);
+    }
+  }, [pathname, setIsOpen]);
 
   // ─── Auto-open sidebar on the course overview page ───────────────────────
   useEffect(() => {
@@ -424,8 +424,10 @@ useEffect(() => {
           {/* Notification bell */}
           <motion.button
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/dashboard/notifications")}
             aria-label="Notifications"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer"
           >
             <FaBell className="text-sm" />
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white animate-pulse" />
@@ -461,9 +463,9 @@ useEffect(() => {
               <p className="text-sm font-bold text-slate-800 leading-tight">
                 {studentName}
               </p>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {/* <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 {instituteName}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

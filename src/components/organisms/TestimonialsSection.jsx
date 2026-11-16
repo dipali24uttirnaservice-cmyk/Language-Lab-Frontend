@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-import TestimonialCard from "@/components/molecules/TestimonialCard";
+import TestimonialCard from "@/app/components/molecules/TestimonialCard";
 
 const testimonials = [
   {

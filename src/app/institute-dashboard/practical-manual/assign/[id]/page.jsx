@@ -4,10 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  ChevronDown,
   Loader2,
   Users,
   AlertCircle,
+  Building2,
+  GraduationCap,
+  FileText,
+  Check,
+  CheckCircle2,
 } from "lucide-react";
 
 import {
@@ -33,8 +37,8 @@ export default function AssignManualPage() {
   const [manual, setManual] = useState(null);
 
   const [departments, setDepartments] = useState([]);
-  const [departmentId, setDepartmentId] = useState("");
-  const [batchId, setBatchId] = useState("");
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedBatches, setSelectedBatches] = useState([]); // Array of "${segment}___${year}"
 
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
@@ -113,11 +117,8 @@ export default function AssignManualPage() {
           data = data.data;
         }
 
-        // [{ name, batches: [{ year, studentCount }] }] — segment (department)
-        // + year (batch) pairs actually present among this institute's
-        // students, from Student records. No department/batch has its own
-        // _id here since these aren't separate collections.
-        setDepartments(Array.isArray(data) ? data : []);
+        const depts = Array.isArray(data) ? data : [];
+        setDepartments(depts);
       } catch (err) {
         console.error("Departments fetch error:", err);
       }
@@ -127,22 +128,42 @@ export default function AssignManualPage() {
   }, []);
 
   // =========================================================
-  // SELECTED DEPARTMENT
+  // ALREADY ASSIGNED BATCHES
   // =========================================================
 
-  const selectedDepartment = useMemo(() => {
-    return departments.find(
-      (department) => String(department?.name) === String(departmentId)
+  const alreadyAssignedBatches = useMemo(() => {
+    return Array.isArray(manual?.assigned_batches) ? manual.assigned_batches : [];
+  }, [manual]);
+
+  const isAlreadyAssigned = (segment, year) => {
+    return alreadyAssignedBatches.some(
+      (b) => String(b.segment) === String(segment) && Number(b.year) === Number(year)
     );
-  }, [departments, departmentId]);
+  };
 
   // =========================================================
-  // BATCHES
+  // AVAILABLE BATCHES FOR SELECTED DEPARTMENTS
   // =========================================================
 
-  const batches = useMemo(() => {
-    return selectedDepartment?.batches || [];
-  }, [selectedDepartment]);
+  const availableBatches = useMemo(() => {
+    const list = [];
+    departments.forEach((dept) => {
+      if (selectedDepartments.includes(dept?.name)) {
+        (dept?.batches || []).forEach((b) => {
+          list.push({
+            segment: dept.name,
+            year: b.year,
+            studentCount: b.studentCount,
+            key: `${dept.name}___${b.year}`,
+            isAssigned: isAlreadyAssigned(dept.name, b.year),
+          });
+        });
+      }
+    });
+    return list;
+  }, [departments, selectedDepartments, alreadyAssignedBatches]);
+
+  const isDeptSelected = selectedDepartments.length > 0;
 
   // =========================================================
   // MANUAL TITLE
@@ -156,22 +177,57 @@ export default function AssignManualPage() {
     "Practical Manual";
 
   // =========================================================
-  // DEPARTMENT CHANGE
+  // DEPARTMENT HANDLERS
   // =========================================================
 
-  const handleDepartmentChange = (event) => {
-    setDepartmentId(event.target.value);
-    setBatchId("");
+  const handleToggleDepartment = (deptName) => {
     setError("");
+    setSelectedDepartments((prev) => {
+      const exists = prev.includes(deptName);
+      if (exists) {
+        // Deselect department and clean up its batches
+        setSelectedBatches((bPrev) =>
+          bPrev.filter((k) => !k.startsWith(`${deptName}___`))
+        );
+        return prev.filter((d) => d !== deptName);
+      } else {
+        return [...prev, deptName];
+      }
+    });
+  };
+
+  const handleSelectAllDepartments = () => {
+    setError("");
+    const all = departments.map((d) => d?.name).filter(Boolean);
+    setSelectedDepartments(all);
+  };
+
+  const handleClearDepartments = () => {
+    setError("");
+    setSelectedDepartments([]);
+    setSelectedBatches([]);
   };
 
   // =========================================================
-  // BATCH CHANGE
+  // BATCH HANDLERS
   // =========================================================
 
-  const handleBatchChange = (event) => {
-    setBatchId(event.target.value);
+  const handleToggleBatch = (key) => {
     setError("");
+    setSelectedBatches((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const handleSelectAllBatches = () => {
+    setError("");
+    const allKeys = availableBatches.map((b) => b.key);
+    setSelectedBatches(allKeys);
+  };
+
+  const handleClearBatches = () => {
+    setError("");
+    setSelectedBatches([]);
   };
 
   // =========================================================
@@ -191,26 +247,45 @@ export default function AssignManualPage() {
 
     setError("");
 
-    if (!departmentId) {
-      setError("Please select a department.");
+    if (selectedDepartments.length === 0) {
+      setError("Please select at least one department.");
       return;
     }
 
-    if (!batchId) {
-      setError("Please select a batch.");
+    if (selectedBatches.length === 0) {
+      setError("Please select at least one batch.");
       return;
     }
 
     try {
       setAssigning(true);
 
-      // departmentId holds the department name (Student.segment), batchId
-      // holds the batch/year of study (Student.year) as a string from the
-      // <select> — the backend's assignPracticalSchema expects a number.
-      await practicalManualAssign(manualId, {
-        segment: departmentId,
-        year: Number(batchId),
+      const assignments = selectedBatches.map((key) => {
+        const [segment, yearStr] = key.split("___");
+        return {
+          segment,
+          year: Number(yearStr),
+        };
       });
+
+      // Try bulk assignment first; fall back to sequential if legacy backend
+      try {
+        await practicalManualAssign(manualId, {
+          assignments,
+          ...(assignments.length === 1 ? assignments[0] : {}),
+        });
+      } catch (bulkErr) {
+        if (assignments.length > 1) {
+          for (const item of assignments) {
+            await practicalManualAssign(manualId, {
+              segment: item.segment,
+              year: item.year,
+            });
+          }
+        } else {
+          throw bulkErr;
+        }
+      }
 
       router.push("/institute-dashboard/practical-manual");
     } catch (err) {
@@ -252,7 +327,7 @@ export default function AssignManualPage() {
           <button
             type="button"
             onClick={handlePrevious}
-            className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-orange-600"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-orange-600 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
             Previous
@@ -286,7 +361,7 @@ export default function AssignManualPage() {
           type="button"
           onClick={handlePrevious}
           disabled={assigning}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-orange-600 disabled:opacity-50"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-orange-600 disabled:opacity-50 cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           Previous
@@ -314,136 +389,268 @@ export default function AssignManualPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6">
-            {/* Manual */}
-            <div className="mb-6 rounded-xl bg-slate-50 px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Practical Manual
-              </p>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Step 1: Practical Manual Info */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-700 text-xs font-black">
+                  1
+                </span>
+                <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <FileText size={16} className="text-orange-600" />
+                  <span>Practical Manual</span>
+                </h3>
+              </div>
 
-              <p className="mt-1 text-base font-bold text-slate-900">
-                {manualTitle}
-              </p>
+              <div className="ml-8 mt-1">
+                <p className="text-base font-bold text-slate-900">
+                  {manualTitle}
+                </p>
+
+                {alreadyAssignedBatches.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="text-slate-500 font-medium">Currently assigned:</span>
+                    {alreadyAssignedBatches.map((b, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-semibold"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        {b.segment} - Batch {b.year}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Error */}
+            {/* Error Message */}
             {error && (
-              <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
                 <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-
-                <p className="text-sm font-medium text-red-600">
-                  {error}
-                </p>
+                <p className="text-sm font-medium text-red-600">{error}</p>
               </div>
             )}
 
-            {/* Department */}
-            <div className="mb-5">
-              <label
-                htmlFor="department"
-                className="mb-2 block text-sm font-semibold text-slate-700"
-              >
-                Department
-                <span className="ml-1 text-red-500">*</span>
-              </label>
+            {/* ── STEP 2: SELECT DEPARTMENT(S) ───── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs font-black">
+                    2
+                  </span>
+                  <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <Building2 size={16} className="text-indigo-600" />
+                    <span>Step 2: Select Department(s) *</span>
+                  </h3>
+                </div>
 
-              <div className="relative">
-                <select
-                  id="department"
-                  value={departmentId}
-                  onChange={handleDepartmentChange}
-                  disabled={assigning}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-                >
-                  <option value="">Select Branch</option>
+                {departments.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllDepartments}
+                      disabled={assigning}
+                      className="text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button
+                      type="button"
+                      onClick={handleClearDepartments}
+                      disabled={assigning || selectedDepartments.length === 0}
+                      className="text-slate-400 hover:text-slate-600 font-medium cursor-pointer disabled:opacity-50"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
 
-                  {departments.map((department) => {
-                    const name = department?.name || "Unnamed Department";
+              <p className="text-xs text-slate-400">
+                Choose the departmental branches for this course.
+              </p>
+
+              {departments.length === 0 ? (
+                <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl text-xs text-amber-800 font-medium">
+                  No departments found for this institute. Please ensure students have a department/segment assigned in the Students section.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  {departments.map((dept) => {
+                    const name = dept?.name || "Unnamed Department";
+                    const isSelected = selectedDepartments.includes(name);
 
                     return (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => handleToggleDepartment(name)}
+                        disabled={assigning}
+                        className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25 ring-2 ring-indigo-400/50"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
+                        }`}
+                      >
+                        <span>{name}</span>
+                        {isSelected && <Check size={14} className="stroke-[3]" />}
+                      </button>
                     );
                   })}
-                </select>
-
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Batch */}
-            <div className="mb-6">
-              <label
-                htmlFor="batch"
-                className="mb-2 block text-sm font-semibold text-slate-700"
-              >
-                Batch
-                <span className="ml-1 text-red-500">*</span>
-              </label>
+            {/* ── STEP 3: SELECT BATCH ───── */}
+            <div
+              className={`space-y-3 transition-opacity duration-300 ${
+                isDeptSelected ? "opacity-100" : "opacity-40 pointer-events-none"
+              }`}
+            >
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">
+                    3
+                  </span>
+                  <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <GraduationCap size={16} className="text-emerald-600" />
+                    <span>Step 3: Select Batch *</span>
+                  </h3>
+                </div>
 
-              <div className="relative">
-                <select
-                  id="batch"
-                  value={batchId}
-                  onChange={handleBatchChange}
-                  disabled={!departmentId || assigning}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-                >
-                  <option value="">
-                    {!departmentId
-                      ? "Select Branch First"
-                      : batches.length === 0
-                        ? "No Batch Available"
-                        : "Select Batch"}
-                  </option>
-
-                  {batches.map((batch) => (
-                    <option key={batch.year} value={batch.year}>
-                      Batch {batch.year}
-                      {batch.studentCount != null
-                        ? ` (${batch.studentCount} students)`
-                        : ""}
-                    </option>
-                  ))}
-                </select>
-
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                {isDeptSelected && availableBatches.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllBatches}
+                      disabled={assigning}
+                      className="text-emerald-600 hover:text-emerald-800 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button
+                      type="button"
+                      onClick={handleClearBatches}
+                      disabled={assigning || selectedBatches.length === 0}
+                      className="text-slate-400 hover:text-slate-600 font-medium cursor-pointer disabled:opacity-50"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
+
+              <p className="text-xs text-slate-400">
+                Dynamic student batches eligible to access this course under this faculty member.
+              </p>
+
+              {!isDeptSelected ? (
+                <div className="p-3 bg-indigo-50/60 border border-indigo-200/60 rounded-xl text-xs text-indigo-800 font-medium flex items-center gap-2">
+                  <span>👈 Please select at least one department in Step 2 first.</span>
+                </div>
+              ) : availableBatches.length === 0 ? (
+                <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-xs text-amber-800 font-semibold flex items-center gap-2.5">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                  <span>No batch available for the selected department(s).</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {availableBatches.map((item) => {
+                    const isSelected = selectedBatches.includes(item.key);
+
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleToggleBatch(item.key)}
+                        disabled={assigning}
+                        className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          isSelected
+                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/50"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={isSelected ? "text-white" : "text-slate-800"}>
+                            Batch {item.year}
+                          </span>
+                          <span
+                            className={`text-[11px] font-semibold ${
+                              isSelected ? "text-emerald-100" : "text-slate-500"
+                            }`}
+                          >
+                            ({item.segment})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {item.studentCount != null && (
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                isSelected
+                                  ? "bg-emerald-700 text-emerald-100"
+                                  : "bg-slate-200 text-slate-600"
+                              }`}
+                            >
+                              {item.studentCount} student{item.studentCount === 1 ? "" : "s"}
+                            </span>
+                          )}
+                          {isSelected && <Check size={14} className="stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Buttons */}
-            <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={assigning}
-                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-
-              <button
-                type="submit"
-                disabled={
-                  !departmentId ||
-                  !batchId ||
-                  assigning
-                }
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:from-orange-600 hover:to-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {assigning ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Assigning...
-                  </>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-5">
+              <div className="text-xs text-slate-500 font-medium">
+                {selectedBatches.length > 0 ? (
+                  <span>
+                    Ready to assign <strong className="text-slate-800">{selectedBatches.length}</strong> batch{selectedBatches.length === 1 ? "" : "es"} across <strong className="text-slate-800">{selectedDepartments.length}</strong> department{selectedDepartments.length === 1 ? "" : "s"}.
+                  </span>
                 ) : (
-                  <>
-                    <Users className="h-4 w-4" />
-                    Assign Practical Manual
-                  </>
+                  <span>Select at least one department and batch to proceed.</span>
                 )}
-              </button>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  disabled={assigning}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={
+                    selectedDepartments.length === 0 ||
+                    selectedBatches.length === 0 ||
+                    assigning
+                  }
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:from-orange-600 hover:to-amber-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  {assigning ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-4 w-4" />
+                      Assign Practical Manual
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>

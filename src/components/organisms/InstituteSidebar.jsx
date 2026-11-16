@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +11,7 @@ import { useInstituteLogoSrc } from "@/utils/media";
 import {
   LayoutDashboard,
   GraduationCap,
+  Users,
   BarChart3,
   Building2,
   BadgeCheck,
@@ -20,6 +22,7 @@ import {
   ListChecks,
   Activity,
   AlertTriangle,
+  AudioWaveform,
 } from "lucide-react";
 
 const menuItems = [
@@ -40,6 +43,15 @@ const menuItems = [
     border: "border-orange-500",
     bg: "from-orange-50 via-amber-50 to-yellow-50",
     text: "text-orange-700",
+  },
+  {
+    title: "Faculty",
+    href: "/institute-dashboard/teachers",
+    icon: Users,
+    color: "from-indigo-500 to-purple-600",
+    border: "border-indigo-500",
+    bg: "from-indigo-50 via-purple-50 to-violet-50",
+    text: "text-indigo-700",
   },
 
   {
@@ -69,6 +81,15 @@ const menuItems = [
     bg: "from-cyan-50 to-blue-50",
     text: "text-cyan-700",
   },
+  // {
+  //   title: "Interactive Learning management",
+  //   href: "/institute-dashboard/interactive-learning",
+  //   icon: AudioWaveform,
+  //   color: "from-cyan-500 to-blue-600",
+  //   border: "border-cyan-500",
+  //   bg: "from-cyan-50 to-blue-50",
+  //   text: "text-cyan-700",
+  // },
   // Assessment Management and Subject Management are hidden from the
   // sidebar until their pages/services are pushed to this branch — the
   // routes exist locally but not yet on test-dev, so linking to them here
@@ -136,13 +157,46 @@ const menuItems = [
   },
 ];
 
-export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
+export default function InstituteSidebar({
+  isOpen,
+  setShowLogoutModal,
+  initialRole,
+  initialUser,
+}) {
   const pathname = usePathname();
-  const { user: institute } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { user: authUser, role: authRole } = useAuth();
+  const institute = authUser || initialUser;
+  const currentRole =
+    authRole ||
+    initialRole ||
+    (mounted ? Cookies.get("role") : null) ||
+    "institute";
+  const isFaculty = currentRole === "faculty";
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
-  const instituteName = institute?.institute_name || "Institute";
+  const instituteName = isFaculty
+    ? institute?.full_name || institute?.name || "Faculty"
+    : institute?.institute_name || "Institute";
   const { src: instituteLogo, onError: handleLogoError } = useInstituteLogoSrc(institute);
+
+  // Filter menu items based on role
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (!isFaculty) return true;
+    // Hide administrative, faculty management, license and danger zone items for faculty
+    const restrictedForFaculty = [
+      "Faculty",
+      "Student Learning Access",
+      "License & Subscription",
+      "Settings",
+      "Danger Zone",
+    ];
+    return !restrictedForFaculty.includes(item.title);
+  });
 
   return (
     <aside
@@ -175,9 +229,8 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
             <div
-              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${
-                isOpen ? "h-14 w-14" : "h-11 w-11"
-              }`}
+              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${isOpen ? "h-14 w-14" : "h-11 w-11"
+                }`}
             >
               <Image
                 src={instituteLogo}
@@ -193,12 +246,18 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
           {isOpen && (
             <div className="min-w-0">
-              <h2 className="text-lg font-black text-slate-800 truncate">
+              <h2
+                suppressHydrationWarning
+                className="text-lg font-black text-slate-800 truncate"
+              >
                 {instituteName}
               </h2>
 
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400 font-bold">
-                Institute Portal
+              <p
+                suppressHydrationWarning
+                className="text-xs uppercase tracking-[0.25em] text-orange-600 font-bold"
+              >
+                {isFaculty ? "Faculty / Instructor" : "Institute Portal"}
               </p>
             </div>
           )}
@@ -207,7 +266,7 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
       {/* Clean Scrollable Navigation Area (Scrollbar completely hidden using modern CSS classes) */}
       <div className="relative z-10 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-2 space-y-2">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
 
@@ -272,9 +331,8 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
                 {isOpen && (
                   <span
-                    className={`relative z-10 text-sm font-bold ${
-                      active ? item.text : "text-slate-700"
-                    }`}
+                    className={`relative z-10 text-sm font-bold ${active ? item.text : "text-slate-700"
+                      }`}
                   >
                     {item.title}
                   </span>
@@ -301,9 +359,8 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
       {/* Bottom Footer Section */}
       <div
-        className={`relative z-10 pt-4 shrink-0 border-t border-slate-100 ${
-          isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
-        }`}
+        className={`relative z-10 pt-4 shrink-0 border-t border-slate-100 ${isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
+          }`}
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md" />
@@ -323,7 +380,10 @@ export default function InstituteSidebar({ isOpen, setShowLogoutModal }) {
 
         {isOpen && (
           <div className="min-w-0">
-            <p className="text-sm font-black text-slate-800 truncate">
+            <p
+              suppressHydrationWarning
+              className="text-sm font-black text-slate-800 truncate"
+            >
               {instituteName}
             </p>
 

@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-import Input from "@/components/atoms/Input";
-import AnimatedBackground from "@/components/organisms/RegisterBackground";
-import StatusModal from "@/components/molecules/StatusModal";
+import Input from "@/app/components/atoms/Input";
+import AnimatedBackground from "@/app/components/organisms/RegisterBackground";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 import { studentLogin } from "@/services/auth/loginApi";
 import { publicInstituteApi } from "@/services/institute/publicInstituteApi";
@@ -258,10 +258,9 @@ export default function StudentLogin() {
                 className={`
                   w-full rounded-xl border bg-white px-4 py-3 text-slate-900
                   outline-none transition-all focus:ring-4 disabled:opacity-60
-                  ${
-                    errors.instituteId || errors.licenseCode
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-100"
-                      : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
+                  ${errors.instituteId || errors.licenseCode
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-100"
+                    : "border-slate-200 focus:border-orange-400 focus:ring-orange-100"
                   }
                 `}
               >

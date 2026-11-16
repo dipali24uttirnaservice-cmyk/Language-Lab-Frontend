@@ -17,7 +17,7 @@ import {
 } from "react-icons/fa";
 
 import { profileApi } from "@/services/institute/profileApi";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { useInstituteLogoSrc } from "@/utils/media";
 
 export default function InstituteProfilePage() {
@@ -30,72 +30,72 @@ export default function InstituteProfilePage() {
     phone: "",
     website: "",
     address: {
-  line1: "",
-  line2: "",
-  taluka: "",
-  dist: "",
-  state: "",
-  pincode: "",
-  autorizedName: "",
-  autorizedPhono: "",
-  nearbyLandmarks: "",
-},
+      line1: "",
+      line2: "",
+      taluka: "",
+      dist: "",
+      state: "",
+      pincode: "",
+      autorizedName: "",
+      autorizedPhono: "",
+      nearbyLandmarks: "",
+    },
   });
 
   const [statusData, setStatusData] = useState({
-  open: false,
-  type: "success",
-  title: "",
-  message: "",
-});
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   // Called unconditionally (before the loading/!institute early returns
   // below) since it's a hook — falls back to the bundled placeholder until
   // `institute` loads, same as before.
   const { src: instituteLogoSrc, onError: handleLogoError } = useInstituteLogoSrc(institute);
 
-const formatAddress = (address) => {
-  if (!address) return "-";
+  const formatAddress = (address) => {
+    if (!address) return "-";
 
-  return [
-    address.line1,
-    address.line2,
-    address.taluka,
-    address.dist,
-    address.state,
-    address.pincode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-};
-
-useEffect(() => {
-  const fetchInstituteProfile = async () => {
-    try {
-   const response =
-  await profileApi.getProfile();
-
-      if (response.data.success) {
-        const data = response.data.data;
-
-        setInstitute(data);
-
-        setFormData({
-          institute_name: data.institute_name || "",
-          address: data.address || "",
-          phone: data.phone || "",
-          website: data.website || "",
-        });
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    return [
+      address.line1,
+      address.line2,
+      address.taluka,
+      address.dist,
+      address.state,
+      address.pincode,
+    ]
+      .filter(Boolean)
+      .join(", ");
   };
 
-  fetchInstituteProfile();
-}, []);
+  useEffect(() => {
+    const fetchInstituteProfile = async () => {
+      try {
+        const response =
+          await profileApi.getProfile();
+
+        if (response.data.success) {
+          const data = response.data.data;
+
+          setInstitute(data);
+
+          setFormData({
+            institute_name: data.institute_name || "",
+            address: data.address || "",
+            phone: data.phone || "",
+            website: data.website || "",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstituteProfile();
+  }, []);
 
 
 
@@ -106,62 +106,62 @@ useEffect(() => {
     });
   };
 
- const handleSave = async () => {
-  try {
-    const response =
-      await profileApi.updateProfile({
-        institute_name: formData.institute_name,
-        address: formData.address,
-        phone: formData.phone,
-        website: formData.website,
-      });
+  const handleSave = async () => {
+    try {
+      const response =
+        await profileApi.updateProfile({
+          institute_name: formData.institute_name,
+          address: formData.address,
+          phone: formData.phone,
+          website: formData.website,
+        });
 
-    if (response.data.success) {
-      setInstitute((prev) => ({
-        ...prev,
-        ...formData,
-      }));
+      if (response.data.success) {
+        setInstitute((prev) => ({
+          ...prev,
+          ...formData,
+        }));
 
-      setIsEditing(false);
+        setIsEditing(false);
+
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Profile Updated",
+          message:
+            "Institute profile updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error(error);
 
       setStatusData({
         open: true,
-        type: "success",
-        title: "Profile Updated",
+        type: "error",
+        title: "Update Failed",
         message:
-          "Institute profile updated successfully.",
+          error?.response?.data?.message ||
+          "Failed to update profile.",
       });
     }
-  } catch (error) {
-    console.error(error);
-
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Update Failed",
-      message:
-        error?.response?.data?.message ||
-        "Failed to update profile.",
-    });
-  }
-};
+  };
 
   const handleCancel = () => {
     setFormData({
       institute_name: institute?.institute_name || "",
-  phone: institute?.phone || "",
+      phone: institute?.phone || "",
       website: institute?.website || "",
       address: institute?.address || {
-  line1: "",
-  line2: "",
-  taluka: "",
-  dist: "",
-  state: "",
-  pincode: "",
-  autorizedName: "",
-  autorizedPhono: "",
-  nearbyLandmarks: "",
-},
+        line1: "",
+        line2: "",
+        taluka: "",
+        dist: "",
+        state: "",
+        pincode: "",
+        autorizedName: "",
+        autorizedPhono: "",
+        nearbyLandmarks: "",
+      },
     });
 
     setIsEditing(false);
@@ -301,210 +301,210 @@ useEffect(() => {
             </div>
 
             <div className="grid md:grid-cols-2 gap-5 mt-6">
-            <ProfileItem
-              icon={FaEnvelope}
-              label="Email Address"
-              value={institute.email}
-              color="from-blue-500 to-indigo-600"
-            />
-
-            {isEditing ? (
-              <EditableItem
-                icon={FaPhone}
-                label="Contact Number"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                color="from-emerald-400 to-emerald-600"
-              />
-            ) : (
               <ProfileItem
-                icon={FaPhone}
-                label="Contact Number"
-                value={institute.phone}
-                color="from-emerald-400 to-emerald-600"
+                icon={FaEnvelope}
+                label="Email Address"
+                value={institute.email}
+                color="from-blue-500 to-indigo-600"
               />
-            )}
 
-            {isEditing ? (
-              <EditableItem
-                icon={FaGlobe}
-                label="Website URL"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                color="from-purple-500 to-fuchsia-600"
-              />
-            ) : (
-              <ProfileItem
-                icon={FaGlobe}
-                label="Website URL"
-                value={institute.website}
-                color="from-purple-500 to-fuchsia-600"
-              />
-            )}
-
-            {isEditing ? (
-             <div className="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
-    Address
-  </p>
-
-  <div className="grid md:grid-cols-2 gap-4">
-
-    <input
-      type="text"
-      placeholder="Address Line 1"
-      value={formData.address.line1 || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            line1: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-    <input
-      type="text"
-      placeholder="Address Line 2"
-      value={formData.address.line2 || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            line2: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-    <input
-      type="text"
-      placeholder="District"
-      value={formData.address.dist || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            dist: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-    <input
-      type="text"
-      placeholder="State"
-      value={formData.address.state || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            state: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-    <input
-      type="text"
-      placeholder="Taluka"
-      value={formData.address.taluka || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            taluka: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-    <input
-      type="text"
-      placeholder="Pincode"
-      value={formData.address.pincode || ""}
-      onChange={(e) =>
-        setFormData({
-          ...formData,
-          address: {
-            ...formData.address,
-            pincode: e.target.value,
-          },
-        })
-      }
-      className="border rounded-xl p-3"
-    />
-
-  </div>
-</div>
-            ) : (
-             <ProfileItem
-  icon={FaMapMarkerAlt}
-  label="Location"
-  value={formatAddress(institute.address)}
-  color="from-rose-500 to-pink-600"
-/>
-            )}
-
-            <ProfileItem
-              icon={FaCheckCircle}
-              label="Account Status"
-              value={institute.is_active ? "Active" : "Inactive"}
-              color={
-                institute.is_active
-                  ? "from-emerald-400 to-emerald-600"
-                  : "from-red-500 to-rose-600"
-              }
-              textColor={
-                institute.is_active
-                  ? "text-emerald-600"
-                  : "text-red-600"
-              }
-            />
-
-            <ProfileItem
-              icon={FaCalendarAlt}
-              label="Registered On"
-              value={new Date(institute.createdAt).toLocaleDateString(
-                "en-IN",
-                {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                }
+              {isEditing ? (
+                <EditableItem
+                  icon={FaPhone}
+                  label="Contact Number"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  color="from-emerald-400 to-emerald-600"
+                />
+              ) : (
+                <ProfileItem
+                  icon={FaPhone}
+                  label="Contact Number"
+                  value={institute.phone}
+                  color="from-emerald-400 to-emerald-600"
+                />
               )}
-              color="from-amber-400 to-orange-500"
-            />
+
+              {isEditing ? (
+                <EditableItem
+                  icon={FaGlobe}
+                  label="Website URL"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  color="from-purple-500 to-fuchsia-600"
+                />
+              ) : (
+                <ProfileItem
+                  icon={FaGlobe}
+                  label="Website URL"
+                  value={institute.website}
+                  color="from-purple-500 to-fuchsia-600"
+                />
+              )}
+
+              {isEditing ? (
+                <div className="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+                    Address
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+
+                    <input
+                      type="text"
+                      placeholder="Address Line 1"
+                      value={formData.address.line1 || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            line1: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Address Line 2"
+                      value={formData.address.line2 || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            line2: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="District"
+                      value={formData.address.dist || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            dist: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="State"
+                      value={formData.address.state || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            state: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Taluka"
+                      value={formData.address.taluka || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            taluka: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      value={formData.address.pincode || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address: {
+                            ...formData.address,
+                            pincode: e.target.value,
+                          },
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                  </div>
+                </div>
+              ) : (
+                <ProfileItem
+                  icon={FaMapMarkerAlt}
+                  label="Location"
+                  value={formatAddress(institute.address)}
+                  color="from-rose-500 to-pink-600"
+                />
+              )}
+
+              <ProfileItem
+                icon={FaCheckCircle}
+                label="Account Status"
+                value={institute.is_active ? "Active" : "Inactive"}
+                color={
+                  institute.is_active
+                    ? "from-emerald-400 to-emerald-600"
+                    : "from-red-500 to-rose-600"
+                }
+                textColor={
+                  institute.is_active
+                    ? "text-emerald-600"
+                    : "text-red-600"
+                }
+              />
+
+              <ProfileItem
+                icon={FaCalendarAlt}
+                label="Registered On"
+                value={new Date(institute.createdAt).toLocaleDateString(
+                  "en-IN",
+                  {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  }
+                )}
+                color="from-amber-400 to-orange-500"
+              />
+            </div>
           </div>
-        </div>
         </motion.div>
       </div>
 
       <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() =>
-    setStatusData((prev) => ({
-      ...prev,
-      open: false,
-    }))
-  }
-/>
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={() =>
+          setStatusData((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+      />
     </div>
   );
 }

@@ -17,8 +17,8 @@ import {
 } from "@/app/schemas/practicalManual.schema";
 import { courseApi } from "@/services/course/courseApi";
 import { topicApi } from "@/services/topic/topicApi";
-import RichTextEditor from "@/components/molecules/RichTextEditor";
-import StatusModal from "@/components/molecules/StatusModal";
+import RichTextEditor from "@/app/components/molecules/RichTextEditor";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 export default function PracticalManualFormPage() {
   const router = useRouter();
@@ -45,13 +45,13 @@ export default function PracticalManualFormPage() {
   const [topics, setTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
 
- const [statusData, setStatusData] = useState({
-  open: false,
-  type: "success",
-  title: "",
-  message: "",
-  manualId: null,
-});
+  const [statusData, setStatusData] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+    manualId: null,
+  });
 
   const [questionList, setQuestionList] = useState([
     { question_text: "", answer_key_html: "", answer_lines: 5, solution_type: "text" }
@@ -134,131 +134,131 @@ export default function PracticalManualFormPage() {
     }
   }, [editingManualId]);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  setFormErrors({});
+    setFormErrors({});
 
-  const payload = {
-    title: formTitle,
-    course_id: formCourseId,
-    topic_id: formTopicId,
-    questions: questionList,
-  };
+    const payload = {
+      title: formTitle,
+      course_id: formCourseId,
+      topic_id: formTopicId,
+      questions: questionList,
+    };
 
-  try {
-    const schema = editingManualId
-      ? updatePracticalManualSchema
-      : createPracticalManualSchema;
+    try {
+      const schema = editingManualId
+        ? updatePracticalManualSchema
+        : createPracticalManualSchema;
 
-    await schema.validate(payload, {
-      abortEarly: false,
-    });
-
-    setSubmitting(true);
-
-    const formData = new FormData();
-
-    formData.append("title", formTitle);
-    formData.append("course_id", formCourseId);
-
-    if (formTopicId) {
-      formData.append("topic_id", formTopicId);
-    }
-
-    formData.append("questions", JSON.stringify(questionList));
-
-    let manualId = editingManualId;
-
-    if (editingManualId) {
-      // =========================
-      // UPDATE
-      // =========================
-      const response = await updatePracticalManual(
-        editingManualId,
-        formData
-      );
-
-      console.log("Update manual response:", response);
-
-      manualId =
-        editingManualId ||
-        response?.data?.data?._id ||
-        response?.data?._id ||
-        response?.data?.data?.id ||
-        response?.data?.id;
-
-      setStatusData({
-        open: true,
-        type: "success",
-        title: "Success",
-        message: "Practical manual updated successfully.",
-        manualId,
+      await schema.validate(payload, {
+        abortEarly: false,
       });
-    } else {
-      // =========================
-      // CREATE
-      // =========================
-      const response = await practicalManual(formData);
 
-      console.log("Create manual response:", response);
+      setSubmitting(true);
 
-      manualId =
-        response?.data?.data?._id ||
-        response?.data?._id ||
-        response?.data?.data?.id ||
-        response?.data?.id;
+      const formData = new FormData();
 
-      if (!manualId) {
-        throw new Error(
-          "Practical manual created, but manual ID was not returned by the server."
-        );
+      formData.append("title", formTitle);
+      formData.append("course_id", formCourseId);
+
+      if (formTopicId) {
+        formData.append("topic_id", formTopicId);
       }
 
+      formData.append("questions", JSON.stringify(questionList));
+
+      let manualId = editingManualId;
+
+      if (editingManualId) {
+        // =========================
+        // UPDATE
+        // =========================
+        const response = await updatePracticalManual(
+          editingManualId,
+          formData
+        );
+
+        console.log("Update manual response:", response);
+
+        manualId =
+          editingManualId ||
+          response?.data?.data?._id ||
+          response?.data?._id ||
+          response?.data?.data?.id ||
+          response?.data?.id;
+
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Success",
+          message: "Practical manual updated successfully.",
+          manualId,
+        });
+      } else {
+        // =========================
+        // CREATE
+        // =========================
+        const response = await practicalManual(formData);
+
+        console.log("Create manual response:", response);
+
+        manualId =
+          response?.data?.data?._id ||
+          response?.data?._id ||
+          response?.data?.data?.id ||
+          response?.data?.id;
+
+        if (!manualId) {
+          throw new Error(
+            "Practical manual created, but manual ID was not returned by the server."
+          );
+        }
+
+        setStatusData({
+          open: true,
+          type: "success",
+          title: "Success",
+          message: "Practical manual created successfully.",
+          manualId,
+        });
+      }
+    } catch (error) {
+      // =========================
+      // YUP VALIDATION ERROR
+      // =========================
+      if (error.name === "ValidationError") {
+        const validationErrors = {};
+
+        error.inner.forEach((err) => {
+          if (err.path) {
+            validationErrors[err.path] = err.message;
+          }
+        });
+
+        setFormErrors(validationErrors);
+        return;
+      }
+
+      // =========================
+      // API ERROR
+      // =========================
+      console.error(error);
+
       setStatusData({
         open: true,
-        type: "success",
-        title: "Success",
-        message: "Practical manual created successfully.",
-        manualId,
+        type: "error",
+        title: "Error",
+        message:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Something went wrong. Please try again.",
       });
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error) {
-    // =========================
-    // YUP VALIDATION ERROR
-    // =========================
-    if (error.name === "ValidationError") {
-      const validationErrors = {};
-
-      error.inner.forEach((err) => {
-        if (err.path) {
-          validationErrors[err.path] = err.message;
-        }
-      });
-
-      setFormErrors(validationErrors);
-      return;
-    }
-
-    // =========================
-    // API ERROR
-    // =========================
-    console.error(error);
-
-    setStatusData({
-      open: true,
-      type: "error",
-      title: "Error",
-      message:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Something went wrong. Please try again.",
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -269,7 +269,7 @@ export default function PracticalManualFormPage() {
   }
 
   return (
-<div className="min-h-screen bg-slate-50/50 p-6 space-y-6 w-full">
+    <div className="min-h-screen bg-slate-50/50 p-6 space-y-6 w-full">
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -336,7 +336,7 @@ export default function PracticalManualFormPage() {
 
             <div className="md:col-span-6">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Topic 
+                Topic
               </label>
               <select
                 value={formTopicId}
@@ -348,8 +348,8 @@ export default function PracticalManualFormPage() {
                   {!formCourseId
                     ? "Select a course first"
                     : topicsLoading
-                    ? "Loading topics..."
-                    : "No specific topic"}
+                      ? "Loading topics..."
+                      : "No specific topic"}
                 </option>
                 {topics.map((t) => (
                   <option key={t._id} value={t._id}>{t.title}</option>
@@ -502,8 +502,8 @@ export default function PracticalManualFormPage() {
                         {q.solution_type === "file"
                           ? "Student uploads a file as the answer to this question."
                           : q.solution_type === "both"
-                          ? "Student can choose to type a paragraph or upload a file for this question."
-                          : "Student types a paragraph answer to this question."}
+                            ? "Student can choose to type a paragraph or upload a file for this question."
+                            : "Student types a paragraph answer to this question."}
                       </p>
                     </div>
                   </div>
@@ -513,13 +513,13 @@ export default function PracticalManualFormPage() {
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
-           <button
-  type="button"
-  onClick={() => router.push("/institute-dashboard/practical-manual")}
-  className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
->
-  Cancel
-</button>
+            <button
+              type="button"
+              onClick={() => router.push("/institute-dashboard/practical-manual")}
+              className="px-6 py-3 rounded-xl border border-orange-300 text-orange-600 bg-white font-bold text-sm hover:bg-orange-50 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
 
             <motion.button
               type="submit"
@@ -536,26 +536,26 @@ export default function PracticalManualFormPage() {
       </div>
 
       <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() => {
-    const isSuccess = statusData.type === "success";
-    const manualId = statusData.manualId;
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={() => {
+          const isSuccess = statusData.type === "success";
+          const manualId = statusData.manualId;
 
-    setStatusData((prev) => ({
-      ...prev,
-      open: false,
-    }));
+          setStatusData((prev) => ({
+            ...prev,
+            open: false,
+          }));
 
-    if (isSuccess && manualId) {
-      router.push(
-        `/institute-dashboard/practical-manual/assign/${manualId}`
-      );
-    }
-  }}
-/>
+          if (isSuccess && manualId) {
+            router.push(
+              `/institute-dashboard/practical-manual/assign/${manualId}`
+            );
+          }
+        }}
+      />
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   ExternalLink,
   Eye,
 } from "lucide-react";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import {
   practicalManualDetail,
   getPracticalSubmissions,
@@ -183,11 +183,11 @@ function PracticalSubmissionRow({
     }
   };
 
-const handleViewAnswerSheet = () => {
-router.push(
-  `/institute-dashboard/practical-manual/submissions/${submission._id}/view?manualId=${manualId}`
-);
-};
+  const handleViewAnswerSheet = () => {
+    router.push(
+      `/institute-dashboard/practical-manual/submissions/${submission._id}/view?manualId=${manualId}`
+    );
+  };
   return (
     <>
       <div className="bg-gradient-to-br from-slate-50/80 to-white rounded-2xl p-5 border border-orange-100/60 space-y-4 shadow-sm hover:border-orange-200 transition-all">

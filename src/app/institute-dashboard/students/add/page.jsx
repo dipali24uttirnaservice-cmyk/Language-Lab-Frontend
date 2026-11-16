@@ -1,16 +1,25 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import BulkUploadStudent from "@/components/students/BulkUploadStudent";
-import IndividualStudentForm from "@/components/students/IndividualStudentForm";
+import Cookies from "js-cookie";
+import BulkUploadStudent from "@/app/components/students/BulkUploadStudent";
+import IndividualStudentForm from "@/app/components/students/IndividualStudentForm";
 import { studentApi } from "@/services/student/studentApi";
 
 function AddStudentPageContent() {
+  const router = useRouter();
   const params = useSearchParams();
 
   const type = params.get("type");
   const studentId = params.get("id");
+
+  useEffect(() => {
+    const role = Cookies.get("role");
+    if (role === "faculty") {
+      router.replace("/institute-dashboard/students");
+    }
+  }, [router]);
 
   const [segmentOptions, setSegmentOptions] = useState([]);
   const [yearOptions, setYearOptions] = useState([]);

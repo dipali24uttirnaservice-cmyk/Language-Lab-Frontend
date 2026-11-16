@@ -17,11 +17,11 @@ const isNetworkError = (error) => !error.response;
 // Also skips straight to `localCall` when there's no masterToken cookie at
 // all, WITHOUT ever attempting `masterCall` — a plain /login session
 // (instituteLogin, not instituteConfigLogin) never obtains one, so calling
-// master here would predictably 401 every single time, not just when
-// offline. That's a real "master can't answer this" case, same as a network
-// error, not an auth problem worth surfacing to the user.
+// Faculty users are strictly scoped to the local institute deployment and their
+// assigned courses/departments. Master API has no record of local faculty, so faculty
+// sessions must always query the local backend directly.
 async function masterWithLocalFallback(masterCall, localCall) {
-  if (!Cookies.get("masterToken")) {
+  if (Cookies.get("role") === "faculty" || !Cookies.get("masterToken")) {
     return await localCall();
   }
 
@@ -35,11 +35,52 @@ async function masterWithLocalFallback(masterCall, localCall) {
 }
 
 export const courseApi = {
-  getCourses: () =>
-    masterWithLocalFallback(
+  getCourses: async () => {
+    const res = await masterWithLocalFallback(
       () => masterApiInstance.get("/institute/me/courses"),
       () => api.get("/institute/me/courses"),
-    ),
+    );
+
+    // Defense-in-depth: When logged in as faculty, filter courses strictly by assigned_courses
+    if (Cookies.get("role") === "faculty") {
+      try {
+        const rawUserData = Cookies.get("userData");
+        if (rawUserData) {
+          const parsed = JSON.parse(rawUserData);
+          const facultyUser = parsed?.faculty || parsed?.user || parsed;
+          const assigned = facultyUser?.assigned_courses;
+          if (Array.isArray(assigned)) {
+            const assignedLower = assigned.map((c) => c.toString().trim().toLowerCase());
+            const coursesList = res?.data?.data?.courses || res?.data?.courses;
+            if (Array.isArray(coursesList)) {
+              const filtered = coursesList.filter((c) => {
+                const cId = c._id?.toString()?.toLowerCase();
+                const cName = c.course_name?.toString()?.toLowerCase();
+                const cCode = c.course_code?.toString()?.toLowerCase();
+                return (
+                  assignedLower.includes(cId) ||
+                  assignedLower.includes(cName) ||
+                  assignedLower.includes(cCode)
+                );
+              });
+
+              if (res?.data?.data?.courses) {
+                res.data.data.courses = filtered;
+                res.data.data.total = filtered.length;
+              } else if (res?.data?.courses) {
+                res.data.courses = filtered;
+                res.data.total = filtered.length;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Error filtering faculty courses:", err);
+      }
+    }
+
+    return res;
+  },
 
   bulkAssignCourses: (data) => api.put("/student/bulk-assign-courses", data),
 

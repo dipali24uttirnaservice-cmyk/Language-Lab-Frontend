@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import StatusModal from "@/components/molecules/StatusModal";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 import {
   BookOpen,
@@ -40,13 +40,13 @@ const getId = (item) => {
 
   return String(
     item._id ??
-      item.id ??
-      item.course_id ??
-      item.topic_id ??
-      item.subtopic_id ??
-      item.department_id ??
-      item.batch_id ??
-      ""
+    item.id ??
+    item.course_id ??
+    item.topic_id ??
+    item.subtopic_id ??
+    item.department_id ??
+    item.batch_id ??
+    ""
   );
 };
 
@@ -55,12 +55,12 @@ const getName = (item) => {
 
   return String(
     item.name ??
-      item.title ??
-      item.course_name ??
-      item.topic_name ??
-      item.subtopic_name ??
-      item.module_name ??
-      ""
+    item.title ??
+    item.course_name ??
+    item.topic_name ??
+    item.subtopic_name ??
+    item.module_name ??
+    ""
   );
 };
 
@@ -72,11 +72,11 @@ const normalizeId = (value) => {
   if (typeof value === "object") {
     return String(
       value._id ??
-        value.id ??
-        value.value ??
-        value.name ??
-        value.year ??
-        ""
+      value.id ??
+      value.value ??
+      value.name ??
+      value.year ??
+      ""
     );
   }
 
@@ -104,15 +104,14 @@ function Checkbox({
           onChange();
         }
       }}
-      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border transition-all ${
-        disabled
+      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border transition-all ${disabled
           ? "cursor-not-allowed border-slate-200 bg-slate-100"
           : checked
-          ? "border-orange-500 bg-orange-500 text-white shadow-sm"
-          : indeterminate
-          ? "border-orange-500 bg-orange-100 text-orange-600"
-          : "border-orange-300 bg-white text-transparent hover:border-orange-500"
-      }`}
+            ? "border-orange-500 bg-orange-500 text-white shadow-sm"
+            : indeterminate
+              ? "border-orange-500 bg-orange-100 text-orange-600"
+              : "border-orange-300 bg-white text-transparent hover:border-orange-500"
+        }`}
       aria-label="checkbox"
     >
       {checked ? (
@@ -129,11 +128,11 @@ function Checkbox({
 ========================================================= */
 
 export default function StudentLearningAccessPage() {
-const router = useRouter();
-const searchParams = useSearchParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-const editId = searchParams.get("id");
-const isEditMode = Boolean(editId);
+  const editId = searchParams.get("id");
+  const isEditMode = Boolean(editId);
 
 
 
@@ -199,12 +198,12 @@ const isEditMode = Boolean(editId);
   const [modulePreview, setModulePreview] = useState(null);
   const [loadingModulePreview, setLoadingModulePreview] = useState(false);
 
-    const [statusData, setStatusData] = useState({
-  open: false,
-  type: "success",
-  title: "",
-  message: "",
-});
+  const [statusData, setStatusData] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   /* =======================================================
      DERIVED DATA
@@ -345,56 +344,55 @@ const isEditMode = Boolean(editId);
       const normalizedDepartments =
         Array.isArray(departmentData)
           ? departmentData.map(
-              (department, departmentIndex) => {
-                const departmentName = String(
-                  department?.name ??
-                    department?._id ??
-                    department?.id ??
-                    `department-${departmentIndex}`
-                );
+            (department, departmentIndex) => {
+              const departmentName = String(
+                department?.name ??
+                department?._id ??
+                department?.id ??
+                `department-${departmentIndex}`
+              );
 
-                const batches =
-                  Array.isArray(
-                    department?.batches
+              const batches =
+                Array.isArray(
+                  department?.batches
+                )
+                  ? department.batches.map(
+                    (
+                      batch,
+                      batchIndex
+                    ) => ({
+                      ...batch,
+
+                      id: String(
+                        batch?._id ??
+                        batch?.id ??
+                        `${departmentName}-year-${batch?.year}-${batchIndex}`
+                      ),
+
+                      year: Number(
+                        batch?.year ?? 0
+                      ),
+
+                      name: `Year ${batch?.year ?? ""
+                        }`,
+
+                      studentCount: Number(
+                        batch?.studentCount ??
+                        0
+                      ),
+                    })
                   )
-                    ? department.batches.map(
-                        (
-                          batch,
-                          batchIndex
-                        ) => ({
-                          ...batch,
+                  : [];
 
-                          id: String(
-                            batch?._id ??
-                              batch?.id ??
-                              `${departmentName}-year-${batch?.year}-${batchIndex}`
-                          ),
+              return {
+                ...department,
 
-                          year: Number(
-                            batch?.year ?? 0
-                          ),
-
-                          name: `Year ${
-                            batch?.year ?? ""
-                          }`,
-
-                          studentCount: Number(
-                            batch?.studentCount ??
-                              0
-                          ),
-                        })
-                      )
-                    : [];
-
-                return {
-                  ...department,
-
-                  id: departmentName,
-                  name: departmentName,
-                  batches,
-                };
-              }
-            )
+                id: departmentName,
+                name: departmentName,
+                batches,
+              };
+            }
+          )
           : [];
 
       console.log(
@@ -411,8 +409,8 @@ const isEditMode = Boolean(editId);
 
       setPageError(
         error?.response?.data?.message ||
-          error?.message ||
-          "Failed to load learning access data."
+        error?.message ||
+        "Failed to load learning access data."
       );
     } finally {
       setLoadingCourses(false);
@@ -462,9 +460,9 @@ const isEditMode = Boolean(editId);
 
       const recordCourseId = String(
         record.course_id?._id ??
-          record.course_id?.id ??
-          record.course_id ??
-          ""
+        record.course_id?.id ??
+        record.course_id ??
+        ""
       );
 
       setCourseId(recordCourseId);
@@ -508,9 +506,9 @@ const isEditMode = Boolean(editId);
 
       const recordTopicId = String(
         record.topic_id?._id ??
-          record.topic_id?.id ??
-          record.topic_id ??
-          ""
+        record.topic_id?.id ??
+        record.topic_id ??
+        ""
       );
 
       setTopicId(recordTopicId);
@@ -547,10 +545,10 @@ const isEditMode = Boolean(editId);
           record.subtopic_ids
         )
           ? record.subtopic_ids
-              .map((item) =>
-                normalizeId(item)
-              )
-              .filter(Boolean)
+            .map((item) =>
+              normalizeId(item)
+            )
+            .filter(Boolean)
           : [];
 
       setSelectedSubtopics(
@@ -610,8 +608,8 @@ const isEditMode = Boolean(editId);
 
       const recordYearValue =
         recordYear !== null &&
-        recordYear !== undefined &&
-        recordYear !== ""
+          recordYear !== undefined &&
+          recordYear !== ""
           ? String(recordYear)
           : "";
 
@@ -627,8 +625,8 @@ const isEditMode = Boolean(editId);
 
       setPageError(
         error?.response?.data?.message ||
-          error?.message ||
-          "Failed to load learning module."
+        error?.message ||
+        "Failed to load learning module."
       );
     } finally {
       setLoadingEdit(false);
@@ -684,7 +682,7 @@ const isEditMode = Boolean(editId);
 
       alert(
         error?.response?.data?.message ||
-          "Failed to load topics."
+        "Failed to load topics."
       );
     } finally {
       setLoadingTopics(false);
@@ -856,7 +854,7 @@ const isEditMode = Boolean(editId);
 
       alert(
         error?.response?.data?.message ||
-          "Failed to load subtopic modules."
+        "Failed to load subtopic modules."
       );
     } finally {
       setLoadingSubtopics(false);
@@ -872,9 +870,9 @@ const isEditMode = Boolean(editId);
   ) => {
     const moduleId = String(
       module?._id ??
-        module?.id ??
-        module?.module_id ??
-        ""
+      module?.id ??
+      module?.module_id ??
+      ""
     );
 
     if (!moduleId) return;
@@ -989,84 +987,94 @@ const isEditMode = Boolean(editId);
      CREATE / UPDATE
   ======================================================= */
 
-const handleConfirmSubmit = async () => {
-  try {
-    setSubmitting(true);
+  const handleConfirmSubmit = async () => {
+    try {
+      setSubmitting(true);
 
-    const basePayload = {
-      course_id: courseId,
-      topic_id: topicId,
-      subtopic_ids: selectedSubtopics,
-      segment: departmentId,
-    };
+      const basePayload = {
+        course_id: courseId,
+        topic_id: topicId,
+        subtopic_ids: selectedSubtopics,
+        segment: departmentId,
+      };
 
-    // Safety validation
-    if (!basePayload.course_id) {
-      throw new Error("Course is required.");
-    }
+      // Safety validation
+      if (!basePayload.course_id) {
+        throw new Error("Course is required.");
+      }
 
-    if (!basePayload.topic_id) {
-      throw new Error("Topic is required.");
-    }
+      if (!basePayload.topic_id) {
+        throw new Error("Topic is required.");
+      }
 
-    if (
-      !Array.isArray(basePayload.subtopic_ids) ||
-      basePayload.subtopic_ids.length === 0
-    ) {
-      throw new Error("At least one subtopic is required.");
-    }
+      if (
+        !Array.isArray(basePayload.subtopic_ids) ||
+        basePayload.subtopic_ids.length === 0
+      ) {
+        throw new Error("At least one subtopic is required.");
+      }
 
-    if (!basePayload.segment) {
-      throw new Error("Branch is required.");
-    }
+      if (!basePayload.segment) {
+        throw new Error("Branch is required.");
+      }
 
-    const numericYears = selectedBatchIds.map((batchId) =>
-      Number(batchId)
-    );
-
-    if (
-      numericYears.length === 0 ||
-      numericYears.some(
-        (year) => !Number.isFinite(year) || year <= 0
-      )
-    ) {
-      throw new Error("At least one valid batch is required.");
-    }
-
-    console.log(
-      isEditMode
-        ? "UPDATE PAYLOAD SENT TO BACKEND:"
-        : "CREATE PAYLOADS SENT TO BACKEND:",
-      numericYears.map((year) => ({ ...basePayload, year }))
-    );
-
-    // API call — edit mode updates the batch the record originally
-    // targeted (or, if that was deselected, switches it to the first
-    // selected batch) and creates a new record for every OTHER newly
-    // ticked batch, so the same content can be assigned to more batches
-    // from the edit screen too. Create mode makes one record per batch.
-    let extraYearsCount = 0;
-
-    if (isEditMode) {
-      const originalYear = Number(originalBatchId);
-
-      const updateYear = numericYears.includes(originalYear)
-        ? originalYear
-        : numericYears[0];
-
-      const extraYears = numericYears.filter(
-        (year) => year !== updateYear
+      const numericYears = selectedBatchIds.map((batchId) =>
+        Number(batchId)
       );
-      extraYearsCount = extraYears.length;
 
-      await studentLearningAccessApi.update(editId, {
-        ...basePayload,
-        year: updateYear,
-      });
+      if (
+        numericYears.length === 0 ||
+        numericYears.some(
+          (year) => !Number.isFinite(year) || year <= 0
+        )
+      ) {
+        throw new Error("At least one valid batch is required.");
+      }
 
-      if (extraYears.length > 0) {
+      console.log(
+        isEditMode
+          ? "UPDATE PAYLOAD SENT TO BACKEND:"
+          : "CREATE PAYLOADS SENT TO BACKEND:",
+        numericYears.map((year) => ({ ...basePayload, year }))
+      );
+
+      // API call — edit mode updates the batch the record originally
+      // targeted (or, if that was deselected, switches it to the first
+      // selected batch) and creates a new record for every OTHER newly
+      // ticked batch, so the same content can be assigned to more batches
+      // from the edit screen too. Create mode makes one record per batch.
+      let extraYearsCount = 0;
+
+      if (isEditMode) {
+        const originalYear = Number(originalBatchId);
+
+        const updateYear = numericYears.includes(originalYear)
+          ? originalYear
+          : numericYears[0];
+
+        const extraYears = numericYears.filter(
+          (year) => year !== updateYear
+        );
+        extraYearsCount = extraYears.length;
+
+        await studentLearningAccessApi.update(editId, {
+          ...basePayload,
+          year: updateYear,
+        });
+
+        if (extraYears.length > 0) {
+          await Promise.all(
+            extraYears.map((year) =>
+              studentLearningAccessApi.create({
+                ...basePayload,
+                year,
+              })
+            )
+          );
+        }
+      } else {
         await Promise.all(
-          extraYears.map((year) =>
+          numericYears.map((year) =>
             studentLearningAccessApi.create({
               ...basePayload,
               year,
@@ -1074,72 +1082,61 @@ const handleConfirmSubmit = async () => {
           )
         );
       }
-    } else {
-      await Promise.all(
-        numericYears.map((year) =>
-          studentLearningAccessApi.create({
-            ...basePayload,
-            year,
-          })
-        )
-      );
-    }
 
-    // Close summary modal
-    setIsModalOpen(false);
+      // Close summary modal
+      setIsModalOpen(false);
 
-    // Reset only after create
-    if (!isEditMode) {
-      handleReset();
-    }
+      // Reset only after create
+      if (!isEditMode) {
+        handleReset();
+      }
 
-    // Show success modal
-    setStatusData({
-      open: true,
-      type: "success",
-      title: isEditMode
-        ? "Access Updated"
-        : "Access Added",
-      message: isEditMode
-        ? extraYearsCount > 0
-          ? `Learning access updated, and added to ${extraYearsCount} more batch${
-              extraYearsCount > 1 ? "es" : ""
+      // Show success modal
+      setStatusData({
+        open: true,
+        type: "success",
+        title: isEditMode
+          ? "Access Updated"
+          : "Access Added",
+        message: isEditMode
+          ? extraYearsCount > 0
+            ? `Learning access updated, and added to ${extraYearsCount} more batch${extraYearsCount > 1 ? "es" : ""
             }.`
-          : "Learning access updated successfully."
-        : numericYears.length > 1
-        ? `Learning access added successfully for ${numericYears.length} batches.`
-        : "Learning access added successfully.",
-    });
-  } catch (error) {
-    console.error(
-      "Failed to save learning access:",
-      error
-    );
+            : "Learning access updated successfully."
+          : numericYears.length > 1
+            ? `Learning access added successfully for ${numericYears.length} batches.`
+            : "Learning access added successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "Failed to save learning access:",
+        error
+      );
 
-    console.error(
-      "Backend error response:",
-      error?.response?.data
-    );
+      console.error(
+        "Backend error response:",
+        error?.response?.data
+      );
 
-    // Close summary modal
-    setIsModalOpen(false);
+      // Close summary modal
+      setIsModalOpen(false);
 
-    // Show error modal
-    setStatusData({
-      open: true,
-      type: "error",
-      title: isEditMode
-        ? "Update Failed"
-        : "Add Failed",
-      message:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong.",
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+      // Show error modal
+      setStatusData({
+        open: true,
+        type: "error",
+        title: isEditMode
+          ? "Update Failed"
+          : "Add Failed",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   /* =======================================================
      RESET
@@ -1154,8 +1151,8 @@ const handleConfirmSubmit = async () => {
     setSelectedBatchIds([]);
     setOriginalBatchId("");
     setIsModalOpen(false);
-  setActiveSubtopicModal(null);
-  setPageError("");
+    setActiveSubtopicModal(null);
+    setPageError("");
 
     setTopics([]);
     setSubtopics([]);
@@ -1201,7 +1198,7 @@ const handleConfirmSubmit = async () => {
     type
   ) =>
     MODULE_TYPE_STYLES[
-      String(type).toLowerCase()
+    String(type).toLowerCase()
     ] || {
       icon: BookOpen,
       iconClass: "text-orange-600",
@@ -1364,11 +1361,10 @@ const handleConfirmSubmit = async () => {
             {/* TOPIC */}
 
             <div
-              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${
-                !courseId
+              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${!courseId
                   ? "pointer-events-none opacity-55"
                   : "animate-fadeIn"
-              }`}
+                }`}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-orange-100 bg-orange-50 text-orange-600">
@@ -1399,8 +1395,8 @@ const handleConfirmSubmit = async () => {
                   loadingTopics
                     ? "Loading topics..."
                     : courseId
-                    ? "Select Topic"
-                    : "First select a course"
+                      ? "Select Topic"
+                      : "First select a course"
                 }
                 disabled={
                   !courseId ||
@@ -1548,11 +1544,10 @@ const handleConfirmSubmit = async () => {
                               subtopic
                             )
                           }
-                          className={`flex cursor-pointer items-center gap-4 px-6 py-3.5 transition ${
-                            checked
+                          className={`flex cursor-pointer items-center gap-4 px-6 py-3.5 transition ${checked
                               ? "bg-orange-50/50"
                               : "hover:bg-orange-50/20"
-                          }`}
+                            }`}
                         >
                           {/* IMPORTANT:
                               Checkbox now uses
@@ -1616,12 +1611,11 @@ const handleConfirmSubmit = async () => {
             {/* DEPARTMENT */}
 
             <div
-              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${
-                selectedSubtopics.length ===
-                0
+              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${selectedSubtopics.length ===
+                  0
                   ? "pointer-events-none opacity-55"
                   : "animate-fadeIn"
-              }`}
+                }`}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600">
@@ -1651,7 +1645,7 @@ const handleConfirmSubmit = async () => {
                 }
                 placeholder={
                   selectedSubtopics.length >
-                  0
+                    0
                     ? loadingDepartments
                       ? "Loading Departments..."
                       : "Select Branch"
@@ -1665,22 +1659,22 @@ const handleConfirmSubmit = async () => {
                     value:
                       String(
                         department.name ??
-                          ""
+                        ""
                       ),
                     label:
                       String(
                         department.name ??
-                          ""
+                        ""
                       ),
                     key: `department-${String(
                       department.name ??
-                        ""
+                      ""
                     )}-${index}`,
                   })
                 )}
                 disabled={
                   selectedSubtopics.length ===
-                    0 ||
+                  0 ||
                   loadingDepartments
                 }
               />
@@ -1689,11 +1683,10 @@ const handleConfirmSubmit = async () => {
             {/* BATCH */}
 
             <div
-              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${
-                !departmentId
+              className={`rounded-2xl border border-orange-200/60 bg-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md ${!departmentId
                   ? "pointer-events-none opacity-55"
                   : "animate-fadeIn"
-              }`}
+                }`}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600">
@@ -1742,11 +1735,10 @@ const handleConfirmSubmit = async () => {
                             toggleBatch(batchValue);
                           }
                         }}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                          checked
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${checked
                             ? "border-orange-500 bg-orange-50/70"
                             : "border-orange-200 bg-white hover:border-orange-300 hover:bg-orange-50/30"
-                        }`}
+                          }`}
                       >
                         <Checkbox
                           checked={checked}
@@ -1819,7 +1811,7 @@ const handleConfirmSubmit = async () => {
             </button>
           </div>
         </form>
-        
+
       </div>
 
       {/* =====================================================
@@ -1829,383 +1821,381 @@ const handleConfirmSubmit = async () => {
       {activeSubtopicModal &&
         typeof document !== "undefined" &&
         createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="flex h-[90vh] w-full max-w-5xl flex-col space-y-5 rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between border-b border-orange-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-200">
-                  <BookOpen size={20} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+            <div className="flex h-[90vh] w-full max-w-5xl flex-col space-y-5 rounded-3xl border border-orange-200 bg-white p-6 shadow-2xl">
+              <div className="flex shrink-0 items-center justify-between border-b border-orange-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-200">
+                    <BookOpen size={20} />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">
+                      {getName(
+                        activeSubtopicModal
+                      ) ||
+                        "Untitled Subtopic"}
+                    </h3>
+
+                    <p className="text-xs text-slate-500">
+                      Subtopic lesson modules
+                      overview
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">
-                    {getName(
-                      activeSubtopicModal
-                    ) ||
-                      "Untitled Subtopic"}
-                  </h3>
-
-                  <p className="text-xs text-slate-500">
-                    Subtopic lesson modules
-                    overview
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSubtopicModal(
+                      null
+                    );
+                    setExpandedModuleId(null);
+                    setModulePreview(null);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 text-slate-400 transition hover:bg-orange-50 hover:text-slate-600"
+                >
+                  <X size={16} />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSubtopicModal(
-                    null
-                  );
-                  setExpandedModuleId(null);
-                  setModulePreview(null);
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 text-slate-400 transition hover:bg-orange-50 hover:text-slate-600"
-              >
-                <X size={16} />
-              </button>
-            </div>
+              <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  Included Lessons &
+                  Modules
+                </p>
 
-            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Included Lessons &
-                Modules
-              </p>
+                {loadingSubtopics ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-400">
+                    <Loader2
+                      size={16}
+                      className="animate-spin text-orange-500"
+                    />
 
-              {loadingSubtopics ? (
-                <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-400">
-                  <Loader2
-                    size={16}
-                    className="animate-spin text-orange-500"
-                  />
-
-                  Loading lessons...
-                </div>
-              ) : !Array.isArray(
+                    Loading lessons...
+                  </div>
+                ) : !Array.isArray(
                   activeSubtopicModal.modules
                 ) ||
-                activeSubtopicModal.modules
-                  .length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  No modules available.
-                </div>
-              ) : (
-                activeSubtopicModal.modules.map(
-                  (
-                    module,
-                    index
-                  ) => {
-                    const moduleId = String(
-                      module?._id ??
+                  activeSubtopicModal.modules
+                    .length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    No modules available.
+                  </div>
+                ) : (
+                  activeSubtopicModal.modules.map(
+                    (
+                      module,
+                      index
+                    ) => {
+                      const moduleId = String(
+                        module?._id ??
                         module?.id ??
                         module?.module_id ??
                         "module"
-                    );
+                      );
 
-                    const isExpanded =
-                      expandedModuleId ===
-                      moduleId;
+                      const isExpanded =
+                        expandedModuleId ===
+                        moduleId;
 
-                    return (
-                    <div
-                      key={`module-${moduleId}-${index}`}
-                      className="rounded-xl border border-orange-100 bg-orange-50/30"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleTogglePreview(
-                            module
-                          )
-                        }
-                        className="flex w-full items-center justify-between p-3 text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-orange-200 bg-white">
-                            {getModuleTypeIcon(
-                              module?.type
-                            )}
-                          </div>
-
-                          <div>
-                            <h4 className="text-xs font-bold text-slate-800">
-                              {module?.title ??
-                                module?.name ??
-                                module?.module_name ??
-                                "Untitled Module"}
-                            </h4>
-
-                            <span
-                              className={`rounded-md px-2 py-0.5 text-[10px] font-semibold capitalize ${
-                                getModuleTypeStyle(
+                      return (
+                        <div
+                          key={`module-${moduleId}-${index}`}
+                          className="rounded-xl border border-orange-100 bg-orange-50/30"
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleTogglePreview(
+                                module
+                              )
+                            }
+                            className="flex w-full items-center justify-between p-3 text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-orange-200 bg-white">
+                                {getModuleTypeIcon(
                                   module?.type
-                                ).badgeClass
-                              }`}
-                            >
-                              {module?.type ||
-                                "module"}
-                            </span>
-                          </div>
-                        </div>
+                                )}
+                              </div>
 
-                        <div className="flex items-center gap-2">
-                          {/* Each module document IS one lesson (see
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-800">
+                                  {module?.title ??
+                                    module?.name ??
+                                    module?.module_name ??
+                                    "Untitled Module"}
+                                </h4>
+
+                                <span
+                                  className={`rounded-md px-2 py-0.5 text-[10px] font-semibold capitalize ${getModuleTypeStyle(
+                                    module?.type
+                                  ).badgeClass
+                                    }`}
+                                >
+                                  {module?.type ||
+                                    "module"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Each module document IS one lesson (see
                               getSubtopicModules/studentAccess.js comments) —
                               there's no separate per-module lesson sub-count
                               to show, unlike the old badge here which always
                               read a field ("module.lessons") that never
                               existed. */}
-                          <span className="rounded-lg border border-orange-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                            1 Lesson
-                          </span>
+                              <span className="rounded-lg border border-orange-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
+                                1 Lesson
+                              </span>
 
-                          {isExpanded ? (
-                            <ChevronUp
-                              size={16}
-                              className="text-slate-400"
-                            />
-                          ) : (
-                            <ChevronDown
-                              size={16}
-                              className="text-slate-400"
-                            />
-                          )}
-                        </div>
-                      </button>
-
-                      {isExpanded && (
-                        <div className="border-t border-orange-100 p-3">
-                          {loadingModulePreview ? (
-                            <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-400">
-                              <Loader2
-                                size={14}
-                                className="animate-spin text-orange-500"
-                              />
-                              Loading preview...
+                              {isExpanded ? (
+                                <ChevronUp
+                                  size={16}
+                                  className="text-slate-400"
+                                />
+                              ) : (
+                                <ChevronDown
+                                  size={16}
+                                  className="text-slate-400"
+                                />
+                              )}
                             </div>
-                          ) : modulePreview?.__error ? (
-                            <p className="py-4 text-center text-xs text-rose-500">
-                              Failed to load
-                              preview.
-                            </p>
-                          ) : String(
-                              module?.type
-                            ).toLowerCase() ===
-                            "video" ? (
-                            <video
-                              controls
-                              className="mx-auto aspect-video max-h-[55vh] w-full max-w-3xl rounded-lg bg-black"
-                              src={getPlayableVideoUrl(
-                                modulePreview?.video ??
-                                  modulePreview?.content
-                                    ?.video
-                              )}
-                            />
-                          ) : String(
-                              module?.type
-                            ).toLowerCase() ===
-                            "audio" ? (
-                            <audio
-                              controls
-                              className="w-full"
-                              src={getPlayableAudioUrl(
-                                modulePreview?.audio ??
-                                  modulePreview?.content
-                                    ?.audio
-                              )}
-                            />
-                          ) : String(
-                              module?.type
-                            ).toLowerCase() ===
-                            "text" ? (
-                            <div
-                              className="max-h-64 overflow-y-auto rounded-lg bg-white p-3 text-xs leading-relaxed text-slate-700 [&_p]:mb-2 [&_h2]:mb-1 [&_h2]:mt-2 [&_h2]:font-bold"
-                              dangerouslySetInnerHTML={{
-                                __html: sanitizeHtml(
+                          </button>
+
+                          {isExpanded && (
+                            <div className="border-t border-orange-100 p-3">
+                              {loadingModulePreview ? (
+                                <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-400">
+                                  <Loader2
+                                    size={14}
+                                    className="animate-spin text-orange-500"
+                                  />
+                                  Loading preview...
+                                </div>
+                              ) : modulePreview?.__error ? (
+                                <p className="py-4 text-center text-xs text-rose-500">
+                                  Failed to load
+                                  preview.
+                                </p>
+                              ) : String(
+                                module?.type
+                              ).toLowerCase() ===
+                                "video" ? (
+                                <video
+                                  controls
+                                  className="mx-auto aspect-video max-h-[55vh] w-full max-w-3xl rounded-lg bg-black"
+                                  src={getPlayableVideoUrl(
+                                    modulePreview?.video ??
+                                    modulePreview?.content
+                                      ?.video
+                                  )}
+                                />
+                              ) : String(
+                                module?.type
+                              ).toLowerCase() ===
+                                "audio" ? (
+                                <audio
+                                  controls
+                                  className="w-full"
+                                  src={getPlayableAudioUrl(
+                                    modulePreview?.audio ??
+                                    modulePreview?.content
+                                      ?.audio
+                                  )}
+                                />
+                              ) : String(
+                                module?.type
+                              ).toLowerCase() ===
+                                "text" ? (
+                                <div
+                                  className="max-h-64 overflow-y-auto rounded-lg bg-white p-3 text-xs leading-relaxed text-slate-700 [&_p]:mb-2 [&_h2]:mb-1 [&_h2]:mt-2 [&_h2]:font-bold"
+                                  dangerouslySetInnerHTML={{
+                                    __html: sanitizeHtml(
+                                      modulePreview
+                                        ?.content
+                                        ?.body ??
+                                      modulePreview?.body ??
+                                      ""
+                                    ),
+                                  }}
+                                />
+                              ) : String(
+                                module?.type
+                              ).toLowerCase() ===
+                                "exercise" ? (
+                                !Array.isArray(
+                                  modulePreview?.questions
+                                ) ||
                                   modulePreview
-                                    ?.content
-                                    ?.body ??
-                                    modulePreview?.body ??
-                                    ""
-                                ),
-                              }}
-                            />
-                          ) : String(
-                              module?.type
-                            ).toLowerCase() ===
-                            "exercise" ? (
-                            !Array.isArray(
-                              modulePreview?.questions
-                            ) ||
-                            modulePreview
-                              .questions
-                              .length === 0 ? (
-                              <p className="py-4 text-center text-xs text-slate-400">
-                                No questions
-                                in this
-                                exercise.
-                              </p>
-                            ) : (
-                              <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
-                                {modulePreview.questions.map(
-                                  (
-                                    q,
-                                    qIndex
-                                  ) => (
-                                    <div
-                                      key={
-                                        q?._id ??
+                                    .questions
+                                    .length === 0 ? (
+                                  <p className="py-4 text-center text-xs text-slate-400">
+                                    No questions
+                                    in this
+                                    exercise.
+                                  </p>
+                                ) : (
+                                  <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+                                    {modulePreview.questions.map(
+                                      (
+                                        q,
                                         qIndex
-                                      }
-                                      className="rounded-lg bg-white p-2.5"
-                                    >
-                                      <div className="mb-1.5 flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-800">
-                                          Q
-                                          {qIndex +
-                                            1}
-                                          .{" "}
-                                          {q?.question_text ??
-                                            "Untitled question"}
-                                        </span>
+                                      ) => (
+                                        <div
+                                          key={
+                                            q?._id ??
+                                            qIndex
+                                          }
+                                          className="rounded-lg bg-white p-2.5"
+                                        >
+                                          <div className="mb-1.5 flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-800">
+                                              Q
+                                              {qIndex +
+                                                1}
+                                              .{" "}
+                                              {q?.question_text ??
+                                                "Untitled question"}
+                                            </span>
 
-                                        <span className="rounded-md bg-purple-100/60 px-2 py-0.5 text-[10px] font-semibold capitalize text-purple-600">
-                                          {(
-                                            q?.question_type ||
-                                            "question"
-                                          ).replace(
-                                            /_/g,
-                                            " "
-                                          )}
-                                        </span>
-                                      </div>
+                                            <span className="rounded-md bg-purple-100/60 px-2 py-0.5 text-[10px] font-semibold capitalize text-purple-600">
+                                              {(
+                                                q?.question_type ||
+                                                "question"
+                                              ).replace(
+                                                /_/g,
+                                                " "
+                                              )}
+                                            </span>
+                                          </div>
 
-                                      {Array.isArray(
-                                        q?.options
-                                      ) &&
-                                      q.options
-                                        .length >
-                                        0 ? (
-                                        <ul className="space-y-1 pl-1 text-[11px] text-slate-600">
-                                          {q.options.map(
-                                            (
-                                              opt,
-                                              optIndex
-                                            ) => {
-                                              const isCorrect =
-                                                String(
-                                                  q?.correct_answer
-                                                ) ===
-                                                  String(
-                                                    opt
-                                                  ) ||
-                                                String(
-                                                  q?.correct_answer
-                                                ) ===
-                                                  String(
-                                                    optIndex
+                                          {Array.isArray(
+                                            q?.options
+                                          ) &&
+                                            q.options
+                                              .length >
+                                            0 ? (
+                                            <ul className="space-y-1 pl-1 text-[11px] text-slate-600">
+                                              {q.options.map(
+                                                (
+                                                  opt,
+                                                  optIndex
+                                                ) => {
+                                                  const isCorrect =
+                                                    String(
+                                                      q?.correct_answer
+                                                    ) ===
+                                                    String(
+                                                      opt
+                                                    ) ||
+                                                    String(
+                                                      q?.correct_answer
+                                                    ) ===
+                                                    String(
+                                                      optIndex
+                                                    );
+
+                                                  return (
+                                                    <li
+                                                      key={
+                                                        optIndex
+                                                      }
+                                                      className={
+                                                        isCorrect
+                                                          ? "font-semibold text-emerald-600"
+                                                          : ""
+                                                      }
+                                                    >
+                                                      {isCorrect
+                                                        ? "✓ "
+                                                        : "• "}
+                                                      {
+                                                        opt
+                                                      }
+                                                    </li>
                                                   );
-
-                                              return (
-                                                <li
-                                                  key={
-                                                    optIndex
-                                                  }
-                                                  className={
-                                                    isCorrect
-                                                      ? "font-semibold text-emerald-600"
-                                                      : ""
-                                                  }
-                                                >
-                                                  {isCorrect
-                                                    ? "✓ "
-                                                    : "• "}
-                                                  {
-                                                    opt
-                                                  }
-                                                </li>
-                                              );
-                                            }
-                                          )}
-                                        </ul>
-                                      ) : q?.correct_answer ? (
-                                        <p className="text-[11px] text-emerald-600">
-                                          ✓ Answer:{" "}
-                                          {String(
-                                            q.correct_answer
-                                          )}
-                                        </p>
-                                      ) : null}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )
-                          ) : (
-                            <p className="py-4 text-center text-xs text-slate-400">
-                              No inline
-                              preview for this
-                              lesson type.
-                            </p>
+                                                }
+                                              )}
+                                            </ul>
+                                          ) : q?.correct_answer ? (
+                                            <p className="text-[11px] text-emerald-600">
+                                              ✓ Answer:{" "}
+                                              {String(
+                                                q.correct_answer
+                                              )}
+                                            </p>
+                                          ) : null}
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                )
+                              ) : (
+                                <p className="py-4 text-center text-xs text-slate-400">
+                                  No inline
+                                  preview for this
+                                  lesson type.
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    }
+                  )
+                )}
+              </div>
+
+              <div className="flex shrink-0 items-center justify-between border-t border-orange-100 pt-3">
+                <span className="text-xs font-medium text-slate-500">
+                  Total Lessons:{" "}
+                  <strong className="text-slate-800">
+                    {(activeSubtopicModal.modules ?? []).length}
+                  </strong>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleSubtopic(
+                      getId(
+                        activeSubtopicModal
+                      )
                     );
-                  }
-                )
-              )}
-            </div>
 
-            <div className="flex shrink-0 items-center justify-between border-t border-orange-100 pt-3">
-              <span className="text-xs font-medium text-slate-500">
-                Total Lessons:{" "}
-                <strong className="text-slate-800">
-                  {(activeSubtopicModal.modules ?? []).length}
-                </strong>
-              </span>
-
-              <button
-                type="button"
-                onClick={() => {
-                  toggleSubtopic(
-                    getId(
-                      activeSubtopicModal
-                    )
-                  );
-
-                  setActiveSubtopicModal(
-                    null
-                  );
-                  setExpandedModuleId(null);
-                  setModulePreview(null);
-                }}
-                className={`rounded-xl px-5 py-2 text-xs font-semibold shadow-sm transition ${
-                  selectedSubtopics.includes(
+                    setActiveSubtopicModal(
+                      null
+                    );
+                    setExpandedModuleId(null);
+                    setModulePreview(null);
+                  }}
+                  className={`rounded-xl px-5 py-2 text-xs font-semibold shadow-sm transition ${selectedSubtopics.includes(
                     getId(
                       activeSubtopicModal
                     )
                   )
-                    ? "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
-                    : "bg-orange-600 text-white hover:bg-orange-700"
-                }`}
-              >
-                {selectedSubtopics.includes(
-                  getId(
-                    activeSubtopicModal
+                      ? "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                      : "bg-orange-600 text-white hover:bg-orange-700"
+                    }`}
+                >
+                  {selectedSubtopics.includes(
+                    getId(
+                      activeSubtopicModal
+                    )
                   )
-                )
-                  ? "Deselect Subtopic"
-                  : "Select Subtopic"}
-              </button>
+                    ? "Deselect Subtopic"
+                    : "Select Subtopic"}
+                </button>
+              </div>
             </div>
-          </div>
 
 
-        </div>,
-        document.body,
-      )}
+          </div>,
+          document.body,
+        )}
 
       {/* =====================================================
           SUMMARY MODAL
@@ -2289,8 +2279,8 @@ const handleConfirmSubmit = async () => {
                 value={
                   selectedBatchIds.length > 0
                     ? selectedBatchIds
-                        .map((batchId) => `Batch ${batchId}`)
-                        .join(", ")
+                      .map((batchId) => `Batch ${batchId}`)
+                      .join(", ")
                     : "-"
                 }
                 valueClass="text-orange-800"
@@ -2298,7 +2288,7 @@ const handleConfirmSubmit = async () => {
               />
             </div>
 
-          
+
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
@@ -2350,27 +2340,27 @@ const handleConfirmSubmit = async () => {
         </div>
       )}
 
-     <StatusModal
-  open={statusData.open}
-  type={statusData.type}
-  title={statusData.title}
-  message={statusData.message}
-  onClose={() => {
-    const wasSuccess = statusData.type === "success";
+      <StatusModal
+        open={statusData.open}
+        type={statusData.type}
+        title={statusData.title}
+        message={statusData.message}
+        onClose={() => {
+          const wasSuccess = statusData.type === "success";
 
-    setStatusData((prev) => ({
-      ...prev,
-      open: false,
-    }));
+          setStatusData((prev) => ({
+            ...prev,
+            open: false,
+          }));
 
-    if (wasSuccess) {
-      router.push(
-        "/institute-dashboard/student-learning-access/access-list"
-      );
-    }
-  }}
-/>
-       
+          if (wasSuccess) {
+            router.push(
+              "/institute-dashboard/student-learning-access/access-list"
+            );
+          }
+        }}
+      />
+
     </div>
   );
 }
@@ -2387,11 +2377,10 @@ function SummaryRow({
 }) {
   return (
     <div
-      className={`flex justify-between gap-4 py-1 ${
-        noBorder
+      className={`flex justify-between gap-4 py-1 ${noBorder
           ? ""
           : "border-b border-orange-100/60"
-      }`}
+        }`}
     >
       <span className="font-medium text-slate-500">
         {label}
@@ -2437,15 +2426,13 @@ function SelectField({
           value={value ?? ""}
           onChange={onChange}
           disabled={disabled}
-          className={`h-11 w-full appearance-none rounded-xl border border-orange-200 bg-white text-sm text-slate-700 outline-none transition ${
-            Icon
+          className={`h-11 w-full appearance-none rounded-xl border border-orange-200 bg-white text-sm text-slate-700 outline-none transition ${Icon
               ? "pl-10 pr-10"
               : "pl-4 pr-10"
-          } ${
-            disabled
+            } ${disabled
               ? "cursor-not-allowed bg-slate-50 text-slate-400"
               : "cursor-pointer hover:border-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-          }`}
+            }`}
         >
           <option value="">
             {placeholder}
@@ -2467,7 +2454,7 @@ function SelectField({
               <option
                 key={`${label}-${String(
                   option?.value ??
-                    "empty"
+                  "empty"
                 )}-${index}`}
                 value={
                   option?.value ?? ""

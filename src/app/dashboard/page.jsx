@@ -5,28 +5,28 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
-import DashboardStats from "@/components/organisms/DashboardStats";
-import RecentActivity from "@/components/organisms/RecentActivity";
-import OverallScoreGauge from "@/components/organisms/OverallScoreGauge";
+import DashboardStats from "@/app/components/organisms/DashboardStats";
+import RecentActivity from "@/app/components/organisms/RecentActivity";
+import OverallScoreGauge from "@/app/components/organisms/OverallScoreGauge";
 
 // These render recharts (a heavy dependency), so code-split them out of the
 // initial dashboard bundle instead of loading the charting library up front.
 const ChartSkeleton = () => (
   <div className="h-64 w-full animate-pulse rounded-2xl bg-slate-100" />
 );
-const SkillRadarChart = dynamic(() => import("@/components/organisms/SkillRadarChart"), {
+const SkillRadarChart = dynamic(() => import("@/app/components/organisms/SkillRadarChart"), {
   loading: ChartSkeleton,
   ssr: false,
 });
-const WeeklyConsistency = dynamic(() => import("@/components/organisms/WeeklyConsistency"), {
+const WeeklyConsistency = dynamic(() => import("@/app/components/organisms/WeeklyConsistency"), {
   loading: ChartSkeleton,
   ssr: false,
 });
-const RecommendationHub = dynamic(() => import("@/components/organisms/RecommendationHub"), {
+const RecommendationHub = dynamic(() => import("@/app/components/organisms/RecommendationHub"), {
   loading: ChartSkeleton,
   ssr: false,
 });
-const AttendanceWidget = dynamic(() => import("@/components/organisms/AttendanceWidget"), {
+const AttendanceWidget = dynamic(() => import("@/app/components/organisms/AttendanceWidget"), {
   loading: ChartSkeleton,
   ssr: false,
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import StatCard from "@/components/molecules/StatCard";
+import StatCard from "@/app/components/molecules/StatCard";
 
 const stats = [
   {

@@ -5,7 +5,7 @@ import { Activity, Search, Download, Loader2, Calendar, Clock, Layers } from "lu
 
 import { activityLogApi } from "@/services/institute/activityLogApi";
 import { courseApi } from "@/services/course/courseApi";
-import Pagination from "@/components/molecules/Pagination";
+import Pagination from "@/app/components/molecules/Pagination";
 
 const PAGE_SIZE = 10;
 

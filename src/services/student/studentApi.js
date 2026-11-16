@@ -63,4 +63,16 @@ export const studentApi = {
     api.post("/student/me/purchase-course", {
       course_id: courseId,
     }),
+
+  // ===========================
+  // CONVERSATION LAB (PEERS / BATCHMATES)
+  // ===========================
+  getBatchmates: () =>
+    api.get("/student/me/batchmates"),
+
+  sendMessage: (receiver_id, message) =>
+    api.post("/student/me/messages", { receiver_id, message }),
+
+  getMessages: (partnerId) =>
+    api.get(`/student/me/messages/${partnerId}`),
 };

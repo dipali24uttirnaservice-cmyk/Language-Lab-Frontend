@@ -11,6 +11,7 @@ import StudentViewModal from "./StudentViewModal";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
+import { GraduationCap } from "lucide-react";
 import { courseApi } from "@/services/course/courseApi";
 function StudentsPageContent() {
   const searchParams = useSearchParams();
@@ -19,6 +20,8 @@ function StudentsPageContent() {
 
   const mode = studentId ? "edit" : "add";
   const router = useRouter();
+  const role = Cookies.get("role");
+  const isFaculty = role === "faculty";
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudents, setSelectedStudents] = useState([]);
@@ -203,6 +206,7 @@ function StudentsPageContent() {
   };
 
   const handleAdd = () => {
+    if (isFaculty) return;
     setShowAddOptions(true);
   };
 
@@ -356,11 +360,10 @@ function StudentsPageContent() {
               setSelectedStudent(row);
               setCoursesModalOpen(true);
             }}
-            className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-              count > 0
+            className={`rounded-full px-3 py-1 text-sm font-medium transition ${count > 0
                 ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
                 : "bg-slate-100 text-slate-500 cursor-default"
-            }`}
+              }`}
           >
             {count} {count === 1 ? "Course" : "Courses"}
           </button>
@@ -373,11 +376,10 @@ function StudentsPageContent() {
       key: "status",
       render: (row) => (
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-            row.is_active
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${row.is_active
               ? "bg-emerald-100 text-emerald-700"
               : "bg-rose-100 text-rose-700"
-          }`}
+            }`}
         >
           {row.is_active ? "Active" : "Inactive"}
         </span>
@@ -390,8 +392,8 @@ function StudentsPageContent() {
       render: (row) => (
         <TableActions
           onView={() => handleView(row)}
-          onEdit={() => handleEdit(row._id)}
-          onDelete={() => handleDelete(row._id)}
+          onEdit={isFaculty ? null : () => handleEdit(row._id)}
+          onDelete={isFaculty ? null : () => handleDelete(row._id)}
         />
       ),
     },
@@ -531,27 +533,48 @@ function StudentsPageContent() {
   };
   return (
     <div>
+      {isFaculty && (
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-100/50 border border-orange-200/80 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20">
+              <GraduationCap size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">
+                Faculty Student Roster
+              </h3>
+              <p className="text-xs text-slate-500">
+                Viewing students enrolled in your assigned classes and batches.
+              </p>
+            </div>
+          </div>
+          <span className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
+            Assigned Batches Only
+          </span>
+        </div>
+      )}
+
       <DataTable
-        title="Students"
+        title={isFaculty ? "My Students" : "Students"}
         columns={columns}
         data={filteredData}
         search={search}
         setSearch={setSearch}
-        onAdd={handleAdd}
-        onBulkUpload={handleBulkUpload}
+        onAdd={isFaculty ? null : handleAdd}
+        onBulkUpload={isFaculty ? null : handleBulkUpload}
         loading={loading}
         segment={segment}
         setSegment={setSegment}
         year={year}
         setYear={setYear}
-        showSelection={showSelection}
+        showSelection={!isFaculty && showSelection}
         segmentOptions={segmentOptions}
         yearOptions={yearOptions}
         selectedStudents={selectedStudents}
         onSelectStudent={handleSelectStudent}
         onSelectAll={handleSelectAll}
-        onAssignAll={handleAssignAll}
-        canDeleteBatch={!batchHasCourseAssigned}
+        onAssignAll={isFaculty ? null : handleAssignAll}
+        canDeleteBatch={!isFaculty && !batchHasCourseAssigned}
         onDeleteBatch={handleDeleteBatch}
         onExport={handleExportExcel}
       />
@@ -683,11 +706,10 @@ function StudentsPageContent() {
                 return (
                   <label
                     key={course._id}
-                    className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4.5 transition duration-150 relative overflow-hidden select-none group ${
-                      isSelected
+                    className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4.5 transition duration-150 relative overflow-hidden select-none group ${isSelected
                         ? "border-orange-500 bg-gradient-to-b from-white to-orange-50/20 ring-4 ring-orange-500/10 shadow-sm"
                         : "border-slate-200 bg-white hover:border-slate-300 shadow-sm"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       {/* Modern Custom Styled Checkbox Variant */}
@@ -699,11 +721,10 @@ function StudentsPageContent() {
                           className="sr-only peer"
                         />
                         <div
-                          className={`h-5 w-5 rounded-md border-2 transition duration-150 flex items-center justify-center ${
-                            isSelected
+                          className={`h-5 w-5 rounded-md border-2 transition duration-150 flex items-center justify-center ${isSelected
                               ? "border-orange-500 bg-orange-500 text-white"
                               : "border-slate-300 group-hover:border-slate-400 bg-white"
-                          }`}
+                            }`}
                         >
                           {isSelected && (
                             <svg
@@ -722,9 +743,8 @@ function StudentsPageContent() {
 
                       <div className="truncate">
                         <h3
-                          className={`text-base font-extrabold tracking-tight transition duration-150 ${
-                            isSelected ? "text-orange-600" : "text-slate-800"
-                          }`}
+                          className={`text-base font-extrabold tracking-tight transition duration-150 ${isSelected ? "text-orange-600" : "text-slate-800"
+                            }`}
                         >
                           {course.course_name}
                         </h3>
@@ -733,11 +753,10 @@ function StudentsPageContent() {
 
                     {/* Minimal structural star decoration for selected states */}
                     <span
-                      className={`text-xs font-black transition-colors ${
-                        isSelected
+                      className={`text-xs font-black transition-colors ${isSelected
                           ? "text-orange-400"
                           : "text-slate-200 group-hover:text-slate-300"
-                      }`}
+                        }`}
                     >
                       ✦
                     </span>
@@ -843,7 +862,7 @@ function StudentsPageContent() {
         </div>
       )}
 
-      {showAddOptions && (
+      {!isFaculty && showAddOptions && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
             {/* Header */}

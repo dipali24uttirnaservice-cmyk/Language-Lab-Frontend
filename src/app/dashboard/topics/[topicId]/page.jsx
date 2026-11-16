@@ -5,7 +5,7 @@ import {
   useParams,
   useRouter,
   useSearchParams,
-} from "next/navigation";import { motion } from "framer-motion";
+} from "next/navigation"; import { motion } from "framer-motion";
 import {
   BookOpen,
   Layers,
@@ -16,24 +16,24 @@ import {
 
 import { topicApi } from "@/services/topic/topicApi";
 import { progressApi } from "@/services/progress/progressApi";
-import ProgressBar from "@/components/atoms/ProgressBar";
+import ProgressBar from "@/app/components/atoms/ProgressBar";
 function TopicDetailsPageContent() {
-    const { topicId } = useParams();
+  const { topicId } = useParams();
 
   const router = useRouter();
-const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-const courseId = searchParams.get("courseId");
-const courseName = searchParams.get("courseName");
-const type = searchParams.get("type");
-const topicName = searchParams.get("topicName");
-
-
+  const courseId = searchParams.get("courseId");
+  const courseName = searchParams.get("courseName");
+  const type = searchParams.get("type");
+  const topicName = searchParams.get("topicName");
 
 
-console.log("Topic ID:", topicId);
-console.log("Course ID:", courseId);
-console.log("Type:", type);
+
+
+  console.log("Topic ID:", topicId);
+  console.log("Course ID:", courseId);
+  console.log("Type:", type);
 
 
 
@@ -50,7 +50,7 @@ console.log("Type:", type);
   // optional topic_id) — they have no SubTopic layer, unlike Video/Audio/
   // Text/Exercise/Vocabulary. So instead of listing subtopics, jump straight
   // into that topic's tasks/practicals.
-  const isFlatTopicType = type === "task" || type === "practical_manual";
+  const isFlatTopicType = type === "task" || type === "practical_manual" || type === "interactive_learning";
 
   useEffect(() => {
     if (!isFlatTopicType) return;
@@ -62,7 +62,7 @@ console.log("Type:", type);
     params.set("type", type);
 
     const destination =
-      type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";
+      type === "task" ? "/dashboard/tasks" : type === "practical_manual" ? "/dashboard/module/practical-manual" : "/dashboard/interactive-learning";
     router.replace(`${destination}?${params.toString()}`);
   }, [isFlatTopicType, type, topicId, courseId, courseName, topicName, router]);
 
@@ -108,28 +108,28 @@ console.log("Type:", type);
 
   return (
 
-    
-   <div className="relative min-h-screen overflow-hidden p-6">
-{/* ================================================= */}
-{/* PREMIUM 3D ANIMATED BACKGROUND */}
-{/* ================================================= */}
 
-<div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-  {/* Base Gradient */}
-  <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-amber-100" />
+    <div className="relative min-h-screen overflow-hidden p-6">
+      {/* ================================================= */}
+      {/* PREMIUM 3D ANIMATED BACKGROUND */}
+      {/* ================================================= */}
 
-  {/* Large Floating Cube */}
-  <motion.div
-    animate={{
-      y: [0, -40, 0],
-      rotate: [0, 20, 0],
-      x: [0, 25, 0],
-    }}
-    transition={{
-      duration: 12,
-      repeat: Infinity,
-    }}
-    className="
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Base Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-amber-100" />
+
+        {/* Large Floating Cube */}
+        <motion.div
+          animate={{
+            y: [0, -40, 0],
+            rotate: [0, 20, 0],
+            x: [0, 25, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+          }}
+          className="
       absolute
       top-20
       right-40
@@ -144,20 +144,20 @@ console.log("Type:", type);
       border-white/40
       shadow-2xl
     "
-  />
+        />
 
-  {/* Floating Sphere */}
-  <motion.div
-    animate={{
-      y: [0, -35, 0],
-      x: [0, 30, 0],
-      scale: [1, 1.1, 1],
-    }}
-    transition={{
-      duration: 9,
-      repeat: Infinity,
-    }}
-    className="
+        {/* Floating Sphere */}
+        <motion.div
+          animate={{
+            y: [0, -35, 0],
+            x: [0, 30, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+          }}
+          className="
       absolute
       top-32
       left-24
@@ -171,19 +171,19 @@ console.log("Type:", type);
       blur-sm
       shadow-2xl
     "
-  />
+        />
 
-  {/* Glass Ring */}
-  <motion.div
-    animate={{
-      rotate: [0, 360],
-    }}
-    transition={{
-      duration: 25,
-      repeat: Infinity,
-      ease: "linear",
-    }}
-    className="
+        {/* Glass Ring */}
+        <motion.div
+          animate={{
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="
       absolute
       right-10
       top-12
@@ -193,19 +193,19 @@ console.log("Type:", type);
       border-[18px]
       border-orange-300/30
     "
-  />
+        />
 
-  {/* Bottom Glow */}
-  <motion.div
-    animate={{
-      x: [0, -40, 0],
-      y: [0, 20, 0],
-    }}
-    transition={{
-      duration: 14,
-      repeat: Infinity,
-    }}
-    className="
+        {/* Bottom Glow */}
+        <motion.div
+          animate={{
+            x: [0, -40, 0],
+            y: [0, 20, 0],
+          }}
+          transition={{
+            duration: 14,
+            repeat: Infinity,
+          }}
+          className="
       absolute
       -bottom-24
       -left-24
@@ -217,18 +217,18 @@ console.log("Type:", type);
       to-yellow-200/20
       blur-3xl
     "
-  />
+        />
 
-  {/* Top Glow */}
-  <motion.div
-    animate={{
-      y: [0, -30, 0],
-    }}
-    transition={{
-      duration: 10,
-      repeat: Infinity,
-    }}
-    className="
+        {/* Top Glow */}
+        <motion.div
+          animate={{
+            y: [0, -30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+          }}
+          className="
       absolute
       -top-20
       left-1/2
@@ -239,18 +239,18 @@ console.log("Type:", type);
       bg-orange-200/30
       blur-3xl
     "
-  />
+        />
 
-  {/* Floating Dots */}
-  <motion.div
-    animate={{
-      y: [0, -15, 0],
-    }}
-    transition={{
-      duration: 5,
-      repeat: Infinity,
-    }}
-    className="
+        {/* Floating Dots */}
+        <motion.div
+          animate={{
+            y: [0, -15, 0],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+          }}
+          className="
       absolute
       top-40
       right-72
@@ -259,129 +259,129 @@ console.log("Type:", type);
       gap-4
       opacity-30
     "
-  >
-    {Array.from({ length: 16 }).map((_, i) => (
-      <div
-        key={i}
-        className="h-2.5 w-2.5 rounded-full bg-orange-400"
-      />
-    ))}
-  </motion.div>
+        >
+          {Array.from({ length: 16 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-2.5 w-2.5 rounded-full bg-orange-400"
+            />
+          ))}
+        </motion.div>
 
-  {/* Curved Lines */}
-  <div className="absolute -left-40 top-0 h-[700px] w-[700px] rounded-full border border-orange-200/40" />
-  <div className="absolute -left-24 top-10 h-[650px] w-[650px] rounded-full border border-orange-200/20" />
+        {/* Curved Lines */}
+        <div className="absolute -left-40 top-0 h-[700px] w-[700px] rounded-full border border-orange-200/40" />
+        <div className="absolute -left-24 top-10 h-[650px] w-[650px] rounded-full border border-orange-200/20" />
 
-</div>
-
-<motion.div
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-6 py-4"
->
-  {/* Left: Back Button & Title */}
-  <div className="flex items-center gap-4">
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.96 }}
-      onClick={() => {
-        // router.back() no-ops when this page was opened without a prior
-        // client-side history entry (e.g. a fresh tab/reload), so navigate to
-        // a deterministic destination instead of relying on browser history.
-        const params = new URLSearchParams();
-        if (courseId) params.set("courseId", courseId);
-        if (courseName) params.set("courseName", courseName);
-        if (type) params.set("type", type);
-        router.push(`/dashboard/topics?${params.toString()}`);
-      }}
-      className="h-10 w-10 rounded-xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-md text-orange-600 shrink-0"
-    >
-      <ArrowLeft size={18} />
-    </motion.button>
-
-    <div className="min-w-0">
-      <h1 className="text-xl font-black text-slate-900 truncate">
-        {topic?.title}
-      </h1>
-      <p className="text-xs text-slate-500 truncate max-w-sm">
-        {topic?.description}
-      </p>
-    </div>
-  </div>
-
-  {/* Right Side: Compact Stats */}
-  <div className="flex items-center gap-2">
-    {[
-      { label: "Subtopics", value: topic?.subtopic_count || 0, icon: "📚", color: "text-orange-600" },
-      { label: "Order", value: `#${topic?.order}`, icon: "🔖", color: "text-blue-600" },
-      { label: "Status", value: "Active", icon: "✓", color: "text-emerald-600" },
-    ].map((item, idx) => (
-      <div
-        key={idx}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-sm"
-      >
-        <div className="flex flex-col">
-          <span className="text-[9px] font-bold text-slate-400 uppercase">{item.label}</span>
-          <span className={`text-sm font-black ${item.color}`}>{item.value}</span>
-        </div>
-        <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-xs opacity-70">
-          {item.icon}
-        </div>
       </div>
-    ))}
-  </div>
-</motion.div>
- 
 
-  {/* SubTopics */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-6 py-4"
+      >
+        {/* Left: Back Button & Title */}
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => {
+              // router.back() no-ops when this page was opened without a prior
+              // client-side history entry (e.g. a fresh tab/reload), so navigate to
+              // a deterministic destination instead of relying on browser history.
+              const params = new URLSearchParams();
+              if (courseId) params.set("courseId", courseId);
+              if (courseName) params.set("courseName", courseName);
+              if (type) params.set("type", type);
+              router.push(`/dashboard/topics?${params.toString()}`);
+            }}
+            className="h-10 w-10 rounded-xl bg-white/80 backdrop-blur-xl border border-orange-100 flex items-center justify-center shadow-md text-orange-600 shrink-0"
+          >
+            <ArrowLeft size={18} />
+          </motion.button>
 
-  <div>
+          <div className="min-w-0">
+            <h1 className="text-xl font-black text-slate-900 truncate">
+              {topic?.title}
+            </h1>
+            <p className="text-xs text-slate-500 truncate max-w-sm">
+              {topic?.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side: Compact Stats */}
+        <div className="flex items-center gap-2">
+          {[
+            { label: "Subtopics", value: topic?.subtopic_count || 0, icon: "📚", color: "text-orange-600" },
+            { label: "Order", value: `#${topic?.order}`, icon: "🔖", color: "text-blue-600" },
+            { label: "Status", value: "Active", icon: "✓", color: "text-emerald-600" },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-sm"
+            >
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">{item.label}</span>
+                <span className={`text-sm font-black ${item.color}`}>{item.value}</span>
+              </div>
+              <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-xs opacity-70">
+                {item.icon}
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
 
 
-    <div className="space-y-6">
+      {/* SubTopics */}
 
-      {topic?.subtopics?.map((subtopic, index) => {
+      <div>
 
-        const colors = [
-          "from-emerald-500 to-teal-500",
-          "from-orange-500 to-amber-500",
-          "from-blue-500 to-indigo-500",
-          "from-pink-500 to-rose-500",
-          "from-cyan-500 to-sky-500",
-          "from-violet-500 to-purple-500",
-        ];
 
-        const color =
-          colors[index % colors.length];
+        <div className="space-y-6">
 
-        return (
-       <motion.div
-  key={subtopic._id}
-  whileHover={{
-    y: -6,
-    scale: 1.01,
-  }}
-  transition={{ duration: 0.25 }}
-onClick={() => {
- if (!type) return;
+          {topic?.subtopics?.map((subtopic, index) => {
 
- const params = new URLSearchParams(searchParams.toString());
+            const colors = [
+              "from-emerald-500 to-teal-500",
+              "from-orange-500 to-amber-500",
+              "from-blue-500 to-indigo-500",
+              "from-pink-500 to-rose-500",
+              "from-cyan-500 to-sky-500",
+              "from-violet-500 to-purple-500",
+            ];
 
-// Remove lesson because we're not on the lesson page yet
-params.delete("lessonName");
-params.delete("lessonId");
+            const color =
+              colors[index % colors.length];
 
-if (courseId) params.set("courseId", courseId);
-if (courseName) params.set("courseName", courseName);
-params.set("type", type);
-params.set("topicId", topicId);
-if (topicName) params.set("topicName", topicName);
+            return (
+              <motion.div
+                key={subtopic._id}
+                whileHover={{
+                  y: -6,
+                  scale: 1.01,
+                }}
+                transition={{ duration: 0.25 }}
+                onClick={() => {
+                  if (!type) return;
 
-params.set("subTopicId", subtopic._id);
-params.set("subTopicName", subtopic.title);
+                  const params = new URLSearchParams(searchParams.toString());
 
-  router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
-}}  className="
+                  // Remove lesson because we're not on the lesson page yet
+                  params.delete("lessonName");
+                  params.delete("lessonId");
+
+                  if (courseId) params.set("courseId", courseId);
+                  if (courseName) params.set("courseName", courseName);
+                  params.set("type", type);
+                  params.set("topicId", topicId);
+                  if (topicName) params.set("topicName", topicName);
+
+                  params.set("subTopicId", subtopic._id);
+                  params.set("subTopicName", subtopic.title);
+
+                  router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
+                }} className="
     group
     relative
     overflow-hidden
@@ -395,10 +395,10 @@ params.set("subTopicName", subtopic.title);
     cursor-pointer
     p-6
   "
->
-  {/* Glow */}
-  <div
-    className={`
+              >
+                {/* Glow */}
+                <div
+                  className={`
       absolute
       -right-10
       -top-10
@@ -413,19 +413,19 @@ params.set("subTopicName", subtopic.title);
       duration-700
       group-hover:scale-125
     `}
-  />
+                />
 
-  <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
-    {/* Left */}
-    <div className="flex items-center gap-5">
+                  {/* Left */}
+                  <div className="flex items-center gap-5">
 
-      <motion.div
-        whileHover={{
-          rotate: -8,
-          scale: 1.08,
-        }}
-        className={`
+                    <motion.div
+                      whileHover={{
+                        rotate: -8,
+                        scale: 1.08,
+                      }}
+                      className={`
           h-10
           w-10
           rounded-3xl
@@ -437,45 +437,45 @@ params.set("subTopicName", subtopic.title);
           text-white
           shadow-xl
         `}
-      >
-        <Layers size={20} />
-      </motion.div>
+                    >
+                      <Layers size={20} />
+                    </motion.div>
 
-      <div>
+                    <div>
 
-        <h2 className="text-2xl font-black text-slate-900">
-          {subtopic.title}
-        </h2>
+                      <h2 className="text-2xl font-black text-slate-900">
+                        {subtopic.title}
+                      </h2>
 
-        <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-wrap gap-2">
 
-          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
-            Order #{subtopic.order}
-          </span>
+                        <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+                          Order #{subtopic.order}
+                        </span>
 
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
-            Ready
-          </span>
+                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
+                          Ready
+                        </span>
 
-        </div>
+                      </div>
 
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-          {subtopic.description}
-        </p>
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                        {subtopic.description}
+                      </p>
 
-      </div>
+                    </div>
 
-    </div>
+                  </div>
 
-    {/* Right */}
-    <div className="lg:w-56">
+                  {/* Right */}
+                  <div className="lg:w-56">
 
-      <ProgressBar percentage={subtopicProgress[subtopic._id] ?? 0} color={color} />
+                    <ProgressBar percentage={subtopicProgress[subtopic._id] ?? 0} color={color} />
 
-      <button
+                    <button
 
-      
-        className="
+
+                      className="
           mt-5
           inline-flex
           items-center
@@ -494,26 +494,26 @@ params.set("subTopicName", subtopic.title);
           hover:scale-105
           hover:shadow-xl
         "
-      >
-        Open
-        <ChevronRight
-          size={16}
-          className="transition-transform group-hover:translate-x-1"
-        />
-      </button>
+                    >
+                      Open
+                      <ChevronRight
+                        size={16}
+                        className="transition-transform group-hover:translate-x-1"
+                      />
+                    </button>
+
+                  </div>
+
+                </div>
+              </motion.div>
+            );
+          })}
+
+        </div>
+
+      </div>
 
     </div>
-
-  </div>
-</motion.div>
-        );
-      })}
-
-    </div>
-
-  </div>
-
-</div>
   );
 }
 

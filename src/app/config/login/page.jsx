@@ -8,9 +8,9 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState, Suspense } from "react";
 
-import Input from "@/components/atoms/Input";
-import AnimatedBackground from "@/components/organisms/AnimatedBackground";
-import StatusModal from "@/components/molecules/StatusModal";
+import Input from "@/app/components/atoms/Input";
+import AnimatedBackground from "@/app/components/organisms/AnimatedBackground";
+import StatusModal from "@/app/components/molecules/StatusModal";
 
 import { instituteConfigLogin } from "@/services/auth/loginApi";
 import { instituteLoginSchema } from "@/app/schemas/institute.schema";
