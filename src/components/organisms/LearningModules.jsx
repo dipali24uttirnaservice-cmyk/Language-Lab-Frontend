@@ -108,7 +108,7 @@ export default function LearningModules({ courseId, courseName }) {
 
     const particles = [];
     const particleCount = 45;
-    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899","#06b6d4"];
+    const colors = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     let mouse = { x: -1000, y: -1000 };
 
@@ -254,13 +254,13 @@ export default function LearningModules({ courseId, courseName }) {
       description: "Learn new words",
     },
     {
-    title: "Practical Manual",
-    type: "practical_manual", // Match this key with your backend API response
-    icon: FileSpreadsheet,
-    color: "from-cyan-500 to-teal-600",
-    shadowColor: "rgba(6, 182, 212, 0.25)",
-    description: "Access hands-on lab guides",
-  },
+      title: "Practical Manual",
+      type: "practical_manual", // Match this key with your backend API response
+      icon: FileSpreadsheet,
+      color: "from-cyan-500 to-teal-600",
+      shadowColor: "rgba(6, 182, 212, 0.25)",
+      description: "Access hands-on lab guides",
+    },
     {
       title: "Task",
       type: "task",
@@ -269,14 +269,14 @@ export default function LearningModules({ courseId, courseName }) {
       shadowColor: "rgba(217, 70, 239, 0.25)",
       description: "Assignments from your institute",
     },
-    {
-      title: "Interactive Learning",
-      type: "interactive_learning",
-      icon: AudioWaveform,
-      color: "from-cyan-500 to-blue-600",
-      shadowColor: "rgba(6, 182, 212, 0.25)",
-      description: "Interactive learning activities",
-    },
+    // {
+    //   title: "Interactive Learning",
+    //   type: "interactive_learning",
+    //   icon: AudioWaveform,
+    //   color: "from-cyan-500 to-blue-600",
+    //   shadowColor: "rgba(6, 182, 212, 0.25)",
+    //   description: "Interactive learning activities",
+    // },
   ];
 
   return (
@@ -325,7 +325,7 @@ export default function LearningModules({ courseId, courseName }) {
               transition: { staggerChildren: 0.08 }
             }
           }}
-         className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6"
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6"
         >
           {modules.map((module) => {
             const Icon = module.icon;

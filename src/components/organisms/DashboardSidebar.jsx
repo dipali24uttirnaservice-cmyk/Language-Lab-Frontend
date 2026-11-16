@@ -42,16 +42,21 @@ const menus = [
     text: "text-orange-700",
     dot: "bg-orange-500",
   },
-  {
-    name: "Conversation Lab",
-    href: "/dashboard/conversation-lab",
-    icon: FaComments,
-    color: "from-[#800020] to-[#500014]",
-    border: "border-[#800020]",
-    bg: "from-rose-50 via-pink-50 to-rose-100/40",
-    text: "text-[#800020]",
-    dot: "bg-[#800020]",
-  },
+
+  // so this is for the communication purpose currently hidden need to setup 
+  // {
+  //   name: "Conversation Lab",
+  //   href: "/dashboard/conversation-lab",
+  //   icon: FaComments,
+  //   color: "from-[#800020] to-[#500014]",
+  //   border: "border-[#800020]",
+  //   bg: "from-rose-50 via-pink-50 to-rose-100/40",
+  //   text: "text-[#800020]",
+  //   dot: "bg-[#800020]",
+  // },
+
+
+
   // Assessment is hidden until its page/service is pushed to this branch —
   // the route exists locally but not yet on test-dev, so linking to it here
   // would 404. Re-add once src/app/dashboard/assessment and
@@ -363,11 +368,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                             <Link
                               key={course._id}
                               href={`/dashboard/course/${course._id}?courseName=${encodeURIComponent(course.course_name)}`}
-                              className={`block rounded-lg px-3 py-2 text-sm transition ${
-                                pathname === `/dashboard/course/${course._id}`
-                                  ? "bg-orange-100 text-orange-700 font-semibold"
-                                  : "hover:bg-orange-50 text-slate-600"
-                              }`}
+                              className={`block rounded-lg px-3 py-2 text-sm transition ${pathname === `/dashboard/course/${course._id}`
+                                ? "bg-orange-100 text-orange-700 font-semibold"
+                                : "hover:bg-orange-50 text-slate-600"
+                                }`}
                             >
                               {course.course_name}
                             </Link>
@@ -405,11 +409,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                               <Link
                                 key={course._id}
                                 href={`/dashboard/course/${course._id}?courseName=${encodeURIComponent(course.course_name)}`}
-                                className={`block rounded-lg px-2 py-2 text-sm transition ${
-                                  pathname === `/dashboard/course/${course._id}`
-                                    ? "bg-orange-100 text-orange-700 font-semibold"
-                                    : "hover:bg-orange-50 text-slate-600"
-                                }`}
+                                className={`block rounded-lg px-2 py-2 text-sm transition ${pathname === `/dashboard/course/${course._id}`
+                                  ? "bg-orange-100 text-orange-700 font-semibold"
+                                  : "hover:bg-orange-50 text-slate-600"
+                                  }`}
                               >
                                 {course.course_name}
                               </Link>
@@ -444,9 +447,8 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                   {active && (
                     <motion.div
                       layoutId="activeSidebarGlow"
-                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg || "from-blue-50 to-indigo-50"} border-2 ${
-                        item.border || "border-blue-500"
-                      } shadow-lg`}
+                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg || "from-blue-50 to-indigo-50"} border-2 ${item.border || "border-blue-500"
+                        } shadow-lg`}
                     />
                   )}
 
@@ -483,9 +485,8 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           FOOTER PROFILE
       ===================================================== */}
       <div
-        className={`relative z-10 pt-5 border-t border-slate-100 ${
-          isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
-        }`}
+        className={`relative z-10 pt-5 border-t border-slate-100 ${isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
+          }`}
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md" />

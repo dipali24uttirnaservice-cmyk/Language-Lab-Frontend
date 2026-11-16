@@ -22,7 +22,7 @@ import {
   ListChecks,
   Activity,
   AlertTriangle,
-  AudioWaveform ,
+  AudioWaveform,
 } from "lucide-react";
 
 const menuItems = [
@@ -81,15 +81,15 @@ const menuItems = [
     bg: "from-cyan-50 to-blue-50",
     text: "text-cyan-700",
   },
-  {
-    title: "Interactive Learning management",
-    href: "/institute-dashboard/interactive-learning",
-    icon: AudioWaveform,
-    color: "from-cyan-500 to-blue-600",
-    border: "border-cyan-500",
-    bg: "from-cyan-50 to-blue-50",
-    text: "text-cyan-700",
-  },
+  // {
+  //   title: "Interactive Learning management",
+  //   href: "/institute-dashboard/interactive-learning",
+  //   icon: AudioWaveform,
+  //   color: "from-cyan-500 to-blue-600",
+  //   border: "border-cyan-500",
+  //   bg: "from-cyan-50 to-blue-50",
+  //   text: "text-cyan-700",
+  // },
   // Assessment Management and Subject Management are hidden from the
   // sidebar until their pages/services are pushed to this branch — the
   // routes exist locally but not yet on test-dev, so linking to them here
@@ -229,9 +229,8 @@ export default function InstituteSidebar({
             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-2xl" />
 
             <div
-              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${
-                isOpen ? "h-14 w-14" : "h-11 w-11"
-              }`}
+              className={`relative rounded-2xl border border-white shadow-lg bg-white transition-all ${isOpen ? "h-14 w-14" : "h-11 w-11"
+                }`}
             >
               <Image
                 src={instituteLogo}
@@ -332,9 +331,8 @@ export default function InstituteSidebar({
 
                 {isOpen && (
                   <span
-                    className={`relative z-10 text-sm font-bold ${
-                      active ? item.text : "text-slate-700"
-                    }`}
+                    className={`relative z-10 text-sm font-bold ${active ? item.text : "text-slate-700"
+                      }`}
                   >
                     {item.title}
                   </span>
@@ -361,9 +359,8 @@ export default function InstituteSidebar({
 
       {/* Bottom Footer Section */}
       <div
-        className={`relative z-10 pt-4 shrink-0 border-t border-slate-100 ${
-          isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
-        }`}
+        className={`relative z-10 pt-4 shrink-0 border-t border-slate-100 ${isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
+          }`}
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md" />
