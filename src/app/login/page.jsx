@@ -1,156 +1,127 @@
 "use client";
 
-import { useState, useEffect } from "react";import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import Input from "@/components/atoms/Input";
-import AnimatedBackground from "@/components/organisms/AnimatedBackground";
-import StatusModal from "@/components/molecules/StatusModal";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import Input from "@/app/components/atoms/Input";
+import AnimatedBackground from "@/app/components/organisms/AnimatedBackground";
+import StatusModal from "@/app/components/molecules/StatusModal";
 import { useAuth } from "@/context/AuthContext";
 
 import { instituteLogin } from "@/services/auth/loginApi";
 import { instituteLoginSchema } from "@/app/schemas/institute.schema";
+import { secureCookieOptions } from "@/utils/cookie";
+import { profileApi } from "@/services/institute/profileApi";
 
 export default function LoginPage() {
-const router = useRouter();
-const { login } = useAuth();
-  const [loading, setLoading] =
-    useState(false);
+  const router = useRouter();
+  const { login } = useAuth();
 
-  const [errors, setErrors] = useState({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(instituteLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const [formData, setFormData] =
-    useState({
-      email: "institute@abcli.edu",
-      password: "Institute@123",
-    });
+  const [modal, setModal] = useState({
+    open: false,
+    type: "",
+    title: "",
+    message: "",
+  });
 
+  useEffect(() => {
+    const token = Cookies.get("token");
+    const role = Cookies.get("role");
 
+    if (!token) return;
 
-  const handleChange = async (
-    field,
-    value
-  ) => {
-    const newFormData = {
-      ...formData,
-      [field]: value,
-    };
-    
-    setFormData(newFormData);
-    
-    // Only re-validate on change if an error for this field already exists
-    if (errors[field]) {
-      try {
-        await instituteLoginSchema.validateAt(field, newFormData);
-        setErrors((prev) => ({
-          ...prev,
-          [field]: "",
-        }));
-      } catch (err) {
-        setErrors((prev) => ({
-          ...prev,
-          [field]: err.message,
-        }));
+    if (role === "institute" || role === "faculty") {
+      router.replace("/institute-dashboard");
+    }
+  }, [router]);
+
+  const onSubmit = async (formData) => {
+    try {
+      const response = await instituteLogin(formData);
+
+      const apiResponse = response.data;
+
+      const token = apiResponse?.data?.token;
+
+      if (!token) {
+        throw new Error("Token not found in response");
       }
+
+      // Detect role returned from unified login (faculty or institute)
+      const role =
+        apiResponse?.data?.role ||
+        (apiResponse?.data?.faculty ? "faculty" : "institute");
+      const userObj =
+        apiResponse?.data?.faculty ||
+        apiResponse?.data?.institute ||
+        apiResponse?.data?.user;
+
+      Cookies.set("role", role, secureCookieOptions());
+
+      Cookies.set("token", token, secureCookieOptions());
+
+      Cookies.set(
+        "userData",
+        JSON.stringify({ [role]: userObj, user: userObj, role }),
+        secureCookieOptions(),
+      );
+
+      login(userObj, role);
+
+      // If logging in as an institute admin, fetch the full institute profile
+      // so logos and campus details are refreshed immediately.
+      if (role === "institute") {
+        profileApi
+          .getProfile()
+          .then((res) => {
+            if (res.data.success) login(res.data.data, "institute");
+          })
+          .catch((error) => {
+            console.error("Failed to refresh institute profile:", error);
+          });
+      }
+
+      router.replace("/institute-dashboard");
+    } catch (error) {
+      console.error("Login Error:", error);
+
+      setModal({
+        open: true,
+        type: "error",
+        title: "Login Failed",
+        message:
+          error?.response?.data?.message ||
+          "Invalid Email or Password",
+      });
     }
   };
 
+  const handleModalClose = () => {
+    setModal((prev) => ({
+      ...prev,
+      open: false,
+    }));
 
-  const [modal, setModal] = useState({
-  open: false,
-  type: "",
-  title: "",
-  message: "",
-});
-
-useEffect(() => {
-  const token = Cookies.get("token");
-  const role = Cookies.get("role");
-
-  if (!token) return;
-
-  if (role === "institute") {
-    router.replace("/institute-dashboard");
-  }
-}, [router]);
-
-const handleLogin = async (e) => {
-  e.preventDefault();
-
-  try {
-    await instituteLoginSchema.validate(formData, { abortEarly: false });
-    setErrors({});
-  } catch (err) {
-    if (err.inner) {
-      const newErrors = {};
-      err.inner.forEach((error) => {
-        newErrors[error.path] = error.message;
-      });
-      setErrors(newErrors);
+    if (modal.type === "success") {
+      router.push("/institute-dashboard");
     }
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await instituteLogin(formData);
-
-    const apiResponse = response.data;
-
-    const token = apiResponse?.data?.token;
-
-    if (!token) {
-      throw new Error("Token not found in response");
-    }
-
-  Cookies.set("role", "institute", {
-  expires: 7,
-});
-
-Cookies.set("token", token, {
-  expires: 7,
-});
-
-const institute = apiResponse?.data?.institute;
-
-Cookies.set("userData", JSON.stringify({ institute }), {
-  expires: 7,
-});
-
-login(institute);
-
-router.replace("/institute-dashboard");
-
-  } catch (error) {
-    console.error("Login Error:", error);
-
-    setModal({
-      open: true,
-      type: "error",
-      title: "Login Failed",
-      message:
-        error?.response?.data?.message ||
-        "Invalid Email or Password",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleModalClose = () => {
-  setModal((prev) => ({
-    ...prev,
-    open: false,
-  }));
-
-  if (modal.type === "success") {
-    router.push("/institute-dashboard");
-  }
-};
-
- 
+  };
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden flex items-center justify-center p-4">
@@ -172,12 +143,12 @@ const handleModalClose = () => {
         }}
         className="relative z-10 w-full max-w-md rounded-[32px] border border-white/60 bg-white/40 backdrop-blur-2xl p-10 shadow-[0_20px_80px_rgba(249,115,22,0.15)]"
       >
-      
-    <div className="flex items-center gap-3 mb-6">
-  <button
-    type="button"
-    onClick={() => router.push("/")}
-    className="
+
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="
       h-10 w-10
       flex items-center justify-center
       rounded-xl
@@ -190,81 +161,68 @@ const handleModalClose = () => {
       hover:shadow-md
       transition-all duration-300
     "
-  >
-    <ArrowLeft size={18} />
-  </button>
+          >
+            <ArrowLeft size={18} />
+          </button>
 
-  <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-     🏫 Institute Management Hub
-  </div>
-</div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+            🏫 Institute & Faculty Portal
+          </div>
+        </div>
 
         <h2 className="text-3xl font-black text-slate-900">
-         Institute Login
+          Staff & Faculty Login
         </h2>
 
         <p className="mt-2 text-slate-500">
-          Continue your English
-          learning journey.
+          Sign in to your institute or faculty teaching portal.
         </p>
 
         <form
-          onSubmit={handleLogin}
+          onSubmit={handleSubmit(onSubmit)}
           className="mt-8 space-y-5"
         >
           <Input
             label="Email Address"
             type="email"
             placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) =>
-              handleChange(
-                "email",
-                e.target.value
-              )
-            }
-            error={errors.email}
+            error={errors.email?.message}
+            {...register("email")}
           />
 
           <Input
             label="Password"
             type="password"
             placeholder="Enter your password"
-            value={formData.password}
-            onChange={(e) =>
-              handleChange(
-                "password",
-                e.target.value
-              )
-            }
-            error={errors.password}
+            error={errors.password?.message}
+            {...register("password")}
           />
 
-        
+
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="w-full rounded-2xl bg-orange-500 py-4 text-white font-bold transition-all hover:bg-orange-600 hover:scale-[1.02] shadow-lg disabled:opacity-50"
           >
-            {loading
+            {isSubmitting
               ? "Signing In..."
               : "Sign In"}
           </button>
         </form>
 
-      
+
       </motion.div>
 
       <StatusModal
-  open={modal.open}
-  type={modal.type}
-  title={modal.title}
-  message={modal.message}
-  onClose={handleModalClose}
-/>
+        open={modal.open}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onClose={handleModalClose}
+      />
     </main>
 
-    
+
   );
 }

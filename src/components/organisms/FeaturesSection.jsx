@@ -8,7 +8,7 @@ import {
   FaPen,
   FaBrain,
 } from "react-icons/fa";
-import FeatureCard from "@/components/molecules/FeatureCard";
+import FeatureCard from "@/app/components/molecules/FeatureCard";
 
 const features = [
   {
@@ -46,13 +46,13 @@ const features = [
 export default function FeaturesSection() {
   return (
     <section className="relative py-32 overflow-hidden bg-slate-50">
-      
+
       {/* GLASS REFRACTION ENGINE: Multi-layered background graphics to blur through */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Warm Ambient Glow Core */}
         <div className="absolute top-1/4 left-1/4 h-[600px] w-[600px] rounded-full bg-amber-200/30 blur-[130px]" />
         <div className="absolute bottom-1/4 right-1/4 h-[500px] w-[500px] rounded-full bg-emerald-200/20 blur-[120px]" />
-        
+
         {/* Sharp Vector Shapes for Dynamic Glass Distortion */}
         <div className="absolute top-1/3 right-[15%] w-96 h-96 rounded-[40%_60%_70%_30%_/_40%_50%_60%_50%] bg-gradient-to-tr from-amber-400/20 to-orange-400/20 animate-[spin_25s_linear_infinite]" />
         <div className="absolute bottom-1/4 left-[10%] w-[450px] h-[450px] rounded-[60%_40%_30%_70%_/_50%_30%_70%_50%] bg-gradient-to-br from-emerald-300/15 to-teal-400/10 animate-[spin_35s_linear_infinite_reverse]" />

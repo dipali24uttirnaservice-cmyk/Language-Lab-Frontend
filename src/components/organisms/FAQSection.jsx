@@ -1,6 +1,6 @@
 "use client";
 
-import FAQItem from "@/components/molecules/FAQItem";
+import FAQItem from "@/app/components/molecules/FAQItem";
 
 const faqs = [
   {
@@ -28,7 +28,7 @@ const faqs = [
 export default function FAQSection() {
   return (
     <section className="relative py-32 overflow-hidden bg-gradient-to-br from-slate-50 via-slate-100/40 to-amber-50/10">
-      
+
       {/* =========================================================================
           STRUCTURAL REFRACTION CORE BACKDROP
           ========================================================================= */}

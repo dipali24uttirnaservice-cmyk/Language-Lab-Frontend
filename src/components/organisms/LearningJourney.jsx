@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import JourneyStep from "@/components/molecules/JourneyStep";
+import JourneyStep from "@/app/components/molecules/JourneyStep";
 
 const steps = [
   {
@@ -29,12 +29,12 @@ const steps = [
 export default function LearningJourney() {
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-slate-50 text-slate-900 selection:bg-amber-200 selection:text-amber-900">
-      
+
       {/* =========================================================================
           VIBRANT 3D MULTI-COLOR GRADIENT BUBBLE ENGINE
           ========================================================================= */}
       <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
-        
+
         {/* Consistent base layout flooring */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50 to-slate-100/40" />
 
@@ -76,7 +76,7 @@ export default function LearningJourney() {
 
         {/* --- Bubble 03: Bottom Center Deep Ambient Gradient Core --- */}
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.1, 1],
             x: [-10, 10, -10]
           }}
@@ -100,7 +100,7 @@ export default function LearningJourney() {
           FOREGROUND INTERACTIVE STEPS LAYER
           ========================================================================= */}
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        
+
         {/* Section Typography Header Block */}
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-24">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-400 shadow-3xs mb-3">
@@ -131,7 +131,7 @@ export default function LearningJourney() {
             >
               {/* Internal card surface reflection */}
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/50 to-transparent pointer-events-none" />
-              
+
               <div className="w-full flex">
                 <JourneyStep
                   number={step.number}
