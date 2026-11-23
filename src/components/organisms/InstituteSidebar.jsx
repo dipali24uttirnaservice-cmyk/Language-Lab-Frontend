@@ -81,15 +81,15 @@ const menuItems = [
     bg: "from-cyan-50 to-blue-50",
     text: "text-cyan-700",
   },
-  // {
-  //   title: "Interactive Learning management",
-  //   href: "/institute-dashboard/interactive-learning",
-  //   icon: AudioWaveform,
-  //   color: "from-cyan-500 to-blue-600",
-  //   border: "border-cyan-500",
-  //   bg: "from-cyan-50 to-blue-50",
-  //   text: "text-cyan-700",
-  // },
+  {
+    title: "Interactive Learning management",
+    href: "/institute-dashboard/interactive-learning",
+    icon: AudioWaveform,
+    color: "from-cyan-500 to-blue-600",
+    border: "border-cyan-500",
+    bg: "from-cyan-50 to-blue-50",
+    text: "text-cyan-700",
+  },
   // Assessment Management and Subject Management are hidden from the
   // sidebar until their pages/services are pushed to this branch — the
   // routes exist locally but not yet on test-dev, so linking to them here

@@ -269,14 +269,14 @@ export default function LearningModules({ courseId, courseName }) {
       shadowColor: "rgba(217, 70, 239, 0.25)",
       description: "Assignments from your institute",
     },
-    // {
-    //   title: "Interactive Learning",
-    //   type: "interactive_learning",
-    //   icon: AudioWaveform,
-    //   color: "from-cyan-500 to-blue-600",
-    //   shadowColor: "rgba(6, 182, 212, 0.25)",
-    //   description: "Interactive learning activities",
-    // },
+    {
+      title: "Interactive Learning",
+      type: "interactive_learning",
+      icon: AudioWaveform,
+      color: "from-cyan-500 to-blue-600",
+      shadowColor: "rgba(6, 182, 212, 0.25)",
+      description: "Interactive learning activities",
+    },
   ];
 
   return (

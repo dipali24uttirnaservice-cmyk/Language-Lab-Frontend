@@ -65,14 +65,25 @@ export const studentApi = {
     }),
 
   // ===========================
-  // CONVERSATION LAB (PEERS / BATCHMATES)
+  // CONVERSATION LAB (1-ON-1 PEER SESSION)
   // ===========================
   getBatchmates: () =>
     api.get("/student/me/batchmates"),
 
-  sendMessage: (receiver_id, message) =>
-    api.post("/student/me/messages", { receiver_id, message }),
+  getActiveConversationSession: () =>
+    api.get("/student/me/conversation-session/active"),
 
-  getMessages: (partnerId) =>
-    api.get(`/student/me/messages/${partnerId}`),
+  startConversationSession: (partner_id) =>
+    api.post("/student/me/conversation-session/start", { partner_id }),
+
+  endConversationSession: (session_id) =>
+    api.post("/student/me/conversation-session/end", { session_id }),
+
+  sendMessage: (receiver_id, message, session_id) =>
+    api.post("/student/me/messages", { receiver_id, message, session_id }),
+
+  getMessages: (partnerId, sessionId) =>
+    api.get(`/student/me/messages/${partnerId}`, {
+      params: sessionId ? { sessionId } : {},
+    }),
 };

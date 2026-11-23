@@ -43,17 +43,16 @@ const menus = [
     dot: "bg-orange-500",
   },
 
-  // so this is for the communication purpose currently hidden need to setup 
-  // {
-  //   name: "Conversation Lab",
-  //   href: "/dashboard/conversation-lab",
-  //   icon: FaComments,
-  //   color: "from-[#800020] to-[#500014]",
-  //   border: "border-[#800020]",
-  //   bg: "from-rose-50 via-pink-50 to-rose-100/40",
-  //   text: "text-[#800020]",
-  //   dot: "bg-[#800020]",
-  // },
+  {
+    name: "Conversation Lab",
+    href: "/dashboard/conversation-lab",
+    icon: FaComments,
+    color: "from-[#800020] to-[#500014]",
+    border: "border-[#800020]",
+    bg: "from-rose-50 via-pink-50 to-rose-100/40",
+    text: "text-[#800020]",
+    dot: "bg-[#800020]",
+  },
 
 
 
