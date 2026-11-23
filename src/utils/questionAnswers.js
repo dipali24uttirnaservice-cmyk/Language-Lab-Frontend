@@ -36,7 +36,11 @@ export function hasAnswer(question, answer) {
     case "match":
       return Object.keys(answer.pairs || {}).length === getMatchPairs(question).length;
     default:
-      return false;
+      // No question_type tagged (plain task questions from /task don't set
+      // one) — treat it like mcq/short_answer based on whatever shape
+      // QuestionInput actually rendered for it.
+      if (question.options?.filter(Boolean).length) return !!answer.value;
+      return !!(answer.text && answer.text.trim().length) || !!answer.value;
   }
 }
 
@@ -62,7 +66,8 @@ export function answerToString(question, answer) {
         .join("|");
     }
     default:
-      return "";
+      // Mirror the fallback in hasAnswer above for untagged questions.
+      return answer.value || answer.text || "";
   }
 }
 

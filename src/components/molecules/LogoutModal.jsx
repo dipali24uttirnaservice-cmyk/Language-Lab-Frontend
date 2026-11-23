@@ -19,6 +19,9 @@ export default function LogoutModal({
           />
 
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-modal-title"
             initial={{
               opacity: 0,
               scale: 0.9,
@@ -34,7 +37,7 @@ export default function LogoutModal({
             className="fixed left-1/2 top-1/2 z-[60] w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white p-8 shadow-2xl"
           >
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-slate-900">
+              <h3 id="logout-modal-title" className="text-2xl font-bold text-slate-900">
                 Logout
               </h3>
 

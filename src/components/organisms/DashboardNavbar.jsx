@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { FaBell, FaBars, FaChevronRight, FaHome, FaBookReader } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 
-import LogoutModal from "@/components/molecules/LogoutModal";
+import LogoutModal from "@/app/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
 import { studentApi } from "@/services/student/studentApi";
 import { getStudentProfile } from "@/services/student/studentProfileApi";
@@ -109,20 +110,20 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   }, []);
 
   // ─── Auto-close sidebar on content pages ─────────────────────────────────
-useEffect(() => {
-  const autoClose =
-    pathname.startsWith("/dashboard/video") ||
-    pathname.startsWith("/dashboard/audio") ||
-    pathname.startsWith("/dashboard/text") ||
-    pathname.startsWith("/dashboard/exercise") ||
-    pathname.startsWith("/dashboard/vocabulary") ||
-    pathname.startsWith("/dashboard/module") || // covers /dashboard/module/{type}/{subtopicId} lesson pages
-    pathname.startsWith("/dashboard/topics");
+  useEffect(() => {
+    const autoClose =
+      pathname.startsWith("/dashboard/video") ||
+      pathname.startsWith("/dashboard/audio") ||
+      pathname.startsWith("/dashboard/text") ||
+      pathname.startsWith("/dashboard/exercise") ||
+      pathname.startsWith("/dashboard/vocabulary") ||
+      pathname.startsWith("/dashboard/module") || // covers /dashboard/module/{type}/{subtopicId} lesson pages
+      pathname.startsWith("/dashboard/topics");
 
-  if (autoClose) {
-    setIsOpen(false);
-  }
-}, [pathname, setIsOpen]);
+    if (autoClose) {
+      setIsOpen(false);
+    }
+  }, [pathname, setIsOpen]);
 
   // ─── Auto-open sidebar on the course overview page ───────────────────────
   useEffect(() => {
@@ -219,7 +220,8 @@ useEffect(() => {
       pathname.includes("/dashboard/audio") ||
       pathname.includes("/dashboard/text") ||
       pathname.includes("/dashboard/exercise") ||
-      pathname.includes("/dashboard/vocabulary");
+      pathname.includes("/dashboard/vocabulary") ||
+      pathname.includes("/dashboard/tasks");
 
     if (isLearningJourney) {
       // Step 3 — Current Course
@@ -230,9 +232,15 @@ useEffect(() => {
         });
       }
 
-      // Step 4 — Content type (Video / Audio / Text etc.)
+      // Step 4 — Content type (Video / Audio / Text / Practical Manual etc.)
       if (type && courseId && courseName) {
-        let typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+        const typeLabelOverrides = {
+          practical_manual: "Practical Manual",
+          task: "Tasks",
+        };
+        let typeLabel =
+          typeLabelOverrides[type.toLowerCase()] ||
+          type.charAt(0).toUpperCase() + type.slice(1);
         if (["video", "audio", "text"].includes(type.toLowerCase())) {
           typeLabel += " Lesson";
         }
@@ -324,6 +332,7 @@ useEffect(() => {
           {/* Sidebar toggle */}
           <button
             onClick={() => setIsOpen(!isSidebarOpen)}
+            aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
           >
             <FaBars size={18} />
@@ -415,7 +424,10 @@ useEffect(() => {
           {/* Notification bell */}
           <motion.button
             whileHover={{ scale: 1.05 }}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/dashboard/notifications")}
+            aria-label="Notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer"
           >
             <FaBell className="text-sm" />
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white animate-pulse" />
@@ -430,11 +442,13 @@ useEffect(() => {
             className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all"
           >
             {profileImage ? (
-              <div className="relative">
-                <img
+              <div className="relative h-10 w-10">
+                <Image
                   src={profileImage}
                   alt={studentName}
-                  className="h-10 w-10 rounded-xl object-cover border border-slate-200"
+                  fill
+                  sizes="40px"
+                  className="rounded-xl object-cover border border-slate-200"
                 />
                 <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
@@ -449,9 +463,9 @@ useEffect(() => {
               <p className="text-sm font-bold text-slate-800 leading-tight">
                 {studentName}
               </p>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {/* <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 {instituteName}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

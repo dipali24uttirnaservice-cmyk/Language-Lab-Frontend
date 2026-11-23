@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { studentApi } from "@/services/student/studentApi";
@@ -18,6 +19,7 @@ import {
   FaHome,
   FaBookOpen,
   FaSignOutAlt,
+  FaComments,
 } from "react-icons/fa";
 
 const menus = [
@@ -40,6 +42,24 @@ const menus = [
     text: "text-orange-700",
     dot: "bg-orange-500",
   },
+
+  {
+    name: "Conversation Lab",
+    href: "/dashboard/conversation-lab",
+    icon: FaComments,
+    color: "from-[#800020] to-[#500014]",
+    border: "border-[#800020]",
+    bg: "from-rose-50 via-pink-50 to-rose-100/40",
+    text: "text-[#800020]",
+    dot: "bg-[#800020]",
+  },
+
+
+
+  // Assessment is hidden until its page/service is pushed to this branch —
+  // the route exists locally but not yet on test-dev, so linking to it here
+  // would 404. Re-add once src/app/dashboard/assessment and
+  // src/services/assessment are pushed.
   {
     name: "Student Profile",
     href: "/dashboard/student-profile",
@@ -220,7 +240,7 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
 
           {isOpen && (
             <div>
-              <h2 className="text-xl font-black text-slate-800">Language Lab</h2>
+              <h2 className="text-xl font-black text-slate-800">Uttirna DigiLabs</h2>
               <p className="text-xs uppercase font-bold text-slate-400">AI Learning Platform</p>
             </div>
           )}
@@ -231,7 +251,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           {menus.map((item) => {
             const Icon = item.icon;
 
-            const active = item.name === "Dashboard" ? pathname === "/dashboard" : pathname === item.href;
+            const active =
+              item.name === "Dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href;
 
             // Icon box: ALWAYS colored (gradient bg + white icon).
             // Active state just adds a ring + slightly stronger shadow for emphasis.
@@ -344,11 +367,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                             <Link
                               key={course._id}
                               href={`/dashboard/course/${course._id}?courseName=${encodeURIComponent(course.course_name)}`}
-                              className={`block rounded-lg px-3 py-2 text-sm transition ${
-                                pathname === `/dashboard/course/${course._id}`
-                                  ? "bg-orange-100 text-orange-700 font-semibold"
-                                  : "hover:bg-orange-50 text-slate-600"
-                              }`}
+                              className={`block rounded-lg px-3 py-2 text-sm transition ${pathname === `/dashboard/course/${course._id}`
+                                ? "bg-orange-100 text-orange-700 font-semibold"
+                                : "hover:bg-orange-50 text-slate-600"
+                                }`}
                             >
                               {course.course_name}
                             </Link>
@@ -386,11 +408,10 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                               <Link
                                 key={course._id}
                                 href={`/dashboard/course/${course._id}?courseName=${encodeURIComponent(course.course_name)}`}
-                                className={`block rounded-lg px-2 py-2 text-sm transition ${
-                                  pathname === `/dashboard/course/${course._id}`
-                                    ? "bg-orange-100 text-orange-700 font-semibold"
-                                    : "hover:bg-orange-50 text-slate-600"
-                                }`}
+                                className={`block rounded-lg px-2 py-2 text-sm transition ${pathname === `/dashboard/course/${course._id}`
+                                  ? "bg-orange-100 text-orange-700 font-semibold"
+                                  : "hover:bg-orange-50 text-slate-600"
+                                  }`}
                               >
                                 {course.course_name}
                               </Link>
@@ -425,9 +446,8 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
                   {active && (
                     <motion.div
                       layoutId="activeSidebarGlow"
-                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg || "from-blue-50 to-indigo-50"} border-2 ${
-                        item.border || "border-blue-500"
-                      } shadow-lg`}
+                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.bg || "from-blue-50 to-indigo-50"} border-2 ${item.border || "border-blue-500"
+                        } shadow-lg`}
                     />
                   )}
 
@@ -464,18 +484,21 @@ export default function DashboardSidebar({ isOpen, setShowLogoutModal }) {
           FOOTER PROFILE
       ===================================================== */}
       <div
-        className={`relative z-10 pt-5 border-t border-slate-100 ${
-          isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
-        }`}
+        className={`relative z-10 pt-5 border-t border-slate-100 ${isOpen ? "flex items-center gap-3 px-2" : "flex justify-center"
+          }`}
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md" />
           {student?.profilePhoto ? (
-            <img
-              src={student.profilePhoto}
-              alt={studentName}
-              className="relative h-10 w-10 rounded-full object-cover border border-white shadow-sm"
-            />
+            <div className="relative h-10 w-10">
+              <Image
+                src={student.profilePhoto}
+                alt={studentName}
+                fill
+                sizes="40px"
+                className="rounded-full object-cover border border-white shadow-sm"
+              />
+            </div>
           ) : (
             <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-white shadow-sm">
               <FaUserCircle className="text-slate-500 text-lg" />

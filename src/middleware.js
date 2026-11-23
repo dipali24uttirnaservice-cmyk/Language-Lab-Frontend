@@ -5,25 +5,30 @@ export function middleware(request) {
   const role = request.cookies.get("role")?.value;
   const pathname = request.nextUrl.pathname;
 
-  // Public routes
   const publicRoutes = ["/", "/login", "/student-login"];
 
-  // If logged in, prevent access to landing & login pages
-  if (token && publicRoutes.includes(pathname)) {
-    if (role === "student") {
+  // ------------------------------------------
+  // PUBLIC ROUTES
+  // ------------------------------------------
+  if (publicRoutes.includes(pathname)) {
+    if (token && role === "student") {
       return NextResponse.redirect(
         new URL("/dashboard", request.url)
       );
     }
 
-    if (role === "institute") {
+    if (token && (role === "institute" || role === "faculty")) {
       return NextResponse.redirect(
         new URL("/institute-dashboard", request.url)
       );
     }
+
+    return NextResponse.next();
   }
 
-  // Not logged in
+  // ------------------------------------------
+  // NOT LOGGED IN
+  // ------------------------------------------
   if (!token) {
     if (pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(
@@ -36,24 +41,51 @@ export function middleware(request) {
         new URL("/login", request.url)
       );
     }
+
+    return NextResponse.next();
   }
 
-  // Student cannot access institute dashboard
+  // ------------------------------------------
+  // DASHBOARD ACCESS
+  // Only check role if role actually exists.
+  // ------------------------------------------
+
   if (
-    token &&
+    pathname.startsWith("/dashboard") &&
+    role &&
+    role !== "student"
+  ) {
+    return NextResponse.redirect(
+      new URL("/institute-dashboard", request.url)
+    );
+  }
+
+  if (
     pathname.startsWith("/institute-dashboard") &&
-    role !== "institute"
+    role &&
+    role !== "institute" &&
+    role !== "faculty"
   ) {
     return NextResponse.redirect(
       new URL("/dashboard", request.url)
     );
   }
 
-  // Institute cannot access student dashboard
+  // ------------------------------------------
+  // RESTRICTED ROUTES FOR FACULTY
+  // ------------------------------------------
+  const facultyRestrictedPaths = [
+    "/institute-dashboard/teachers",
+    "/institute-dashboard/license",
+    "/institute-dashboard/danger-zone",
+    "/institute-dashboard/settings",
+    "/institute-dashboard/student-learning-access",
+    "/institute-dashboard/students/add",
+  ];
+
   if (
-    token &&
-    pathname.startsWith("/dashboard") &&
-    role !== "student"
+    role === "faculty" &&
+    facultyRestrictedPaths.some((p) => pathname.startsWith(p))
   ) {
     return NextResponse.redirect(
       new URL("/institute-dashboard", request.url)

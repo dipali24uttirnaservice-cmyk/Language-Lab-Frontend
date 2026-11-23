@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { FaPlay, FaEllipsisV } from "react-icons/fa";
 
 export default function YouTubeVideoCard({ thumbnail, title, channel, views, uploaded, duration }) {
@@ -10,8 +11,14 @@ export default function YouTubeVideoCard({ thumbnail, title, channel, views, upl
     >
       {/* Thumbnail with Gradient Glow */}
       <div className="relative overflow-hidden rounded-2xl bg-slate-200">
-        <div className="aspect-video w-full overflow-hidden">
-          <img src={thumbnail} alt={title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+        <div className="relative aspect-video w-full overflow-hidden">
+          <Image
+            src={thumbnail}
+            alt={title}
+            fill
+            sizes="(min-width: 1024px) 33vw, 100vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+          />
         </div>
 
         {/* Hover Overlay */}
