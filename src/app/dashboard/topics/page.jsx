@@ -382,7 +382,9 @@ return (
               <div className="mt-2 flex items-center gap-3">
 
                 <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
-                  {topic.subtopic_count} Subtopics
+                  {type === "interactive_learning"
+                    ? "Interactive Reading"
+                    : `${topic.subtopic_count} Subtopics`}
                 </span>
 
                 <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
