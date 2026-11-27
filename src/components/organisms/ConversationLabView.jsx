@@ -57,10 +57,14 @@ export default function ConversationLabView() {
   const channelRef = useRef(null);
   const activeSessionRef = useRef(null);
   const currentStudentIdRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   // Keep refs synced for timers & event listeners
   useEffect(() => {
     activeSessionRef.current = activeSession;
+    if (activeSession) {
+      chatInputRef.current?.focus();
+    }
   }, [activeSession]);
 
   useEffect(() => {
@@ -296,6 +300,9 @@ export default function ConversationLabView() {
           sessionId: session._id,
           partner_id: partner._id,
         });
+
+        // Immediately fetch existing chat history for this partner
+        fetchSessionMessages(partner._id, session._id, false);
       }
     } catch (err) {
       const msg =
@@ -368,6 +375,7 @@ export default function ConversationLabView() {
     if (directText === null) {
       setInputValue("");
     }
+    chatInputRef.current?.focus();
     setIsSending(true);
 
     try {
@@ -411,6 +419,7 @@ export default function ConversationLabView() {
     } finally {
       setIsSending(false);
       scrollToBottom();
+      chatInputRef.current?.focus();
     }
   };
 
@@ -661,11 +670,11 @@ export default function ConversationLabView() {
             className="p-3.5 px-5 bg-white border-t border-slate-200 flex items-center gap-2"
           >
             <input
+              ref={chatInputRef}
               type="text"
               placeholder={`Message ${activeSession.partner.full_name}...`}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              disabled={isSending}
               className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#800020]/20 focus:border-[#800020] transition-all text-slate-800 placeholder:text-slate-400"
             />
 
