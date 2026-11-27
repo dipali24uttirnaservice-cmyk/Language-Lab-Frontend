@@ -205,20 +205,6 @@ export default function InstituteSidebar({
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-amber-100 via-orange-50 to-amber-200" />
-
-        <motion.div
-          animate={{ y: [0, -20, 0], x: [0, 20, 0], rotate: [0, 360] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-indigo-400/15 to-violet-500/10 blur-3xl"
-        />
-
-        <motion.div
-          animate={{ y: [0, 25, 0], x: [0, -15, 0], rotate: [360, 0] }}
-          transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-0 -left-20 h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/15 to-blue-500/10 blur-3xl"
-        />
-
-        <div className="absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-white/50 via-white/10 to-transparent blur-md" />
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-indigo-400/40 to-transparent" />
       </div>
 

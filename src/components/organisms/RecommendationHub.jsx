@@ -128,7 +128,7 @@ export default function RecommendationHub({ progress = [], moduleBreakdown = nul
                   cy="50%"
                   innerRadius={totalCompleted > 0 ? 38 : 0}
                   outerRadius={55}
-                  paddingAngle={totalCompleted > 0 ? 3 : 0}
+                  paddingAngle={totalCompleted > 0 ? 3   : 0}
                   dataKey="value"
                 >
                   {chartData.map((entry, index) => (
