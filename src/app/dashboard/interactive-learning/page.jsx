@@ -75,6 +75,20 @@ function InteractiveStudioContent() {
   const courseName = searchParams.get("courseName");
   const topicId = searchParams.get("topicId");
   const topicName = searchParams.get("topicName");
+  const taskId = searchParams.get("taskId");
+
+  const handleBackToTopicTasks = () => {
+    const params = new URLSearchParams();
+    if (courseId) params.set("courseId", courseId);
+    if (courseName) params.set("courseName", courseName);
+    params.set("type", "interactive_learning");
+    if (topicName) params.set("topicName", topicName);
+    if (topicId) {
+      router.push(`/dashboard/topics/${topicId}?${params.toString()}`);
+    } else {
+      router.push(`/dashboard/topics?${params.toString()}`);
+    }
+  };
 
   // =========================
   // TASK LIST & CURRENT INDEX
@@ -150,10 +164,16 @@ function InteractiveStudioContent() {
         const list = res.data?.data?.tasks || [];
         setTasks(list);
 
+        let initialIndex = 0;
+        if (taskId) {
+          const foundIdx = list.findIndex((t) => String(t._id) === String(taskId));
+          if (foundIdx !== -1) initialIndex = foundIdx;
+        }
+        setCurrentIndex(initialIndex);
+
         if (list.length > 0) {
-          // If the task was previously attempted, initialize attempts
-          const first = list[0];
-          setAttemptsUsed(first.user_attempts ? first.user_attempts + 1 : 1);
+          const activeTask = list[initialIndex] || list[0];
+          setAttemptsUsed(activeTask.user_attempts ? activeTask.user_attempts + 1 : 1);
         }
       } catch (err) {
         console.error("[InteractiveStudio] Fetch error:", err);
@@ -588,7 +608,7 @@ function InteractiveStudioContent() {
           </p>
         </div>
         <button
-          onClick={() => router.back()}
+          onClick={handleBackToTopicTasks}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Go Back
@@ -615,10 +635,10 @@ function InteractiveStudioContent() {
           </p>
         </div>
         <button
-          onClick={() => router.push(`/dashboard/topics?courseId=${courseId}&courseName=${courseName || ""}`)}
+          onClick={handleBackToTopicTasks}
           className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
         >
-          Return to Learning Journey <ChevronRight className="w-4 h-4" />
+          Return to Topic Tasks <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     );
@@ -633,10 +653,10 @@ function InteractiveStudioContent() {
       {/* ================= NAVIGATION BREADCRUMB ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
-          onClick={() => router.back()}
+          onClick={handleBackToTopicTasks}
           className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Topics
+          <ArrowLeft className="w-4 h-4" /> Back to Topic Tasks
         </button>
 
         {/* Task Counter Badge */}

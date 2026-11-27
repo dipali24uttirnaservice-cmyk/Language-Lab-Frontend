@@ -11,11 +11,18 @@ import {
   Layers,
   ArrowLeft,
   ChevronRight,
+  AudioWaveform,
+  CheckCircle2,
+  Mic,
+  Clock,
+  Sparkles,
+  Award,
 } from "lucide-react";
 
 
 import { topicApi } from "@/services/topic/topicApi";
 import { progressApi } from "@/services/progress/progressApi";
+import { interactiveLearningApi } from "@/services/interactiveLearning/interactiveLearningApi";
 import ProgressBar from "@/app/components/atoms/ProgressBar";
 function TopicDetailsPageContent() {
   const { topicId } = useParams();
@@ -45,12 +52,14 @@ function TopicDetailsPageContent() {
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState(null);
   const [subtopicProgress, setSubtopicProgress] = useState({});
+  const [interactiveTasks, setInteractiveTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
 
   // Task and Practical Manual are scoped to a Topic directly (course_id +
   // optional topic_id) — they have no SubTopic layer, unlike Video/Audio/
   // Text/Exercise/Vocabulary. So instead of listing subtopics, jump straight
   // into that topic's tasks/practicals.
-  const isFlatTopicType = type === "task" || type === "practical_manual" || type === "interactive_learning";
+  const isFlatTopicType = type === "task" || type === "practical_manual";
 
   useEffect(() => {
     if (!isFlatTopicType) return;
@@ -62,15 +71,19 @@ function TopicDetailsPageContent() {
     params.set("type", type);
 
     const destination =
-      type === "task" ? "/dashboard/tasks" : type === "practical_manual" ? "/dashboard/module/practical-manual" : "/dashboard/interactive-learning";
+      type === "task" ? "/dashboard/tasks" : "/dashboard/module/practical-manual";
     router.replace(`${destination}?${params.toString()}`);
   }, [isFlatTopicType, type, topicId, courseId, courseName, topicName, router]);
 
   useEffect(() => {
     if (isFlatTopicType) return;
     fetchTopic();
-    fetchProgress();
-  }, [topicId, isFlatTopicType]);
+    if (type === "interactive_learning") {
+      fetchInteractiveTasks();
+    } else {
+      fetchProgress();
+    }
+  }, [topicId, isFlatTopicType, type, courseId]);
 
   const fetchTopic = async () => {
     try {
@@ -81,6 +94,21 @@ function TopicDetailsPageContent() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInteractiveTasks = async () => {
+    try {
+      setLoadingTasks(true);
+      const params = {};
+      if (topicId) params.topicId = topicId;
+      const res = await interactiveLearningApi.getStudentTasks(courseId, params);
+      setInteractiveTasks(res.data?.data?.tasks || []);
+    } catch (err) {
+      console.error("Failed to fetch interactive tasks:", err);
+      setInteractiveTasks([]);
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -312,9 +340,27 @@ function TopicDetailsPageContent() {
         {/* Right Side: Compact Stats */}
         <div className="flex items-center gap-2">
           {[
-            { label: "Subtopics", value: topic?.subtopic_count || 0, icon: "📚", color: "text-orange-600" },
-            { label: "Order", value: `#${topic?.order}`, icon: "🔖", color: "text-blue-600" },
-            { label: "Status", value: "Active", icon: "✓", color: "text-emerald-600" },
+            {
+              label: type === "interactive_learning" ? "Tasks" : "Subtopics",
+              value:
+                type === "interactive_learning"
+                  ? interactiveTasks.length
+                  : topic?.subtopic_count || topic?.subtopics?.length || 0,
+              icon: type === "interactive_learning" ? "🎙️" : "📚",
+              color: "text-orange-600",
+            },
+            {
+              label: "Order",
+              value: `#${topic?.order ?? 1}`,
+              icon: "🔖",
+              color: "text-blue-600",
+            },
+            {
+              label: "Status",
+              value: "Active",
+              icon: "✓",
+              color: "text-emerald-600",
+            },
           ].map((item, idx) => (
             <div
               key={idx}
@@ -333,184 +379,391 @@ function TopicDetailsPageContent() {
       </motion.div>
 
 
-      {/* SubTopics */}
+      {/* SubTopics or Interactive Learning Tasks */}
 
       <div>
-
-
         <div className="space-y-6">
+          {type === "interactive_learning" ? (
+            loadingTasks ? (
+              <div className="h-48 flex flex-col items-center justify-center space-y-3">
+                <div className="h-10 w-10 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Loading tasks...
+                </p>
+              </div>
+            ) : interactiveTasks.length === 0 ? (
+              <div className="rounded-[30px] border border-white/70 bg-white/80 backdrop-blur-xl shadow-lg p-12 text-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto shadow-inner">
+                  <AudioWaveform className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    No Reading Tasks Assigned
+                  </h3>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
+                    Your faculty has not published any interactive reading exercises for this topic yet.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (courseId) params.set("courseId", courseId);
+                    if (courseName) params.set("courseName", courseName);
+                    if (type) params.set("type", type);
+                    router.push(`/dashboard/topics?${params.toString()}`);
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back to Topics
+                </button>
+              </div>
+            ) : (
+              interactiveTasks.map((task, index) => {
+                const colors = [
+                  "from-emerald-500 to-teal-500",
+                  "from-orange-500 to-amber-500",
+                  "from-blue-500 to-indigo-500",
+                  "from-pink-500 to-rose-500",
+                  "from-cyan-500 to-sky-500",
+                  "from-violet-500 to-purple-500",
+                ];
+                const color = colors[index % colors.length];
+                const isDone = !!task.is_completed;
+                const accuracy = task.user_accuracy ?? 0;
+                const targetWpm = task.target_wpm || 120;
+                const minAcc = task.min_accuracy || 75;
 
-          {topic?.subtopics?.map((subtopic, index) => {
+                return (
+                  <motion.div
+                    key={task._id}
+                    whileHover={{
+                      y: -6,
+                      scale: 1.01,
+                    }}
+                    transition={{ duration: 0.25 }}
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (courseId) params.set("courseId", courseId);
+                      if (courseName) params.set("courseName", courseName);
+                      params.set("type", "interactive_learning");
+                      params.set("topicId", topicId);
+                      if (topicName || topic?.title) {
+                        params.set("topicName", topicName || topic?.title);
+                      }
+                      params.set("taskId", task._id);
 
-            const colors = [
-              "from-emerald-500 to-teal-500",
-              "from-orange-500 to-amber-500",
-              "from-blue-500 to-indigo-500",
-              "from-pink-500 to-rose-500",
-              "from-cyan-500 to-sky-500",
-              "from-violet-500 to-purple-500",
-            ];
-
-            const color =
-              colors[index % colors.length];
-
-            return (
-              <motion.div
-                key={subtopic._id}
-                whileHover={{
-                  y: -6,
-                  scale: 1.01,
-                }}
-                transition={{ duration: 0.25 }}
-                onClick={() => {
-                  if (!type) return;
-
-                  const params = new URLSearchParams(searchParams.toString());
-
-                  // Remove lesson because we're not on the lesson page yet
-                  params.delete("lessonName");
-                  params.delete("lessonId");
-
-                  if (courseId) params.set("courseId", courseId);
-                  if (courseName) params.set("courseName", courseName);
-                  params.set("type", type);
-                  params.set("topicId", topicId);
-                  if (topicName) params.set("topicName", topicName);
-
-                  params.set("subTopicId", subtopic._id);
-                  params.set("subTopicName", subtopic.title);
-
-                  router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
-                }} className="
-    group
-    relative
-    overflow-hidden
-    rounded-[30px]
-    border
-    border-white/70
-    bg-white/80
-    backdrop-blur-xl
-    shadow-lg
-    hover:shadow-2xl
-    cursor-pointer
-    p-6
-  "
-              >
-                {/* Glow */}
-                <div
-                  className={`
-      absolute
-      -right-10
-      -top-10
-      h-40
-      w-40
-      rounded-full
-      bg-gradient-to-br
-      ${color}
-      opacity-10
-      blur-3xl
-      transition-all
-      duration-700
-      group-hover:scale-125
-    `}
-                />
-
-                <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
-                  {/* Left */}
-                  <div className="flex items-center gap-5">
-
-                    <motion.div
-                      whileHover={{
-                        rotate: -8,
-                        scale: 1.08,
-                      }}
+                      router.push(`/dashboard/interactive-learning?${params.toString()}`);
+                    }}
+                    className="
+                      group
+                      relative
+                      overflow-hidden
+                      rounded-[30px]
+                      border
+                      border-white/70
+                      bg-white/80
+                      backdrop-blur-xl
+                      shadow-lg
+                      hover:shadow-2xl
+                      cursor-pointer
+                      p-6
+                    "
+                  >
+                    {/* Glow */}
+                    <div
                       className={`
-          h-10
-          w-10
-          rounded-3xl
-          bg-gradient-to-br
-          ${color}
-          flex
-          items-center
-          justify-center
-          text-white
-          shadow-xl
-        `}
-                    >
-                      <Layers size={20} />
-                    </motion.div>
+                        absolute
+                        -right-10
+                        -top-10
+                        h-40
+                        w-40
+                        rounded-full
+                        bg-gradient-to-br
+                        ${color}
+                        opacity-10
+                        blur-3xl
+                        transition-all
+                        duration-700
+                        group-hover:scale-125
+                      `}
+                    />
 
-                    <div>
+                    <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                      {/* Left */}
+                      <div className="flex items-start sm:items-center gap-5">
+                        <motion.div
+                          whileHover={{
+                            rotate: -8,
+                            scale: 1.08,
+                          }}
+                          className={`
+                            h-12
+                            w-12
+                            rounded-3xl
+                            bg-gradient-to-br
+                            ${color}
+                            flex
+                            items-center
+                            justify-center
+                            text-white
+                            shadow-xl
+                            shrink-0
+                          `}
+                        >
+                          <AudioWaveform size={22} />
+                        </motion.div>
 
-                      <h2 className="text-2xl font-black text-slate-900">
-                        {subtopic.title}
-                      </h2>
+                        <div>
+                          <h2 className="text-2xl font-black text-slate-900">
+                            {task.title}
+                          </h2>
 
-                      <div className="mt-2 flex flex-wrap gap-2">
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+                              Target: {targetWpm} WPM
+                            </span>
 
-                        <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
-                          Order #{subtopic.order}
-                        </span>
+                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">
+                              Min Accuracy: {minAcc}%
+                            </span>
 
-                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
-                          Ready
-                        </span>
+                            {isDone ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                                <CheckCircle2 size={13} /> Completed ({accuracy}%)
+                              </span>
+                            ) : (task.user_attempts || 0) > 0 ? (
+                              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                                Attempted ({task.user_attempts}/{task.max_retries || 3})
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
+                                Ready to Practice
+                              </span>
+                            )}
+                          </div>
+
+                          {task.paragraph && (
+                            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 line-clamp-2">
+                              {task.paragraph}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right */}
+                      <div className="lg:w-56 shrink-0 flex flex-col items-start lg:items-end">
+                        {isDone ? (
+                          <div className="w-full">
+                            <ProgressBar percentage={accuracy} color={color} />
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold text-slate-400">
+                            Max Retries: {task.max_retries || 3}
+                          </div>
+                        )}
+
+                        <button
+                          className="
+                            mt-4
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-xl
+                            bg-gradient-to-r
+                            from-orange-500
+                            to-amber-500
+                            px-5
+                            py-2.5
+                            text-sm
+                            font-bold
+                            text-white
+                            shadow-lg
+                            transition-all
+                            hover:scale-105
+                            hover:shadow-xl
+                          "
+                        >
+                          {isDone ? "Practice Again" : "Start Practice"}
+                          <ChevronRight
+                            size={16}
+                            className="transition-transform group-hover:translate-x-1"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )
+          ) : (
+            topic?.subtopics?.map((subtopic, index) => {
+              const colors = [
+                "from-emerald-500 to-teal-500",
+                "from-orange-500 to-amber-500",
+                "from-blue-500 to-indigo-500",
+                "from-pink-500 to-rose-500",
+                "from-cyan-500 to-sky-500",
+                "from-violet-500 to-purple-500",
+              ];
+
+              const color =
+                colors[index % colors.length];
+
+              return (
+                <motion.div
+                  key={subtopic._id}
+                  whileHover={{
+                    y: -6,
+                    scale: 1.01,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  onClick={() => {
+                    if (!type) return;
+
+                    const params = new URLSearchParams(searchParams.toString());
+
+                    // Remove lesson because we're not on the lesson page yet
+                    params.delete("lessonName");
+                    params.delete("lessonId");
+
+                    if (courseId) params.set("courseId", courseId);
+                    if (courseName) params.set("courseName", courseName);
+                    params.set("type", type);
+                    params.set("topicId", topicId);
+                    if (topicName) params.set("topicName", topicName);
+
+                    params.set("subTopicId", subtopic._id);
+                    params.set("subTopicName", subtopic.title);
+
+                    router.push(`/dashboard/module/${type}/${subtopic._id}?${params.toString()}`);
+                  }}
+                  className="
+                    group
+                    relative
+                    overflow-hidden
+                    rounded-[30px]
+                    border
+                    border-white/70
+                    bg-white/80
+                    backdrop-blur-xl
+                    shadow-lg
+                    hover:shadow-2xl
+                    cursor-pointer
+                    p-6
+                  "
+                >
+                  {/* Glow */}
+                  <div
+                    className={`
+                      absolute
+                      -right-10
+                      -top-10
+                      h-40
+                      w-40
+                      rounded-full
+                      bg-gradient-to-br
+                      ${color}
+                      opacity-10
+                      blur-3xl
+                      transition-all
+                      duration-700
+                      group-hover:scale-125
+                    `}
+                  />
+
+                  <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+                    {/* Left */}
+                    <div className="flex items-center gap-5">
+
+                      <motion.div
+                        whileHover={{
+                          rotate: -8,
+                          scale: 1.08,
+                        }}
+                        className={`
+                          h-10
+                          w-10
+                          rounded-3xl
+                          bg-gradient-to-br
+                          ${color}
+                          flex
+                          items-center
+                          justify-center
+                          text-white
+                          shadow-xl
+                        `}
+                      >
+                        <Layers size={20} />
+                      </motion.div>
+
+                      <div>
+
+                        <h2 className="text-2xl font-black text-slate-900">
+                          {subtopic.title}
+                        </h2>
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+
+                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+                            Order #{subtopic.order}
+                          </span>
+
+                          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
+                            Ready
+                          </span>
+
+                        </div>
+
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                          {subtopic.description}
+                        </p>
 
                       </div>
 
-                      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-                        {subtopic.description}
-                      </p>
+                    </div>
+
+                    {/* Right */}
+                    <div className="lg:w-56">
+
+                      <ProgressBar percentage={subtopicProgress[subtopic._id] ?? 0} color={color} />
+
+                      <button
+                        className="
+                          mt-5
+                          inline-flex
+                          items-center
+                          gap-2
+                          rounded-xl
+                          bg-gradient-to-r
+                          from-orange-500
+                          to-amber-500
+                          px-4
+                          py-2
+                          text-sm
+                          font-semibold
+                          text-white
+                          shadow-lg
+                          transition-all
+                          hover:scale-105
+                          hover:shadow-xl
+                        "
+                      >
+                        Open
+                        <ChevronRight
+                          size={16}
+                          className="transition-transform group-hover:translate-x-1"
+                        />
+                      </button>
 
                     </div>
 
                   </div>
-
-                  {/* Right */}
-                  <div className="lg:w-56">
-
-                    <ProgressBar percentage={subtopicProgress[subtopic._id] ?? 0} color={color} />
-
-                    <button
-
-
-                      className="
-          mt-5
-          inline-flex
-          items-center
-          gap-2
-          rounded-xl
-          bg-gradient-to-r
-          from-orange-500
-          to-amber-500
-          px-4
-          py-2
-          text-sm
-          font-semibold
-          text-white
-          shadow-lg
-          transition-all
-          hover:scale-105
-          hover:shadow-xl
-        "
-                    >
-                      Open
-                      <ChevronRight
-                        size={16}
-                        className="transition-transform group-hover:translate-x-1"
-                      />
-                    </button>
-
-                  </div>
-
-                </div>
-              </motion.div>
-            );
-          })}
-
+                </motion.div>
+              );
+            })
+          )}
         </div>
-
       </div>
 
     </div>
