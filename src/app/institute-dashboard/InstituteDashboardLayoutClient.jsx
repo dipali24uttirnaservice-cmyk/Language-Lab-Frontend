@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import LogoutModal from "@/app/components/molecules/LogoutModal";
 import InstituteSidebar from "@/app/components/organisms/InstituteSidebar";
 import InstituteNavbar from "@/app/components/organisms/InstituteNavbar";
@@ -129,21 +128,9 @@ export default function InstituteDashboardLayoutClient({
 
         {/* Scrollable Content with Background */}
         <main className="flex-1 overflow-y-auto relative">
-          {/* Background Grid & Blurs - Identical to Student Dashboard */}
+          {/* Background Grid Layer */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:32px_32px] opacity-80" />
-
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], y: [0, -20, 0] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-20 right-[10%] h-[500px] w-[500px] rounded-full bg-gradient-to-br from-amber-300/15 via-orange-200/10 to-transparent blur-[100px]"
-            />
-
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], x: [0, 15, 0] }}
-              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-20 -left-20 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-emerald-300/10 via-teal-200/10 to-transparent blur-[90px]"
-            />
           </div>
 
           {/* Children Content Layer */}

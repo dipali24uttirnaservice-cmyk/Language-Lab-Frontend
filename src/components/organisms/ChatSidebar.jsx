@@ -12,11 +12,11 @@ const chats = [
 export default function ChatSidebar() {
   return (
     <aside className="w-80 border-r border-slate-200/60 bg-white/50 backdrop-blur-xl p-6 flex flex-col h-full">
-      
+
       {/* New Chat Button */}
       <button className="mb-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-4 text-white font-bold text-sm hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
         <FaPlus />
-         New Chat
+        New Chat
       </button>
 
       {/* History Header */}

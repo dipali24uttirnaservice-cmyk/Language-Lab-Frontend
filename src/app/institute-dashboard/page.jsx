@@ -198,24 +198,9 @@ export default function InstituteDashboard() {
   return (
     <div className="relative min-h-screen bg-slate-50 p-6 md:p-8 text-slate-900 overflow-hidden font-sans flex flex-col">
       {" "}
-      {/* Background Floating Ambient Orbs */}
+      {/* Background Grid */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:40px_40px] opacity-40" />
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-10 right-[15%] h-[450px] w-[450px] rounded-full bg-gradient-to-br from-indigo-400/10 via-purple-300/10 to-transparent blur-[100px]"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], x: [0, -20, 0], y: [0, 40, 0] }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-          className="absolute bottom-10 left-[10%] h-[350px] w-[350px] rounded-full bg-gradient-to-br from-blue-400/10 via-indigo-200/5 to-transparent blur-[80px]"
-        />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto w-full space-y-3 ">
         {" "}
@@ -234,7 +219,7 @@ export default function InstituteDashboard() {
             </h1>
           </div>
           <div className="flex flex-row items-center gap-3 self-start sm:self-auto">
-            <div className="flex items-center gap-2 rounded-xl border border-white bg-white/80 px-4 py-2 shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Operational

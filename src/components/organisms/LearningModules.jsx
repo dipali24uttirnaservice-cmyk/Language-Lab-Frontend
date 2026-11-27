@@ -16,7 +16,6 @@ import {
   FileSpreadsheet,
   ListTodo,
   ChevronRight,
-  Sparkles,
   AudioWaveform,
 } from "lucide-react";
 
@@ -173,10 +172,8 @@ export default function LearningModules({ courseId, courseName }) {
         ctx.arc(p.x, p.y, finalRadius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.min(1, scale * 0.4);
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = p.color;
         ctx.fill();
-        ctx.shadowBlur = 0;
+
       });
 
       // Connect proximal nodes to generate structural 3D web geometry
@@ -285,34 +282,9 @@ export default function LearningModules({ courseId, courseName }) {
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />
 
       {/* Decorative Blur Background Points */}
-      <div className="absolute top-[-20%] left-[-15%] w-[600px] h-[600px] rounded-full bg-orange-400/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] rounded-full bg-indigo-400/10 blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10 space-y-12">
-
-        {/* INTERACTIVE HEADER: Fills out empty top space beautifully */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-100/50"
-        >
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
-                <Sparkles size={12} className="animate-pulse" />
-                <span>Active Learning Matrix</span>
-              </div>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 mt-0.5 tracking-tight">
-                {courseName || "Course Modules Workspace"}
-              </h1>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center bg-slate-950/80 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 shadow-2xl">
-            <span className="bg-gradient-to-r from-orange-400 via-amber-200 to-white bg-clip-text text-transparent text-xs font-black tracking-wide uppercase">
-              Enjoy Your Learning Journey
-            </span>
-          </div>
-        </motion.div>
 
         {/* CARDS GRID SYSTEM */}
         <motion.div
@@ -355,7 +327,7 @@ export default function LearningModules({ courseId, courseName }) {
                   params.set("type", module.type);
                   router.push(`/dashboard/topics?${params.toString()}`);
                 }}
-                className="cursor-pointer rounded-3xl bg-white/80 backdrop-blur-md p-6 border border-slate-200/80 shadow-lg shadow-slate-100 transition-all group flex flex-col justify-between min-h-[250px]"
+                className="cursor-pointer rounded-3xl bg-white p-6 border border-slate-200/80 shadow-lg shadow-slate-100 transition-all group flex flex-col justify-between min-h-[250px]"
               >
                 <div>
                   <div className="flex items-start justify-between">

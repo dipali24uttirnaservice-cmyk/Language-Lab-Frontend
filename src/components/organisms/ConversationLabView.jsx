@@ -111,6 +111,13 @@ export default function ConversationLabView() {
             initiatorId: s.initiatorId,
             startedAt: s.startedAt,
           });
+        } else if (!data.myActiveSession && activeSessionRef.current) {
+          // Partner logged out or session ended remotely
+          setPartnerEndedNotice(
+            activeSessionRef.current.partner?.full_name || "Your partner"
+          );
+          setActiveSession(null);
+          setMessages([]);
         }
       }
     } catch (err) {
@@ -407,24 +414,41 @@ export default function ConversationLabView() {
     }
   };
 
-  // ── Filtered Students List ──────────────────────────────────────────────────
-  const filteredStudents = students.filter((s) => {
-    // Search query match
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const match =
-        s.full_name?.toLowerCase().includes(q) ||
-        s.roll_no?.toLowerCase().includes(q) ||
-        s.enrollment_no?.toLowerCase().includes(q);
-      if (!match) return false;
-    }
-    // Tab filter
-    if (filterTab === "all") return true;
-    if (filterTab === "available") return s.chatStatus === "available";
-    if (filterTab === "busy") return s.chatStatus === "busy";
-    if (filterTab === "offline") return s.chatStatus === "offline";
-    return true;
-  });
+  // ── Filtered & Sorted Students List ──────────────────────────────────────────
+  // Priority: available (online) first, then busy (in conversation), then offline
+  const STATUS_PRIORITY = {
+    available: 1,
+    busy: 2,
+    offline: 3,
+  };
+
+  const filteredStudents = students
+    .filter((s) => {
+      // Search query match
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const match =
+          s.full_name?.toLowerCase().includes(q) ||
+          s.roll_no?.toLowerCase().includes(q) ||
+          s.enrollment_no?.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      // Tab filter
+      if (filterTab === "all") return true;
+      if (filterTab === "available") return s.chatStatus === "available";
+      if (filterTab === "busy") return s.chatStatus === "busy";
+      if (filterTab === "offline") return s.chatStatus === "offline";
+      return true;
+    })
+    .sort((a, b) => {
+      const priorityA = STATUS_PRIORITY[a.chatStatus] || 99;
+      const priorityB = STATUS_PRIORITY[b.chatStatus] || 99;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      // Secondary sort: alphabetical by full name
+      return (a.full_name || "").localeCompare(b.full_name || "");
+    });
 
   const availableCount = students.filter((s) => s.chatStatus === "available").length;
   const busyCount = students.filter((s) => s.chatStatus === "busy").length;
