@@ -20,6 +20,7 @@ import { logoutUser } from "@/services/auth/logoutApi";
 import { taskApi } from "@/services/task/taskApi";
 import { practicalManualDetail } from "@/services/practical-Manual/page.jsx";
 import { courseApi } from "@/services/course/courseApi";
+import { notificationApi } from "@/services/notification/notificationApi";
 import { useInstituteLogoSrc } from "@/utils/media";
 
 const MONGO_ID = /^[a-f\d]{24}$/i;
@@ -66,8 +67,36 @@ export default function InstituteNavbar({
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // ─── Fetch unread notifications count ────────────────────────────────────
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await notificationApi.getUnreadCount();
+        if (isMounted && res.data?.success) {
+          setUnreadCount(res.data.data?.unread_count || 0);
+        }
+      } catch (err) {
+        // Silently catch in navbar
+      }
+    };
+
+    fetchUnread();
+
+    const handleUpdate = () => fetchUnread();
+    window.addEventListener("notificationsUpdated", handleUpdate);
+    const interval = setInterval(fetchUnread, 60000); // Poll every 60s
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("notificationsUpdated", handleUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   const { user: authUser, role: authRole } = useAuth();
@@ -267,8 +296,11 @@ export default function InstituteNavbar({
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer"
           >
             <FaBell className="text-sm" />
-
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white animate-pulse" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-orange-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </motion.button>
 
           <div className="h-6 w-[1px] bg-slate-200" />

@@ -40,3 +40,8 @@ export const practicalManualDepartments = async () => {
 export const practicalManualAssign = async (id, payload) => {
   return await api.put(`/practical/${id}/assign`, payload);
 };
+
+// Sends reminder notification to all unsubmitted students for this practical manual.
+export const notifyUnsubmittedPractical = async (id) => {
+  return await api.post(`/practical/${id}/notify-unsubmitted`);
+};

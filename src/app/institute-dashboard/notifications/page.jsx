@@ -1,14 +1,10 @@
+import InstituteNotificationsView from "@/app/components/organisms/InstituteNotificationsView";
+
 export const metadata = {
-  title: "Notifications",
-  description: "View institute notifications",
+  title: "Institute Notifications",
+  description: "View and manage institute notifications and alerts.",
 };
 
 export default function InstituteNotificationsPage() {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center p-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-800">Notifications</h1>
-      </div>
-    </div>
-  );
+  return <InstituteNotificationsView />;
 }

@@ -19,6 +19,9 @@ export const interactiveLearningApi = {
 
   getSubmissions: (id) => api.get(`/interactive-task/${id}/submissions`),
 
+  notifyUnsubmitted: (id) =>
+    api.post(`/interactive-task/${id}/notify-unsubmitted`),
+
   // ── Student APIs ───────────────────────────────────────────────────────────
   getStudentTasks: (courseId, params = {}) =>
     api.get(`/interactive-task/student/course/${courseId}`, { params }),

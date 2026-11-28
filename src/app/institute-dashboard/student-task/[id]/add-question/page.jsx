@@ -88,13 +88,10 @@ function AddTaskQuestionPageContent() {
       })
       .catch((err) => {
         triggerModal(
-          "success",
-          "Questions Saved",
-          `${valid.length} question${valid.length > 1 ? "s" : ""} saved.`,
-          () =>
-            router.push(
-              `/institute-dashboard/student-task/assign/${id}`
-            )
+          "error",
+          "Failed to Load Task",
+          err?.response?.data?.message || err?.message || "Could not retrieve task details.",
+          () => router.push(`/institute-dashboard/student-task`)
         );
       })
       .finally(() => setLoading(false));
