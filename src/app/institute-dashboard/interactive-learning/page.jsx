@@ -740,7 +740,11 @@ export default function InteractiveLearningPage() {
                           </button>
 
                           <button
-                            onClick={() => handleOpenSubmissionsModal(task)}
+                            onClick={() =>
+                              router.push(
+                                `/institute-dashboard/interactive-learning/submissions/${task._id}`
+                              )
+                            }
                             className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors cursor-pointer"
                             title="View Submissions"
                             aria-label="View Submissions"

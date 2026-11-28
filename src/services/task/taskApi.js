@@ -30,4 +30,7 @@ export const taskApi = {
 
   // Assigns a task to one department (segment) + batch (year) pair.
   assignTask: (id, payload) => api.put(`/task/${id}/assign`, payload),
+
+  // Sends reminder notification to all unsubmitted students for this task.
+  notifyUnsubmitted: (id) => api.post(`/task/${id}/notify-unsubmitted`),
 };

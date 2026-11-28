@@ -12,6 +12,7 @@ import LogoutModal from "@/app/components/molecules/LogoutModal";
 import { logoutStudent } from "@/services/auth/logoutApi";
 import { studentApi } from "@/services/student/studentApi";
 import { getStudentProfile } from "@/services/student/studentProfileApi";
+import { notificationApi } from "@/services/notification/notificationApi";
 import Link from "next/link";
 
 export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
@@ -21,6 +22,7 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
   const [mounted, setMounted] = useState(false);
   const [student, setStudent] = useState({});
   const [courses, setCourses] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // ─── Breadcrumb drag-to-scroll (native DOM — document-level move/up) ───────
   const breadcrumbRef = useRef(null);
@@ -170,6 +172,33 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
       }
     };
     fetchCourses();
+  }, []);
+
+  // ─── Fetch unread notifications count ────────────────────────────────────
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await notificationApi.getUnreadCount();
+        if (isMounted && res.data?.success) {
+          setUnreadCount(res.data.data?.unread_count || 0);
+        }
+      } catch (err) {
+        // Silently catch in navbar
+      }
+    };
+
+    fetchUnread();
+
+    const handleUpdate = () => fetchUnread();
+    window.addEventListener("notificationsUpdated", handleUpdate);
+    const interval = setInterval(fetchUnread, 60000); // Poll every 60s
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("notificationsUpdated", handleUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
 
@@ -430,7 +459,11 @@ export default function DashboardNavbar({ isSidebarOpen, setIsOpen }) {
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer"
           >
             <FaBell className="text-sm" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white animate-pulse" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-orange-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </motion.button>
 
           {/* Vertical divider */}
